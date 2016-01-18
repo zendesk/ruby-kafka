@@ -7,7 +7,6 @@ module Kafka
       end
 
       def write(bytes)
-        bytes.force_encoding(Encoding::BINARY)
         @io.write(bytes)
       end
 

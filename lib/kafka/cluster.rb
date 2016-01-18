@@ -34,5 +34,20 @@ module Kafka
 
       response
     end
+
+    def produce(**options)
+      api_key = Protocol::PRODUCE_API_KEY
+      request = Protocol::ProduceRequest.new(**options)
+
+      @connection.write_request(api_key, request)
+
+      if request.requires_acks?
+        response = Protocol::ProduceResponse.new
+        @connection.read_response(response)
+        response
+      else
+        nil
+      end
+    end
   end
 end
