@@ -1,5 +1,6 @@
 module Kafka
   module Protocol
+    TOPIC_METADATA_API_KEY = 3
   end
 end
 

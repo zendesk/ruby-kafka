@@ -27,11 +27,11 @@ module Kafka
       raise ConnectionError, e
     end
 
-    def write_request(request)
+    def write_request(api_key, request)
       @correlation_id += 1
 
       message = Kafka::Protocol::RequestMessage.new(
-        api_key: 3, # TODO move this constant
+        api_key: api_key,
         api_version: 0,
         correlation_id: @correlation_id,
         client_id: @client_id,

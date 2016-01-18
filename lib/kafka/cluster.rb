@@ -25,10 +25,11 @@ module Kafka
     end
 
     def fetch_metadata(**options)
-      request = Kafka::Protocol::TopicMetadataRequest.new(**options)
-      response = Kafka::Protocol::MetadataResponse.new
+      api_key = Protocol::TOPIC_METADATA_API_KEY
+      request = Protocol::TopicMetadataRequest.new(**options)
+      response = Protocol::MetadataResponse.new
 
-      @connection.write_request(request)
+      @connection.write_request(api_key, request)
       @connection.read_response(response)
 
       response

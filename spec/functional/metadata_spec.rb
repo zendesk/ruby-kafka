@@ -26,7 +26,7 @@ describe "Metadata request/response" do
 
     response = Kafka::Protocol::MetadataResponse.new
 
-    connection.write_request(request)
+    connection.write_request(3, request)
     connection.read_response(response)
 
     brokers = response.brokers
