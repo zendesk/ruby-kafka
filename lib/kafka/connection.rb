@@ -18,7 +18,7 @@ module Kafka
     end
 
     def open
-      @logger.info "Opening connection to #{@host}:#{@port}..."
+      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
       @socket = TCPSocket.new(@host, @port)
     rescue SocketError => e
