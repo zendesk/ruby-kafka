@@ -3,8 +3,8 @@ require "kafka"
 describe "Metadata request/response" do
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
-  let(:host) { ENV.fetch("KAFKA_HOST") }
-  let(:port) { ENV.fetch("KAFKA_PORT").to_i }
+  let(:host) { KAFKA_HOST }
+  let(:port) { KAFKA_PORT }
 
   let(:connection) do
     Kafka::Connection.new(

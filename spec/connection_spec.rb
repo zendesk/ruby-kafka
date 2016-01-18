@@ -9,8 +9,8 @@ describe Kafka::Connection do
 
     it "connects to a Kafka broker" do
       connection = Kafka::Connection.new(
-        host: ENV.fetch("KAFKA_HOST"),
-        port: ENV.fetch("KAFKA_PORT"),
+        host: KAFKA_HOST,
+        port: KAFKA_PORT,
         client_id: "test",
         logger: logger,
       )
