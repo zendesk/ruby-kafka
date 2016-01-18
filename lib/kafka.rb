@@ -1,5 +1,8 @@
 require "kafka/version"
+require "kafka/cluster"
 
 module Kafka
-  # Your code goes here...
+  def self.new(**options)
+    Cluster.new(**options)
+  end
 end
