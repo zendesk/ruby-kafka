@@ -23,6 +23,8 @@ module Kafka
     #         Value => bytes
     #
     class ProduceRequest
+      attr_reader :required_acks, :timeout, :messages_for_topics
+
       def initialize(required_acks:, timeout:, messages_for_topics:)
         @required_acks = required_acks
         @timeout = timeout

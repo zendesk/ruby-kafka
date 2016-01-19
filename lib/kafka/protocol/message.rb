@@ -15,6 +15,8 @@ module Kafka
     class Message
       MAGIC_BYTE = 0
 
+      attr_reader :key, :value, :attributes
+
       def initialize(key:, value:, attributes: 0)
         @key = key
         @value = value
@@ -27,6 +29,10 @@ module Kafka
 
         encoder.write_int32(crc)
         encoder.write(data)
+      end
+
+      def ==(other)
+        @key == other.key && @value == other.value && @attributes == other.attributes
       end
 
       private
