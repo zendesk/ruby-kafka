@@ -23,7 +23,6 @@ module Kafka
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
       @correlation_id = 0
-      @socket_timeout = 1000
     end
 
     def write_request(api_key, request)
