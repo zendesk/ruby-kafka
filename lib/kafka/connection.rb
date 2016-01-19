@@ -19,6 +19,8 @@ module Kafka
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
       @socket = TCPSocket.new(@host, @port)
+      @encoder = Kafka::Protocol::Encoder.new(@socket)
+      @decoder = Kafka::Protocol::Decoder.new(@socket)
     rescue SocketError => e
       @logger.error "Failed to connect to #{@host}:#{@port}: #{e}"
 
@@ -42,15 +44,13 @@ module Kafka
 
       @logger.info "Sending request #{@correlation_id} (#{request.class})..."
 
-      connection_encoder = Kafka::Protocol::Encoder.new(@socket)
-      connection_encoder.write_bytes(buffer.string)
+      @encoder.write_bytes(buffer.string)
     end
 
     def read_response(response)
       @logger.info "Reading response #{response.class}"
 
-      connection_decoder = Kafka::Protocol::Decoder.new(@socket)
-      bytes = connection_decoder.bytes
+      bytes = @decoder.bytes
 
       buffer = StringIO.new(bytes)
       response_decoder = Kafka::Protocol::Decoder.new(buffer)
