@@ -4,7 +4,24 @@ require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
 
 module Kafka
+
+  # A connection to a single Kafka broker.
+  #
+  # Usually you'll need a separate connection to each broker in a cluster, since most
+  # requests must be directed specifically to the broker that is currently leader for
+  # the set of topic partitions you want to produce to or consumer from.
   class Connection
+
+    # Opens a connection to a Kafka broker.
+    #
+    # @param host [String] the hostname of the broker.
+    # @param port [Integer] the port of the broker.
+    # @param client_id [String] the client id is a user-specified string sent in each
+    #   request to help trace calls and should logically identify the application
+    #   making the request.
+    # @param logger [Logger] the logger used to log trace messages.
+    #
+    # @return [Connection] a new connection.
     def self.open(host:, port:, client_id:, logger:)
       logger.info "Opening connection to #{host}:#{port} with client id #{client_id}..."
 
@@ -25,6 +42,12 @@ module Kafka
       @correlation_id = 0
     end
 
+    # Writes a request over the connection.
+    #
+    # @param api_key [Integer] the integer code for the API that is invoked.
+    # @param request [#encode] the request that should be encoded and written.
+    #
+    # @return [nil]
     def write_request(api_key, request)
       @correlation_id += 1
 
@@ -43,8 +66,16 @@ module Kafka
       @logger.info "Sending request #{@correlation_id} (#{request.class})..."
 
       @encoder.write_bytes(buffer.string)
+
+      nil
     end
 
+    # Reads a response from the connection.
+    #
+    # @param response [#decode] an empty response object that can decode the
+    #   response bytes.
+    #
+    # @return [nil]
     def read_response(response)
       @logger.info "Reading response #{response.class}"
 
@@ -58,6 +89,8 @@ module Kafka
       @logger.info "Correlation id #{correlation_id}"
 
       response.decode(response_decoder)
+
+      nil
     end
   end
 end
