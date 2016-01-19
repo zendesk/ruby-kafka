@@ -7,14 +7,12 @@ module Kafka
     def self.connect(brokers:, client_id:, logger:)
       host, port = brokers.first.split(":", 2)
 
-      connection = Connection.new(
+      connection = Connection.open(
         host: host,
         port: port.to_i,
         client_id: client_id,
         logger: logger
       )
-
-      connection.open
 
       new(connection: connection, logger: logger)
     end

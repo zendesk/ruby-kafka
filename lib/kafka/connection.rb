@@ -5,26 +5,25 @@ require "kafka/protocol/decoder"
 
 module Kafka
   class Connection
-    def initialize(host:, port:, client_id:, logger:)
-      @host = host
-      @port = port
-      @client_id = client_id
-      @logger = logger
-      @socket = nil
-      @correlation_id = 0
-      @socket_timeout = 1000
-    end
+    def self.open(host:, port:, client_id:, logger:)
+      logger.info "Opening connection to #{host}:#{port} with client id #{client_id}..."
 
-    def open
-      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
-
-      @socket = TCPSocket.new(@host, @port)
-      @encoder = Kafka::Protocol::Encoder.new(@socket)
-      @decoder = Kafka::Protocol::Decoder.new(@socket)
+      socket = TCPSocket.new(host, port)
+      new(socket: socket, client_id: client_id, logger: logger)
     rescue SocketError => e
-      @logger.error "Failed to connect to #{@host}:#{@port}: #{e}"
+      logger.error "Failed to connect to #{host}:#{port}: #{e}"
 
       raise ConnectionError, e
+    end
+
+    def initialize(socket:, client_id:, logger:)
+      @client_id = client_id
+      @logger = logger
+      @socket = socket
+      @encoder = Kafka::Protocol::Encoder.new(@socket)
+      @decoder = Kafka::Protocol::Decoder.new(@socket)
+      @correlation_id = 0
+      @socket_timeout = 1000
     end
 
     def write_request(api_key, request)
