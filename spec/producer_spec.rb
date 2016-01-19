@@ -1,45 +1,79 @@
 describe Kafka::Producer do
   let(:log) { StringIO.new }
-  let(:log) { $stderr }
   let(:logger) { Logger.new(log) }
-  let(:connection) { FakeConnection.new }
-  let(:cluster) { Kafka::Cluster.new(connection: connection, logger: logger) }
+  let(:cluster) { FakeCluster.new }
+  let(:producer) { Kafka::Producer.new(cluster: cluster, logger: logger) }
 
-  class FakeConnection
+  class FakeCluster
     attr_reader :requests
 
     def initialize
       @requests = []
+      @mock_response = nil
     end
 
-    def write_request(api_key, request)
-      @requests << request
+    def produce(**options)
+      @requests << [:produce, options]
+      @mock_response
     end
 
-    def read_response(response)
-      response
+    def mock_response(response)
+      @mock_response = response
     end
   end
 
   it "buffers messages and sends them in bulk" do
-    producer = Kafka::Producer.new(cluster: cluster, logger: logger)
-
     producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
     producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
 
-    expect(connection.requests).to be_empty
+    expect(cluster.requests).to be_empty
 
     producer.flush
 
-    expect(connection.requests.size).to eq 1
+    expect(cluster.requests.size).to eq 1
 
-    request = connection.requests.first
+    request_type, request = cluster.requests.first
 
-    expect(request.messages_for_topics).to eq({
-      "test-messages" => {
-        0 => [Kafka::Protocol::Message.new(key: "x", value: "hello1")],
-        1 => [Kafka::Protocol::Message.new(key: "y", value: "hello2")],
+    expect(request).to eq({
+      required_acks: 1,
+      timeout: 10_000,
+      messages_for_topics: {
+        "test-messages" => {
+          0 => [Kafka::Protocol::Message.new(key: "x", value: "hello1")],
+          1 => [Kafka::Protocol::Message.new(key: "y", value: "hello2")],
+        }
       }
     })
+  end
+
+  it "raises an error if a message is corrupt" do
+    mock_response_with_error_code(2)
+
+    expect { producer.flush }.to raise_error(Kafka::CorruptMessage)
+  end
+
+  it "raises an error if the topic or partition are not known" do
+    mock_response_with_error_code(3)
+
+    expect { producer.flush }.to raise_error(Kafka::UnknownTopicOrPartition)
+  end
+
+  def mock_response_with_error_code(error_code)
+    response = Kafka::Protocol::ProduceResponse.new(
+      topics: [
+        Kafka::Protocol::ProduceResponse::TopicInfo.new(
+          topic: "test-messages",
+          partitions: [
+            Kafka::Protocol::ProduceResponse::PartitionInfo.new(
+              partition: 0,
+              offset: 0,
+              error_code: error_code,
+            )
+          ]
+        )
+      ]
+    )
+
+    cluster.mock_response(response)
   end
 end
