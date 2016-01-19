@@ -71,6 +71,10 @@ module Kafka
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
       attr_reader :topics
 
+      # Decodes a MetadataResponse from a {Decoder} containing response data.
+      #
+      # @param decoder [Decoder]
+      # @return [nil]
       def decode(decoder)
         @brokers = decoder.array do
           node_id = decoder.int32
@@ -104,6 +108,8 @@ module Kafka
             partitions: partitions,
           )
         end
+
+        nil
       end
     end
   end
