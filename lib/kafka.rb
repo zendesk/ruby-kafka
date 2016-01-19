@@ -4,6 +4,7 @@ require "kafka/producer"
 
 module Kafka
   Error = Class.new(StandardError)
+  ConnectionError = Class.new(Error)
   CorruptMessage = Class.new(Error)
   UnknownError = Class.new(Error)
   OffsetOutOfRange = Class.new(Error)

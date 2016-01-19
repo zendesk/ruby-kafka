@@ -4,8 +4,6 @@ require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
 
 module Kafka
-  ConnectionError = Class.new(StandardError)
-
   class Connection
     def initialize(host:, port:, client_id:, logger:)
       @host = host
