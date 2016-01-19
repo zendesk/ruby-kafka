@@ -1,5 +1,35 @@
 module Kafka
   module Protocol
+
+    # A response to a {TopicMetadataRequest}.
+    #
+    # The response contains information on the brokers, topics, and partitions in
+    # the cluster.
+    #
+    # * For each broker a node id, host, and port is provided.
+    # * For each topic partition the node id of the broker acting as partition leader,
+    #   as well as a list of node ids for the set of replicas, are given. The `isr` list is
+    #   the subset of replicas that are "in sync", i.e. have fully caught up with the
+    #   leader.
+    #
+    # == API Specification
+    #
+    #     MetadataResponse => [Broker][TopicMetadata]
+    #       Broker => NodeId Host Port  (any number of brokers may be returned)
+    #         NodeId => int32
+    #         Host => string
+    #         Port => int32
+    #
+    #       TopicMetadata => TopicErrorCode TopicName [PartitionMetadata]
+    #         TopicErrorCode => int16
+    #
+    #       PartitionMetadata => PartitionErrorCode PartitionId Leader Replicas Isr
+    #         PartitionErrorCode => int16
+    #         PartitionId => int32
+    #         Leader => int32
+    #         Replicas => [int32]
+    #         Isr => [int32]
+    #
     class MetadataResponse
       class Broker
         attr_reader :node_id, :host, :port
@@ -22,6 +52,12 @@ module Kafka
       end
 
       class TopicMetadata
+        # @return [String] the name of the topic
+        attr_reader :topic_name
+
+        # @return [Array<PartitionMetadata>] the partitions in the topic.
+        attr_reader :partitions
+
         def initialize(topic_error_code:, topic_name:, partitions:)
           @topic_error_code = topic_error_code
           @topic_name = topic_name
@@ -29,7 +65,11 @@ module Kafka
         end
       end
 
-      attr_reader :brokers, :topics
+      # @return [Array<Broker>] the list of brokers in the cluster.
+      attr_reader :brokers
+
+      # @return [Array<TopicMetadata>] the list of topics in the cluster.
+      attr_reader :topics
 
       def decode(decoder)
         @brokers = decoder.array do
