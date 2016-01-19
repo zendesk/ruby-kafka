@@ -22,14 +22,14 @@ describe Kafka::Producer do
   end
 
   it "buffers messages and sends them in bulk" do
-    buffer = Kafka::Producer.new(cluster: cluster, logger: logger)
+    producer = Kafka::Producer.new(cluster: cluster, logger: logger)
 
-    buffer.write("hello1", key: "x", topic: "test-messages", partition: 0)
-    buffer.write("hello2", key: "y", topic: "test-messages", partition: 1)
+    producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
+    producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
 
     expect(connection.requests).to be_empty
 
-    buffer.flush
+    producer.flush
 
     expect(connection.requests.size).to eq 1
 

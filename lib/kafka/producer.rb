@@ -2,9 +2,15 @@ require "kafka/protocol/message"
 
 module Kafka
   class Producer
-    def initialize(cluster:, logger:)
+    # @param timeout [Integer] The number of milliseconds to wait for an
+    #   acknowledgement from the broker before timing out.
+    # @param required_acks [Integer] The number of replicas that must acknowledge
+    #   a write.
+    def initialize(cluster:, logger:, timeout: 10_000, required_acks: 1)
       @cluster = cluster
       @logger = logger
+      @required_acks = required_acks
+      @timeout = timeout
       @buffer = {}
     end
 
