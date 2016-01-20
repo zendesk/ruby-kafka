@@ -31,7 +31,7 @@ module Kafka
     #         Isr => [int32]
     #
     class MetadataResponse
-      class Broker
+      class BrokerInfo
         attr_reader :node_id, :host, :port
 
         def initialize(node_id:, host:, port:)
@@ -65,7 +65,7 @@ module Kafka
         end
       end
 
-      # @return [Array<Broker>] the list of brokers in the cluster.
+      # @return [Array<BrokerInfo>] the list of brokers in the cluster.
       attr_reader :brokers
 
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
@@ -81,7 +81,7 @@ module Kafka
           host = decoder.string
           port = decoder.int32
 
-          Broker.new(
+          BrokerInfo.new(
             node_id: node_id,
             host: host,
             port: port
