@@ -31,7 +31,7 @@ module Kafka
     #         Isr => [int32]
     #
     class MetadataResponse
-      class Broker
+      class BrokerInfo
         attr_reader :node_id, :host, :port
 
         def initialize(node_id:, host:, port:)
@@ -39,9 +39,15 @@ module Kafka
           @host = host
           @port = port
         end
+
+        def inspect
+          "#{host}:#{port} (node_id=#{node_id})"
+        end
       end
 
       class PartitionMetadata
+        attr_reader :partition_id, :leader
+
         def initialize(partition_error_code:, partition_id:, leader:, replicas:, isr:)
           @partition_error_code = partition_error_code
           @partition_id = partition_id
@@ -65,11 +71,41 @@ module Kafka
         end
       end
 
-      # @return [Array<Broker>] the list of brokers in the cluster.
+      # @return [Array<BrokerInfo>] the list of brokers in the cluster.
       attr_reader :brokers
 
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
       attr_reader :topics
+
+      # Finds the node id of the broker that is acting as leader for the given topic
+      # and partition per this metadata.
+      #
+      # @param topic [String] the name of the topic.
+      # @param partition [Integer] the partition number.
+      # @return [Integer] the node id of the leader.
+      def find_leader_id(topic, partition)
+        topic_info = @topics.find {|t| t.topic_name == topic }
+
+        if topic_info.nil?
+          raise "no topic #{topic}"
+        end
+
+        partition_info = topic_info.partitions.find {|p| p.partition_id == partition }
+
+        if partition_info.nil?
+          raise "no partition #{partition} in topic #{topic}"
+        end
+
+        partition_info.leader
+      end
+
+      # Finds the broker info for the given node id.
+      #
+      # @param node_id [Integer] the node id of the broker.
+      # @return [BrokerInfo] information about the broker.
+      def find_broker(node_id)
+        @brokers.find {|broker| broker.node_id == node_id }
+      end
 
       # Decodes a MetadataResponse from a {Decoder} containing response data.
       #
@@ -81,7 +117,7 @@ module Kafka
           host = decoder.string
           port = decoder.int32
 
-          Broker.new(
+          BrokerInfo.new(
             node_id: node_id,
             host: host,
             port: port

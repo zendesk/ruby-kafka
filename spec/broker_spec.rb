@@ -1,14 +1,15 @@
 require "kafka/protocol/message"
 
-describe Kafka::Cluster do
+describe Kafka::Broker do
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
   let(:host) { KAFKA_HOST }
   let(:port) { KAFKA_PORT }
 
-  let(:cluster) do
-    Kafka::Cluster.connect(
-      brokers: ["#{host}:#{port}"],
+  let(:broker) do
+    Kafka::Broker.new(
+      host: host,
+      port: port,
       client_id: "test-#{rand(1000)}",
       logger: logger,
     )
@@ -16,14 +17,14 @@ describe Kafka::Cluster do
 
   describe "#metadata" do
     it "fetches cluster metadata" do
-      metadata = cluster.fetch_metadata(topics: [])
+      metadata = broker.fetch_metadata(topics: [])
 
       brokers = metadata.brokers
 
-      expect(brokers.size).to eq 1
+      expect(brokers.size).to be > 0
 
-      expect(brokers.first.host).to eq host
-      expect(brokers.first.port).to eq port
+      expect(brokers.map(&:host)).to include host
+      expect(brokers.map(&:port)).to include port
     end
   end
 
@@ -32,7 +33,7 @@ describe Kafka::Cluster do
     let(:message) { Kafka::Protocol::Message.new(key: "yo", value: "lo") }
 
     it "sends message sets to the broker" do
-      response = cluster.produce(
+      response = broker.produce(
         required_acks: -1, # -1 means all replicas must ack
         timeout: 1000,
         messages_for_topics: { topic => { 0 => [message] } }
@@ -43,11 +44,10 @@ describe Kafka::Cluster do
 
       expect(topic_info.topic).to eq topic
       expect(partition_info.partition).to eq 0
-      expect(partition_info.offset).to be > 0
     end
 
     it "doesn't wait for a response if zero acknowledgements are required" do
-      response = cluster.produce(
+      response = broker.produce(
         required_acks: 0, # 0 means the server doesn't respond or ack at all
         timeout: 1000,
         messages_for_topics: { topic => { 0 => [message] } }

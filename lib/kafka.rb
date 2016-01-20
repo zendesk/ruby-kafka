@@ -1,5 +1,5 @@
 require "kafka/version"
-require "kafka/cluster"
+require "kafka/broker_pool"
 require "kafka/producer"
 
 module Kafka
@@ -15,6 +15,6 @@ module Kafka
   RequestTimedOut = Class.new(Error)
 
   def self.new(**options)
-    Cluster.new(**options)
+    Broker.connect(**options)
   end
 end

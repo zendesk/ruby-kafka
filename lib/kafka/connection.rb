@@ -63,7 +63,7 @@ module Kafka
       message_encoder = Kafka::Protocol::Encoder.new(buffer)
       message.encode(message_encoder)
 
-      @logger.info "Sending request #{@correlation_id} (#{request.class})..."
+      @logger.debug "Sending request #{@correlation_id}"
 
       @encoder.write_bytes(buffer.string)
 
@@ -77,7 +77,7 @@ module Kafka
     #
     # @return [nil]
     def read_response(response)
-      @logger.info "Reading response #{response.class}"
+      @logger.debug "Waiting for response #{@correlation_id}"
 
       bytes = @decoder.bytes
 
@@ -86,9 +86,9 @@ module Kafka
 
       correlation_id = response_decoder.int32
 
-      @logger.info "Correlation id #{correlation_id}"
-
       response.decode(response_decoder)
+
+      @logger.debug "Received response #{@correlation_id}"
 
       nil
     end
