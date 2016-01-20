@@ -3,7 +3,7 @@ require "kafka/connection"
 require "kafka/protocol"
 
 module Kafka
-  class Cluster
+  class Broker
     def self.connect(brokers:, client_id:, logger:)
       host, port = brokers.first.split(":", 2)
 

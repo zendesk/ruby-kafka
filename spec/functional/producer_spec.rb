@@ -4,8 +4,8 @@ describe "Producer API" do
   let(:host) { KAFKA_HOST }
   let(:port) { KAFKA_PORT }
 
-  let(:cluster) do
-    Kafka::Cluster.connect(
+  let(:broker) do
+    Kafka::Broker.connect(
       brokers: ["#{host}:#{port}"],
       client_id: "test-#{rand(1000)}",
       logger: logger,
@@ -13,7 +13,7 @@ describe "Producer API" do
   end
 
   example "writing messages using the buffered producer" do
-    producer = Kafka::Producer.new(cluster: cluster, logger: logger)
+    producer = Kafka::Producer.new(broker: broker, logger: logger)
 
     producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
     producer.write("hello2", key: "y", topic: "test-messages", partition: 1)

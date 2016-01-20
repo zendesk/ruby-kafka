@@ -1,10 +1,10 @@
 describe Kafka::Producer do
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
-  let(:cluster) { FakeCluster.new }
-  let(:producer) { Kafka::Producer.new(cluster: cluster, logger: logger) }
+  let(:broker) { FakeBroker.new }
+  let(:producer) { Kafka::Producer.new(broker: broker, logger: logger) }
 
-  class FakeCluster
+  class FakeBroker
     attr_reader :requests
 
     def initialize
@@ -26,13 +26,13 @@ describe Kafka::Producer do
     producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
     producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
 
-    expect(cluster.requests).to be_empty
+    expect(broker.requests).to be_empty
 
     producer.flush
 
-    expect(cluster.requests.size).to eq 1
+    expect(broker.requests.size).to eq 1
 
-    request_type, request = cluster.requests.first
+    request_type, request = broker.requests.first
 
     expect(request).to eq({
       required_acks: 1,
@@ -74,6 +74,6 @@ describe Kafka::Producer do
       ]
     )
 
-    cluster.mock_response(response)
+    broker.mock_response(response)
   end
 end

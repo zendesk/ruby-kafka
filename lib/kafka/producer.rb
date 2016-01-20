@@ -6,8 +6,8 @@ module Kafka
     #   acknowledgement from the broker before timing out.
     # @param required_acks [Integer] The number of replicas that must acknowledge
     #   a write.
-    def initialize(cluster:, logger:, timeout: 10_000, required_acks: 1)
-      @cluster = cluster
+    def initialize(broker:, logger:, timeout: 10_000, required_acks: 1)
+      @broker = broker
       @logger = logger
       @required_acks = required_acks
       @timeout = timeout
@@ -23,7 +23,7 @@ module Kafka
     end
 
     def flush
-      response = @cluster.produce(
+      response = @broker.produce(
         required_acks: @required_acks,
         timeout: @timeout,
         messages_for_topics: @buffer
