@@ -4,9 +4,7 @@ require "kafka/protocol"
 
 module Kafka
   class Broker
-    def self.connect(brokers:, client_id:, logger:)
-      host, port = brokers.first.split(":", 2)
-
+    def self.connect(host:, port:, client_id:, logger:)
       connection = Connection.open(
         host: host,
         port: port.to_i,

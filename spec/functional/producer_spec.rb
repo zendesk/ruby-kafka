@@ -6,7 +6,8 @@ describe "Producer API" do
 
   let(:broker) do
     Kafka::Broker.connect(
-      brokers: ["#{host}:#{port}"],
+      host: host,
+      port: port,
       client_id: "test-#{rand(1000)}",
       logger: logger,
     )
