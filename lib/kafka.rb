@@ -1,5 +1,5 @@
 require "kafka/version"
-require "kafka/broker"
+require "kafka/broker_pool"
 require "kafka/producer"
 
 module Kafka

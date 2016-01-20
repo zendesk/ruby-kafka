@@ -4,20 +4,21 @@ require "kafka/protocol"
 
 module Kafka
   class Broker
-    def self.connect(host:, port:, client_id:, logger:)
-      connection = Connection.open(
+    def initialize(host:, port:, client_id:, logger:)
+      @host, @port = host, port
+
+      @connection = Connection.open(
         host: host,
-        port: port.to_i,
+        port: port,
         client_id: client_id,
         logger: logger
       )
 
-      new(connection: connection, logger: logger)
+      @logger = logger
     end
 
-    def initialize(connection:, logger: nil)
-      @connection = connection
-      @logger = logger
+    def to_s
+      "#{@host}:#{@port}"
     end
 
     def fetch_metadata(**options)
