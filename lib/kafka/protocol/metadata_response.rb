@@ -39,6 +39,10 @@ module Kafka
           @host = host
           @port = port
         end
+
+        def inspect
+          "#{host}:#{port} (node_id=#{node_id})"
+        end
       end
 
       class PartitionMetadata
