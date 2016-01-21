@@ -15,6 +15,10 @@ describe Kafka::Broker do
     )
   end
 
+  after do
+    broker.disconnect
+  end
+
   describe "#metadata" do
     it "fetches cluster metadata" do
       metadata = broker.fetch_metadata(topics: [])

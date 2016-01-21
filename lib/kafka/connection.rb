@@ -51,6 +51,11 @@ module Kafka
       "#{@host}:#{@port}"
     end
 
+    def close
+      @logger.debug "Closing socket to #{to_s}"
+      @socket.close
+    end
+
     # Sends a request over the connection.
     #
     # @param api_key [Integer] the integer code for the API that is invoked.

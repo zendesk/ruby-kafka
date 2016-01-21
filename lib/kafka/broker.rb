@@ -21,6 +21,10 @@ module Kafka
       "#{@host}:#{@port} (node_id=#{@node_id.inspect})"
     end
 
+    def disconnect
+      @connection.close
+    end
+
     def fetch_metadata(**options)
       api_key = Protocol::TOPIC_METADATA_API_KEY
       request = Protocol::TopicMetadataRequest.new(**options)

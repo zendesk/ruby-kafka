@@ -34,6 +34,13 @@ module Kafka
       broker_for_id(leader_id)
     end
 
+    def shutdown
+      @brokers.each do |id, broker|
+        @logger.info "Disconnecting broker #{id}"
+        broker.disconnect
+      end
+    end
+
     private
 
     def broker_for_id(broker_id)

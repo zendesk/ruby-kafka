@@ -51,5 +51,9 @@ module Kafka
 
       @buffered_messages.clear
     end
+
+    def shutdown
+      @broker_pool.shutdown
+    end
   end
 end
