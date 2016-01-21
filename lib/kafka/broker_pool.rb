@@ -33,6 +33,7 @@ module Kafka
       Broker.new(
         host: broker_info.host,
         port: broker_info.port,
+        node_id: broker_info.node_id,
         client_id: @client_id,
         logger: @logger,
       )

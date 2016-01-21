@@ -4,8 +4,8 @@ require "kafka/protocol"
 
 module Kafka
   class Broker
-    def initialize(host:, port:, client_id:, logger:)
-      @host, @port = host, port
+    def initialize(host:, port:, node_id: nil, client_id:, logger:)
+      @host, @port, @node_id = host, port, node_id
 
       @connection = Connection.open(
         host: host,
@@ -18,7 +18,7 @@ module Kafka
     end
 
     def to_s
-      "#{@host}:#{@port}"
+      "#{@host}:#{@port} (node_id=#{@node_id.inspect})"
     end
 
     def fetch_metadata(**options)
