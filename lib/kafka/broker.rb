@@ -26,8 +26,7 @@ module Kafka
       request = Protocol::TopicMetadataRequest.new(**options)
       response = Protocol::MetadataResponse.new
 
-      @connection.write_request(api_key, request)
-      @connection.read_response(response)
+      @connection.request(api_key, request, response)
 
       response
     end
@@ -35,12 +34,11 @@ module Kafka
     def produce(**options)
       api_key = Protocol::PRODUCE_API_KEY
       request = Protocol::ProduceRequest.new(**options)
+      response = request.requires_acks? ? Protocol::ProduceResponse.new : nil
 
-      @connection.write_request(api_key, request)
+      @connection.request(api_key, request, response)
 
       if request.requires_acks?
-        response = Protocol::ProduceResponse.new
-        @connection.read_response(response)
         response
       else
         nil

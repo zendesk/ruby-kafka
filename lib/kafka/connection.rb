@@ -42,6 +42,16 @@ module Kafka
       @correlation_id = 0
     end
 
+    def request(api_key, request, response)
+      write_request(api_key, request)
+
+      unless response.nil?
+        read_response(response)
+      end
+    end
+
+    private
+
     # Writes a request over the connection.
     #
     # @param api_key [Integer] the integer code for the API that is invoked.
