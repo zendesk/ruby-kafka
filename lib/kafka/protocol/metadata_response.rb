@@ -48,6 +48,8 @@ module Kafka
       class PartitionMetadata
         attr_reader :partition_id, :leader
 
+        attr_reader :partition_error_code
+
         def initialize(partition_error_code:, partition_id:, leader:, replicas:, isr:)
           @partition_error_code = partition_error_code
           @partition_id = partition_id
@@ -63,6 +65,8 @@ module Kafka
 
         # @return [Array<PartitionMetadata>] the partitions in the topic.
         attr_reader :partitions
+
+        attr_reader :topic_error_code
 
         def initialize(topic_error_code:, topic_name:, partitions:)
           @topic_error_code = topic_error_code

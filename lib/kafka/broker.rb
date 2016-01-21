@@ -26,7 +26,17 @@ module Kafka
       request = Protocol::TopicMetadataRequest.new(**options)
       response_class = Protocol::MetadataResponse
 
-      @connection.request(api_key, request, response_class)
+      response = @connection.request(api_key, request, response_class)
+
+      response.topics.each do |topic|
+        Protocol.handle_error(topic.topic_error_code)
+
+        topic.partitions.each do |partition|
+          Protocol.handle_error(partition.partition_error_code)
+        end
+      end
+
+      response
     end
 
     def produce(**options)
