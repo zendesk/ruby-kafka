@@ -42,11 +42,13 @@ module Kafka
       @correlation_id = 0
     end
 
-    def request(api_key, request, response)
+    def request(api_key, request, response_class)
       write_request(api_key, request)
 
-      unless response.nil?
+      unless response_class.nil?
+        response = response_class.new
         read_response(response)
+        response
       end
     end
 
