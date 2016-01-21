@@ -21,24 +21,29 @@ module Kafka
     #   request to help trace calls and should logically identify the application
     #   making the request.
     # @param logger [Logger] the logger used to log trace messages.
+    # @param connect_timeout [Integer] the socket timeout for connecting to the broker,
+    #   in milliseconds. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:)
+    def initialize(host:, port:, client_id:, logger:, connect_timeout: 10_000)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
 
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      @socket = TCPSocket.new(host, port)
+      # The `connect_timeout` argument is in seconds, but our value is in milliseconds.
+      @socket = Socket.tcp(host, port, connect_timeout: connect_timeout / 1000.0)
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
 
       # Correlation id is initialized to zero and bumped for each request.
       @correlation_id = 0
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while trying to connect to #{host}:#{port}: #{e}"
+      raise ConnectionError, e
     rescue SocketError => e
       @logger.error "Failed to connect to #{host}:#{port}: #{e}"
-
       raise ConnectionError, e
     end
 
