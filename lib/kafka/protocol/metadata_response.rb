@@ -115,7 +115,7 @@ module Kafka
       # Decodes a MetadataResponse from a {Decoder} containing response data.
       #
       # @param decoder [Decoder]
-      # @return [nil]
+      # @return [MetadataResponse] the metadata response.
       def self.decode(decoder)
         brokers = decoder.array do
           node_id = decoder.int32
