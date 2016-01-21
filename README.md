@@ -1,8 +1,8 @@
 # Kafka
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/kafka`. To experiment with that code, run `bin/console` for an interactive prompt.
+A Ruby client library for the Kafka distributed log system. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-TODO: Delete this and the text above, and describe your gem
+This library is still in pre-alpha stage, but development is ongoing. Current efforts are focused on implementing a solid Producer client. The next step will be implementing a client for the Kafka 0.9 Consumer API.
 
 ## Installation
 
@@ -22,7 +22,22 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+kafka = Kafka.new(
+  seed_brokers: ["kafka1:9092", "kafka2:9092"],
+  client_id: "my-app",
+  logger: Logger.new($stderr),
+)
+
+producer = kafka.get_producer
+
+# `write` will buffer the message in the producer.
+producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
+producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
+
+# `flush` will send the buffered messages to the cluster.
+producer.flush
+```
 
 ## Development
 
