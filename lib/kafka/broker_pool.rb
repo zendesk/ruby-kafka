@@ -7,6 +7,14 @@ module Kafka
   # to will be asked for the cluster metadata, which allows the pool to map topic
   # partitions to the current leader for those partitions.
   class BrokerPool
+
+    # Initializes a broker pool with a set of seed brokers.
+    #
+    # The pool will try to fetch cluster metadata from one of the brokers.
+    #
+    # @param seed_brokers [Array<String>]
+    # @param client_id [String]
+    # @param logger [Logger]
     def initialize(seed_brokers:, client_id:, logger:)
       @client_id = client_id
       @logger = logger
@@ -15,6 +23,11 @@ module Kafka
       initialize_from_seed_brokers(seed_brokers)
     end
 
+    # Gets the leader of the given topic and partition.
+    #
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [Broker] the broker that's currently acting as leader of the partition.
     def get_leader(topic, partition)
       leader_id = @cluster_info.find_leader_id(topic, partition)
 
