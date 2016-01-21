@@ -1,6 +1,6 @@
 describe "Producer API" do
   let(:logger) { Logger.new(log) }
-  let(:log) { StringIO.new }
+  let(:log) { LOG }
   let(:broker_pool) { Kafka::BrokerPool.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
 
   example "writing messages using the buffered producer" do

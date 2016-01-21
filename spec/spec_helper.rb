@@ -11,3 +11,5 @@ host, port = KAFKA_BROKERS.first.split(":", 2)
 
 KAFKA_HOST = host
 KAFKA_PORT = port.to_i
+
+LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new

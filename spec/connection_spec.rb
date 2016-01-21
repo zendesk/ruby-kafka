@@ -4,7 +4,7 @@ require "stringio"
 
 describe Kafka::Connection do
   describe "open" do
-    let(:log) { StringIO.new }
+    let(:log) { LOG }
     let(:logger) { Logger.new(log) }
 
     it "connects to a Kafka broker" do

@@ -1,7 +1,7 @@
 require "kafka/protocol/message"
 
 describe Kafka::Broker do
-  let(:log) { StringIO.new }
+  let(:log) { LOG }
   let(:logger) { Logger.new(log) }
   let(:host) { KAFKA_HOST }
   let(:port) { KAFKA_PORT }
