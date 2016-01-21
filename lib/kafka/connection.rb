@@ -68,6 +68,7 @@ module Kafka
     # @return [nil]
     def write_request(api_key, request)
       @correlation_id += 1
+      @logger.debug "Sending request #{@correlation_id}"
 
       message = Kafka::Protocol::RequestMessage.new(
         api_key: api_key,
@@ -77,13 +78,8 @@ module Kafka
         request: request,
       )
 
-      buffer = StringIO.new
-      message_encoder = Kafka::Protocol::Encoder.new(buffer)
-      message.encode(message_encoder)
-
-      @logger.debug "Sending request #{@correlation_id}"
-
-      @encoder.write_bytes(buffer.string)
+      data = Kafka::Protocol::Encoder.encode_with(message)
+      @encoder.write_bytes(data)
 
       nil
     end

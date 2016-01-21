@@ -74,22 +74,13 @@ module Kafka
           # When encoding a message into a message set, the bytesize of the message must
           # precede the actual bytes. Therefore we need to encode the message into a
           # separate buffer first.
-          encoded_message = encode_message(message)
+          encoded_message = Encoder.encode_with(message)
 
           encoder.write_int64(offset)
 
           # When encoding bytes, the 32 bit size of the byte buffer is encoded first.
           encoder.write_bytes(encoded_message)
         end
-
-        buffer.string
-      end
-
-      def encode_message(message)
-        buffer = StringIO.new
-        encoder = Encoder.new(buffer)
-
-        message.encode(encoder)
 
         buffer.string
       end

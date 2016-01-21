@@ -48,6 +48,15 @@ module Kafka
           write(bytes)
         end
       end
+
+      def self.encode_with(object)
+        buffer = StringIO.new
+        encoder = new(buffer)
+
+        object.encode(encoder)
+
+        buffer.string
+      end
     end
   end
 end
