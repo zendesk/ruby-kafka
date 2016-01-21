@@ -95,10 +95,9 @@ module Kafka
       response_decoder = Kafka::Protocol::Decoder.new(buffer)
 
       correlation_id = response_decoder.int32
-
       response = response_class.decode(response_decoder)
 
-      @logger.debug "Received response #{@correlation_id}"
+      @logger.debug "Received response #{correlation_id}"
 
       response
     end
