@@ -8,7 +8,7 @@ describe Kafka::Connection do
     let(:logger) { Logger.new(log) }
 
     it "connects to a Kafka broker" do
-      connection = Kafka::Connection.open(
+      connection = Kafka::Connection.new(
         host: KAFKA_HOST,
         port: KAFKA_PORT,
         client_id: "test",
@@ -18,7 +18,7 @@ describe Kafka::Connection do
 
     it "raises ConnectionError if it cannot connect to the broker" do
       expect {
-        Kafka::Connection.open(
+        Kafka::Connection.new(
           host: "imaginary.example",
           port: 1234,
           client_id: "test",

@@ -7,7 +7,7 @@ module Kafka
     def initialize(host:, port:, node_id: nil, client_id:, logger:)
       @host, @port, @node_id = host, port, node_id
 
-      @connection = Connection.open(
+      @connection = Connection.new(
         host: host,
         port: port,
         client_id: client_id,

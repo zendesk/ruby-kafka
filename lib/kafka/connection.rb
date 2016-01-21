@@ -23,24 +23,27 @@ module Kafka
     # @param logger [Logger] the logger used to log trace messages.
     #
     # @return [Connection] a new connection.
-    def self.open(host:, port:, client_id:, logger:)
-      logger.info "Opening connection to #{host}:#{port} with client id #{client_id}..."
+    def initialize(host:, port:, client_id:, logger:)
+      @host, @port, @client_id = host, port, client_id
+      @logger = logger
 
-      socket = TCPSocket.new(host, port)
-      new(socket: socket, client_id: client_id, logger: logger)
+      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
+
+      @socket = TCPSocket.new(host, port)
+
+      @encoder = Kafka::Protocol::Encoder.new(@socket)
+      @decoder = Kafka::Protocol::Decoder.new(@socket)
+
+      # Correlation id is initialized to zero and bumped for each request.
+      @correlation_id = 0
     rescue SocketError => e
-      logger.error "Failed to connect to #{host}:#{port}: #{e}"
+      @logger.error "Failed to connect to #{host}:#{port}: #{e}"
 
       raise ConnectionError, e
     end
 
-    def initialize(socket:, client_id:, logger:)
-      @client_id = client_id
-      @logger = logger
-      @socket = socket
-      @encoder = Kafka::Protocol::Encoder.new(@socket)
-      @decoder = Kafka::Protocol::Decoder.new(@socket)
-      @correlation_id = 0
+    def to_s
+      "#{@host}:#{@port}"
     end
 
     # Sends a request over the connection.
@@ -68,7 +71,7 @@ module Kafka
     # @return [nil]
     def write_request(api_key, request)
       @correlation_id += 1
-      @logger.debug "Sending request #{@correlation_id}"
+      @logger.debug "Sending request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
         api_key: api_key,
@@ -91,7 +94,7 @@ module Kafka
     #
     # @return [nil]
     def read_response(response_class)
-      @logger.debug "Waiting for response #{@correlation_id}"
+      @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
 
       bytes = @decoder.bytes
 
@@ -101,7 +104,7 @@ module Kafka
       correlation_id = response_decoder.int32
       response = response_class.decode(response_decoder)
 
-      @logger.debug "Received response #{correlation_id}"
+      @logger.debug "Received response #{correlation_id} from #{to_s}"
 
       response
     end
