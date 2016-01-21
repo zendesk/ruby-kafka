@@ -42,6 +42,13 @@ module Kafka
       @correlation_id = 0
     end
 
+    # Sends a request over the connection.
+    #
+    # @param api_key [Integer] the integer code for the API that is invoked.
+    # @param request [#encode] the request that should be encoded and written.
+    # @param response_class [#decode] an object that can decode the response.
+    #
+    # @return [Object] the response that was decoded by `response_class`.
     def request(api_key, request, response_class)
       write_request(api_key, request)
 
@@ -82,8 +89,8 @@ module Kafka
 
     # Reads a response from the connection.
     #
-    # @param response [#decode] an empty response object that can decode the
-    #   response bytes.
+    # @param response_class [#decode] an object that can decode the response from
+    #   a given Decoder.
     #
     # @return [nil]
     def read_response(response_class)
