@@ -77,6 +77,11 @@ module Kafka
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
       attr_reader :topics
 
+      def initialize(brokers:, topics:)
+        @brokers = brokers
+        @topics = topics
+      end
+
       # Finds the node id of the broker that is acting as leader for the given topic
       # and partition per this metadata.
       #
@@ -111,8 +116,8 @@ module Kafka
       #
       # @param decoder [Decoder]
       # @return [nil]
-      def decode(decoder)
-        @brokers = decoder.array do
+      def self.decode(decoder)
+        brokers = decoder.array do
           node_id = decoder.int32
           host = decoder.string
           port = decoder.int32
@@ -124,7 +129,7 @@ module Kafka
           )
         end
 
-        @topics = decoder.array do
+        topics = decoder.array do
           topic_error_code = decoder.int16
           topic_name = decoder.string
 
@@ -145,7 +150,7 @@ module Kafka
           )
         end
 
-        nil
+        new(brokers: brokers, topics: topics)
       end
     end
   end

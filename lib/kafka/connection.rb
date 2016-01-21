@@ -46,9 +46,7 @@ module Kafka
       write_request(api_key, request)
 
       unless response_class.nil?
-        response = response_class.new
-        read_response(response)
-        response
+        read_response(response_class)
       end
     end
 
@@ -88,7 +86,7 @@ module Kafka
     #   response bytes.
     #
     # @return [nil]
-    def read_response(response)
+    def read_response(response_class)
       @logger.debug "Waiting for response #{@correlation_id}"
 
       bytes = @decoder.bytes
@@ -98,11 +96,11 @@ module Kafka
 
       correlation_id = response_decoder.int32
 
-      response.decode(response_decoder)
+      response = response_class.decode(response_decoder)
 
       @logger.debug "Received response #{@correlation_id}"
 
-      nil
+      response
     end
   end
 end

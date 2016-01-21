@@ -26,8 +26,8 @@ module Kafka
         @topics = topics
       end
 
-      def decode(decoder)
-        @topics = decoder.array do
+      def self.decode(decoder)
+        topics = decoder.array do
           topic = decoder.string
 
           partitions = decoder.array do
@@ -40,6 +40,8 @@ module Kafka
 
           TopicInfo.new(topic: topic, partitions: partitions)
         end
+
+        new(topics: topics)
       end
     end
   end
