@@ -116,6 +116,11 @@ module Kafka
         @brokers.find {|broker| broker.node_id == node_id }
       end
 
+      def partitions_for(topic_name)
+        topic = @topics.find {|t| t.topic_name == topic_name }
+        topic.partitions
+      end
+
       # Decodes a MetadataResponse from a {Decoder} containing response data.
       #
       # @param decoder [Decoder]

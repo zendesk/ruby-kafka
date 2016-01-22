@@ -34,6 +34,10 @@ module Kafka
       broker_for_id(leader_id)
     end
 
+    def partitions_for(topic)
+      @cluster_info.partitions_for(topic)
+    end
+
     def shutdown
       @brokers.each do |id, broker|
         @logger.info "Disconnecting broker #{id}"
