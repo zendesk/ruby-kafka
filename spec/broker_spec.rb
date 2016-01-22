@@ -39,7 +39,7 @@ describe Kafka::Broker do
     it "sends message sets to the broker" do
       response = broker.produce(
         required_acks: -1, # -1 means all replicas must ack
-        timeout: 1000,
+        timeout: 1,
         messages_for_topics: { topic => { 0 => [message] } }
       )
 
@@ -53,7 +53,7 @@ describe Kafka::Broker do
     it "doesn't wait for a response if zero acknowledgements are required" do
       response = broker.produce(
         required_acks: 0, # 0 means the server doesn't respond or ack at all
-        timeout: 1000,
+        timeout: 1,
         messages_for_topics: { topic => { 0 => [message] } }
       )
 
