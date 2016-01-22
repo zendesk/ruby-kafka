@@ -4,11 +4,11 @@ require "kafka/partitioner"
 
 module Kafka
   class Producer
-    # @param timeout [Integer] The number of milliseconds to wait for an
+    # @param timeout [Integer] The number of seconds to wait for an
     #   acknowledgement from the broker before timing out.
     # @param required_acks [Integer] The number of replicas that must acknowledge
     #   a write.
-    def initialize(broker_pool:, logger:, timeout: 10_000, required_acks: 1)
+    def initialize(broker_pool:, logger:, timeout: 10, required_acks: 1)
       @broker_pool = broker_pool
       @logger = logger
       @required_acks = required_acks
@@ -78,7 +78,7 @@ module Kafka
         response = broker.produce(
           messages_for_topics: message_set.to_h,
           required_acks: @required_acks,
-          timeout: @timeout,
+          timeout: @timeout * 1000, # Kafka expects the timeout in milliseconds.
         )
 
         if response
