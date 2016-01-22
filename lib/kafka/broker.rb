@@ -4,22 +4,19 @@ require "kafka/protocol"
 
 module Kafka
   class Broker
-    def initialize(host:, port:, node_id: nil, client_id:, logger:, socket_timeout: nil)
-      @host, @port, @node_id = host, port, node_id
+    def self.connect(node_id: nil, logger:, **options)
+      connection = Connection.new(logger: logger, **options)
+      new(connection: connection, node_id: node_id, logger: logger)
+    end
 
-      @connection = Connection.new(
-        host: host,
-        port: port,
-        client_id: client_id,
-        socket_timeout: socket_timeout,
-        logger: logger
-      )
-
+    def initialize(connection:, node_id: nil, logger:)
+      @connection = connection
+      @node_id = node_id
       @logger = logger
     end
 
     def to_s
-      "#{@host}:#{@port} (node_id=#{@node_id.inspect})"
+      "#{@connection} (node_id=#{@node_id.inspect})"
     end
 
     def disconnect

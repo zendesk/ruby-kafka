@@ -6,14 +6,16 @@ describe Kafka::Broker do
   let(:host) { KAFKA_HOST }
   let(:port) { KAFKA_PORT }
 
-  let(:broker) do
-    Kafka::Broker.new(
+  let(:connection) do
+    Kafka::Connection.new(
       host: host,
       port: port,
       client_id: "test-#{rand(1000)}",
       logger: logger,
     )
   end
+
+  let(:broker) { Kafka::Broker.new(connection: connection, logger: logger) }
 
   after do
     broker.disconnect

@@ -55,7 +55,7 @@ module Kafka
     def connect_to_broker(broker_id)
       broker_info = @cluster_info.find_broker(broker_id)
 
-      Broker.new(
+      Broker.connect(
         host: broker_info.host,
         port: broker_info.port,
         node_id: broker_info.node_id,
@@ -72,12 +72,12 @@ module Kafka
         begin
           host, port = node.split(":", 2)
 
-          broker = Broker.new(
+          broker = Broker.connect(
             host: host,
-            port: port,
+            port: port.to_i,
             client_id: @client_id,
-            logger: @logger,
             socket_timeout: @socket_timeout,
+            logger: @logger,
           )
 
           @cluster_info = broker.fetch_metadata
