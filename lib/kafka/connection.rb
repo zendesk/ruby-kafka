@@ -47,7 +47,7 @@ module Kafka
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while trying to connect to #{host}:#{port}: #{e}"
       raise ConnectionError, e
-    rescue SocketError => e
+    rescue SocketError, Errno::ECONNREFUSED => e
       @logger.error "Failed to connect to #{host}:#{port}: #{e}"
       raise ConnectionError, e
     end
