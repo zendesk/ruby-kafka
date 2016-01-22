@@ -15,9 +15,10 @@ module Kafka
     # @param seed_brokers [Array<String>]
     # @param client_id [String]
     # @param logger [Logger]
-    def initialize(seed_brokers:, client_id:, logger:)
+    def initialize(seed_brokers:, client_id:, logger:, socket_timeout: nil)
       @client_id = client_id
       @logger = logger
+      @socket_timeout = socket_timeout
       @brokers = {}
 
       initialize_from_seed_brokers(seed_brokers)
@@ -55,6 +56,7 @@ module Kafka
         port: broker_info.port,
         node_id: broker_info.node_id,
         client_id: @client_id,
+        socket_timeout: @socket_timeout,
         logger: @logger,
       )
     end
@@ -66,7 +68,13 @@ module Kafka
         begin
           host, port = node.split(":", 2)
 
-          broker = Broker.new(host: host, port: port, client_id: @client_id, logger: @logger)
+          broker = Broker.new(
+            host: host,
+            port: port,
+            client_id: @client_id,
+            logger: @logger,
+            socket_timeout: @socket_timeout,
+          )
 
           @cluster_info = broker.fetch_metadata
 
