@@ -12,6 +12,8 @@ module Kafka
   # the set of topic partitions you want to produce to or consumer from.
   class Connection
     API_VERSION = 0
+    SOCKET_TIMEOUT = 5_000
+    CONNECT_TIMEOUT = 10_000
 
     # Opens a connection to a Kafka broker.
     #
@@ -23,16 +25,21 @@ module Kafka
     # @param logger [Logger] the logger used to log trace messages.
     # @param connect_timeout [Integer] the socket timeout for connecting to the broker,
     #   in milliseconds. Default is 10 seconds.
+    # @param socket_timeout [Integer] the socket timeout for reading and writing to the broker,
+    #   in milliseconds. Default is 5 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, connect_timeout: 10_000)
+    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
+
+      @connect_timeout = connect_timeout || CONNECT_TIMEOUT
+      @socket_timeout = socket_timeout || SOCKET_TIMEOUT
 
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
       # The `connect_timeout` argument is in seconds, but our value is in milliseconds.
-      @socket = Socket.tcp(host, port, connect_timeout: connect_timeout / 1000.0)
+      @socket = Socket.tcp(host, port, connect_timeout: @connect_timeout / 1000.0)
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
@@ -92,6 +99,12 @@ module Kafka
       )
 
       data = Kafka::Protocol::Encoder.encode_with(message)
+
+      unless IO.select(nil, [@socket], nil, @socket_timeout / 1000.0)
+        @logger.error "Timed out while writing request #{@correlation_id}"
+        raise ConnectionError
+      end
+
       @encoder.write_bytes(data)
 
       nil
@@ -105,6 +118,11 @@ module Kafka
     # @return [nil]
     def read_response(response_class)
       @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
+
+      unless IO.select([@socket], nil, nil, @socket_timeout / 1000.0)
+        @logger.error "Timed out while waiting for response #{@correlation_id}"
+        raise ConnectionError
+      end
 
       bytes = @decoder.bytes
 
