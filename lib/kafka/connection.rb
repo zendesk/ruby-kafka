@@ -11,7 +11,6 @@ module Kafka
   # requests must be directed specifically to the broker that is currently leader for
   # the set of topic partitions you want to produce to or consumer from.
   class Connection
-    API_VERSION = 0
     SOCKET_TIMEOUT = 5
     CONNECT_TIMEOUT = 10
 
@@ -91,7 +90,6 @@ module Kafka
 
       message = Kafka::Protocol::RequestMessage.new(
         api_key: api_key,
-        api_version: API_VERSION,
         correlation_id: @correlation_id,
         client_id: @client_id,
         request: request,

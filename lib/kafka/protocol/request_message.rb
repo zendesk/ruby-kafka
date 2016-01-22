@@ -1,7 +1,9 @@
 module Kafka
   module Protocol
     class RequestMessage
-      def initialize(api_key:, api_version:, correlation_id:, client_id:, request:)
+      API_VERSION = 0
+
+      def initialize(api_key:, api_version: API_VERSION, correlation_id:, client_id:, request:)
         @api_key = api_key
         @api_version = api_version
         @correlation_id = correlation_id
