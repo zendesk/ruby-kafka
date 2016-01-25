@@ -3,13 +3,25 @@ require "kafka"
 require "dotenv"
 require "logger"
 
+require "test_cluster"
+
 Dotenv.load
 
-KAFKA_BROKERS = ENV.fetch("KAFKA_BROKERS").split(",").map(&:strip)
+LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new
+
+KAFKA_TOPIC = "test-messages"
+
+KAFKA_CLUSTER = TestCluster.new
+KAFKA_CLUSTER.start
+KAFKA_CLUSTER.create_topic(KAFKA_TOPIC, num_partitions: 2)
+
+KAFKA_BROKERS = KAFKA_CLUSTER.kafka_hosts
 
 host, port = KAFKA_BROKERS.first.split(":", 2)
 
 KAFKA_HOST = host
 KAFKA_PORT = port.to_i
 
-LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new
+at_exit {
+  KAFKA_CLUSTER.stop
+}
