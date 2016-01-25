@@ -5,10 +5,16 @@ Docker.url = ENV.fetch("DOCKER_HOST")
 class TestCluster
   DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST")).host
   KAFKA_IMAGE = "wurstmeister/kafka:0.8.2.0"
-  ZOOKEEPER_IMAGE = "wurstmeister/zookeeper"
+  ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
 
   def initialize
+    [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
+      print "Fetching image #{image}... "
+      Docker::Image.create("fromImage" => image)
+      puts "OK"
+    end
+
     @zookeeper = create(
       "Image" => ZOOKEEPER_IMAGE,
       "ExposedPorts" => {
