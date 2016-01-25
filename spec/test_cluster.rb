@@ -70,6 +70,18 @@ class TestCluster
     }
   end
 
+  def kill_kafka_broker(number)
+    broker = @kafka_brokers[number]
+    puts "Killing broker #{number}"
+    broker.kill
+  end
+
+  def start_kafka_broker(number)
+    broker = @kafka_brokers[number]
+    puts "Starting broker #{number}"
+    broker.start
+  end
+
   def create_topic(topic, num_partitions: 1, num_replicas: 1)
     command = [
       "/opt/kafka_2.10-0.8.2.0/bin/kafka-topics.sh",

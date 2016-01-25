@@ -13,7 +13,7 @@ KAFKA_TOPIC = "test-messages"
 
 KAFKA_CLUSTER = TestCluster.new
 KAFKA_CLUSTER.start
-KAFKA_CLUSTER.create_topic(KAFKA_TOPIC, num_partitions: 2)
+KAFKA_CLUSTER.create_topic(KAFKA_TOPIC, num_partitions: 3, num_replicas: 2)
 
 KAFKA_BROKERS = KAFKA_CLUSTER.kafka_hosts
 

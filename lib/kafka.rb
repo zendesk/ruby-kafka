@@ -12,6 +12,8 @@ module Kafka
   LeaderNotAvailable = Class.new(Error)
   NotLeaderForPartition = Class.new(Error)
   RequestTimedOut = Class.new(Error)
+
+  # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
   ReplicaNotAvailable = Class.new(Error)
 
   def self.new(**options)

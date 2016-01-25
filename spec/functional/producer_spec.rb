@@ -28,4 +28,20 @@ describe "Producer API" do
 
     producer.flush
   end
+
+  example "handle a broker going down after the initial discovery" do
+    begin
+      producer
+
+      KAFKA_CLUSTER.kill_kafka_broker(0)
+
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 1)
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 2)
+
+      producer.flush
+    ensure
+      KAFKA_CLUSTER.start_kafka_broker(0)
+    end
+  end
 end
