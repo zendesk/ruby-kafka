@@ -22,13 +22,18 @@ Or install it yourself as:
 
 ## Usage
 
+Currently, only the Producer API is supported. A Kafka 0.9 compatible Consumer API is on the roadmap.
+
 ```ruby
+# The client must be initialized with at least one Kafka broker.
 kafka = Kafka.new(
   seed_brokers: ["kafka1:9092", "kafka2:9092"],
   client_id: "my-app",
   logger: Logger.new($stderr),
 )
 
+# Each producer keeps a separate pool of broker connections. Don't use the same
+# producer from more than one thread.
 producer = kafka.get_producer
 
 # `write` will buffer the message in the producer.
@@ -43,7 +48,25 @@ producer.flush
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+**Note:** the specs require a working [Docker](https://www.docker.com/) instance, but should work out of the box if you have Docker installed. Please create an issue if that's not the case.
+
+## Roadmap
+
+v0.1 is targeted for release in February. Other milestones do not have firm target dates, but v0.2 will be released as soon as we are confident that it is ready to run in critical production environments and that the API shouldn't be changed.
+
+### v0.1: Producer API for non-critical production data
+
+We need to actually run this in production for a while before we can say that it won't lose data, so initially the library should only be deployed for non-critical use cases.
+
+The API may also be changed.
+
+### v0.2: Stable Producer API
+
+The API should now have stabilized and the library should be battle tested enough to deploy for critical use cases.
+
+### v1.0: Consumer API
+
+The Consumer API defined by Kafka 0.9 will be implemented.
 
 ## Contributing
 
