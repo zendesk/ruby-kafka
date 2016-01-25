@@ -44,7 +44,7 @@ module Kafka
 
       # Correlation id is initialized to zero and bumped for each request.
       @correlation_id = 0
-    rescue Errno::ETIMEDOUT
+    rescue Errno::ETIMEDOUT => e
       @logger.error "Timed out while trying to connect to #{host}:#{port}: #{e}"
       raise ConnectionError, e
     rescue SocketError, Errno::ECONNREFUSED => e
