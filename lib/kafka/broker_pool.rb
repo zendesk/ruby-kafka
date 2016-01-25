@@ -92,7 +92,7 @@ module Kafka
         if attempt < MAX_CONNECTION_ATTEMPTS
           attempt += 1
 
-          @logger.info "Rediscovering cluster and retrying"
+          @logger.info "Rediscovering cluster and retrying in #{RETRY_BACKOFF_TIMEOUT} second(s)"
 
           sleep RETRY_BACKOFF_TIMEOUT
           refresh
