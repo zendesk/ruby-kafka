@@ -34,7 +34,12 @@ module Kafka
         Protocol.handle_error(topic.topic_error_code)
 
         topic.partitions.each do |partition|
-          Protocol.handle_error(partition.partition_error_code)
+          begin
+            Protocol.handle_error(partition.partition_error_code)
+          rescue ReplicaNotAvailable
+            # This error can be safely ignored per the protocol specification.
+            @logger.warn "Replica not available for topic #{topic.topic_name}, partition #{partition.partition_id}"
+          end
         end
       end
 
