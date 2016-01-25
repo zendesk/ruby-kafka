@@ -4,3 +4,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem "dotenv"
+gem "docker-api"
