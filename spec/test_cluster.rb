@@ -85,8 +85,8 @@ class TestCluster
   def stop
     puts "Stopping cluster..."
 
-    kafka_brokers.each(&:stop)
-    @zookeeper.stop
+    @kafka_brokers.each {|kafka| kafka.stop rescue nil }
+    @zookeeper.stop rescue nil
   end
 
   private
