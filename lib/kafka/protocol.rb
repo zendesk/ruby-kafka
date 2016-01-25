@@ -14,6 +14,7 @@ module Kafka
       when 5 then raise LeaderNotAvailable
       when 6 then raise NotLeaderForPartition
       when 7 then raise RequestTimedOut
+      when 9 then raise ReplicaNotAvailable
       else raise UnknownError, "Unknown error with code #{error_code}"
       end
     end
