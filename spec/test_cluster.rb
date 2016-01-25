@@ -9,6 +9,12 @@ class TestCluster
   KAFKA_CLUSTER_SIZE = 3
 
   def initialize
+    [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
+      print "Fetching image #{image}... "
+      Docker::Image.create("fromImage" => image)
+      puts "OK"
+    end
+
     @zookeeper = create(
       "Image" => ZOOKEEPER_IMAGE,
       "ExposedPorts" => {
