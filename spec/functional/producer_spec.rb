@@ -1,10 +1,12 @@
-require "test_cluster"
-
-describe "Producer API" do
+describe "Producer API", type: :functional do
   let(:logger) { Logger.new(log) }
   let(:log) { LOG }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
   let(:producer) { kafka.get_producer }
+
+  before do
+    require "test_cluster"
+  end
 
   after do
     producer.shutdown
