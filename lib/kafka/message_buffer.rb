@@ -1,6 +1,6 @@
 module Kafka
 
-  # Buffers messages for specific topics/partitons.
+  # Buffers messages for specific topics/partitions.
   class MessageBuffer
     include Enumerable
 
