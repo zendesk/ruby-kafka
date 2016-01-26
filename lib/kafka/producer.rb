@@ -45,7 +45,7 @@ module Kafka
         partition = partitioner.partition_for_key(partition_key)
       end
 
-      message = Message.new(value, key: key, topic: topic, partition: partition)
+      message = Message.new(value, topic, key: key, partition: partition)
 
       @buffered_messages << message
 
