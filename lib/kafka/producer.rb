@@ -22,13 +22,20 @@ module Kafka
     # == Partitioning
     #
     # There are several options for specifying the partition that the message should
-    # be written to. The simplest option is to not specify a partition or partition
-    # key, in which case the message key will be used to select one of the available
-    # partitions. You can also specify the `partition` parameter yourself. This
-    # requires you to know which partitions are available, however. Oftentimes the
-    # best option is to specify the `partition_key` parameter: messages with the
-    # same partition key will always be assigned to the same partition, as long as
-    # the number of partitions doesn't change.
+    # be written to.
+    #
+    # The simplest option is to not specify a message key, partition key, or
+    # partition number, in which case the message will be assigned a partition at
+    # random.
+    #
+    # You can also specify the `partition` parameter yourself. This requires you to
+    # know which partitions are available, however. Oftentimes the best option is
+    # to specify the `partition_key` parameter: messages with the same partition
+    # key will always be assigned to the same partition, as long as the number of
+    # partitions doesn't change. You can also omit the partition key and specify
+    # a message key instead. The message key is part of the message payload, and
+    # so can carry semantic value--whether you want to have the message key double
+    # as a partition key is up to you.
     #
     # @param value [String] the message data.
     # @param key [String] the message key.
@@ -37,7 +44,7 @@ module Kafka
     # @param partition_key [String] the key that should be used to assign a partition.
     #
     # @return [nil]
-    def write(value, key:, topic:, partition: nil, partition_key: nil)
+    def write(value, key: nil, topic:, partition: nil, partition_key: nil)
       if partition.nil?
         # If no explicit partition key is specified we use the message key instead.
         partition_key ||= key
