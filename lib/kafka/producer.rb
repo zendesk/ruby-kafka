@@ -1,6 +1,6 @@
-require "kafka/message"
-require "kafka/message_set"
 require "kafka/partitioner"
+require "kafka/message_buffer"
+require "kafka/protocol/message"
 
 module Kafka
   class Producer
@@ -13,7 +13,7 @@ module Kafka
       @logger = logger
       @required_acks = required_acks
       @timeout = timeout
-      @buffered_messages = []
+      @buffer = MessageBuffer.new
     end
 
     # Writes a message to the specified topic. Note that messages are buffered in
@@ -36,7 +36,7 @@ module Kafka
     # @param partition [Integer] the partition that the message should be written to.
     # @param partition_key [String] the key that should be used to assign a partition.
     #
-    # @return [Message] the message that was written.
+    # @return [nil]
     def write(value, key:, topic:, partition: nil, partition_key: nil)
       if partition.nil?
         # If no explicit partition key is specified we use the message key instead.
@@ -45,11 +45,11 @@ module Kafka
         partition = partitioner.partition_for_key(partition_key)
       end
 
-      message = Message.new(value, key: key, topic: topic, partition: partition)
+      message = Protocol::Message.new(key: key, value: value)
 
-      @buffered_messages << message
+      @buffer.write(message, topic: topic, partition: partition)
 
-      message
+      nil
     end
 
     # Flushes all messages to the Kafka brokers.
@@ -63,18 +63,16 @@ module Kafka
     def flush
       messages_for_broker = {}
 
-      @buffered_messages.each do |message|
-        broker = @broker_pool.get_leader(message.topic, message.partition)
+      @buffer.each do |topic, partition, messages|
+        broker = @broker_pool.get_leader(topic, partition)
 
-        messages_for_broker[broker] ||= []
-        messages_for_broker[broker] << message
+        @logger.debug "Current leader for #{topic}/#{partition} is #{broker}"
+
+        messages_for_broker[broker] ||= MessageBuffer.new
+        messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
       end
 
-      messages_for_broker.each do |broker, messages|
-        @logger.info "Sending #{messages.count} messages to broker #{broker}"
-
-        message_set = MessageSet.new(messages)
-
+      messages_for_broker.each do |broker, message_set|
         response = broker.produce(
           messages_for_topics: message_set.to_h,
           required_acks: @required_acks,
@@ -90,7 +88,7 @@ module Kafka
         end
       end
 
-      @buffered_messages.clear
+      @buffer.clear
 
       nil
     end
