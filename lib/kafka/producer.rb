@@ -49,7 +49,7 @@ module Kafka
 
       @buffer.write(message, topic: topic, partition: partition)
 
-      nil
+      partition
     end
 
     # Flushes all messages to the Kafka brokers.
