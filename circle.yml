@@ -1,0 +1,9 @@
+machine:
+  services:
+    - docker
+  environment:
+    DOCKER_HOST: unix:///var/run/docker.sock
+
+dependencies:
+  pre:
+    - gem install bundler
