@@ -1,36 +1,32 @@
 require "kafka/protocol/message"
 
 describe Kafka::Broker do
-  let(:log) { LOG }
-  let(:logger) { Logger.new(log) }
-  let(:host) { KAFKA_HOST }
-  let(:port) { KAFKA_PORT }
-
-  let(:connection) do
-    Kafka::Connection.new(
-      host: host,
-      port: port,
-      client_id: "test-#{rand(1000)}",
-      logger: logger,
-    )
-  end
-
+  let(:logger) { Logger.new(LOG) }
+  let(:connection) { FakeConnection.new }
   let(:broker) { Kafka::Broker.new(connection: connection, logger: logger) }
 
-  after do
-    broker.disconnect
+  class FakeConnection
+    def initialize
+      @mocked_response = nil
+    end
+
+    def mock_response(response)
+      @mocked_response = response
+    end
+
+    def request(api_key, request, response_decoder)
+      @mocked_response
+    end
   end
 
   describe "#metadata" do
     it "fetches cluster metadata" do
+      response = Kafka::Protocol::MetadataResponse.new(brokers: [], topics: [])
+      connection.mock_response(response)
+
       metadata = broker.fetch_metadata(topics: [])
 
-      brokers = metadata.brokers
-
-      expect(brokers.size).to be > 0
-
-      expect(brokers.map(&:host)).to include host
-      expect(brokers.map(&:port)).to include port
+      expect(metadata).to eq response
     end
   end
 
@@ -38,18 +34,17 @@ describe Kafka::Broker do
     let(:topic) { "test-messages" }
     let(:message) { Kafka::Protocol::Message.new(key: "yo", value: "lo") }
 
-    it "sends message sets to the broker" do
-      response = broker.produce(
+    it "waits for a response if acknowledgements are required" do
+      response = Kafka::Protocol::ProduceResponse.new
+      connection.mock_response(response)
+
+      actual_response = broker.produce(
         required_acks: -1, # -1 means all replicas must ack
         timeout: 1,
-        messages_for_topics: { topic => { 0 => [message] } }
+        messages_for_topics: {}
       )
 
-      topic_info = response.topics.first
-      partition_info = topic_info.partitions.first
-
-      expect(topic_info.topic).to eq topic
-      expect(partition_info.partition).to eq 0
+      expect(actual_response).to eq response
     end
 
     it "doesn't wait for a response if zero acknowledgements are required" do

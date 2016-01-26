@@ -132,3 +132,20 @@ class TestCluster
     Docker::Container.create(options)
   end
 end
+
+KAFKA_TOPIC = "test-messages"
+
+KAFKA_CLUSTER = TestCluster.new
+KAFKA_CLUSTER.start
+KAFKA_CLUSTER.create_topic(KAFKA_TOPIC, num_partitions: 3, num_replicas: 2)
+
+KAFKA_BROKERS = KAFKA_CLUSTER.kafka_hosts
+
+host, port = KAFKA_BROKERS.first.split(":", 2)
+
+KAFKA_HOST = host
+KAFKA_PORT = port.to_i
+
+at_exit {
+  KAFKA_CLUSTER.stop
+}

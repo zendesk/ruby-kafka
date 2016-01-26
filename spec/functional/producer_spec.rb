@@ -1,3 +1,5 @@
+require "test_cluster"
+
 describe "Producer API" do
   let(:logger) { Logger.new(log) }
   let(:log) { LOG }
