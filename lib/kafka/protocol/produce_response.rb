@@ -26,6 +26,14 @@ module Kafka
         @topics = topics
       end
 
+      def each_partition
+        @topics.each do |topic_info|
+          topic_info.partitions.each do |partition_info|
+            yield topic_info, partition_info
+          end
+        end
+      end
+
       def self.decode(decoder)
         topics = decoder.array do
           topic = decoder.string

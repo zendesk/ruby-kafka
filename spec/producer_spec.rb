@@ -1,6 +1,15 @@
 describe Kafka::Producer do
-  let(:logger) { Logger.new(StringIO.new) }
-  let(:producer) { Kafka::Producer.new(broker_pool: broker_pool, logger: logger) }
+  let(:logger) { Logger.new(LOG) }
+
+  let(:producer) {
+    Kafka::Producer.new(
+      broker_pool: broker_pool,
+      logger: logger,
+      max_retries: 2,
+      retry_backoff: 0,
+    )
+  }
+
   let(:broker_pool) { double(:broker_pool) }
 
   describe "#write" do
@@ -31,6 +40,7 @@ describe Kafka::Producer do
     class FakeBroker
       def initialize
         @messages = {}
+        @partition_errors = {}
       end
 
       def messages
@@ -62,14 +72,30 @@ describe Kafka::Producer do
             partitions: messages_for_topic.map {|partition, messages|
               Kafka::Protocol::ProduceResponse::PartitionInfo.new(
                 partition: partition,
-                error_code: 0,
+                error_code: error_code_for_partition(topic, partition),
                 offset: messages.size,
               )
             }
           )
         }
 
-        Kafka::Protocol::ProduceResponse.new(topics: topics)
+        if required_acks != 0
+          Kafka::Protocol::ProduceResponse.new(topics: topics)
+        else
+          nil
+        end
+      end
+
+      def mark_partition_with_error(topic:, partition:, error_code:)
+        @partition_errors[topic] ||= Hash.new { 0 }
+        @partition_errors[topic][partition] = error_code
+      end
+
+      private
+
+      def error_code_for_partition(topic, partition)
+        @partition_errors[topic] ||= Hash.new { 0 }
+        @partition_errors[topic][partition]
       end
     end
 
@@ -80,13 +106,53 @@ describe Kafka::Producer do
       allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
       allow(broker_pool).to receive(:get_leader).with("greetings", 1) { broker2 }
 
-      partition = producer.write("hello1", key: "greeting1", topic: "greetings", partition: 0)
-      partition = producer.write("hello2", key: "greeting2", topic: "greetings", partition: 1)
+      producer.write("hello1", key: "greeting1", topic: "greetings", partition: 0)
+      producer.write("hello2", key: "greeting2", topic: "greetings", partition: 1)
 
       producer.flush
 
       expect(broker1.messages).to eq ["hello1"]
       expect(broker2.messages).to eq ["hello2"]
+    end
+
+    it "handles when a partition temporarily doesn't have a leader" do
+      broker = FakeBroker.new
+      broker.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
+
+      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
+
+      producer.write("hello1", topic: "greetings", partition: 0)
+      producer.flush
+
+      # The producer was not able to write the message, but it's still buffered.
+      expect(producer.buffer_size).to eq 1
+
+      # Clear the error.
+      broker.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
+
+      producer.flush
+
+      expect(producer.buffer_size).to eq 0
+    end
+
+    it "clears the buffer after flushing if no acknowledgements are required" do
+      broker = FakeBroker.new
+
+      producer = Kafka::Producer.new(
+        broker_pool: broker_pool,
+        logger: logger,
+        required_acks: 0, # <-- this is the important bit.
+        max_retries: 2,
+        retry_backoff: 0,
+      )
+
+      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
+
+      producer.write("hello1", topic: "greetings", partition: 0)
+      producer.flush
+
+      # The producer was not able to write the message, but it's still buffered.
+      expect(producer.buffer_size).to eq 0
     end
   end
 end
