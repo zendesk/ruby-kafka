@@ -20,6 +20,14 @@ module Kafka
       @buffer
     end
 
+    def size
+      @buffer.values.inject(0) {|sum, messages| messages.values.flatten.size + sum }
+    end
+
+    def empty?
+      @buffer.empty?
+    end
+
     def each
       @buffer.each do |topic, messages_for_topic|
         messages_for_topic.each do |partition, messages_for_partition|
