@@ -31,6 +31,13 @@ describe "Producer API" do
     producer.flush
   end
 
+  example "omitting message keys entirely" do
+    producer.write("hello1", topic: "test-messages")
+    producer.write("hello2", topic: "test-messages")
+
+    producer.flush
+  end
+
   example "handle a broker going down after the initial discovery" do
     begin
       producer
