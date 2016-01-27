@@ -72,7 +72,21 @@ module Kafka
       write_request(api_key, request)
 
       unless response_class.nil?
-        read_response(response_class)
+        loop do
+          correlation_id, response = read_response(response_class)
+
+          # There may have been a previous request that timed out before the client
+          # was able to read the response. In that case, the response will still be
+          # sitting in the socket waiting to be read. If the response we just read
+          # was to a previous request, we can safely skip it.
+          if correlation_id < @correlation_id
+            @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
+          elsif correlation_id > @correlation_id
+            raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
+          else
+            break response
+          end
+        end
       end
     end
 
@@ -131,7 +145,7 @@ module Kafka
 
       @logger.debug "Received response #{correlation_id} from #{to_s}"
 
-      response
+      return correlation_id, response
     end
   end
 end
