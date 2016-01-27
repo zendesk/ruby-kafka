@@ -31,7 +31,6 @@ describe Kafka::Broker do
   end
 
   describe "#produce" do
-    let(:topic) { "test-messages" }
     let(:message) { Kafka::Protocol::Message.new(key: "yo", value: "lo") }
 
     it "waits for a response if acknowledgements are required" do
@@ -41,7 +40,11 @@ describe Kafka::Broker do
       actual_response = broker.produce(
         required_acks: -1, # -1 means all replicas must ack
         timeout: 1,
-        messages_for_topics: {}
+        messages_for_topics: {
+          "yolos" => {
+            3 => [message],
+          }
+        }
       )
 
       expect(actual_response).to eq response
@@ -51,7 +54,11 @@ describe Kafka::Broker do
       response = broker.produce(
         required_acks: 0, # 0 means the server doesn't respond or ack at all
         timeout: 1,
-        messages_for_topics: { topic => { 0 => [message] } }
+        messages_for_topics: {
+          "yolos" => {
+            3 => [message],
+          }
+        }
       )
 
       expect(response).to be_nil
