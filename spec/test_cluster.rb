@@ -76,6 +76,18 @@ class TestCluster
     broker.kill
   end
 
+  def pause_kafka_broker(number)
+    broker = @kafka_brokers[number]
+    puts "Pausing broker #{number}"
+    broker.pause
+  end
+
+  def unpause_kafka_broker(number)
+    broker = @kafka_brokers[number]
+    puts "Unpausing broker #{number}"
+    broker.unpause
+  end
+
   def start_kafka_broker(number)
     broker = @kafka_brokers[number]
     puts "Starting broker #{number}"
@@ -92,7 +104,7 @@ class TestCluster
       "--zookeeper zk",
     ]
 
-    puts "creating topic #{topic}..."
+    puts "Creating topic #{topic}..."
     out, err, status = @kafka.exec(command)
 
     raise "Command failed: #{out}" if status != 0
