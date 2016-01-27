@@ -2,7 +2,7 @@
 
 A Ruby client library for the Kafka distributed log system. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-This library is still in pre-alpha stage, but development is ongoing. Current efforts are focused on implementing a solid Producer client. The next step will be implementing a client for the Kafka 0.9 Consumer API.
+This library is still in pre-beta stage, but development is ongoing. Current efforts are focused on implementing a solid Producer client. The next step will be implementing a client for the Kafka 0.9 Consumer API.
 
 ## Installation
 
