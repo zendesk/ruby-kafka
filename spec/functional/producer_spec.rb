@@ -46,6 +46,7 @@ describe "Producer API", type: :functional do
 
       KAFKA_CLUSTER.kill_kafka_broker(0)
 
+      # Write to all partitions so that we'll be sure to hit the broker.
       producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
       producer.write("hello1", key: "x", topic: "test-messages", partition: 1)
       producer.write("hello1", key: "x", topic: "test-messages", partition: 2)
@@ -53,6 +54,23 @@ describe "Producer API", type: :functional do
       producer.flush
     ensure
       KAFKA_CLUSTER.start_kafka_broker(0)
+    end
+  end
+
+  example "handle a broker being temporarily unavailable" do
+    begin
+      producer
+
+      KAFKA_CLUSTER.pause_kafka_broker(0)
+
+      # Write to all partitions so that we'll be sure to hit the broker.
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 1)
+      producer.write("hello1", key: "x", topic: "test-messages", partition: 2)
+
+      producer.flush
+    ensure
+      KAFKA_CLUSTER.unpause_kafka_broker(0)
     end
   end
 end
