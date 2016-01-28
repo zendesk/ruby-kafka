@@ -176,16 +176,18 @@ module Kafka
       messages_for_broker = {}
 
       @buffer.each do |topic, partition, messages|
-        broker = @broker_pool.get_leader(topic, partition)
+        broker_id = @broker_pool.get_leader_id(topic, partition)
 
-        @logger.debug "Current leader for #{topic}/#{partition} is #{broker}"
+        @logger.debug "Current leader for #{topic}/#{partition} is node #{broker_id}"
 
-        messages_for_broker[broker] ||= MessageBuffer.new
-        messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
+        messages_for_broker[broker_id] ||= MessageBuffer.new
+        messages_for_broker[broker_id].concat(messages, topic: topic, partition: partition)
       end
 
-      messages_for_broker.each do |broker, message_set|
+      messages_for_broker.each do |broker_id, message_set|
         begin
+          broker = @broker_pool.get_broker(broker_id)
+
           response = broker.produce(
             messages_for_topics: message_set.to_h,
             required_acks: @required_acks,
@@ -194,7 +196,10 @@ module Kafka
 
           handle_response(response) if response
         rescue ConnectionError => e
-          @logger.error "Could not connect to #{broker}: #{e}"
+          @logger.error "Could not connect to broker #{broker_id}: #{e}"
+
+          # Mark the broker pool as stale in order to force a cluster metadata refresh.
+          @broker_pool.mark_as_stale!
         end
       end
     end

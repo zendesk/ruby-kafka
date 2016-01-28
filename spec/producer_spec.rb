@@ -1,5 +1,8 @@
 describe Kafka::Producer do
   let(:logger) { Logger.new(LOG) }
+  let(:broker1) { FakeBroker.new }
+  let(:broker2) { FakeBroker.new }
+  let(:broker_pool) { double(:broker_pool) }
 
   let(:producer) {
     Kafka::Producer.new(
@@ -10,7 +13,13 @@ describe Kafka::Producer do
     )
   }
 
-  let(:broker_pool) { double(:broker_pool) }
+  before do
+    allow(broker_pool).to receive(:get_leader_id).with("greetings", 0) { 1 }
+    allow(broker_pool).to receive(:get_leader_id).with("greetings", 1) { 2 }
+
+    allow(broker_pool).to receive(:get_broker).with(1) { broker1 }
+    allow(broker_pool).to receive(:get_broker).with(2) { broker2 }
+  end
 
   describe "#write" do
     before do
@@ -100,12 +109,6 @@ describe Kafka::Producer do
     end
 
     it "sends messages to the leader of the partition being written to" do
-      broker1 = FakeBroker.new
-      broker2 = FakeBroker.new
-
-      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
-      allow(broker_pool).to receive(:get_leader).with("greetings", 1) { broker2 }
-
       producer.write("hello1", key: "greeting1", topic: "greetings", partition: 0)
       producer.write("hello2", key: "greeting2", topic: "greetings", partition: 1)
 
@@ -116,10 +119,7 @@ describe Kafka::Producer do
     end
 
     it "handles when a partition temporarily doesn't have a leader" do
-      broker = FakeBroker.new
-      broker.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
-
-      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
+      broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
 
       producer.write("hello1", topic: "greetings", partition: 0)
 
@@ -129,7 +129,7 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 1
 
       # Clear the error.
-      broker.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
+      broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
 
       producer.flush
 
@@ -137,8 +137,6 @@ describe Kafka::Producer do
     end
 
     it "clears the buffer after flushing if no acknowledgements are required" do
-      broker = FakeBroker.new
-
       producer = Kafka::Producer.new(
         broker_pool: broker_pool,
         logger: logger,
@@ -146,8 +144,6 @@ describe Kafka::Producer do
         max_retries: 2,
         retry_backoff: 0,
       )
-
-      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
 
       producer.write("hello1", topic: "greetings", partition: 0)
       producer.flush
@@ -157,15 +153,11 @@ describe Kafka::Producer do
     end
 
     it "raises BufferOverflow if the max buffer size is exceeded" do
-      broker = FakeBroker.new
-
       producer = Kafka::Producer.new(
         broker_pool: broker_pool,
         logger: logger,
         max_buffer_size: 2, # <-- this is the important bit.
       )
-
-      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
 
       producer.write("hello1", topic: "greetings", partition: 0)
       producer.write("hello1", topic: "greetings", partition: 0)
