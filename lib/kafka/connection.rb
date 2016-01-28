@@ -67,7 +67,7 @@ module Kafka
     # @param request [#encode] the request that should be encoded and written.
     # @param response_class [#decode] an object that can decode the response.
     #
-    # @return [Object] the response that was decoded by `response_class`.
+    # @return [Object] the response that was decoded by +response_class+.
     def request(api_key, request, response_class)
       write_request(api_key, request)
 

@@ -34,10 +34,10 @@ module Kafka
     # Refreshes the cluster metadata.
     #
     # This is used to update the partition leadership information, among other things.
-    # The methods will go through each node listed in `seed_brokers`, connecting to the
+    # The methods will go through each node listed in +seed_brokers+, connecting to the
     # first one that is available. This node will be queried for the cluster metadata.
     #
-    # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
+    # @raise [ConnectionError] if none of the nodes in +seed_brokers+ are available.
     # @return [nil]
     def refresh
       @seed_brokers.each do |node|
@@ -73,7 +73,7 @@ module Kafka
     # metadata may be out of date. In that case, the cluster needs to be re-discovered. This
     # can happen when a broker becomes unavailable, which would trigger a leader election for
     # the partitions previously owned by that broker. Since this can take some time, this method
-    # will retry up to `MAX_CONNECTION_ATTEMPTS` times, waiting `RETRY_BACKOFF_TIMEOUT` seconds
+    # will retry up to +MAX_CONNECTION_ATTEMPTS+ times, waiting +RETRY_BACKOFF_TIMEOUT+ seconds
     # between each attempt.
     #
     # @param topic [String]

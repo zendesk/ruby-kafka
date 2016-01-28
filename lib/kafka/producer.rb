@@ -11,7 +11,7 @@ module Kafka
   # The producer buffers pending messages until {#flush} is called. Note that there is
   # a maximum buffer size (default is 1,000 messages) and writing messages after the
   # buffer has reached this size will result in a BufferOverflow exception. Make sure
-  # to periodically call {#flush} or set `max_buffer_size` to an appropriate value.
+  # to periodically call {#flush} or set +max_buffer_size+ to an appropriate value.
   #
   # Buffering messages and sending them in batches greatly improves performance, so
   # try to avoid flushing after every write. The tradeoff between throughput and
@@ -29,7 +29,7 @@ module Kafka
   #
   # After this, we check if the buffer is empty. If it is, we're all done. If it's
   # not, we do another round of requests, this time with just the remaining messages.
-  # We do this for as long as `max_retries` permits.
+  # We do this for as long as +max_retries+ permits.
   #
   class Producer
 
@@ -77,9 +77,9 @@ module Kafka
     # partition number, in which case the message will be assigned a partition at
     # random.
     #
-    # You can also specify the `partition` parameter yourself. This requires you to
+    # You can also specify the +partition+ parameter yourself. This requires you to
     # know which partitions are available, however. Oftentimes the best option is
-    # to specify the `partition_key` parameter: messages with the same partition
+    # to specify the +partition_key+ parameter: messages with the same partition
     # key will always be assigned to the same partition, as long as the number of
     # partitions doesn't change. You can also omit the partition key and specify
     # a message key instead. The message key is part of the message payload, and
@@ -115,9 +115,9 @@ module Kafka
 
     # Flushes all messages to the Kafka brokers.
     #
-    # Depending on the value of `required_acks` used when initializing the producer,
+    # Depending on the value of +required_acks+ used when initializing the producer,
     # this call may block until the specified number of replicas have acknowledged
-    # the writes. The `timeout` setting places an upper bound on the amount of time
+    # the writes. The +timeout+ setting places an upper bound on the amount of time
     # the call will block before failing.
     #
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
