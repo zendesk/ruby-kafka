@@ -131,7 +131,11 @@ module Kafka
         @buffer.clear
       end
 
-      nil
+      unless @buffer.empty?
+        partitions = @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
+
+        raise FailedToSendMessages, "Failed to send messages to #{partitions}"
+      end
     end
 
     # Returns the number of messages currently held in the buffer.

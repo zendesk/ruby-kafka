@@ -122,7 +122,8 @@ describe Kafka::Producer do
       allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
 
       producer.write("hello1", topic: "greetings", partition: 0)
-      producer.flush
+
+      expect { producer.flush }.to raise_error(Kafka::FailedToSendMessages)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
