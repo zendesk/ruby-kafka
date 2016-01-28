@@ -1,5 +1,4 @@
 require "kafka/version"
-require "kafka/client"
 
 module Kafka
   Error = Class.new(StandardError)
@@ -12,6 +11,14 @@ module Kafka
   LeaderNotAvailable = Class.new(Error)
   NotLeaderForPartition = Class.new(Error)
   RequestTimedOut = Class.new(Error)
+  BrokerNotAvailable = Class.new(Error)
+  MessageSizeTooLarge = Class.new(Error)
+  OffsetMetadataTooLarge = Class.new(Error)
+  InvalidTopic = Class.new(Error)
+  RecordListTooLarge = Class.new(Error)
+  NotEnoughReplicas = Class.new(Error)
+  NotEnoughReplicasAfterAppend = Class.new(Error)
+  InvalidRequiredAcks = Class.new(Error)
 
   # Raised when a producer buffer has reached its maximum size.
   BufferOverflow = Class.new(Error)
@@ -26,3 +33,5 @@ module Kafka
     Client.new(**options)
   end
 end
+
+require "kafka/client"

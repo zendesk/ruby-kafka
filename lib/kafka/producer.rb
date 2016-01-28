@@ -206,10 +206,20 @@ module Kafka
 
         begin
           Protocol.handle_error(partition_info.error_code)
+        rescue Kafka::CorruptMessage
+          @logger.error "Corrupt message when writing to #{topic}/#{partition}"
+        rescue Kafka::UnknownTopicOrPartition
+          @logger.error "Unknown topic or partition #{topic}/#{partition}"
         rescue Kafka::LeaderNotAvailable
           @logger.error "Leader currently not available for #{topic}/#{partition}"
+        rescue Kafka::NotLeaderForPartition
+          @logger.error "Broker not currently leader for #{topic}/#{partition}"
         rescue Kafka::RequestTimedOut
           @logger.error "Timed out while writing to #{topic}/#{partition}"
+        rescue Kafka::NotEnoughReplicas
+          @logger.error "Not enough in-sync replicas for #{topic}/#{partition}"
+        rescue Kafka::NotEnoughReplicasAfterAppend
+          @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
           offset = partition_info.offset
           @logger.info "Successfully flushed messages for #{topic}/#{partition}; new offset is #{offset}"
