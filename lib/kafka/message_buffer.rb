@@ -20,6 +20,14 @@ module Kafka
       @buffer
     end
 
+    def size
+      @buffer.values.inject(0) {|sum, messages| messages.values.flatten.size + sum }
+    end
+
+    def empty?
+      @buffer.empty?
+    end
+
     def each
       @buffer.each do |topic, messages_for_topic|
         messages_for_topic.each do |partition, messages_for_partition|
@@ -28,6 +36,20 @@ module Kafka
       end
     end
 
+    # Clears buffered messages for the given topic and partition.
+    #
+    # @param topic [String] the name of the topic.
+    # @param partition [Integer] the partition id.
+    #
+    # @return [nil]
+    def clear_messages(topic:, partition:)
+      @buffer[topic].delete(partition)
+      @buffer.delete(topic) if @buffer[topic].empty?
+    end
+
+    # Clears messages across all topics and partitions.
+    #
+    # @return [nil]
     def clear
       @buffer = {}
     end

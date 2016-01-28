@@ -92,7 +92,7 @@ class TestCluster
       "--zookeeper zk",
     ]
 
-    puts "creating topic #{topic}..."
+    puts "Creating topic #{topic}..."
     out, err, status = @kafka.exec(command)
 
     raise "Command failed: #{out}" if status != 0

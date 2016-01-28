@@ -60,7 +60,7 @@ module Kafka
 
           return
         rescue Error => e
-          @logger.error "Failed to fetch metadata from broker #{broker}: #{e}"
+          @logger.error "Failed to fetch metadata from #{node}: #{e}"
         end
       end
 

@@ -2,7 +2,7 @@ describe "Producer API", type: :functional do
   let(:logger) { Logger.new(log) }
   let(:log) { LOG }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
-  let(:producer) { kafka.get_producer }
+  let(:producer) { kafka.get_producer(max_retries: 1, retry_backoff: 0) }
 
   before do
     require "test_cluster"
@@ -46,6 +46,7 @@ describe "Producer API", type: :functional do
 
       KAFKA_CLUSTER.kill_kafka_broker(0)
 
+      # Write to all partitions so that we'll be sure to hit the broker.
       producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
       producer.write("hello1", key: "x", topic: "test-messages", partition: 1)
       producer.write("hello1", key: "x", topic: "test-messages", partition: 2)
