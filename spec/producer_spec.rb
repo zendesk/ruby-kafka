@@ -14,6 +14,8 @@ describe Kafka::Producer do
   }
 
   before do
+    allow(broker_pool).to receive(:mark_as_stale!)
+
     allow(broker_pool).to receive(:get_leader_id).with("greetings", 0) { 1 }
     allow(broker_pool).to receive(:get_leader_id).with("greetings", 1) { 2 }
 

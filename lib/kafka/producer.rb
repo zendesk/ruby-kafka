@@ -217,8 +217,10 @@ module Kafka
           @logger.error "Unknown topic or partition #{topic}/#{partition}"
         rescue Kafka::LeaderNotAvailable
           @logger.error "Leader currently not available for #{topic}/#{partition}"
+          @broker_pool.mark_as_stale!
         rescue Kafka::NotLeaderForPartition
           @logger.error "Broker not currently leader for #{topic}/#{partition}"
+          @broker_pool.mark_as_stale!
         rescue Kafka::RequestTimedOut
           @logger.error "Timed out while writing to #{topic}/#{partition}"
         rescue Kafka::NotEnoughReplicas
