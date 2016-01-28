@@ -2,32 +2,36 @@ require "kafka/version"
 
 module Kafka
   Error = Class.new(StandardError)
+
+  ProtocolError = Class.new(StandardError)
+  CorruptMessage = Class.new(ProtocolError)
+  UnknownError = Class.new(ProtocolError)
+  OffsetOutOfRange = Class.new(ProtocolError)
+  UnknownTopicOrPartition = Class.new(ProtocolError)
+  InvalidMessageSize = Class.new(ProtocolError)
+  LeaderNotAvailable = Class.new(ProtocolError)
+  NotLeaderForPartition = Class.new(ProtocolError)
+  RequestTimedOut = Class.new(ProtocolError)
+  BrokerNotAvailable = Class.new(ProtocolError)
+  MessageSizeTooLarge = Class.new(ProtocolError)
+  OffsetMetadataTooLarge = Class.new(ProtocolError)
+  InvalidTopic = Class.new(ProtocolError)
+  RecordListTooLarge = Class.new(ProtocolError)
+  NotEnoughReplicas = Class.new(ProtocolError)
+  NotEnoughReplicasAfterAppend = Class.new(ProtocolError)
+  InvalidRequiredAcks = Class.new(ProtocolError)
+
+  # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
+  ReplicaNotAvailable = Class.new(ProtocolError)
+
+  # Raised when there's a network connection error.
   ConnectionError = Class.new(Error)
-  CorruptMessage = Class.new(Error)
-  UnknownError = Class.new(Error)
-  OffsetOutOfRange = Class.new(Error)
-  UnknownTopicOrPartition = Class.new(Error)
-  InvalidMessageSize = Class.new(Error)
-  LeaderNotAvailable = Class.new(Error)
-  NotLeaderForPartition = Class.new(Error)
-  RequestTimedOut = Class.new(Error)
-  BrokerNotAvailable = Class.new(Error)
-  MessageSizeTooLarge = Class.new(Error)
-  OffsetMetadataTooLarge = Class.new(Error)
-  InvalidTopic = Class.new(Error)
-  RecordListTooLarge = Class.new(Error)
-  NotEnoughReplicas = Class.new(Error)
-  NotEnoughReplicasAfterAppend = Class.new(Error)
-  InvalidRequiredAcks = Class.new(Error)
 
   # Raised when a producer buffer has reached its maximum size.
   BufferOverflow = Class.new(Error)
 
   # Raised if not all messages could be sent by a producer.
   FailedToSendMessages = Class.new(Error)
-
-  # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
-  ReplicaNotAvailable = Class.new(Error)
 
   # Initializes a new Kafka client.
   #
