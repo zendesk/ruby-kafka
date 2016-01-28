@@ -6,6 +6,17 @@ module Kafka
 
   # Allows sending messages to a Kafka cluster.
   #
+  # == Buffering
+  #
+  # The producer buffers pending messages until {#flush} is called. Note that there is
+  # a maximum buffer size (default is 1,000 messages) and writing messages after the
+  # buffer has reached this size will result in a BufferOverflow exception. Make sure
+  # to periodically call {#flush} or set `max_buffer_size` to an appropriate value.
+  #
+  # Buffering messages and sending them in batches greatly improves performance, so
+  # try to avoid flushing after every write. The tradeoff between throughput and
+  # message delays depends on your use case.
+  #
   # == Error Handling and Retries
   #
   # The design of the error handling is based on having a {MessageBuffer} hold messages
@@ -40,13 +51,17 @@ module Kafka
     #
     # @param retry_backoff [Integer] the number of seconds to wait between retries.
     #
-    def initialize(broker_pool:, logger:, timeout: 10, required_acks: 1, max_retries: 2, retry_backoff: 1)
+    # @param max_buffer_size [Integer] the number of messages allowed in the buffer
+    #   before new writes will raise BufferOverflow exceptions.
+    #
+    def initialize(broker_pool:, logger:, timeout: 10, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @broker_pool = broker_pool
       @logger = logger
       @required_acks = required_acks
       @timeout = timeout
       @max_retries = max_retries
       @retry_backoff = retry_backoff
+      @max_buffer_size = max_buffer_size
       @buffer = MessageBuffer.new
     end
 
@@ -77,8 +92,13 @@ module Kafka
     # @param partition [Integer] the partition that the message should be written to.
     # @param partition_key [String] the key that should be used to assign a partition.
     #
+    # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
     def write(value, key: nil, topic:, partition: nil, partition_key: nil)
+      unless buffer_size < @max_buffer_size
+        raise BufferOverflow, "Max buffer size #{@max_buffer_size} exceeded"
+      end
+
       if partition.nil?
         # If no explicit partition key is specified we use the message key instead.
         partition_key ||= key
@@ -100,6 +120,7 @@ module Kafka
     # the writes. The `timeout` setting places an upper bound on the amount of time
     # the call will block before failing.
     #
+    # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
     def flush
       attempt = 0

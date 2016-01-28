@@ -155,5 +155,26 @@ describe Kafka::Producer do
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0
     end
+
+    it "raises BufferOverflow if the max buffer size is exceeded" do
+      broker = FakeBroker.new
+
+      producer = Kafka::Producer.new(
+        broker_pool: broker_pool,
+        logger: logger,
+        max_buffer_size: 2, # <-- this is the important bit.
+      )
+
+      allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker }
+
+      producer.write("hello1", topic: "greetings", partition: 0)
+      producer.write("hello1", topic: "greetings", partition: 0)
+
+      expect {
+        producer.write("hello1", topic: "greetings", partition: 0)
+      }.to raise_error(Kafka::BufferOverflow)
+
+      expect(producer.buffer_size).to eq 2
+    end
   end
 end
