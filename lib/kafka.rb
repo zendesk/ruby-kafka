@@ -29,6 +29,10 @@ module Kafka
   # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
   ReplicaNotAvailable = Class.new(Error)
 
+  # Initializes a new Kafka client.
+  #
+  # @see Client#initialize
+  # @return [Client]
   def self.new(**options)
     Client.new(**options)
   end
