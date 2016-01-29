@@ -39,8 +39,20 @@ kafka = Kafka.new(
 producer = kafka.get_producer
 
 # `produce` will buffer the message in the producer.
-producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
-producer.produce("hello2", key: "y", topic: "test-messages", partition: 1)
+producer.produce("hello1", topic: "test-messages")
+
+# It's possible to specify a message key:
+producer.produce("hello2", key: "x", topic: "test-messages")
+
+# If you need to control which partition a message should be written to, you
+# can pass in the `partition` parameter:
+producer.produce("hello3", topic: "test-messages", partition: 1)
+
+# If you don't know exactly how many partitions are in the topic, or you'd
+# rather have some level of indirection, you can pass in `partition_key`.
+# Two messages with the same partition key will always be written to the
+# same partition.
+producer.produce("hello4", topic: "test-messages", partition_key: "yo")
 
 # `send_messages` will send the buffered messages to the cluster. Since messages
 # may be destined for different partitions, this could involve writing to more
