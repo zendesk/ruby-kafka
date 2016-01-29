@@ -8,11 +8,11 @@ module Kafka
     #
     # * For each broker a node id, host, and port is provided.
     # * For each topic partition the node id of the broker acting as partition leader,
-    #   as well as a list of node ids for the set of replicas, are given. The +isr+ list is
+    #   as well as a list of node ids for the set of replicas, are given. The `isr` list is
     #   the subset of replicas that are "in sync", i.e. have fully caught up with the
     #   leader.
     #
-    # == API Specification
+    # ## API Specification
     #
     #     MetadataResponse => [Broker][TopicMetadata]
     #       Broker => NodeId Host Port  (any number of brokers may be returned)

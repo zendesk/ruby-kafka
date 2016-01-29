@@ -3,7 +3,7 @@ module Kafka
 
     # A produce request sends a message set to the server.
     #
-    # == API Specification
+    # ## API Specification
     #
     #     ProduceRequest => RequiredAcks Timeout [TopicName [Partition MessageSetSize MessageSet]]
     #         RequiredAcks => int16

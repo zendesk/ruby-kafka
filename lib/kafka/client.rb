@@ -30,7 +30,7 @@ module Kafka
 
     # Builds a new producer.
     #
-    # +options+ are passed to {Producer#initialize}.
+    # `options` are passed to {Producer#initialize}.
     #
     # @see Producer#initialize
     # @return [Producer] the Kafka producer.

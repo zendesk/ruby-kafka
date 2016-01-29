@@ -3,7 +3,7 @@ require "zlib"
 module Kafka
   module Protocol
 
-    # == API Specification
+    # ## API Specification
     #
     #     Message => Crc MagicByte Attributes Key Value
     #         Crc => int32

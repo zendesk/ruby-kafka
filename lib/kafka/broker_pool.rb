@@ -66,10 +66,10 @@ module Kafka
     # Fetches the cluster metadata.
     #
     # This is used to update the partition leadership information, among other things.
-    # The methods will go through each node listed in +seed_brokers+, connecting to the
+    # The methods will go through each node listed in `seed_brokers`, connecting to the
     # first one that is available. This node will be queried for the cluster metadata.
     #
-    # @raise [ConnectionError] if none of the nodes in +seed_brokers+ are available.
+    # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
       @seed_brokers.each do |node|
