@@ -23,31 +23,31 @@ describe Kafka::Producer do
     allow(broker_pool).to receive(:get_broker).with(2) { broker2 }
   end
 
-  describe "#write" do
+  describe "#produce" do
     before do
       allow(broker_pool).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
     end
 
     it "writes the message to the buffer" do
-      partition = producer.write("hello", key: "greeting1", topic: "greetings")
+      partition = producer.produce("hello", key: "greeting1", topic: "greetings")
 
       expect(partition).to eq 3
     end
 
     it "allows explicitly setting the partition" do
-      partition = producer.write("hello", key: "greeting1", topic: "greetings", partition: 1)
+      partition = producer.produce("hello", key: "greeting1", topic: "greetings", partition: 1)
 
       expect(partition).to eq 1
     end
 
     it "allows implicitly setting the partition using a partition key" do
-      partition = producer.write("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
+      partition = producer.produce("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
 
       expect(partition).to eq 0
     end
   end
 
-  describe "#flush" do
+  describe "#send_messages" do
     class FakeBroker
       def initialize
         @messages = {}
@@ -111,10 +111,10 @@ describe Kafka::Producer do
     end
 
     it "sends messages to the leader of the partition being written to" do
-      producer.write("hello1", key: "greeting1", topic: "greetings", partition: 0)
-      producer.write("hello2", key: "greeting2", topic: "greetings", partition: 1)
+      producer.produce("hello1", key: "greeting1", topic: "greetings", partition: 0)
+      producer.produce("hello2", key: "greeting2", topic: "greetings", partition: 1)
 
-      producer.flush
+      producer.send_messages
 
       expect(broker1.messages).to eq ["hello1"]
       expect(broker2.messages).to eq ["hello2"]
@@ -123,9 +123,9 @@ describe Kafka::Producer do
     it "handles when a partition temporarily doesn't have a leader" do
       broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
 
-      producer.write("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.flush }.to raise_error(Kafka::FailedToSendMessages)
+      expect { producer.send_messages }.to raise_error(Kafka::FailedToSendMessages)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -133,12 +133,12 @@ describe Kafka::Producer do
       # Clear the error.
       broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
 
-      producer.flush
+      producer.send_messages
 
       expect(producer.buffer_size).to eq 0
     end
 
-    it "clears the buffer after flushing if no acknowledgements are required" do
+    it "clears the buffer after sending messages if no acknowledgements are required" do
       producer = Kafka::Producer.new(
         broker_pool: broker_pool,
         logger: logger,
@@ -147,8 +147,8 @@ describe Kafka::Producer do
         retry_backoff: 0,
       )
 
-      producer.write("hello1", topic: "greetings", partition: 0)
-      producer.flush
+      producer.produce("hello1", topic: "greetings", partition: 0)
+      producer.send_messages
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0
@@ -161,11 +161,11 @@ describe Kafka::Producer do
         max_buffer_size: 2, # <-- this is the important bit.
       )
 
-      producer.write("hello1", topic: "greetings", partition: 0)
-      producer.write("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0)
 
       expect {
-        producer.write("hello1", topic: "greetings", partition: 0)
+        producer.produce("hello1", topic: "greetings", partition: 0)
       }.to raise_error(Kafka::BufferOverflow)
 
       expect(producer.buffer_size).to eq 2
