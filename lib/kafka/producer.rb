@@ -8,19 +8,19 @@ module Kafka
   #
   # == Buffering
   #
-  # The producer buffers pending messages until {#flush} is called. Note that there is
+  # The producer buffers pending messages until {#send_messages} is called. Note that there is
   # a maximum buffer size (default is 1,000 messages) and writing messages after the
   # buffer has reached this size will result in a BufferOverflow exception. Make sure
-  # to periodically call {#flush} or set +max_buffer_size+ to an appropriate value.
+  # to periodically call {#send_messages} or set +max_buffer_size+ to an appropriate value.
   #
   # Buffering messages and sending them in batches greatly improves performance, so
-  # try to avoid flushing after every write. The tradeoff between throughput and
+  # try to avoid sending messages after every write. The tradeoff between throughput and
   # message delays depends on your use case.
   #
   # == Error Handling and Retries
   #
   # The design of the error handling is based on having a {MessageBuffer} hold messages
-  # for all topics/partitions. Whenever we want to flush messages to the cluster, we
+  # for all topics/partitions. Whenever we want to send messages to the cluster, we
   # group the buffered messages by the broker they need to be sent to and fire off a
   # request to each broker. A request can be a partial success, so we go through the
   # response and inspect the error code for each partition that we wrote to. If the
@@ -65,8 +65,8 @@ module Kafka
       @buffer = MessageBuffer.new
     end
 
-    # Writes a message to the specified topic. Note that messages are buffered in
-    # the producer until {#flush} is called.
+    # Produces a message to the specified topic. Note that messages are buffered in
+    # the producer until {#send_messages} is called.
     #
     # == Partitioning
     #
@@ -94,7 +94,7 @@ module Kafka
     #
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
-    def write(value, key: nil, topic:, partition: nil, partition_key: nil)
+    def produce(value, key: nil, topic:, partition: nil, partition_key: nil)
       unless buffer_size < @max_buffer_size
         raise BufferOverflow, "Max buffer size #{@max_buffer_size} exceeded"
       end
@@ -113,7 +113,7 @@ module Kafka
       partition
     end
 
-    # Flushes all messages to the Kafka brokers.
+    # Sends all buffered messages to the Kafka brokers.
     #
     # Depending on the value of +required_acks+ used when initializing the producer,
     # this call may block until the specified number of replicas have acknowledged
@@ -122,11 +122,11 @@ module Kafka
     #
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
-    def flush
+    def send_messages
       attempt = 0
 
       loop do
-        @logger.info "Flushing #{@buffer.size} messages"
+        @logger.info "Sending #{@buffer.size} messages"
 
         attempt += 1
         transmit_messages
@@ -232,7 +232,7 @@ module Kafka
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
           offset = partition_info.offset
-          @logger.info "Successfully flushed messages for #{topic}/#{partition}; new offset is #{offset}"
+          @logger.info "Successfully sent messages for #{topic}/#{partition}; new offset is #{offset}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)

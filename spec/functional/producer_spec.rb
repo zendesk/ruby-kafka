@@ -17,31 +17,31 @@ describe "Producer API", type: :functional do
   end
 
   example "writing messages using the buffered producer" do
-    producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
-    producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
+    producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
+    producer.produce("hello2", key: "y", topic: "test-messages", partition: 1)
 
-    producer.flush
+    producer.send_messages
   end
 
   example "having the producer assign partitions based on partition keys" do
-    producer.write("hello1", key: "x", topic: "test-messages", partition_key: "xk")
-    producer.write("hello2", key: "y", topic: "test-messages", partition_key: "yk")
+    producer.produce("hello1", key: "x", topic: "test-messages", partition_key: "xk")
+    producer.produce("hello2", key: "y", topic: "test-messages", partition_key: "yk")
 
-    producer.flush
+    producer.send_messages
   end
 
   example "having the producer assign partitions based on message keys" do
-    producer.write("hello1", key: "x", topic: "test-messages")
-    producer.write("hello2", key: "y", topic: "test-messages")
+    producer.produce("hello1", key: "x", topic: "test-messages")
+    producer.produce("hello2", key: "y", topic: "test-messages")
 
-    producer.flush
+    producer.send_messages
   end
 
   example "omitting message keys entirely" do
-    producer.write("hello1", topic: "test-messages")
-    producer.write("hello2", topic: "test-messages")
+    producer.produce("hello1", topic: "test-messages")
+    producer.produce("hello2", topic: "test-messages")
 
-    producer.flush
+    producer.send_messages
   end
 
   example "handle a broker going down after the initial discovery" do
@@ -51,11 +51,11 @@ describe "Producer API", type: :functional do
       KAFKA_CLUSTER.kill_kafka_broker(0)
 
       # Write to all partitions so that we'll be sure to hit the broker.
-      producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
-      producer.write("hello1", key: "x", topic: "test-messages", partition: 1)
-      producer.write("hello1", key: "x", topic: "test-messages", partition: 2)
+      producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
+      producer.produce("hello1", key: "x", topic: "test-messages", partition: 1)
+      producer.produce("hello1", key: "x", topic: "test-messages", partition: 2)
 
-      producer.flush
+      producer.send_messages
     ensure
       KAFKA_CLUSTER.start_kafka_broker(0)
     end

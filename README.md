@@ -36,12 +36,12 @@ kafka = Kafka.new(
 # producer from more than one thread.
 producer = kafka.get_producer
 
-# `write` will buffer the message in the producer.
-producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
-producer.write("hello2", key: "y", topic: "test-messages", partition: 1)
+# `produce` will buffer the message in the producer.
+producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
+producer.produce("hello2", key: "y", topic: "test-messages", partition: 1)
 
-# `flush` will send the buffered messages to the cluster.
-producer.flush
+# `send_messages` will send the buffered messages to the cluster.
+producer.send_messages
 ```
 
 ## Development
