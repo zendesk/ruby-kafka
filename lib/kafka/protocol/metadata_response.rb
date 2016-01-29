@@ -118,6 +118,11 @@ module Kafka
 
       def partitions_for(topic_name)
         topic = @topics.find {|t| t.topic_name == topic_name }
+
+        if topic.nil?
+          raise UnknownTopicOrPartition, "unknown topic #{topic_name}"
+        end
+
         topic.partitions
       end
 
