@@ -15,6 +15,7 @@ module Kafka
     # @param seed_brokers [Array<String>]
     # @param client_id [String]
     # @param logger [Logger]
+    # @param socket_timeout [Integer, nil] see {Connection#initialize}.
     def initialize(seed_brokers:, client_id:, logger:, socket_timeout: nil)
       @client_id = client_id
       @logger = logger
