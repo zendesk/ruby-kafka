@@ -1,3 +1,5 @@
+# Reads lines from STDIN, writing them to Kafka.
+
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "kafka"
