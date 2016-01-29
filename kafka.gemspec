@@ -10,7 +10,13 @@ Gem::Specification.new do |spec|
   spec.email         = ["daniel.schierbeck@gmail.com"]
 
   spec.summary       = %q{A client library for the Kafka distributed commit log.}
-  spec.description   = %q{A client library for the Kafka distributed commit log. Still very much at the alpha stage.}
+
+  spec.description   = <<-DESC.gsub(/^    /, "").strip
+    A client library for the Kafka distributed commit log.
+
+    Currently, only the Producer API is implemented.
+  DESC
+
   spec.homepage      = "https://github.com/zendesk/ruby-kafka"
   spec.license       = "Apache License Version 2.0"
 
