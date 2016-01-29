@@ -28,6 +28,12 @@ module Kafka
       )
     end
 
+    # Builds a new producer.
+    #
+    # +options+ are passed to {Producer#initialize}.
+    #
+    # @see Producer#initialize
+    # @return [Producer] the Kafka producer.
     def get_producer(**options)
       Producer.new(broker_pool: @broker_pool, logger: @logger, **options)
     end
