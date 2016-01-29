@@ -166,6 +166,9 @@ module Kafka
       @buffer.size
     end
 
+    # Closes all connections to the brokers.
+    #
+    # @return [nil]
     def shutdown
       @broker_pool.shutdown
     end
