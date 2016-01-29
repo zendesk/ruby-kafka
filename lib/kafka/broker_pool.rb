@@ -93,6 +93,8 @@ module Kafka
           return cluster_info
         rescue Error => e
           @logger.error "Failed to fetch metadata from #{node}: #{e}"
+        ensure
+          broker.disconnect unless broker.nil?
         end
       end
 
