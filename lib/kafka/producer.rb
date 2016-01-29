@@ -39,7 +39,7 @@ module Kafka
     #
     # @param logger [Logger]
     #
-    # @param timeout [Integer] The number of seconds a broker can wait for
+    # @param ack_timeout [Integer] The number of seconds a broker can wait for
     #   replicas to acknowledge a write before responding with a timeout.
     #
     # @param required_acks [Integer] The number of replicas that must acknowledge
@@ -54,11 +54,11 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(broker_pool:, logger:, timeout: 10, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    def initialize(broker_pool:, logger:, ack_timeout: 10, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @broker_pool = broker_pool
       @logger = logger
       @required_acks = required_acks
-      @timeout = timeout
+      @ack_timeout = ack_timeout
       @max_retries = max_retries
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
@@ -117,8 +117,8 @@ module Kafka
     #
     # Depending on the value of +required_acks+ used when initializing the producer,
     # this call may block until the specified number of replicas have acknowledged
-    # the writes. The +timeout+ setting places an upper bound on the amount of time
-    # the call will block before failing.
+    # the writes. The +ack_timeout+ setting places an upper bound on the amount of
+    # time the call will block before failing.
     #
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
@@ -191,7 +191,7 @@ module Kafka
           response = broker.produce(
             messages_for_topics: message_set.to_h,
             required_acks: @required_acks,
-            timeout: @timeout * 1000, # Kafka expects the timeout in milliseconds.
+            timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
           )
 
           handle_response(response) if response
