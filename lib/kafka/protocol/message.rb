@@ -1,3 +1,4 @@
+require "stringio"
 require "zlib"
 
 module Kafka

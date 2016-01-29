@@ -1,4 +1,5 @@
 require "socket"
+require "stringio"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"

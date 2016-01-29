@@ -1,3 +1,5 @@
+require "stringio"
+
 module Kafka
   module Protocol
 
