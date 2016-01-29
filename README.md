@@ -25,22 +25,26 @@ Or install it yourself as:
 Currently, only the Producer API is supported. A Kafka 0.9 compatible Consumer API is on the roadmap.
 
 ```ruby
-# The client must be initialized with at least one Kafka broker.
+# A client must be initialized with at least one Kafka broker. Each client keeps
+# a separate pool of broker connections. Don't use the same client from more than
+# one thread.
 kafka = Kafka.new(
   seed_brokers: ["kafka1:9092", "kafka2:9092"],
   client_id: "my-app",
   logger: Logger.new($stderr),
 )
 
-# Each producer keeps a separate pool of broker connections. Don't use the same
-# producer from more than one thread.
+# A producer buffers messages and sends them to the broker that is the leader of
+# the partition a given message is being produced to.
 producer = kafka.get_producer
 
 # `produce` will buffer the message in the producer.
 producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
 producer.produce("hello2", key: "y", topic: "test-messages", partition: 1)
 
-# `send_messages` will send the buffered messages to the cluster.
+# `send_messages` will send the buffered messages to the cluster. Since messages
+# may be destined for different partitions, this could involve writing to more
+# than one Kafka broker.
 producer.send_messages
 ```
 
