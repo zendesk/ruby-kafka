@@ -12,6 +12,10 @@ describe "Producer API", type: :functional do
     producer.shutdown
   end
 
+  example "listing all topics in the cluster" do
+    expect(kafka.topics).to include "test-messages"
+  end
+
   example "writing messages using the buffered producer" do
     producer.write("hello1", key: "x", topic: "test-messages", partition: 0)
     producer.write("hello2", key: "y", topic: "test-messages", partition: 1)

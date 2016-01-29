@@ -18,21 +18,35 @@ module Kafka
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id:, logger:, socket_timeout: nil)
-      @seed_brokers = seed_brokers
-      @client_id = client_id
       @logger = logger
-      @socket_timeout = socket_timeout
+
+      @broker_pool = BrokerPool.new(
+        seed_brokers: seed_brokers,
+        client_id: client_id,
+        logger: logger,
+        socket_timeout: socket_timeout,
+      )
     end
 
+    # Builds a new producer.
+    #
+    # +options+ are passed to {Producer#initialize}.
+    #
+    # @see Producer#initialize
+    # @return [Producer] the Kafka producer.
     def get_producer(**options)
-      broker_pool = BrokerPool.new(
-        seed_brokers: @seed_brokers,
-        client_id: @client_id,
-        logger: @logger,
-        socket_timeout: @socket_timeout,
-      )
+      Producer.new(broker_pool: @broker_pool, logger: @logger, **options)
+    end
 
-      Producer.new(broker_pool: broker_pool, logger: @logger, **options)
+    # Lists all topics in the cluster.
+    #
+    # @return [Array<String>] the list of topic names.
+    def topics
+      @broker_pool.topics
+    end
+
+    def close
+      @broker_pool.shutdown
     end
   end
 end

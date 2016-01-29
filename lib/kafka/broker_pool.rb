@@ -46,6 +46,10 @@ module Kafka
       cluster_info.partitions_for(topic)
     end
 
+    def topics
+      cluster_info.topics.map(&:topic_name)
+    end
+
     def shutdown
       @brokers.each do |id, broker|
         @logger.info "Disconnecting broker #{id}"
