@@ -4,24 +4,25 @@ module Kafka
   class MessageBuffer
     include Enumerable
 
+    attr_reader :size
+
     def initialize
       @buffer = {}
+      @size = 0
     end
 
     def write(message, topic:, partition:)
+      @size += 1
       buffer_for(topic, partition) << message
     end
 
     def concat(messages, topic:, partition:)
+      @size += messages.count
       buffer_for(topic, partition).concat(messages)
     end
 
     def to_h
       @buffer
-    end
-
-    def size
-      @buffer.values.inject(0) {|sum, messages| messages.values.flatten.size + sum }
     end
 
     def empty?
@@ -43,6 +44,8 @@ module Kafka
     #
     # @return [nil]
     def clear_messages(topic:, partition:)
+      @size -= @buffer[topic][partition].count
+
       @buffer[topic].delete(partition)
       @buffer.delete(topic) if @buffer[topic].empty?
     end
@@ -52,6 +55,7 @@ module Kafka
     # @return [nil]
     def clear
       @buffer = {}
+      @size = 0
     end
 
     private
