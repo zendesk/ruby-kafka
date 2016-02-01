@@ -8,5 +8,5 @@ Dotenv.load
 LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new
 
 RSpec.configure do |config|
-  config.filter_run_excluding type: :functional
+  config.filter_run_excluding functional: true
 end
