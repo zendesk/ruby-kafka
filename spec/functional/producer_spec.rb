@@ -1,3 +1,5 @@
+require "ruby-prof"
+
 describe "Producer API", functional: true do
   let(:logger) { Logger.new(log) }
   let(:log) { LOG }
@@ -59,5 +61,23 @@ describe "Producer API", functional: true do
     ensure
       KAFKA_CLUSTER.start_kafka_broker(0)
     end
+  end
+
+  example "profile", profile: true do
+    logger.level = Logger::FATAL
+
+    # Warm up
+    producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
+    producer.send_messages
+
+    result = RubyProf.profile do
+      100.times do
+        producer.produce("hello1", key: "x", topic: "test-messages")
+        producer.send_messages
+      end
+    end
+
+    printer = RubyProf::FlatPrinter.new(result)
+    printer.print(STDOUT)
   end
 end
