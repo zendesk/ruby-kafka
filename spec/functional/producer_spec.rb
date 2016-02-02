@@ -63,7 +63,7 @@ describe "Producer API", functional: true do
     end
   end
 
-  example "profile" do
+  example "profile", profile: true do
     logger.level = Logger::FATAL
 
     # Warm up
