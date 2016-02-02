@@ -1,5 +1,5 @@
-require "socket"
 require "stringio"
+require "kafka/socket_with_timeout"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
@@ -38,7 +38,7 @@ module Kafka
 
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      @socket = Socket.tcp(host, port, connect_timeout: @connect_timeout)
+      @socket = SocketWithTimeout.open(@host, @port, timeout: @connect_timeout)
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
