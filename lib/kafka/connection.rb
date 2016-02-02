@@ -1,5 +1,5 @@
-require "socket"
 require "stringio"
+require "kafka/socket_with_timeout"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
@@ -38,7 +38,7 @@ module Kafka
 
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      @socket = Socket.tcp(host, port, connect_timeout: @connect_timeout)
+      @socket = SocketWithTimeout.new(@host, @port, timeout: @connect_timeout)
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
@@ -112,14 +112,12 @@ module Kafka
 
       data = Kafka::Protocol::Encoder.encode_with(message)
 
-      unless IO.select(nil, [@socket], nil, @socket_timeout)
-        @logger.error "Timed out while writing request #{@correlation_id}"
-        raise ConnectionError
-      end
-
       @encoder.write_bytes(data)
 
       nil
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while writing request #{@correlation_id}"
+      raise ConnectionError
     end
 
     # Reads a response from the connection.
@@ -130,11 +128,6 @@ module Kafka
     # @return [nil]
     def read_response(response_class)
       @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
-
-      unless IO.select([@socket], nil, nil, @socket_timeout)
-        @logger.error "Timed out while waiting for response #{@correlation_id}"
-        raise ConnectionError
-      end
 
       bytes = @decoder.bytes
 
@@ -147,6 +140,9 @@ module Kafka
       @logger.debug "Received response #{correlation_id} from #{to_s}"
 
       return correlation_id, response
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while waiting for response #{@correlation_id}"
+      raise ConnectionError
     end
   end
 end
