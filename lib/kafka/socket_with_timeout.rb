@@ -3,7 +3,12 @@ require "socket"
 module Kafka
 
   # Opens sockets in a non-blocking fashion, ensuring that we're not stalling
-  # for long periods of time waiting for a connection to open.
+  # for long periods of time.
+  #
+  # It's possible to set timeouts for connecting to the server, for reading data,
+  # and for writing data. Whenever a timeout is exceeded, Errno::ETIMEDOUT is
+  # raised.
+  #
   class SocketWithTimeout
 
     # Opens a socket.
@@ -11,7 +16,7 @@ module Kafka
     # @param host [String]
     # @param port [Integer]
     # @param timeout [Integer] the connection timeout, in seconds.
-    # @return [TCPSocket] the open socket.
+    # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     def initialize(host, port, timeout: nil)
       addr = Socket.getaddrinfo(host, nil)
       sockaddr = Socket.pack_sockaddr_in(port, addr[0][3])
@@ -43,6 +48,12 @@ module Kafka
       end
     end
 
+    # Reads bytes from the socket, possible with a timeout.
+    #
+    # @param num_bytes [Integer] the number of bytes to read.
+    # @param timeout [Integer] the number of seconds to wait before timing out.
+    # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
+    # @return [String] the data that was read from the socket.
     def read(num_bytes, timeout: nil)
       unless IO.select([@socket], nil, nil, timeout)
         raise Errno::ETIMEDOUT
@@ -51,6 +62,12 @@ module Kafka
       @socket.read(num_bytes)
     end
 
+    # Writes bytes to the socket, possible with a timeout.
+    #
+    # @param bytes [String] the data that should be written to the socket.
+    # @param timeout [Integer] the number of seconds to wait before timing out.
+    # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
+    # @return [Integer] the number of bytes written.
     def write(bytes, timeout: nil)
       unless IO.select(nil, [@socket], nil, timeout)
         raise Errno::ETIMEDOUT
