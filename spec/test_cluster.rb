@@ -4,7 +4,7 @@ Docker.url = ENV.fetch("DOCKER_HOST")
 
 class TestCluster
   DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST")).host
-  KAFKA_IMAGE = "wurstmeister/kafka:0.8.2.0"
+  KAFKA_IMAGE = "wurstmeister/kafka:0.9.0.0"
   ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
 
@@ -88,7 +88,7 @@ class TestCluster
 
   def create_topic(topic, num_partitions: 1, num_replicas: 1)
     command = [
-      "/opt/kafka_2.10-0.8.2.0/bin/kafka-topics.sh",
+      "/opt/kafka_2.11-0.9.0.0/bin/kafka-topics.sh",
       "--create",
       "--topic test-messages",
       "--replication-factor #{num_replicas}",
