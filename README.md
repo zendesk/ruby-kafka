@@ -2,7 +2,7 @@
 
 A Ruby client library for the Kafka distributed log system. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-This library is still in pre-beta stage, but development is ongoing. Current efforts are focused on implementing a solid Producer client. The next step will be implementing a client for the Kafka 0.9 Consumer API.
+Currently, only the Producer API has been implemented, but a fully-fledged Consumer implementation compatible with Kafka 0.9 is on the roadmap.
 
 ## Installation
 
@@ -22,9 +22,9 @@ Or install it yourself as:
 
 ## Usage
 
-Currently, only the Producer API is supported. A Kafka 0.9 compatible Consumer API is on the roadmap.
-
 ```ruby
+require "kafka"
+
 # A client must be initialized with at least one Kafka broker. Each client keeps
 # a separate pool of broker connections. Don't use the same client from more than
 # one thread.
@@ -68,15 +68,13 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 ## Roadmap
 
-v0.1 is targeted for release in February. Other milestones do not have firm target dates, but v0.2 will be released as soon as we are confident that it is ready to run in critical production environments and that the API shouldn't be changed.
+The current stable release is v0.1. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
 
-### v0.1: Producer API for non-critical production data
-
-We need to actually run this in production for a while before we can say that it won't lose data, so initially the library should only be deployed for non-critical use cases.
-
-The API may also be changed.
+The API may still be changed in v0.2. 
 
 ### v0.2: Stable Producer API
+
+Target date: end of February.
 
 The API should now have stabilized and the library should be battle tested enough to deploy for critical use cases.
 
