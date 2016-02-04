@@ -15,42 +15,53 @@ describe Kafka::Connection do
     )
   }
 
-  let(:broker) { Thread.start { FakeServer.new(server).run } }
-
-  before do
-    broker.abort_on_exception = true
-  end
+  let!(:broker) { FakeServer.start(server) }
 
   class FakeServer
+    def self.start(server)
+      thread = Thread.new { new(server).start }
+      thread.abort_on_exception = true
+      thread
+    end
+
     def initialize(server)
       @server = server
     end
 
-    def run
+    def start
       loop do
         client = @server.accept
 
-        loop do
-          request_bytes = Kafka::Protocol::Decoder.new(client).bytes
-          request_decoder = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes))
-
-          api_key = request_decoder.int16
-          api_version = request_decoder.int16
-          correlation_id = request_decoder.int32
-          client_id = request_decoder.string
-
-          message = request_decoder.string
-
-          response = StringIO.new
-          response_encoder = Kafka::Protocol::Encoder.new(response)
-          response_encoder.write_int32(correlation_id)
-          response_encoder.write_string(message)
-
-          encoder = Kafka::Protocol::Encoder.new(client)
-          encoder.write_bytes(response.string)
+        begin
+          handle_client(client)
+        rescue => e
+          puts e
+          break
+        ensure
+          client.close
         end
+      end
+    end
 
-        client.close
+    def handle_client(client)
+      loop do
+        request_bytes = Kafka::Protocol::Decoder.new(client).bytes
+        request_decoder = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes))
+
+        api_key = request_decoder.int16
+        api_version = request_decoder.int16
+        correlation_id = request_decoder.int32
+        client_id = request_decoder.string
+
+        message = request_decoder.string
+
+        response = StringIO.new
+        response_encoder = Kafka::Protocol::Encoder.new(response)
+        response_encoder.write_int32(correlation_id)
+        response_encoder.write_string(message)
+
+        encoder = Kafka::Protocol::Encoder.new(client)
+        encoder.write_bytes(response.string)
       end
     end
   end
@@ -108,8 +119,9 @@ describe Kafka::Connection do
       # Connection is torn down
       connection.request(api_key, request, response_decoder) rescue nil
 
-      broker = Thread.start { FakeServer.new(server).run }
-      broker.abort_on_exception = true
+      server.close
+      server = TCPServer.new(host, port)
+      broker = FakeServer.start(server)
 
       # Connection is re-established
       response = connection.request(api_key, request, response_decoder)

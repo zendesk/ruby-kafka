@@ -102,7 +102,7 @@ module Kafka
           end
         end
       end
-    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT => e
+    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       @logger.error "Connection error: #{e}"
 
       close
