@@ -91,7 +91,7 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(broker_pool:, logger:, ack_timeout: 10, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    def initialize(broker_pool:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @broker_pool = broker_pool
       @logger = logger
       @required_acks = required_acks

@@ -12,7 +12,7 @@ module Kafka
   # requests must be directed specifically to the broker that is currently leader for
   # the set of topic partitions you want to produce to or consumer from.
   class Connection
-    SOCKET_TIMEOUT = 5
+    SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
 
     # Opens a connection to a Kafka broker.
@@ -26,7 +26,7 @@ module Kafka
     # @param connect_timeout [Integer] the socket timeout for connecting to the broker.
     #   Default is 10 seconds.
     # @param socket_timeout [Integer] the socket timeout for reading and writing to the
-    #   broker. Default is 5 seconds.
+    #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
     def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
