@@ -35,33 +35,13 @@ module Kafka
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
-
-      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
-
-      connect
     end
 
     def to_s
       "#{@host}:#{@port}"
     end
 
-    def connect
-      @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
-
-      @encoder = Kafka::Protocol::Encoder.new(@socket)
-      @decoder = Kafka::Protocol::Decoder.new(@socket)
-
-      # Correlation id is initialized to zero and bumped for each request.
-      @correlation_id = 0
-    rescue Errno::ETIMEDOUT => e
-      @logger.error "Timed out while trying to connect to #{self}: #{e}"
-      raise ConnectionError, e
-    rescue SocketError, Errno::ECONNREFUSED => e
-      @logger.error "Failed to connect to #{self}: #{e}"
-      raise ConnectionError, e
-    end
-
-    def connected?
+    def open?
       !@socket.nil?
     end
 
@@ -80,7 +60,7 @@ module Kafka
     #
     # @return [Object] the response that was decoded by `response_class`.
     def send_request(request, response_class)
-      connect unless connected?
+      open unless open?
 
       @correlation_id += 1
 
@@ -95,6 +75,24 @@ module Kafka
     end
 
     private
+
+    def open
+      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
+
+      @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
+
+      @encoder = Kafka::Protocol::Encoder.new(@socket)
+      @decoder = Kafka::Protocol::Decoder.new(@socket)
+
+      # Correlation id is initialized to zero and bumped for each request.
+      @correlation_id = 0
+    rescue Errno::ETIMEDOUT => e
+      @logger.error "Timed out while trying to connect to #{self}: #{e}"
+      raise ConnectionError, e
+    rescue SocketError, Errno::ECONNREFUSED => e
+      @logger.error "Failed to connect to #{self}: #{e}"
+      raise ConnectionError, e
+    end
 
     # Writes a request over the connection.
     #

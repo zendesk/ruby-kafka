@@ -66,7 +66,7 @@ describe Kafka::Connection do
     end
   end
 
-  describe "#request" do
+  describe "#send_request" do
     let(:api_key) { 5 }
     let(:request) { double(:request, api_key: api_key) }
     let(:response_decoder) { double(:response_decoder) }

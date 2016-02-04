@@ -16,11 +16,8 @@ describe Kafka::Producer do
   before do
     allow(broker_pool).to receive(:mark_as_stale!)
 
-    allow(broker_pool).to receive(:get_leader_id).with("greetings", 0) { 1 }
-    allow(broker_pool).to receive(:get_leader_id).with("greetings", 1) { 2 }
-
-    allow(broker_pool).to receive(:get_broker).with(1) { broker1 }
-    allow(broker_pool).to receive(:get_broker).with(2) { broker2 }
+    allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
+    allow(broker_pool).to receive(:get_leader).with("greetings", 1) { broker2 }
   end
 
   describe "#produce" do

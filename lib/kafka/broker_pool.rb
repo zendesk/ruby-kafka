@@ -33,13 +33,9 @@ module Kafka
     #
     # @param topic [String]
     # @param partition [Integer]
-    # @return [Integer] the broker id.
-    def get_leader_id(topic, partition)
-      cluster_info.find_leader_id(topic, partition)
-    end
-
-    def get_broker(broker_id)
-      @brokers[broker_id] ||= connect_to_broker(broker_id)
+    # @return [Broker] the broker that's currently leader.
+    def get_leader(topic, partition)
+      get_broker(get_leader_id(topic, partition))
     end
 
     def partitions_for(topic)
@@ -58,6 +54,14 @@ module Kafka
     end
 
     private
+
+    def get_leader_id(topic, partition)
+      cluster_info.find_leader_id(topic, partition)
+    end
+
+    def get_broker(broker_id)
+      @brokers[broker_id] ||= connect_to_broker(broker_id)
+    end
 
     def cluster_info
       @cluster_info ||= fetch_cluster_info
