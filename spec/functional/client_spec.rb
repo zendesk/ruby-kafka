@@ -1,7 +1,7 @@
 describe "Producer API", functional: true do
   let(:logger) { Logger.new(log) }
   let(:log) { LOG }
-  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
+  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, logger: logger) }
 
   before do
     require "test_cluster"

@@ -3,6 +3,7 @@ require "kafka/producer"
 
 module Kafka
   class Client
+    DEFAULT_CLIENT_ID = "ruby-kafka"
 
     # Initializes a new Kafka client.
     #
@@ -17,7 +18,7 @@ module Kafka
     #   connections. See {BrokerPool#initialize}.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id:, logger:, socket_timeout: nil)
+    def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger:, socket_timeout: nil)
       @logger = logger
 
       @broker_pool = BrokerPool.new(
