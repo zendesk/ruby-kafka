@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "dotenv"
   spec.add_development_dependency "docker-api"
   spec.add_development_dependency "rspec-benchmark"
+  spec.add_development_dependency "activesupport", ">= 4.2.0", "< 5.1"
 end
