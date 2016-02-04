@@ -38,7 +38,15 @@ module Kafka
 
       @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      @socket = SocketWithTimeout.new(@host, @port, timeout: @connect_timeout)
+      connect
+    end
+
+    def to_s
+      "#{@host}:#{@port}"
+    end
+
+    def connect
+      @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)
@@ -46,20 +54,23 @@ module Kafka
       # Correlation id is initialized to zero and bumped for each request.
       @correlation_id = 0
     rescue Errno::ETIMEDOUT => e
-      @logger.error "Timed out while trying to connect to #{host}:#{port}: #{e}"
+      @logger.error "Timed out while trying to connect to #{self}: #{e}"
       raise ConnectionError, e
     rescue SocketError, Errno::ECONNREFUSED => e
-      @logger.error "Failed to connect to #{host}:#{port}: #{e}"
+      @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
     end
 
-    def to_s
-      "#{@host}:#{@port}"
+    def connected?
+      !@socket.nil?
     end
 
     def close
       @logger.debug "Closing socket to #{to_s}"
-      @socket.close
+
+      @socket.close if @socket
+
+      @socket = nil
     end
 
     # Sends a request over the connection.
@@ -70,6 +81,8 @@ module Kafka
     #
     # @return [Object] the response that was decoded by `response_class`.
     def request(api_key, request, response_class)
+      connect unless connected?
+
       write_request(api_key, request)
 
       unless response_class.nil?
@@ -89,6 +102,12 @@ module Kafka
           end
         end
       end
+    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
+      @logger.error "Connection error: #{e}"
+
+      close
+
+      raise ConnectionError, "Connection error: #{e}"
     end
 
     private
@@ -117,7 +136,7 @@ module Kafka
       nil
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while writing request #{@correlation_id}"
-      raise ConnectionError
+      raise
     end
 
     # Reads a response from the connection.
@@ -142,7 +161,7 @@ module Kafka
       return correlation_id, response
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while waiting for response #{@correlation_id}"
-      raise ConnectionError
+      raise
     end
   end
 end

@@ -85,7 +85,7 @@ module Kafka
       #
       # @return [String]
       def read(number_of_bytes)
-        @io.read(number_of_bytes)
+        @io.read(number_of_bytes) or raise EOFError
       end
     end
   end
