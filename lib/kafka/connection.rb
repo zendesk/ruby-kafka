@@ -83,25 +83,10 @@ module Kafka
     def request(api_key, request, response_class)
       connect unless connected?
 
+      @correlation_id += 1
+
       write_request(api_key, request)
-
-      unless response_class.nil?
-        loop do
-          correlation_id, response = read_response(response_class)
-
-          # There may have been a previous request that timed out before the client
-          # was able to read the response. In that case, the response will still be
-          # sitting in the socket waiting to be read. If the response we just read
-          # was to a previous request, we can safely skip it.
-          if correlation_id < @correlation_id
-            @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
-          elsif correlation_id > @correlation_id
-            raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
-          else
-            break response
-          end
-        end
-      end
+      wait_for_response(response_class) unless response_class.nil?
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       @logger.error "Connection error: #{e}"
 
@@ -119,7 +104,6 @@ module Kafka
     #
     # @return [nil]
     def write_request(api_key, request)
-      @correlation_id += 1
       @logger.debug "Sending request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
@@ -162,6 +146,24 @@ module Kafka
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while waiting for response #{@correlation_id}"
       raise
+    end
+
+    def wait_for_response(response_class)
+      loop do
+        correlation_id, response = read_response(response_class)
+
+        # There may have been a previous request that timed out before the client
+        # was able to read the response. In that case, the response will still be
+        # sitting in the socket waiting to be read. If the response we just read
+        # was to a previous request, we can safely skip it.
+        if correlation_id < @correlation_id
+          @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
+        elsif correlation_id > @correlation_id
+          raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
+        else
+          return response
+        end
+      end
     end
   end
 end
