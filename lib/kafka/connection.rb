@@ -75,33 +75,17 @@ module Kafka
 
     # Sends a request over the connection.
     #
-    # @param api_key [Integer] the integer code for the API that is invoked.
     # @param request [#encode] the request that should be encoded and written.
     # @param response_class [#decode] an object that can decode the response.
     #
     # @return [Object] the response that was decoded by `response_class`.
-    def request(api_key, request, response_class)
+    def send_request(request, response_class)
       connect unless connected?
 
-      write_request(api_key, request)
+      @correlation_id += 1
 
-      unless response_class.nil?
-        loop do
-          correlation_id, response = read_response(response_class)
-
-          # There may have been a previous request that timed out before the client
-          # was able to read the response. In that case, the response will still be
-          # sitting in the socket waiting to be read. If the response we just read
-          # was to a previous request, we can safely skip it.
-          if correlation_id < @correlation_id
-            @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
-          elsif correlation_id > @correlation_id
-            raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
-          else
-            break response
-          end
-        end
-      end
+      write_request(request)
+      wait_for_response(response_class) unless response_class.nil?
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       @logger.error "Connection error: #{e}"
 
@@ -118,12 +102,11 @@ module Kafka
     # @param request [#encode] the request that should be encoded and written.
     #
     # @return [nil]
-    def write_request(api_key, request)
-      @correlation_id += 1
+    def write_request(request)
       @logger.debug "Sending request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
-        api_key: api_key,
+        api_key: request.api_key,
         correlation_id: @correlation_id,
         client_id: @client_id,
         request: request,
@@ -162,6 +145,24 @@ module Kafka
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while waiting for response #{@correlation_id}"
       raise
+    end
+
+    def wait_for_response(response_class)
+      loop do
+        correlation_id, response = read_response(response_class)
+
+        # There may have been a previous request that timed out before the client
+        # was able to read the response. In that case, the response will still be
+        # sitting in the socket waiting to be read. If the response we just read
+        # was to a previous request, we can safely skip it.
+        if correlation_id < @correlation_id
+          @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
+        elsif correlation_id > @correlation_id
+          raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
+        else
+          return response
+        end
+      end
     end
   end
 end

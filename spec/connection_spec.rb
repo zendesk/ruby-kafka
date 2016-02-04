@@ -68,7 +68,7 @@ describe Kafka::Connection do
 
   describe "#request" do
     let(:api_key) { 5 }
-    let(:request) { double(:request) }
+    let(:request) { double(:request, api_key: api_key) }
     let(:response_decoder) { double(:response_decoder) }
 
     before do
@@ -80,7 +80,7 @@ describe Kafka::Connection do
     end
 
     it "sends requests to a broker and reads back the response" do
-      response = connection.request(api_key, request, response_decoder)
+      response = connection.send_request(request, response_decoder)
 
       expect(response).to eq "hello!"
     end
@@ -92,39 +92,39 @@ describe Kafka::Connection do
       # causing a mismatch. This simulates the client killing the connection due
       # to e.g. a timeout, then resuming with a new request -- the old response
       # still sits in the connection waiting to be read.
-      connection.request(api_key, request, nil)
+      connection.send_request(request, nil)
 
       allow(request).to receive(:encode) {|encoder| encoder.write_string("goodbye!") }
-      response = connection.request(api_key, request, response_decoder)
+      response = connection.send_request(request, response_decoder)
 
       expect(response).to eq "goodbye!"
     end
 
     it "disconnects on network errors" do
-      response = connection.request(api_key, request, response_decoder)
+      response = connection.send_request(request, response_decoder)
 
       expect(response).to eq "hello!"
 
       broker.kill
 
       expect {
-        connection.request(api_key, request, response_decoder)
+        connection.send_request(request, response_decoder)
       }.to raise_error(Kafka::ConnectionError)
     end
 
     it "re-opens the connection after a network error" do
-      connection.request(api_key, request, response_decoder)
+      connection.send_request(request, response_decoder)
       broker.kill
 
       # Connection is torn down
-      connection.request(api_key, request, response_decoder) rescue nil
+      connection.send_request(request, response_decoder) rescue nil
 
       server.close
       server = TCPServer.new(host, port)
       broker = FakeServer.start(server)
 
       # Connection is re-established
-      response = connection.request(api_key, request, response_decoder)
+      response = connection.send_request(request, response_decoder)
 
       expect(response).to eq "hello!"
     end
