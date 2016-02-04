@@ -1,5 +1,10 @@
 module Kafka
   module Protocol
+    APIS = {
+      0 => :produce,
+      3 => :topic_metadata,
+    }
+
     ERRORS = {
       -1 => UnknownError,
       1 => OffsetOutOfRange,
@@ -20,7 +25,6 @@ module Kafka
       21 => InvalidRequiredAcks,
     }
 
-
     def self.handle_error(error_code)
       if error_code == 0
         # No errors, yay!
@@ -29,6 +33,10 @@ module Kafka
       else
         raise UnknownError, "Unknown error with code #{error_code}"
       end
+    end
+
+    def self.api_name(api_key)
+      APIS.fetch(api_key, :unknown)
     end
   end
 end

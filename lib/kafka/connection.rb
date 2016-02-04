@@ -1,5 +1,6 @@
 require "stringio"
 require "kafka/socket_with_timeout"
+require "kafka/instrumentation"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
@@ -11,6 +12,18 @@ module Kafka
   # Usually you'll need a separate connection to each broker in a cluster, since most
   # requests must be directed specifically to the broker that is currently leader for
   # the set of topic partitions you want to produce to or consumer from.
+  #
+  # ## Instrumentation
+  #
+  # Connections emit a `request.kafka` notification on each request. The following
+  # keys will be found in the payload:
+  #
+  # * `:api` — the name of the API being invoked.
+  # * `:request_size` — the number of bytes in the request.
+  # * `:response_size` — the number of bytes in the response.
+  #
+  # The notification also includes the duration of the request.
+  #
   class Connection
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
@@ -60,12 +73,20 @@ module Kafka
     #
     # @return [Object] the response that was decoded by `response_class`.
     def send_request(request, response_class)
-      open unless open?
+      Instrumentation.instrument("request.kafka") do |notification|
+        open unless open?
 
-      @correlation_id += 1
+        @correlation_id += 1
 
-      write_request(request)
-      wait_for_response(response_class) unless response_class.nil?
+        # Look up the API name.
+        notification[:api] = Protocol.api_name(request.api_key)
+
+        # We may not read a response, in which case the size is zero.
+        notification[:response_size] = 0
+
+        write_request(request, notification)
+        wait_for_response(response_class, notification) unless response_class.nil?
+      end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       @logger.error "Connection error: #{e}"
 
@@ -99,7 +120,7 @@ module Kafka
     # @param request [#encode] the request that should be encoded and written.
     #
     # @return [nil]
-    def write_request(request)
+    def write_request(request, notification)
       @logger.debug "Sending request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
@@ -110,6 +131,7 @@ module Kafka
       )
 
       data = Kafka::Protocol::Encoder.encode_with(message)
+      notification[:request_size] = data.bytesize
 
       @encoder.write_bytes(data)
 
@@ -125,12 +147,13 @@ module Kafka
     #   a given Decoder.
     #
     # @return [nil]
-    def read_response(response_class)
+    def read_response(response_class, notification)
       @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
 
-      bytes = @decoder.bytes
+      data = @decoder.bytes
+      notification[:response_size] = data.bytesize
 
-      buffer = StringIO.new(bytes)
+      buffer = StringIO.new(data)
       response_decoder = Kafka::Protocol::Decoder.new(buffer)
 
       correlation_id = response_decoder.int32
@@ -144,9 +167,9 @@ module Kafka
       raise
     end
 
-    def wait_for_response(response_class)
+    def wait_for_response(response_class, notification)
       loop do
-        correlation_id, response = read_response(response_class)
+        correlation_id, response = read_response(response_class, notification)
 
         # There may have been a previous request that timed out before the client
         # was able to read the response. In that case, the response will still be

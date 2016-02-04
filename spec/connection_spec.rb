@@ -67,7 +67,7 @@ describe Kafka::Connection do
   end
 
   describe "#send_request" do
-    let(:api_key) { 5 }
+    let(:api_key) { 0 }
     let(:request) { double(:request, api_key: api_key) }
     let(:response_decoder) { double(:response_decoder) }
 
@@ -127,6 +127,26 @@ describe Kafka::Connection do
       response = connection.send_request(request, response_decoder)
 
       expect(response).to eq "hello!"
+    end
+
+    it "emits a notification" do
+      events = []
+
+      subscriber = proc {|*args|
+        events << ActiveSupport::Notifications::Event.new(*args)
+      }
+
+      ActiveSupport::Notifications.subscribed(subscriber, "request.kafka") do
+        connection.send_request(request, response_decoder)
+      end
+
+      expect(events.count).to eq 1
+
+      event = events.first
+
+      expect(event.payload[:api]).to eq :produce
+      expect(event.payload[:request_size]).to eq 22
+      expect(event.payload[:response_size]).to eq 12
     end
   end
 end
