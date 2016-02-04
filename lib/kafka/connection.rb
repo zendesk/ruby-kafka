@@ -96,7 +96,6 @@ module Kafka
 
     # Writes a request over the connection.
     #
-    # @param api_key [Integer] the integer code for the API that is invoked.
     # @param request [#encode] the request that should be encoded and written.
     #
     # @return [nil]
