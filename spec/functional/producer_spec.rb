@@ -17,10 +17,19 @@ describe "Producer API", functional: true do
   end
 
   example "writing messages using the buffered producer" do
-    producer.produce("hello1", key: "x", topic: "test-messages", partition: 0)
-    producer.produce("hello2", key: "y", topic: "test-messages", partition: 1)
+    value1 = rand(10_000).to_s
+    value2 = rand(10_000).to_s
+
+    producer.produce(value1, key: "x", topic: "test-messages", partition: 0)
+    producer.produce(value2, key: "y", topic: "test-messages", partition: 1)
 
     producer.send_messages
+
+    message1 = kafka.fetch_messages(topic: "test-messages", partition: 0, offset: :earliest).last
+    message2 = kafka.fetch_messages(topic: "test-messages", partition: 1, offset: :earliest).last
+
+    expect(message1.value).to eq value1
+    expect(message2.value).to eq value2
   end
 
   example "having the producer assign partitions based on partition keys" do

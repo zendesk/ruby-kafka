@@ -64,4 +64,20 @@ describe Kafka::Broker do
       expect(response).to be_nil
     end
   end
+
+  describe "#fetch_messages" do
+    it "fetches messages from the specified topic/partition" do
+      response = Kafka::Protocol::ProduceResponse.new
+
+      connection.mock_response(response)
+
+      actual_response = broker.fetch_messages(
+        max_wait_time: 0,
+        min_bytes: 0,
+        topics: {}
+      )
+
+      expect(actual_response.topics).to eq []
+    end
+  end
 end

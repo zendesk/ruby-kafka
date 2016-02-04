@@ -1,7 +1,12 @@
 module Kafka
   module Protocol
+    # The replica id of non-brokers is always -1.
+    REPLICA_ID = -1
+
     APIS = {
       0 => :produce,
+      1 => :fetch,
+      2 => :list_offset,
       3 => :topic_metadata,
     }
 
@@ -45,3 +50,7 @@ require "kafka/protocol/topic_metadata_request"
 require "kafka/protocol/metadata_response"
 require "kafka/protocol/produce_request"
 require "kafka/protocol/produce_response"
+require "kafka/protocol/fetch_request"
+require "kafka/protocol/fetch_response"
+require "kafka/protocol/list_offset_request"
+require "kafka/protocol/list_offset_response"

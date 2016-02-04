@@ -36,6 +36,21 @@ module Kafka
         @key == other.key && @value == other.value && @attributes == other.attributes
       end
 
+      def self.decode(decoder)
+        crc = decoder.int32
+        magic_byte = decoder.int8
+
+        unless magic_byte == MAGIC_BYTE
+          raise Kafka::Error, "Invalid magic byte: #{magic_byte}"
+        end
+
+        attributes = decoder.int8
+        key = decoder.bytes
+        value = decoder.bytes
+
+        new(key: key, value: value, attributes: attributes)
+      end
+
       private
 
       def encode_without_crc
