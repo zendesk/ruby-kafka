@@ -38,7 +38,7 @@ module Kafka
             Protocol.handle_error(partition.partition_error_code)
           rescue ReplicaNotAvailable
             # This error can be safely ignored per the protocol specification.
-            @logger.warn "Replica not available for topic #{topic.topic_name}, partition #{partition.partition_id}"
+            @logger.warn "Replica not available for #{topic.topic_name}/#{partition.partition_id}"
           end
         end
       end
