@@ -1,4 +1,4 @@
-# Kafka
+# ruby-kafka
 
 [![Circle CI](https://circleci.com/gh/zendesk/ruby-kafka.svg?style=shield)](https://circleci.com/gh/zendesk/ruby-kafka/tree/master)
 
