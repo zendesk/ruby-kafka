@@ -10,11 +10,14 @@ describe Kafka::Connection do
       port: port,
       client_id: "test",
       logger: logger,
+      connect_timeout: 0.1,
+      socket_timeout: 0.1,
     )
   }
 
+  let(:broker) { Thread.start { FakeServer.new(server).run } }
+
   before do
-    broker = Thread.start { FakeServer.new(server).run }
     broker.abort_on_exception = true
   end
 
@@ -84,6 +87,34 @@ describe Kafka::Connection do
       response = connection.request(api_key, request, response_decoder)
 
       expect(response).to eq "goodbye!"
+    end
+
+    it "disconnects on network errors" do
+      response = connection.request(api_key, request, response_decoder)
+
+      expect(response).to eq "hello!"
+
+      broker.kill
+
+      expect {
+        connection.request(api_key, request, response_decoder)
+      }.to raise_error(Kafka::ConnectionError)
+    end
+
+    it "re-opens the connection after a network error" do
+      connection.request(api_key, request, response_decoder)
+      broker.kill
+
+      # Connection is torn down
+      connection.request(api_key, request, response_decoder) rescue nil
+
+      broker = Thread.start { FakeServer.new(server).run }
+      broker.abort_on_exception = true
+
+      # Connection is re-established
+      response = connection.request(api_key, request, response_decoder)
+
+      expect(response).to eq "hello!"
     end
   end
 end

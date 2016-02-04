@@ -9,7 +9,7 @@ describe Kafka::SocketWithTimeout, ".open" do
     start = Time.now
 
     expect {
-      Kafka::SocketWithTimeout.new(host, port, timeout: timeout)
+      Kafka::SocketWithTimeout.new(host, port, connect_timeout: timeout, timeout: 1)
     }.to raise_exception(Errno::ETIMEDOUT)
 
     finish = Time.now
@@ -26,12 +26,12 @@ describe Kafka::SocketWithTimeout, ".open" do
       timeout = 0.1
       allowed_time = timeout + 0.1
 
-      socket = Kafka::SocketWithTimeout.new(host, port, timeout: 1)
+      socket = Kafka::SocketWithTimeout.new(host, port, connect_timeout: 1, timeout: timeout)
 
       start = Time.now
 
       expect {
-        socket.read(4, timeout: timeout)
+        socket.read(4)
       }.to raise_exception(Errno::ETIMEDOUT)
 
       finish = Time.now

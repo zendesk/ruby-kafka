@@ -15,11 +15,14 @@ module Kafka
     #
     # @param host [String]
     # @param port [Integer]
-    # @param timeout [Integer] the connection timeout, in seconds.
+    # @param connect_timeout [Integer] the connection timeout, in seconds.
+    # @param timeout [Integer] the read and write timeout, in seconds.
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
-    def initialize(host, port, timeout: nil)
+    def initialize(host, port, connect_timeout: nil, timeout: nil)
       addr = Socket.getaddrinfo(host, nil)
       sockaddr = Socket.pack_sockaddr_in(port, addr[0][3])
+
+      @timeout = timeout
 
       @socket = Socket.new(Socket.const_get(addr[0][0]), Socket::SOCK_STREAM, 0)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
@@ -32,7 +35,7 @@ module Kafka
       rescue IO::WaitWritable
         # IO.select will block until the socket is writable or the timeout
         # is exceeded, whichever comes first.
-        unless IO.select(nil, [@socket], nil, timeout)
+        unless IO.select(nil, [@socket], nil, connect_timeout)
           # IO.select returns nil when the socket is not ready before timeout 
           # seconds have elapsed
           @socket.close
@@ -51,11 +54,10 @@ module Kafka
     # Reads bytes from the socket, possible with a timeout.
     #
     # @param num_bytes [Integer] the number of bytes to read.
-    # @param timeout [Integer] the number of seconds to wait before timing out.
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     # @return [String] the data that was read from the socket.
-    def read(num_bytes, timeout: nil)
-      unless IO.select([@socket], nil, nil, timeout)
+    def read(num_bytes)
+      unless IO.select([@socket], nil, nil, @timeout)
         raise Errno::ETIMEDOUT
       end
 
@@ -65,11 +67,10 @@ module Kafka
     # Writes bytes to the socket, possible with a timeout.
     #
     # @param bytes [String] the data that should be written to the socket.
-    # @param timeout [Integer] the number of seconds to wait before timing out.
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     # @return [Integer] the number of bytes written.
-    def write(bytes, timeout: nil)
-      unless IO.select(nil, [@socket], nil, timeout)
+    def write(bytes)
+      unless IO.select(nil, [@socket], nil, @timeout)
         raise Errno::ETIMEDOUT
       end
 
