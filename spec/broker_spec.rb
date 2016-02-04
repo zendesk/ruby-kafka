@@ -14,7 +14,7 @@ describe Kafka::Broker do
       @mocked_response = response
     end
 
-    def request(api_key, request, response_decoder)
+    def send_request(request, response_decoder)
       @mocked_response
     end
   end

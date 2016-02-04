@@ -24,11 +24,10 @@ module Kafka
     end
 
     def fetch_metadata(**options)
-      api_key = Protocol::TOPIC_METADATA_API_KEY
       request = Protocol::TopicMetadataRequest.new(**options)
       response_class = Protocol::MetadataResponse
 
-      response = @connection.request(api_key, request, response_class)
+      response = @connection.send_request(request, response_class)
 
       response.topics.each do |topic|
         Protocol.handle_error(topic.topic_error_code)
@@ -47,11 +46,10 @@ module Kafka
     end
 
     def produce(**options)
-      api_key = Protocol::PRODUCE_API_KEY
       request = Protocol::ProduceRequest.new(**options)
       response_class = request.requires_acks? ? Protocol::ProduceResponse : nil
 
-      @connection.request(api_key, request, response_class)
+      @connection.send_request(request, response_class)
     end
   end
 end

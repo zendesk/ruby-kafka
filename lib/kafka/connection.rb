@@ -75,17 +75,16 @@ module Kafka
 
     # Sends a request over the connection.
     #
-    # @param api_key [Integer] the integer code for the API that is invoked.
     # @param request [#encode] the request that should be encoded and written.
     # @param response_class [#decode] an object that can decode the response.
     #
     # @return [Object] the response that was decoded by `response_class`.
-    def request(api_key, request, response_class)
+    def send_request(request, response_class)
       connect unless connected?
 
       @correlation_id += 1
 
-      write_request(api_key, request)
+      write_request(request)
       wait_for_response(response_class) unless response_class.nil?
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       @logger.error "Connection error: #{e}"
@@ -103,11 +102,11 @@ module Kafka
     # @param request [#encode] the request that should be encoded and written.
     #
     # @return [nil]
-    def write_request(api_key, request)
+    def write_request(request)
       @logger.debug "Sending request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
-        api_key: api_key,
+        api_key: request.api_key,
         correlation_id: @correlation_id,
         client_id: @client_id,
         request: request,

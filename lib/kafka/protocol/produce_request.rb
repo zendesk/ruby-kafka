@@ -33,6 +33,10 @@ module Kafka
         @messages_for_topics = messages_for_topics
       end
 
+      def api_key
+        0
+      end
+
       # Whether this request requires any acknowledgements at all. If no acknowledgements
       # are required, the server will not send back a response at all.
       #

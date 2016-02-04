@@ -1,8 +1,5 @@
 module Kafka
   module Protocol
-    PRODUCE_API_KEY = 0
-    TOPIC_METADATA_API_KEY = 3
-
     ERRORS = {
       -1 => UnknownError,
       1 => OffsetOutOfRange,
