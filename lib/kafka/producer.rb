@@ -7,6 +7,20 @@ module Kafka
 
   # Allows sending messages to a Kafka cluster.
   #
+  # Typically you won't instantiate this class yourself, but rather have {Kafka::Client}
+  # do it for you, e.g.
+  #
+  #     # Will instantiate Kafka::Client
+  #     kafka = Kafka.new(...)
+  #
+  #     # Will instantiate Kafka::Producer
+  #     producer = kafka.get_producer
+  #
+  # This is done in order to share a logger as well as a pool of broker connections across
+  # different producers. This also means that you don't need to pass the `broker_pool` and
+  # `logger` options to `#get_producer`. See {#initialize} for the list of other options
+  # you can pass in.
+  #
   # ## Buffering
   #
   # The producer buffers pending messages until {#send_messages} is called. Note that there is
@@ -73,8 +87,10 @@ module Kafka
     # Initializes a new Producer.
     #
     # @param broker_pool [BrokerPool] the broker pool representing the cluster.
+    #   Typically passed in for you.
     #
-    # @param logger [Logger]
+    # @param logger [Logger] the logger that should be used. Typically passed
+    #   in for you.
     #
     # @param ack_timeout [Integer] The number of seconds a broker can wait for
     #   replicas to acknowledge a write before responding with a timeout.
