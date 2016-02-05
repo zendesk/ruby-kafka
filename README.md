@@ -86,6 +86,16 @@ The API should now have stabilized and the library should be battle tested enoug
 
 The Consumer API defined by Kafka 0.9 will be implemented.
 
+## Why a new library?
+
+There are a few existing Kafka clients in Ruby:
+
+* [Poseidon](https://github.com/bpot/poseidon) seems to work for Kafka 0.8, but the project has is unmaintained and has known issues.
+* [Hermann](https://github.com/reiseburo/hermann) wraps the C library [librdkafka](https://github.com/edenhill/librdkafka) and seems to be very efficient, but its API and mode of operation is too intrusive for our needs.
+* [jruby-kafka](https://github.com/joekiller/jruby-kafka) is a great option if you're running on JRuby.
+
+We needed a robust client that could be used from our existing Ruby apps, allowed our Ops to monitor operation, and provided flexible error handling. There didn't exist such a client, hence this project. 
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/zendesk/ruby-kafka.
