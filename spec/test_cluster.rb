@@ -11,7 +11,11 @@ class TestCluster
   def initialize
     [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
       print "Fetching image #{image}... "
-      Docker::Image.create("fromImage" => image)
+
+      unless Docker::Image.exist?(image)
+        Docker::Image.create("fromImage" => image)
+      end
+
       puts "OK"
     end
 
