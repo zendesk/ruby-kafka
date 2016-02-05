@@ -14,17 +14,21 @@ module Kafka
     #
     # @param logger [Logger]
     #
+    # @param connect_timeout [Integer, nil] the timeout setting for connecting
+    #   to brokers. See {BrokerPool#initialize}.
+    #
     # @param socket_timeout [Integer, nil] the timeout setting for socket
     #   connections. See {BrokerPool#initialize}.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger:, socket_timeout: nil)
+    def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger:, connect_timeout: nil, socket_timeout: nil)
       @logger = logger
 
       @broker_pool = BrokerPool.new(
         seed_brokers: seed_brokers,
         client_id: client_id,
         logger: logger,
+        connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
       )
     end

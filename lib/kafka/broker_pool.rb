@@ -15,10 +15,12 @@ module Kafka
     # @param seed_brokers [Array<String>]
     # @param client_id [String]
     # @param logger [Logger]
+    # @param connect_timeout [Integer, nil] see {Connection#initialize}.
     # @param socket_timeout [Integer, nil] see {Connection#initialize}.
-    def initialize(seed_brokers:, client_id:, logger:, socket_timeout: nil)
+    def initialize(seed_brokers:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
       @client_id = client_id
       @logger = logger
+      @connect_timeout = connect_timeout
       @socket_timeout = socket_timeout
       @brokers = {}
       @seed_brokers = seed_brokers
@@ -113,6 +115,7 @@ module Kafka
         port: broker_info.port,
         node_id: broker_info.node_id,
         client_id: @client_id,
+        connect_timeout: @connect_timeout,
         socket_timeout: @socket_timeout,
         logger: @logger,
       )
