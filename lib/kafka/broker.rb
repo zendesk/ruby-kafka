@@ -27,22 +27,7 @@ module Kafka
       request = Protocol::TopicMetadataRequest.new(**options)
       response_class = Protocol::MetadataResponse
 
-      response = @connection.send_request(request, response_class)
-
-      response.topics.each do |topic|
-        Protocol.handle_error(topic.topic_error_code)
-
-        topic.partitions.each do |partition|
-          begin
-            Protocol.handle_error(partition.partition_error_code)
-          rescue ReplicaNotAvailable
-            # This error can be safely ignored per the protocol specification.
-            @logger.warn "Replica not available for #{topic.topic_name}/#{partition.partition_id}"
-          end
-        end
-      end
-
-      response
+      @connection.send_request(request, response_class)
     end
 
     def produce(**options)

@@ -50,7 +50,7 @@ module Kafka
 
         attr_reader :partition_error_code
 
-        def initialize(partition_error_code:, partition_id:, leader:, replicas:, isr:)
+        def initialize(partition_error_code:, partition_id:, leader:, replicas: [], isr: [])
           @partition_error_code = partition_error_code
           @partition_id = partition_id
           @leader = leader
@@ -68,7 +68,7 @@ module Kafka
 
         attr_reader :topic_error_code
 
-        def initialize(topic_error_code:, topic_name:, partitions:)
+        def initialize(topic_error_code: 0, topic_name:, partitions:)
           @topic_error_code = topic_error_code
           @topic_name = topic_name
           @partitions = partitions
@@ -96,13 +96,21 @@ module Kafka
         topic_info = @topics.find {|t| t.topic_name == topic }
 
         if topic_info.nil?
-          raise "no topic #{topic}"
+          raise UnknownTopicOrPartition, "no topic #{topic}"
         end
+
+        Protocol.handle_error(topic_info.topic_error_code)
 
         partition_info = topic_info.partitions.find {|p| p.partition_id == partition }
 
         if partition_info.nil?
-          raise "no partition #{partition} in topic #{topic}"
+          raise UnknownTopicOrPartition, "no partition #{partition} in topic #{topic}"
+        end
+
+        begin
+          Protocol.handle_error(partition_info.partition_error_code)
+        rescue ReplicaNotAvailable
+          # This error can be safely ignored per the protocol specification.
         end
 
         partition_info.leader
