@@ -1,4 +1,10 @@
 # Reads lines from STDIN, writing them to Kafka.
+#
+# You need to define the environment variable KAFKA_BROKERS for this
+# to work, e.g.
+#
+#     export KAFKA_BROKERS=localhost:9092
+#
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
@@ -9,7 +15,7 @@ brokers = ENV.fetch("KAFKA_BROKERS").split(",")
 
 # Make sure to create this topic in your Kafka cluster or configure the
 # cluster to auto-create topics.
-topic = "random-messages"
+topic = "text"
 
 kafka = Kafka.new(
   seed_brokers: brokers,

@@ -5,12 +5,19 @@ module Kafka
     # from it. The Kafka protocol is not self-describing, so a client must call
     # these methods in just the right order for things to work.
     class Decoder
+      def self.from_string(str)
+        new(StringIO.new(str))
+      end
 
       # Initializes a new decoder.
       #
       # @param io [IO] an object that acts as an IO.
       def initialize(io)
         @io = io
+      end
+
+      def eof?
+        @io.eof?
       end
 
       # Decodes an 8-bit integer from the IO object.
