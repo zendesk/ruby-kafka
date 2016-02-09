@@ -40,9 +40,17 @@ module Kafka
       def offset_for(topic, partition)
         topic_info = @topics.find {|t| t.name == topic }
 
+        if topic_info.nil?
+          raise UnknownTopicOrPartition, "Unknown topic #{topic}"
+        end
+
         partition_info = topic_info
           .partition_offsets
           .find {|p| p.partition == partition }
+
+        if partition_info.nil?
+          raise UnknownTopicOrPartition, "Unknown partition #{topic}/#{partition}"
+        end
 
         Protocol.handle_error(partition_info.error_code)
 
