@@ -1,7 +1,7 @@
 require "kafka/partitioner"
 require "kafka/message_buffer"
 require "kafka/protocol/message"
-require "kafka/transmission"
+require "kafka/produce_operation"
 
 module Kafka
 
@@ -178,7 +178,7 @@ module Kafka
     def send_messages
       attempt = 0
 
-      transmission = Transmission.new(
+      operation = ProduceOperation.new(
         broker_pool: @broker_pool,
         buffer: @buffer,
         required_acks: @required_acks,
@@ -190,18 +190,18 @@ module Kafka
         @logger.info "Sending #{@buffer.size} messages"
 
         attempt += 1
-        transmission.send_messages
+        operation.execute
 
         if @buffer.empty?
-          @logger.info "Successfully transmitted all messages"
+          @logger.info "Successfully sent all messages"
           break
         elsif attempt <= @max_retries
-          @logger.warn "Failed to transmit all messages, retry #{attempt} of #{@max_retries}"
+          @logger.warn "Failed to send all messages, retry #{attempt} of #{@max_retries}"
           @logger.info "Waiting #{@retry_backoff}s before retrying"
 
           sleep @retry_backoff
         else
-          @logger.error "Failed to transmit all messages; keeping remaining messages in buffer"
+          @logger.error "Failed to send all messages; keeping remaining messages in buffer"
           break
         end
       end

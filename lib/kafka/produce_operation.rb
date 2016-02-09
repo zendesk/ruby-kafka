@@ -1,5 +1,5 @@
 module Kafka
-  class Transmission
+  class ProduceOperation
     def initialize(broker_pool:, buffer:, required_acks:, ack_timeout:, logger:)
       @broker_pool = broker_pool
       @buffer = buffer
@@ -8,7 +8,7 @@ module Kafka
       @logger = logger
     end
 
-    def send_messages
+    def execute
       messages_for_broker = {}
 
       @buffer.each do |topic, partition, messages|
