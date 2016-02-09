@@ -1,6 +1,7 @@
 require "kafka/broker_pool"
 require "kafka/producer"
 require "kafka/fetched_message"
+require "kafka/fetch_operation"
 
 module Kafka
   class Client
@@ -107,40 +108,16 @@ module Kafka
     #
     # @return [Array<Kafka::FetchedMessage>] the messages returned from the broker.
     def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 10, min_bytes: 1, max_bytes: 1048576)
-      broker = @broker_pool.get_leader(topic, partition)
-
-      offset = resolve_offset(topic, partition, offset, broker)
-
-      options = {
-        max_wait_time: max_wait_time * 1000, # Kafka expects ms, not secs
+      operation = FetchOperation.new(
+        broker_pool: @broker_pool,
+        logger: @logger,
         min_bytes: min_bytes,
-        topics: {
-          topic => {
-            partition => {
-              fetch_offset: offset,
-              max_bytes: max_bytes,
-            }
-          }
-        }
-      }
+        max_wait_time: max_wait_time,
+      )
 
-      response = broker.fetch_messages(**options)
+      operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
 
-      response.topics.map {|fetched_topic|
-        fetched_topic.partitions.map {|fetched_partition|
-          Protocol.handle_error(fetched_partition.error_code)
-
-          fetched_partition.messages.map {|offset, message|
-            FetchedMessage.new(
-              value: message.value,
-              key: message.key,
-              topic: fetched_topic.name,
-              partition: fetched_partition.partition,
-              offset: offset,
-            )
-          }
-        }
-      }.flatten
+      operation.execute
     end
 
     # Lists all topics in the cluster.
@@ -152,37 +129,6 @@ module Kafka
 
     def close
       @broker_pool.shutdown
-    end
-
-    private
-
-    def resolve_offset(topic, partition, logical_offset, broker)
-      if logical_offset == :earliest
-        offset = -2
-      elsif logical_offset == :latest
-        offset = -1
-      else
-        offset = logical_offset
-      end
-
-      # Positive offsets don't need resolving.
-      return offset if offset > 0
-
-      @logger.debug "Resolving offset `#{logical_offset}` for #{topic}/#{partition}..."
-
-      response = broker.list_offsets(
-        topics: {
-          topic => [
-            { partition: partition, time: offset, max_offsets: 1 }
-          ]
-        }
-      )
-
-      resolved_offset = response.offset_for(topic, partition)
-
-      @logger.debug "Offset `#{logical_offset}` for #{topic}/#{partition} is #{resolved_offset.inspect}"
-
-      resolved_offset || 0
     end
   end
 end
