@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Daniel Schierbeck"]
   spec.email         = ["daniel.schierbeck@gmail.com"]
 
-  spec.summary       = %q{A client library for the Kafka distributed commit log.}
+  spec.summary       = "A client library for the Kafka distributed commit log."
 
   spec.description   = <<-DESC.gsub(/^    /, "").strip
     A client library for the Kafka distributed commit log.
