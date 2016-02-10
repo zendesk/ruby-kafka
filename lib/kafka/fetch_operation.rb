@@ -88,17 +88,16 @@ module Kafka
       topics.each do |topic, partitions|
         partitions.each do |partition, options|
           offset = options.fetch(:fetch_offset)
+          next if offset >= 0
 
-          if offset < 0
-            @logger.debug "Resolving offset `#{offset}` for #{topic}/#{partition}..."
+          @logger.debug "Resolving offset `#{offset}` for #{topic}/#{partition}..."
 
-            pending_topics[topic] ||= []
-            pending_topics[topic] << {
-              partition: partition,
-              time: offset,
-              max_offsets: 1,
-            }
-          end
+          pending_topics[topic] ||= []
+          pending_topics[topic] << {
+            partition: partition,
+            time: offset,
+            max_offsets: 1,
+          }
         end
       end
 
