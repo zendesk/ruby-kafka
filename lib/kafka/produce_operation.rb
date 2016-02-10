@@ -1,4 +1,24 @@
 module Kafka
+  # A produce operation attempts to send all messages in a buffer to the Kafka cluster.
+  # Since topics and partitions are spread among all brokers in a cluster, this usually
+  # involves sending requests to several or all of the brokers.
+  #
+  # ## Instrumentation
+  #
+  # When executing the operation, an `append_message_set.kafka` notification will be
+  # emitted for each message set that was successfully appended to a topic partition.
+  # The following keys will be found in the payload:
+  #
+  # * `:topic` — the topic that was written to.
+  # * `:partition` — the partition that the message set was appended to.
+  # * `:offset` — the offset of the first message in the message set.
+  # * `:message_count` — the number of messages that were appended.
+  #
+  # If there was an error appending the message set, the key `:exception` will be set
+  # in the payload. In that case, the message set will most likely not have been
+  # appended and will possibly be retried later. Check this key before reporting the
+  # operation as successful.
+  #
   class ProduceOperation
     def initialize(broker_pool:, buffer:, required_acks:, ack_timeout:, logger:)
       @broker_pool = broker_pool
@@ -22,6 +42,8 @@ module Kafka
 
       messages_for_broker.each do |broker, message_set|
         begin
+          @logger.info "Sending #{message_set.size} messages to #{broker}"
+
           response = broker.produce(
             messages_for_topics: message_set.to_h,
             required_acks: @required_acks,
@@ -44,9 +66,20 @@ module Kafka
       response.each_partition do |topic_info, partition_info|
         topic = topic_info.topic
         partition = partition_info.partition
+        offset = partition_info.offset
+        message_count = @buffer.message_count_for_partition(topic: topic, partition: partition)
 
         begin
-          Protocol.handle_error(partition_info.error_code)
+          payload = {
+            topic: topic,
+            partition: partition,
+            offset: offset,
+            message_count: message_count,
+          }
+
+          Instrumentation.instrument("append_message_set.kafka", payload) do
+            Protocol.handle_error(partition_info.error_code)
+          end
         rescue Kafka::CorruptMessage
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition
@@ -64,8 +97,7 @@ module Kafka
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          offset = partition_info.offset
-          @logger.info "Successfully sent messages for #{topic}/#{partition}; new offset is #{offset}"
+          @logger.info "Successfully appended #{message_count} messages to #{topic}/#{partition} at offset #{offset}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)
