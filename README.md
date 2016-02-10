@@ -94,7 +94,7 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 The current stable release is v0.1. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
 
-The API may still be changed in v0.2. 
+The API may still be changed in v0.2.
 
 ### v0.2: Stable Producer API
 
@@ -114,7 +114,7 @@ There are a few existing Kafka clients in Ruby:
 * [Hermann](https://github.com/reiseburo/hermann) wraps the C library [librdkafka](https://github.com/edenhill/librdkafka) and seems to be very efficient, but its API and mode of operation is too intrusive for our needs.
 * [jruby-kafka](https://github.com/joekiller/jruby-kafka) is a great option if you're running on JRuby.
 
-We needed a robust client that could be used from our existing Ruby apps, allowed our Ops to monitor operation, and provided flexible error handling. There didn't exist such a client, hence this project. 
+We needed a robust client that could be used from our existing Ruby apps, allowed our Ops to monitor operation, and provided flexible error handling. There didn't exist such a client, hence this project.
 
 ## Contributing
 
