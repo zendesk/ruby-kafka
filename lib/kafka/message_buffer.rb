@@ -50,6 +50,10 @@ module Kafka
       @buffer.delete(topic) if @buffer[topic].empty?
     end
 
+    def message_count_for_partition(topic:, partition:)
+      buffer_for(topic, partition).count
+    end
+
     # Clears messages across all topics and partitions.
     #
     # @return [nil]
