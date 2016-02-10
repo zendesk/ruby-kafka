@@ -18,6 +18,10 @@ module Kafka
     # @param connect_timeout [Integer, nil] see {Connection#initialize}.
     # @param socket_timeout [Integer, nil] see {Connection#initialize}.
     def initialize(seed_brokers:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
+      if seed_brokers.empty?
+        raise ArgumentError, "At least one seed broker must be configured"
+      end
+
       @client_id = client_id
       @logger = logger
       @connect_timeout = connect_timeout
