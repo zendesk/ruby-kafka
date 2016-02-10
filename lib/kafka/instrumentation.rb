@@ -6,7 +6,7 @@ module Kafka
   end
 
   if defined?(ActiveSupport::Notifications)
-    Instrumentation = ActiveSupport::Notifications 
+    Instrumentation = ActiveSupport::Notifications
   else
     Instrumentation = NullInstrumentation
   end

@@ -40,7 +40,7 @@ module Kafka
 
     def execute
       topics_by_broker = {}
-      
+
       @topics.each do |topic, partitions|
         partitions.each do |partition, options|
           broker = @broker_pool.get_leader(topic, partition)
