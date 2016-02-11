@@ -152,6 +152,9 @@ module Kafka
         raise BufferOverflow, "Max buffer size #{@max_buffer_size} exceeded"
       end
 
+      # Make sure we get metadata for this topic.
+      @broker_pool.add_target_topic(topic)
+
       if partition.nil?
         # If no explicit partition key is specified we use the message key instead.
         partition_key ||= key

@@ -29,6 +29,15 @@ module Kafka
       @brokers = {}
       @seed_brokers = seed_brokers
       @cluster_info = nil
+      @target_topics = []
+    end
+
+    def add_target_topic(topic)
+      unless @target_topics.include?(topic)
+        @logger.info "New topic added to target list: #{topic}"
+        @target_topics.push(topic)
+        mark_as_stale!
+      end
     end
 
     def mark_as_stale!
@@ -96,7 +105,7 @@ module Kafka
             logger: @logger,
           )
 
-          cluster_info = broker.fetch_metadata
+          cluster_info = broker.fetch_metadata(topics: @target_topics)
 
           @logger.info "Initialized broker pool with brokers: #{cluster_info.brokers.inspect}"
 
