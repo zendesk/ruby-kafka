@@ -24,6 +24,10 @@ Or install it yourself as:
 
 ## Usage
 
+Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release.
+
+An example of a fairly simple Kafka producer:
+
 ```ruby
 require "kafka"
 
