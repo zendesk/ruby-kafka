@@ -15,7 +15,7 @@ describe Kafka::Producer do
 
   before do
     allow(broker_pool).to receive(:mark_as_stale!)
-    allow(broker_pool).to receive(:add_target_topic).with("greetings")
+    allow(broker_pool).to receive(:add_target_topics)
 
     allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
     allow(broker_pool).to receive(:get_leader).with("greetings", 1) { broker2 }
@@ -27,21 +27,35 @@ describe Kafka::Producer do
     end
 
     it "writes the message to the buffer" do
-      partition = producer.produce("hello", key: "greeting1", topic: "greetings")
+      producer.produce("hello", key: "greeting1", topic: "greetings")
 
-      expect(partition).to eq 3
+      expect(producer.buffer_size).to eq 1
     end
 
     it "allows explicitly setting the partition" do
-      partition = producer.produce("hello", key: "greeting1", topic: "greetings", partition: 1)
+      producer.produce("hello", key: "greeting1", topic: "greetings", partition: 1)
 
-      expect(partition).to eq 1
+      expect(producer.buffer_size).to eq 1
     end
 
     it "allows implicitly setting the partition using a partition key" do
-      partition = producer.produce("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
+      producer.produce("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
 
-      expect(partition).to eq 0
+      expect(producer.buffer_size).to eq 1
+    end
+
+    it "works even when Kafka is unavailable" do
+      allow(broker1).to receive(:produce).and_raise(Kafka::Error)
+      allow(broker2).to receive(:produce).and_raise(Kafka::Error)
+
+      producer.produce("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
+
+      expect(producer.buffer_size).to eq 1
+
+      # Only when we try to send the messages to Kafka do we experience the issue.
+      expect {
+        producer.send_messages
+      }.to raise_exception(Kafka::Error)
     end
   end
 
