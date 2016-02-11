@@ -20,8 +20,8 @@ module Kafka
   # operation as successful.
   #
   class ProduceOperation
-    def initialize(broker_pool:, buffer:, required_acks:, ack_timeout:, logger:)
-      @broker_pool = broker_pool
+    def initialize(cluster:, buffer:, required_acks:, ack_timeout:, logger:)
+      @cluster = cluster
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
@@ -32,7 +32,7 @@ module Kafka
       messages_for_broker = {}
 
       @buffer.each do |topic, partition, messages|
-        broker = @broker_pool.get_leader(topic, partition)
+        broker = @cluster.get_leader(topic, partition)
 
         @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
 
@@ -55,7 +55,7 @@ module Kafka
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
           # Mark the broker pool as stale in order to force a cluster metadata refresh.
-          @broker_pool.mark_as_stale!
+          @cluster.mark_as_stale!
         end
       end
     end
@@ -86,10 +86,10 @@ module Kafka
           @logger.error "Unknown topic or partition #{topic}/#{partition}"
         rescue Kafka::LeaderNotAvailable
           @logger.error "Leader currently not available for #{topic}/#{partition}"
-          @broker_pool.mark_as_stale!
+          @cluster.mark_as_stale!
         rescue Kafka::NotLeaderForPartition
           @logger.error "Broker not currently leader for #{topic}/#{partition}"
-          @broker_pool.mark_as_stale!
+          @cluster.mark_as_stale!
         rescue Kafka::RequestTimedOut
           @logger.error "Timed out while writing to #{topic}/#{partition}"
         rescue Kafka::NotEnoughReplicas

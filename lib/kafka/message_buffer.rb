@@ -29,6 +29,11 @@ module Kafka
       @buffer.empty?
     end
 
+    # @return [Array<String>] the list of topics with buffered messages.
+    def topics
+      @buffer.keys
+    end
+
     def each
       @buffer.each do |topic, messages_for_topic|
         messages_for_topic.each do |partition, messages_for_partition|

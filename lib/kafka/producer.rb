@@ -17,7 +17,7 @@ module Kafka
   #     producer = kafka.get_producer
   #
   # This is done in order to share a logger as well as a pool of broker connections across
-  # different producers. This also means that you don't need to pass the `broker_pool` and
+  # different producers. This also means that you don't need to pass the `cluster` and
   # `logger` options to `#get_producer`. See {#initialize} for the list of other options
   # you can pass in.
   #
@@ -86,8 +86,7 @@ module Kafka
 
     # Initializes a new Producer.
     #
-    # @param broker_pool [BrokerPool] the broker pool representing the cluster.
-    #   Typically passed in for you.
+    # @param cluster [Cluster]
     #
     # @param logger [Logger] the logger that should be used. Typically passed
     #   in for you.
@@ -107,8 +106,8 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(broker_pool:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
-      @broker_pool = broker_pool
+    def initialize(cluster:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+      @cluster = cluster
       @logger = logger
       @required_acks = required_acks
       @ack_timeout = ack_timeout
@@ -155,7 +154,7 @@ module Kafka
       if partition.nil?
         # If no explicit partition key is specified we use the message key instead.
         partition_key ||= key
-        partitioner = Partitioner.new(@broker_pool.partitions_for(topic))
+        partitioner = Partitioner.new(@cluster.partitions_for(topic))
         partition = partitioner.partition_for_key(partition_key)
       end
 
@@ -179,7 +178,7 @@ module Kafka
       attempt = 0
 
       operation = ProduceOperation.new(
-        broker_pool: @broker_pool,
+        cluster: @cluster,
         buffer: @buffer,
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,
@@ -231,7 +230,7 @@ module Kafka
     #
     # @return [nil]
     def shutdown
-      @broker_pool.shutdown
+      @cluster.shutdown
     end
   end
 end

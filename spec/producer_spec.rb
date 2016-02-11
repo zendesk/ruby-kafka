@@ -2,11 +2,11 @@ describe Kafka::Producer do
   let(:logger) { Logger.new(LOG) }
   let(:broker1) { FakeBroker.new }
   let(:broker2) { FakeBroker.new }
-  let(:broker_pool) { double(:broker_pool) }
+  let(:cluster) { double(:cluster) }
 
   let(:producer) {
     Kafka::Producer.new(
-      broker_pool: broker_pool,
+      cluster: cluster,
       logger: logger,
       max_retries: 2,
       retry_backoff: 0,
@@ -14,15 +14,15 @@ describe Kafka::Producer do
   }
 
   before do
-    allow(broker_pool).to receive(:mark_as_stale!)
+    allow(cluster).to receive(:mark_as_stale!)
 
-    allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
-    allow(broker_pool).to receive(:get_leader).with("greetings", 1) { broker2 }
+    allow(cluster).to receive(:get_leader).with("greetings", 0) { broker1 }
+    allow(cluster).to receive(:get_leader).with("greetings", 1) { broker2 }
   end
 
   describe "#produce" do
     before do
-      allow(broker_pool).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
+      allow(cluster).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
     end
 
     it "writes the message to the buffer" do
@@ -137,7 +137,7 @@ describe Kafka::Producer do
 
     it "clears the buffer after sending messages if no acknowledgements are required" do
       producer = Kafka::Producer.new(
-        broker_pool: broker_pool,
+        cluster: cluster,
         logger: logger,
         required_acks: 0, # <-- this is the important bit.
         max_retries: 2,
@@ -153,7 +153,7 @@ describe Kafka::Producer do
 
     it "raises BufferOverflow if the max buffer size is exceeded" do
       producer = Kafka::Producer.new(
-        broker_pool: broker_pool,
+        cluster: cluster,
         logger: logger,
         max_buffer_size: 2, # <-- this is the important bit.
       )

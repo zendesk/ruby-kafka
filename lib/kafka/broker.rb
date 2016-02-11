@@ -4,11 +4,6 @@ require "kafka/protocol"
 
 module Kafka
   class Broker
-    def self.connect(node_id: nil, logger:, **options)
-      connection = Connection.new(logger: logger, **options)
-      new(connection: connection, node_id: node_id, logger: logger)
-    end
-
     def initialize(connection:, node_id: nil, logger:)
       @connection = connection
       @node_id = node_id
