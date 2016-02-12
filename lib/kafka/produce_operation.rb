@@ -39,8 +39,8 @@ module Kafka
 
           messages_for_broker[broker] ||= MessageBuffer.new
           messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
-        rescue LeaderNotAvailable
-          @logger.error "Leader not available for #{topic}/#{partition}"
+        rescue Kafka::Error => e
+          @logger.error "Could not connect to leader for partition #{topic}/#{partition}: #{e}"
 
           # We can't send the messages right now, so we'll just keep them in the buffer.
           # We'll mark the broker pool as stale in order to force a metadata refresh.

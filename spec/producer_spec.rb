@@ -107,6 +107,24 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 0
     end
 
+    it "handles when there's a connection error when fetching topic metadata" do
+      allow(broker_pool).to receive(:get_leader).and_raise(Kafka::ConnectionError)
+
+      producer.produce("hello1", topic: "greetings", partition: 0)
+
+      expect { producer.send_messages }.to raise_error(Kafka::FailedToSendMessages)
+
+      # The producer was not able to write the message, but it's still buffered.
+      expect(producer.buffer_size).to eq 1
+
+      # Clear the error.
+      allow(broker_pool).to receive(:get_leader) { broker1 }
+
+      producer.send_messages
+
+      expect(producer.buffer_size).to eq 0
+    end
+
     it "clears the buffer after sending messages if no acknowledgements are required" do
       producer = Kafka::Producer.new(
         broker_pool: broker_pool,
