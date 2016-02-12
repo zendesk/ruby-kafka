@@ -67,7 +67,7 @@ describe "Producer API", functional: true do
 
   example "handle a broker going down after the initial discovery" do
     begin
-      producer = kafka.get_producer(max_retries: 3, retry_backoff: 5)
+      producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
 
       KAFKA_CLUSTER.kill_kafka_broker(0)
 
