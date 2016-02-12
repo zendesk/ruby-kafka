@@ -68,6 +68,16 @@ producer.send_messages
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
 
+### Buffering and Error Handling
+
+The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
+
+Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::FailedToSendMessages` is raised from `Kafka::Producer#send_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#send_messages` will still attempt to send them.
+
+Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#get_producer` in order to configure this.
+
+A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#send_messages` immediately after `#produce`.
+
 ### Understanding Timeouts
 
 It's important to understand how timeouts work if you have a latency sensitive application. This library allows configuring timeouts on different levels:
