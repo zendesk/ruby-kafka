@@ -4,11 +4,6 @@ module Kafka
 
   # Assigns partitions to messages.
   class Partitioner
-    def initialize(partitions)
-      raise ArgumentError if partitions.empty?
-
-      @partitions = partitions
-    end
 
     # Assigns a partition number based on a key.
     #
@@ -17,13 +12,16 @@ module Kafka
     # number of partitions doesn't change, the same key will always be assigned
     # to the same partition.
     #
+    # @param partition_count [Integer] the number of partitions in the topic.
     # @param key [String, nil] the key to base the partition assignment on, or nil.
     # @return [Integer] the partition number.
-    def partition_for_key(key)
+    def self.partition_for_key(partition_count, key)
+      raise ArgumentError if partition_count == 0
+
       if key.nil?
-        rand(@partitions.count)
+        rand(partition_count)
       else
-        Zlib.crc32(key) % @partitions.count
+        Zlib.crc32(key) % partition_count
       end
     end
   end
