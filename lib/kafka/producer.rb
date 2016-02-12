@@ -270,6 +270,7 @@ module Kafka
       end
     rescue Kafka::Error => e
       @logger.error "Failed to assign pending message to a partition: #{e}"
+      @broker_pool.mark_as_stale!
     end
   end
 end
