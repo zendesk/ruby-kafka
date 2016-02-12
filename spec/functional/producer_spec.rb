@@ -53,12 +53,28 @@ describe "Producer API", functional: true do
     producer.send_messages
   end
 
-  example "writing to a topic that doesn't yet exist" do
+  example "writing to a an explicit partition of a topic that doesn't yet exist" do
     topic = "topic#{rand(1000)}"
 
     producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic, partition: 0)
     producer.send_messages
+
+    expect(producer.buffer_size).to eq 0
+
+    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+    expect(messages.last.value).to eq "hello"
+  end
+
+  example "writing to a an unspecified partition of a topic that doesn't yet exist" do
+    topic = "topic#{rand(1000)}"
+
+    producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
+    producer.produce("hello", topic: topic)
+    producer.send_messages
+
+    expect(producer.buffer_size).to eq 0
 
     messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
 
