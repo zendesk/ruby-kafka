@@ -120,7 +120,7 @@ module Kafka
 
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
-          @logger.info "Initialized broker pool with brokers: #{cluster_info.brokers.inspect}"
+          @logger.info "Discovered cluster metadata; nodes: #{cluster_info.brokers.join(', ')}"
 
           return cluster_info
         rescue Error => e

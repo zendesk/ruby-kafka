@@ -40,7 +40,7 @@ module Kafka
           @port = port
         end
 
-        def inspect
+        def to_s
           "#{host}:#{port} (node_id=#{node_id})"
         end
       end
