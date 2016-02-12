@@ -1,7 +1,7 @@
 require "kafka/partitioner"
 require "kafka/message_buffer"
-require "kafka/protocol/message"
 require "kafka/produce_operation"
+require "kafka/pending_message"
 
 module Kafka
 
@@ -115,7 +115,12 @@ module Kafka
       @max_retries = max_retries
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
+
+      # A buffer organized by topic/partition.
       @buffer = MessageBuffer.new
+
+      # Messages added by `#produce` but not yet assigned a partition.
+      @pending_messages = []
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
@@ -152,21 +157,15 @@ module Kafka
         raise BufferOverflow, "Max buffer size #{@max_buffer_size} exceeded"
       end
 
-      # Make sure we get metadata for this topic.
-      @broker_pool.add_target_topic(topic)
+      @pending_messages << PendingMessage.new(
+        value: value,
+        key: key,
+        topic: topic,
+        partition: partition,
+        partition_key: partition_key,
+      )
 
-      if partition.nil?
-        # If no explicit partition key is specified we use the message key instead.
-        partition_key ||= key
-        partitioner = Partitioner.new(@broker_pool.partitions_for(topic))
-        partition = partitioner.partition_for_key(partition_key)
-      end
-
-      message = Protocol::Message.new(key: key, value: value)
-
-      @buffer.write(message, topic: topic, partition: partition)
-
-      partition
+      nil
     end
 
     # Sends all buffered messages to the Kafka brokers.
@@ -181,6 +180,10 @@ module Kafka
     def send_messages
       attempt = 0
 
+      # Make sure we get metadata for this topic.
+      target_topics = @pending_messages.map(&:topic).uniq
+      @broker_pool.add_target_topics(target_topics)
+
       operation = ProduceOperation.new(
         broker_pool: @broker_pool,
         buffer: @buffer,
@@ -193,9 +196,10 @@ module Kafka
         @logger.info "Sending #{@buffer.size} messages"
 
         attempt += 1
+        assign_partitions!
         operation.execute
 
-        if @buffer.empty?
+        if @pending_messages.empty? && @buffer.empty?
           @logger.info "Successfully sent all messages"
           break
         elsif attempt <= @max_retries
@@ -227,7 +231,7 @@ module Kafka
     #
     # @return [Integer] buffer size.
     def buffer_size
-      @buffer.size
+      @pending_messages.size + @buffer.size
     end
 
     # Closes all connections to the brokers.
@@ -235,6 +239,38 @@ module Kafka
     # @return [nil]
     def shutdown
       @broker_pool.shutdown
+    end
+
+    private
+
+    def assign_partitions!
+      until @pending_messages.empty?
+        # We want to keep the message in the first-stage buffer in case there's an error.
+        message = @pending_messages.first
+
+        partition = message.partition
+
+        if partition.nil?
+          # If no explicit partition key is specified we use the message key instead.
+          partition_key = message.partition_key || message.key
+
+          partition_count = @broker_pool.partitions_for(message.topic)
+          partitioner = Partitioner.new(partition_count)
+          partition = partitioner.partition_for_key(partition_key)
+        end
+
+        @buffer.write(
+          value: message.value,
+          key: message.key,
+          topic: message.topic,
+          partition: partition,
+        )
+
+        # Now it's safe to remove the message from the first-stage buffer.
+        @pending_messages.shift
+      end
+    rescue Kafka::Error => e
+      @logger.error "Failed to assign pending message to a partition: #{e}"
     end
   end
 end

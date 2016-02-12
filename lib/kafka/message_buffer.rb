@@ -1,3 +1,5 @@
+require "kafka/protocol/message"
+
 module Kafka
 
   # Buffers messages for specific topics/partitions.
@@ -11,8 +13,9 @@ module Kafka
       @size = 0
     end
 
-    def write(message, topic:, partition:)
+    def write(value:, key:, topic:, partition:)
       @size += 1
+      message = Protocol::Message.new(key: key, value: value)
       buffer_for(topic, partition) << message
     end
 

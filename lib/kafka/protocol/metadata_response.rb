@@ -131,6 +131,8 @@ module Kafka
           raise UnknownTopicOrPartition, "unknown topic #{topic_name}"
         end
 
+        Protocol.handle_error(topic.topic_error_code)
+
         topic.partitions
       end
 

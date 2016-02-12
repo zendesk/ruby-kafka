@@ -1,3 +1,4 @@
+require "set"
 require "kafka/broker"
 
 module Kafka
@@ -29,19 +30,31 @@ module Kafka
       @brokers = {}
       @seed_brokers = seed_brokers
       @cluster_info = nil
-      @target_topics = []
+
+      # This is the set of topics we need metadata for. If empty, metadata for
+      # all topics will be fetched.
+      @target_topics = Set.new
     end
 
-    def add_target_topic(topic)
-      unless @target_topics.include?(topic)
-        @logger.info "New topic added to target list: #{topic}"
-        @target_topics.push(topic)
-        mark_as_stale!
+    def add_target_topics(topics)
+      new_topics = @target_topics.difference(topics)
+
+      unless new_topics.empty?
+        @logger.info "New topics added to target list: #{new_topics.join(', ')}"
+
+        @target_topics.merge(new_topics)
+
+        refresh_metadata!
       end
     end
 
     def mark_as_stale!
       @cluster_info = nil
+    end
+
+    def refresh_metadata!
+      mark_as_stale!
+      cluster_info
     end
 
     # Finds the broker acting as the leader of the given topic and partition.
