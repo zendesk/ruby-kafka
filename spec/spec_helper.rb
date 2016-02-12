@@ -10,6 +10,6 @@ Dotenv.load
 LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new
 
 RSpec.configure do |config|
-  config.filter_run_excluding functional: true, performance: true
+  config.filter_run_excluding functional: true, performance: true, fuzz: true
   config.include RSpec::Benchmark::Matchers
 end
