@@ -8,7 +8,7 @@ module Kafka
   # Kafka protocol specification.
   #
   # See https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
-  class ProtocolError < StandardError
+  class ProtocolError < Error
   end
 
   # This indicates that a message contents does not match its CRC.
