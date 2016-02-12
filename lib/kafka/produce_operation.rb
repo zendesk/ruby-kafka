@@ -105,7 +105,7 @@ module Kafka
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          @logger.info "Successfully appended #{message_count} messages to #{topic}/#{partition} at offset #{offset}"
+          @logger.debug "Successfully appended #{message_count} messages to #{topic}/#{partition} at offset #{offset}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)

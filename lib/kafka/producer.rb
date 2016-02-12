@@ -193,18 +193,14 @@ module Kafka
       )
 
       loop do
-        @logger.info "Sending #{buffer_size} messages"
-
         attempt += 1
         assign_partitions!
         operation.execute
 
         if @pending_messages.empty? && @buffer.empty?
-          @logger.info "Successfully sent all messages"
           break
         elsif attempt <= @max_retries
-          @logger.warn "Failed to send all messages, retry #{attempt} of #{@max_retries}"
-          @logger.info "Waiting #{@retry_backoff}s before retrying"
+          @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
 
           sleep @retry_backoff
         else

@@ -88,8 +88,6 @@ module Kafka
         wait_for_response(response_class, notification) unless response_class.nil?
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
-      @logger.error "Connection error: #{e}"
-
       close
 
       raise ConnectionError, "Connection error: #{e}"
@@ -98,7 +96,7 @@ module Kafka
     private
 
     def open
-      @logger.info "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
+      @logger.debug "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
       @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
 
