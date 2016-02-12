@@ -5,6 +5,8 @@ module Kafka
   # Assigns partitions to messages.
   class Partitioner
     def initialize(partitions)
+      raise ArgumentError if partitions.empty?
+
       @partitions = partitions
     end
 

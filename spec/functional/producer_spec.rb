@@ -53,6 +53,18 @@ describe "Producer API", functional: true do
     producer.send_messages
   end
 
+  example "writing to a topic that doesn't yet exist" do
+    topic = "topic#{rand(1000)}"
+
+    producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
+    producer.produce("hello", topic: topic, partition: 0)
+    producer.send_messages
+
+    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+    expect(messages.last.value).to eq "hello"
+  end
+
   example "handle a broker going down after the initial discovery" do
     begin
       producer = kafka.get_producer(max_retries: 3, retry_backoff: 5)

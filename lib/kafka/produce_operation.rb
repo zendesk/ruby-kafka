@@ -32,12 +32,20 @@ module Kafka
       messages_for_broker = {}
 
       @buffer.each do |topic, partition, messages|
-        broker = @broker_pool.get_leader(topic, partition)
+        begin
+          broker = @broker_pool.get_leader(topic, partition)
 
-        @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
+          @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
 
-        messages_for_broker[broker] ||= MessageBuffer.new
-        messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
+          messages_for_broker[broker] ||= MessageBuffer.new
+          messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
+        rescue LeaderNotAvailable
+          @logger.error "Leader not available for #{topic}/#{partition}"
+
+          # We can't send the messages right now, so we'll just keep them in the buffer.
+          # We'll mark the broker pool as stale in order to force a metadata refresh.
+          @broker_pool.mark_as_stale!
+        end
       end
 
       messages_for_broker.each do |broker, message_set|

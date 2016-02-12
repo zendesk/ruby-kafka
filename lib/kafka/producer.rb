@@ -193,7 +193,7 @@ module Kafka
       )
 
       loop do
-        @logger.info "Sending #{@buffer.size} messages"
+        @logger.info "Sending #{buffer_size} messages"
 
         attempt += 1
         assign_partitions!
