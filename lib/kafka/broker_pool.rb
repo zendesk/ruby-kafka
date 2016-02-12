@@ -37,10 +37,10 @@ module Kafka
     end
 
     def add_target_topics(topics)
-      new_topics = @target_topics.difference(topics)
+      new_topics = Set.new(topics) - @target_topics
 
       unless new_topics.empty?
-        @logger.info "New topics added to target list: #{new_topics.join(', ')}"
+        @logger.info "New topics added to target list: #{new_topics.to_a.join(', ')}"
 
         @target_topics.merge(new_topics)
 
@@ -105,7 +105,7 @@ module Kafka
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
       @seed_brokers.each do |node|
-        @logger.info "Trying to initialize broker pool from node #{node}"
+        @logger.info "Fetching cluster metadata from #{node}"
 
         begin
           host, port = node.split(":", 2)
