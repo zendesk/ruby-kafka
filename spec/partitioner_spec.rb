@@ -1,5 +1,5 @@
-describe Kafka::Partitioner, "#partition_for_key" do
-  let(:partitioner) { Kafka::Partitioner }
+describe Kafka::DefaultPartitioner, "#partition_for_key" do
+  let(:partitioner) { Kafka::DefaultPartitioner }
 
   it "deterministically returns a partition number for a given key and number of partitions" do
     partition = partitioner.partition_for_key(3, "yolo")

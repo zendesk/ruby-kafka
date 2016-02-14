@@ -5,6 +5,7 @@ describe Kafka::Producer do
   let(:broker1) { FakeBroker.new }
   let(:broker2) { FakeBroker.new }
   let(:broker_pool) { double(:broker_pool) }
+  let(:partitioner) { nil }
 
   let(:producer) {
     Kafka::Producer.new(
@@ -12,6 +13,7 @@ describe Kafka::Producer do
       logger: logger,
       max_retries: 2,
       retry_backoff: 0,
+      partitioner: partitioner
     )
   }
 
@@ -140,5 +142,53 @@ describe Kafka::Producer do
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0
     end
+
+    context "when a partitioner is not specified" do
+
+      it "uses the partition_key and DefaultPartitioner to determine which partition to publish to" do
+        allow(broker_pool).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
+
+        expect(Kafka::DefaultPartitioner).to receive(:partition_for_key).with(4, "partition_key").and_return(:test_partition)
+        expect(broker_pool).to receive(:get_leader).with("greetings", :test_partition) { broker1 }
+
+        producer.produce("hello1", key: "key", partition_key: "partition_key", topic: "greetings")
+        producer.send_messages
+
+        expect(broker1.messages).to eq ["hello1"]
+      end
+
+      it "uses the key and DefaultPartitioner to determine which partition to publish to when a partition_key is not given" do
+        allow(broker_pool).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
+
+        expect(Kafka::DefaultPartitioner).to receive(:partition_for_key).with(4, "key").and_return(:test_partition)
+        expect(broker_pool).to receive(:get_leader).with("greetings", :test_partition) { broker1 }
+
+        producer.produce("hello1", key: "key", topic: "greetings")
+        producer.send_messages
+
+        expect(broker1.messages).to eq ["hello1"]
+      end
+
+    end
+
   end
+
+  context "when a partitioner is specified" do
+
+    let(:partitioner) { Class.new }
+
+    it "uses the partitioner to determ which partition to publish to" do
+      allow(broker_pool).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }
+
+      expect(partitioner).to receive(:partition_for_key).with(4, "partition_key").and_return(:test_partition)
+      expect(broker_pool).to receive(:get_leader).with("greetings", :test_partition) { broker1 }
+
+      producer.produce("hello1", key: "key", partition_key: "partition_key", topic: "greetings")
+      producer.send_messages
+
+      expect(broker1.messages).to eq ["hello1"]
+    end
+
+  end
+
 end
