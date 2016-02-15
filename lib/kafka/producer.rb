@@ -236,7 +236,7 @@ module Kafka
     #
     # @return [nil]
     def shutdown
-      @cluster.shutdown
+      @cluster.disconnect
     end
 
     private

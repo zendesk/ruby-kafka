@@ -18,10 +18,10 @@ module Kafka
     # @param logger [Logger]
     #
     # @param connect_timeout [Integer, nil] the timeout setting for connecting
-    #   to brokers. See {Cluster#initialize}.
+    #   to brokers. See {BrokerPool#initialize}.
     #
     # @param socket_timeout [Integer, nil] the timeout setting for socket
-    #   connections. See {Cluster#initialize}.
+    #   connections. See {BrokerPool#initialize}.
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger: DEFAULT_LOGGER, connect_timeout: nil, socket_timeout: nil)
@@ -128,7 +128,7 @@ module Kafka
     end
 
     def close
-      @cluster.shutdown
+      @cluster.disconnect
     end
   end
 end
