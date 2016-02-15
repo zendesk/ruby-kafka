@@ -1,17 +1,18 @@
 describe Kafka::Cluster do
   describe "#get_leader" do
     let(:broker) { double(:broker) }
+    let(:broker_pool) { double(:broker_pool) }
 
     let(:cluster) {
       Kafka::Cluster.new(
         seed_brokers: ["test1:9092"],
-        client_id: "test",
+        broker_pool: broker_pool,
         logger: Logger.new(LOG),
       )
     }
 
     before do
-      allow(Kafka::Broker).to receive(:connect) { broker }
+      allow(broker_pool).to receive(:connect) { broker }
       allow(broker).to receive(:disconnect)
     end
 
@@ -73,11 +74,11 @@ describe Kafka::Cluster do
     it "raises ConnectionError if unable to connect to any of the seed brokers" do
       cluster = Kafka::Cluster.new(
         seed_brokers: ["not-there:9092", "not-here:9092"],
-        client_id: "test",
+        broker_pool: broker_pool,
         logger: Logger.new(LOG),
       )
 
-      allow(Kafka::Broker).to receive(:connect).and_raise(Kafka::ConnectionError)
+      allow(broker_pool).to receive(:connect).and_raise(Kafka::ConnectionError)
 
       expect {
         cluster.get_leader("greetings", 42)

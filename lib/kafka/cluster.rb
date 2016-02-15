@@ -14,26 +14,18 @@ module Kafka
     # The cluster will try to fetch cluster metadata from one of the brokers.
     #
     # @param seed_brokers [Array<String>]
-    # @param client_id [String]
+    # @param broker_pool [Kafka::BrokerPool]
     # @param logger [Logger]
-    # @param connect_timeout [Integer, nil] see {Connection#initialize}.
-    # @param socket_timeout [Integer, nil] see {Connection#initialize}.
-    def initialize(seed_brokers:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
+    def initialize(seed_brokers:, broker_pool:, logger:)
       if seed_brokers.empty?
         raise ArgumentError, "At least one seed broker must be configured"
       end
 
       @logger = logger
       @seed_brokers = seed_brokers
+      @broker_pool = broker_pool
       @cluster_info = nil
       @stale = true
-
-      @broker_pool = BrokerPool.new(
-        client_id: client_id,
-        connect_timeout: connect_timeout,
-        socket_timeout: socket_timeout,
-        logger: logger,
-      )
 
       # This is the set of topics we need metadata for. If empty, metadata for
       # all topics will be fetched.

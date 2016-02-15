@@ -27,12 +27,17 @@ module Kafka
     def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger: DEFAULT_LOGGER, connect_timeout: nil, socket_timeout: nil)
       @logger = logger
 
-      @cluster = Cluster.new(
-        seed_brokers: seed_brokers,
+      broker_pool = BrokerPool.new(
         client_id: client_id,
-        logger: logger,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
+        logger: logger,
+      )
+
+      @cluster = Cluster.new(
+        seed_brokers: seed_brokers,
+        broker_pool: broker_pool,
+        logger: logger,
       )
     end
 
