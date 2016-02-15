@@ -3,7 +3,7 @@ require "zlib"
 module Kafka
 
   # Assigns partitions to messages.
-  class Partitioner
+  class DefaultPartitioner
 
     # Assigns a partition number based on a key.
     #

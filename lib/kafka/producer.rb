@@ -1,4 +1,4 @@
-require "kafka/partitioner"
+require "kafka/default_partitioner"
 require "kafka/message_buffer"
 require "kafka/produce_operation"
 require "kafka/pending_message"
@@ -107,7 +107,7 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(broker_pool:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    def initialize(broker_pool:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, partitioner: nil)
       @broker_pool = broker_pool
       @logger = logger
       @required_acks = required_acks
@@ -115,6 +115,7 @@ module Kafka
       @max_retries = max_retries
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
+      @partitioner = partitioner || Kafka::DefaultPartitioner
 
       # A buffer organized by topic/partition.
       @buffer = MessageBuffer.new
@@ -251,7 +252,7 @@ module Kafka
           partition_key = message.partition_key || message.key
 
           partition_count = @broker_pool.partitions_for(message.topic).count
-          partition = Partitioner.partition_for_key(partition_count, partition_key)
+          partition = @partitioner.partition_for_key(partition_count, partition_key)
         end
 
         @buffer.write(
