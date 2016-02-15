@@ -9,9 +9,8 @@ module Kafka
       new(connection: connection, logger: logger)
     end
 
-    def initialize(connection:, logger:)
+    def initialize(connection:)
       @connection = connection
-      @logger = logger
     end
 
     def to_s

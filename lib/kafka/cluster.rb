@@ -1,5 +1,6 @@
 require "set"
-require "kafka/broker_pool"
+require "kafka/connection_pool"
+require "kafka/broker"
 
 module Kafka
 
@@ -14,16 +15,16 @@ module Kafka
     # The cluster will try to fetch cluster metadata from one of the brokers.
     #
     # @param seed_brokers [Array<String>]
-    # @param broker_pool [Kafka::BrokerPool]
+    # @param connection_pool [Kafka::ConnectionPool]
     # @param logger [Logger]
-    def initialize(seed_brokers:, broker_pool:, logger:)
+    def initialize(seed_brokers:, connection_pool:, logger:)
       if seed_brokers.empty?
         raise ArgumentError, "At least one seed broker must be configured"
       end
 
       @logger = logger
       @seed_brokers = seed_brokers
-      @broker_pool = broker_pool
+      @connection_pool = connection_pool
       @cluster_info = nil
       @stale = true
 
@@ -75,7 +76,7 @@ module Kafka
     end
 
     def disconnect
-      @broker_pool.close
+      @connection_pool.close
     end
 
     private
@@ -103,7 +104,8 @@ module Kafka
         begin
           host, port = node.split(":", 2)
 
-          broker = @broker_pool.connect(host, port.to_i)
+          connection = @connection_pool.connect(host, port.to_i)
+          broker = Broker.new(connection: connection)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
           @stale = false
@@ -121,8 +123,9 @@ module Kafka
 
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
+      connection = @connection_pool.connect(info.host, info.port)
 
-      @broker_pool.connect(info.host, info.port)
+      Broker.new(connection: connection)
     end
   end
 end
