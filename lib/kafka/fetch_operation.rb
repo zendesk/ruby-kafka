@@ -39,6 +39,8 @@ module Kafka
     end
 
     def execute
+      @broker_pool.add_target_topics(@topics.keys)
+
       topics_by_broker = {}
 
       @topics.each do |topic, partitions|
@@ -78,6 +80,10 @@ module Kafka
           }
         }
       }
+    rescue Kafka::LeaderNotAvailable
+      @broker_pool.mark_as_stale!
+
+      raise
     end
 
     private
