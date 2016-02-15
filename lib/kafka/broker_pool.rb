@@ -137,7 +137,7 @@ module Kafka
         end
       end
 
-      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.inspect}"
+      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
     end
 
     def connect_to_broker(broker_id)
