@@ -21,12 +21,6 @@ module Kafka
       @connection.close
     end
 
-    def fetch_metadata(**options)
-      request = Protocol::TopicMetadataRequest.new(**options)
-
-      @connection.send_request(request)
-    end
-
     def fetch_messages(**options)
       request = Protocol::FetchRequest.new(**options)
 

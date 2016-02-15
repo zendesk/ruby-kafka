@@ -105,8 +105,8 @@ module Kafka
           host, port = node.split(":", 2)
 
           connection = @connection_pool.connect(host, port.to_i)
-          broker = Broker.new(connection: connection)
-          cluster_info = broker.fetch_metadata(topics: @target_topics)
+          request = Protocol::TopicMetadataRequest.new(topics: @target_topics)
+          cluster_info = connection.send_request(request)
 
           @stale = false
 
