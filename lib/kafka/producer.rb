@@ -247,11 +247,8 @@ module Kafka
         partition = message.partition
 
         if partition.nil?
-          # If no explicit partition key is specified we use the message key instead.
-          partition_key = message.partition_key || message.key
-
           partition_count = @broker_pool.partitions_for(message.topic).count
-          partition = Partitioner.partition_for_key(partition_count, partition_key)
+          partition = Partitioner.partition_for_key(partition_count, message)
         end
 
         @buffer.write(
