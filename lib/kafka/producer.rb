@@ -17,7 +17,7 @@ module Kafka
   #     producer = kafka.get_producer
   #
   # This is done in order to share a logger as well as a pool of broker connections across
-  # different producers. This also means that you don't need to pass the `broker_pool` and
+  # different producers. This also means that you don't need to pass the `cluster` and
   # `logger` options to `#get_producer`. See {#initialize} for the list of other options
   # you can pass in.
   #
@@ -86,8 +86,7 @@ module Kafka
 
     # Initializes a new Producer.
     #
-    # @param broker_pool [BrokerPool] the broker pool representing the cluster.
-    #   Typically passed in for you.
+    # @param cluster [Cluster] the cluster client. Typically passed in for you.
     #
     # @param logger [Logger] the logger that should be used. Typically passed
     #   in for you.
@@ -107,8 +106,8 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(broker_pool:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
-      @broker_pool = broker_pool
+    def initialize(cluster:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+      @cluster = cluster
       @logger = logger
       @required_acks = required_acks
       @ack_timeout = ack_timeout
@@ -182,10 +181,10 @@ module Kafka
 
       # Make sure we get metadata for this topic.
       target_topics = @pending_messages.map(&:topic).uniq
-      @broker_pool.add_target_topics(target_topics)
+      @cluster.add_target_topics(target_topics)
 
       operation = ProduceOperation.new(
-        broker_pool: @broker_pool,
+        cluster: @cluster,
         buffer: @buffer,
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,
@@ -195,7 +194,7 @@ module Kafka
       loop do
         attempt += 1
 
-        @broker_pool.refresh_metadata_if_necessary!
+        @cluster.refresh_metadata_if_necessary!
 
         assign_partitions!
         operation.execute
@@ -237,7 +236,7 @@ module Kafka
     #
     # @return [nil]
     def shutdown
-      @broker_pool.shutdown
+      @cluster.shutdown
     end
 
     private
@@ -250,7 +249,7 @@ module Kafka
         partition = message.partition
 
         if partition.nil?
-          partition_count = @broker_pool.partitions_for(message.topic).count
+          partition_count = @cluster.partitions_for(message.topic).count
           partition = Partitioner.partition_for_key(partition_count, message)
         end
 
@@ -266,7 +265,7 @@ module Kafka
       end
     rescue Kafka::Error => e
       @logger.error "Failed to assign pending message to a partition: #{e}"
-      @broker_pool.mark_as_stale!
+      @cluster.mark_as_stale!
     end
   end
 end

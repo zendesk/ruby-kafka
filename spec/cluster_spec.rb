@@ -1,9 +1,9 @@
-describe Kafka::BrokerPool do
+describe Kafka::Cluster do
   describe "#get_leader" do
     let(:broker) { double(:broker) }
 
-    let(:pool) {
-      Kafka::BrokerPool.new(
+    let(:cluster) {
+      Kafka::Cluster.new(
         seed_brokers: ["test1:9092"],
         client_id: "test",
         logger: Logger.new(LOG),
@@ -41,7 +41,7 @@ describe Kafka::BrokerPool do
       allow(broker).to receive(:fetch_metadata) { metadata }
 
       expect {
-        pool.get_leader("greetings", 42)
+        cluster.get_leader("greetings", 42)
       }.to raise_error Kafka::LeaderNotAvailable
     end
 
@@ -66,12 +66,12 @@ describe Kafka::BrokerPool do
       allow(broker).to receive(:fetch_metadata) { metadata }
 
       expect {
-        pool.get_leader("greetings", 42)
+        cluster.get_leader("greetings", 42)
       }.to raise_error Kafka::InvalidTopic
     end
 
     it "raises ConnectionError if unable to connect to any of the seed brokers" do
-      pool = Kafka::BrokerPool.new(
+      cluster = Kafka::Cluster.new(
         seed_brokers: ["not-there:9092", "not-here:9092"],
         client_id: "test",
         logger: Logger.new(LOG),
@@ -80,7 +80,7 @@ describe Kafka::BrokerPool do
       allow(Kafka::Broker).to receive(:connect).and_raise(Kafka::ConnectionError)
 
       expect {
-        pool.get_leader("greetings", 42)
+        cluster.get_leader("greetings", 42)
       }.to raise_exception(Kafka::ConnectionError)
     end
   end

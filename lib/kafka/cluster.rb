@@ -3,15 +3,15 @@ require "kafka/broker"
 
 module Kafka
 
-  # A broker pool represents the set of brokers in a cluster. It needs to be initialized
-  # with a non-empty list of seed brokers. The first seed broker that the pool can connect
-  # to will be asked for the cluster metadata, which allows the pool to map topic
+  # A broker cluster represents the set of brokers in a cluster. It needs to be initialized
+  # with a non-empty list of seed brokers. The first seed broker that the cluster can connect
+  # to will be asked for the cluster metadata, which allows the cluster to map topic
   # partitions to the current leader for those partitions.
-  class BrokerPool
+  class Cluster
 
-    # Initializes a broker pool with a set of seed brokers.
+    # Initializes a broker cluster with a set of seed brokers.
     #
-    # The pool will try to fetch cluster metadata from one of the brokers.
+    # The cluster will try to fetch cluster metadata from one of the brokers.
     #
     # @param seed_brokers [Array<String>]
     # @param client_id [String]

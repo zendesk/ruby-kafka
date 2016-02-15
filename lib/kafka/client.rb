@@ -1,4 +1,4 @@
-require "kafka/broker_pool"
+require "kafka/cluster"
 require "kafka/producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
@@ -18,16 +18,16 @@ module Kafka
     # @param logger [Logger]
     #
     # @param connect_timeout [Integer, nil] the timeout setting for connecting
-    #   to brokers. See {BrokerPool#initialize}.
+    #   to brokers. See {Cluster#initialize}.
     #
     # @param socket_timeout [Integer, nil] the timeout setting for socket
-    #   connections. See {BrokerPool#initialize}.
+    #   connections. See {Cluster#initialize}.
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger: DEFAULT_LOGGER, connect_timeout: nil, socket_timeout: nil)
       @logger = logger
 
-      @broker_pool = BrokerPool.new(
+      @cluster = Cluster.new(
         seed_brokers: seed_brokers,
         client_id: client_id,
         logger: logger,
@@ -43,7 +43,7 @@ module Kafka
     # @see Producer#initialize
     # @return [Kafka::Producer] the Kafka producer.
     def get_producer(**options)
-      Producer.new(broker_pool: @broker_pool, logger: @logger, **options)
+      Producer.new(cluster: @cluster, logger: @logger, **options)
     end
 
     # Fetches a batch of messages from a single partition. Note that it's possible
@@ -109,7 +109,7 @@ module Kafka
     # @return [Array<Kafka::FetchedMessage>] the messages returned from the broker.
     def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576)
       operation = FetchOperation.new(
-        broker_pool: @broker_pool,
+        cluster: @cluster,
         logger: @logger,
         min_bytes: min_bytes,
         max_wait_time: max_wait_time,
@@ -124,11 +124,11 @@ module Kafka
     #
     # @return [Array<String>] the list of topic names.
     def topics
-      @broker_pool.topics
+      @cluster.topics
     end
 
     def close
-      @broker_pool.shutdown
+      @cluster.shutdown
     end
   end
 end
