@@ -22,7 +22,7 @@ describe "Fetch API", functional: true do
         offset: 0,
         max_wait_time: 0.1
       )
-    rescue Kafka::LeaderNotAvailable
+    rescue Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
       if attempt < 10
         attempt += 1
         sleep 0.1
