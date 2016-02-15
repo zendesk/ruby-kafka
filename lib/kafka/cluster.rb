@@ -1,6 +1,6 @@
 require "set"
 require "kafka/connection_pool"
-require "kafka/broker"
+require "kafka/protocol/topic_metadata_request"
 
 module Kafka
 
@@ -62,7 +62,7 @@ module Kafka
     #
     # @param topic [String]
     # @param partition [Integer]
-    # @return [Broker] the broker that's currently leader.
+    # @return [Kafka::Connection] connection to the broker that's currently leader.
     def get_leader(topic, partition)
       connect_to_broker(get_leader_id(topic, partition))
     end
@@ -123,9 +123,8 @@ module Kafka
 
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
-      connection = @connection_pool.connect(info.host, info.port)
 
-      Broker.new(connection: connection)
+      @connection_pool.connect(info.host, info.port)
     end
   end
 end

@@ -1,6 +1,7 @@
 require "stringio"
 require "kafka/socket_with_timeout"
 require "kafka/instrumentation"
+require "kafka/protocol"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"

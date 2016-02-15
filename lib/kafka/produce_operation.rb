@@ -1,3 +1,5 @@
+require "kafka/protocol/produce_request"
+
 module Kafka
   # A produce operation attempts to send all messages in a buffer to the Kafka cluster.
   # Since topics and partitions are spread among all brokers in a cluster, this usually
@@ -33,12 +35,12 @@ module Kafka
 
       @buffer.each do |topic, partition, messages|
         begin
-          broker = @cluster.get_leader(topic, partition)
+          connection = @cluster.get_leader(topic, partition)
 
-          @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
+          @logger.debug "Current leader for #{topic}/#{partition} is #{connection}"
 
-          messages_for_broker[broker] ||= MessageBuffer.new
-          messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
+          messages_for_broker[connection] ||= MessageBuffer.new
+          messages_for_broker[connection].concat(messages, topic: topic, partition: partition)
         rescue Kafka::Error => e
           @logger.error "Could not connect to leader for partition #{topic}/#{partition}: #{e}"
 
@@ -48,19 +50,21 @@ module Kafka
         end
       end
 
-      messages_for_broker.each do |broker, message_set|
+      messages_for_broker.each do |connection, message_set|
         begin
-          @logger.info "Sending #{message_set.size} messages to #{broker}"
+          @logger.info "Sending #{message_set.size} messages to #{connection}"
 
-          response = broker.produce(
+          request = Protocol::ProduceRequest.new(
             messages_for_topics: message_set.to_h,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
           )
 
+          response = connection.send_request(request)
+
           handle_response(response) if response
         rescue ConnectionError => e
-          @logger.error "Could not connect to broker #{broker}: #{e}"
+          @logger.error "Could not connect to #{connection}: #{e}"
 
           # Mark the cluster as stale in order to force a cluster metadata refresh.
           @cluster.mark_as_stale!

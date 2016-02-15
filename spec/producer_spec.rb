@@ -1,9 +1,7 @@
-require "fake_broker"
-
 describe Kafka::Producer do
   let(:logger) { Logger.new(LOG) }
-  let(:broker1) { FakeBroker.new }
-  let(:broker2) { FakeBroker.new }
+  let(:connection1) { double(:connection1) }
+  let(:connection2) { double(:connection2) }
   let(:cluster) { double(:cluster) }
 
   let(:producer) {
@@ -20,8 +18,10 @@ describe Kafka::Producer do
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
     allow(cluster).to receive(:add_target_topics)
 
-    allow(cluster).to receive(:get_leader).with("greetings", 0) { broker1 }
-    allow(cluster).to receive(:get_leader).with("greetings", 1) { broker2 }
+    allow(cluster).to receive(:get_leader).with("greetings", 0) { connection1 }
+    allow(cluster).to receive(:get_leader).with("greetings", 1) { connection2 }
+
+    allow(connection1).to receive(:send_request)
   end
 
   describe "#produce" do
@@ -65,8 +65,8 @@ describe Kafka::Producer do
     end
 
     it "works even when Kafka is unavailable" do
-      allow(broker1).to receive(:produce).and_raise(Kafka::Error)
-      allow(broker2).to receive(:produce).and_raise(Kafka::Error)
+      allow(connection1).to receive(:send_request).and_raise(Kafka::Error)
+      allow(connection2).to receive(:send_request).and_raise(Kafka::Error)
 
       producer.produce("hello", key: "greeting1", topic: "greetings", partition_key: "hey")
 
@@ -86,12 +86,12 @@ describe Kafka::Producer do
 
       producer.send_messages
 
-      expect(broker1.messages).to eq ["hello1"]
-      expect(broker2.messages).to eq ["hello2"]
+      expect(connection1.messages).to eq ["hello1"]
+      expect(connection2.messages).to eq ["hello2"]
     end
 
     it "handles when a partition temporarily doesn't have a leader" do
-      broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
+      connection1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
@@ -101,7 +101,7 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 1
 
       # Clear the error.
-      broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
+      connection1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
 
       producer.send_messages
 
@@ -119,7 +119,7 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 1
 
       # Clear the error.
-      allow(cluster).to receive(:get_leader) { broker1 }
+      allow(cluster).to receive(:get_leader) { connection1 }
 
       producer.send_messages
 
