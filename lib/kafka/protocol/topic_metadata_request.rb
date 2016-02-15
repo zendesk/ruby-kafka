@@ -1,6 +1,10 @@
 module Kafka
   module Protocol
     class TopicMetadataRequest
+
+      # A request for cluster metadata.
+      #
+      # @param topics [Array<String>]
       def initialize(topics: [])
         @topics = topics
       end

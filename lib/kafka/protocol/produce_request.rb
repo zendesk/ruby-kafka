@@ -27,6 +27,9 @@ module Kafka
     class ProduceRequest
       attr_reader :required_acks, :timeout, :messages_for_topics
 
+      # @param required_acks [Integer]
+      # @param timeout [Integer]
+      # @param messages_for_topics [Hash]
       def initialize(required_acks:, timeout:, messages_for_topics:)
         @required_acks = required_acks
         @timeout = timeout

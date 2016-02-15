@@ -15,6 +15,10 @@ module Kafka
     #       MaxBytes => int32
     #
     class FetchRequest
+
+      # @param max_wait_time [Integer]
+      # @param min_bytes [Integer]
+      # @param topics [Hash]
       def initialize(max_wait_time:, min_bytes:, topics:)
         @replica_id = REPLICA_ID
         @max_wait_time = max_wait_time

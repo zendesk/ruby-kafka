@@ -12,6 +12,8 @@ module Kafka
     #       MaxNumberOfOffsets => int32
     #
     class ListOffsetRequest
+
+      # @param topics [Hash]
       def initialize(topics:)
         @replica_id = REPLICA_ID
         @topics = topics
