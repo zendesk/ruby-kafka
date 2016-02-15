@@ -69,5 +69,19 @@ describe Kafka::BrokerPool do
         pool.get_leader("greetings", 42)
       }.to raise_error Kafka::InvalidTopic
     end
+
+    it "raises ConnectionError if unable to connect to any of the seed brokers" do
+      pool = Kafka::BrokerPool.new(
+        seed_brokers: ["not-there:9092", "not-here:9092"],
+        client_id: "test",
+        logger: Logger.new(LOG),
+      )
+
+      allow(Kafka::Broker).to receive(:connect).and_raise(Kafka::ConnectionError)
+
+      expect {
+        pool.get_leader("greetings", 42)
+      }.to raise_exception(Kafka::ConnectionError)
+    end
   end
 end

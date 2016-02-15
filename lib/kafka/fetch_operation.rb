@@ -40,6 +40,7 @@ module Kafka
 
     def execute
       @broker_pool.add_target_topics(@topics.keys)
+      @broker_pool.refresh_metadata_if_necessary!
 
       topics_by_broker = {}
 
@@ -80,7 +81,7 @@ module Kafka
           }
         }
       }
-    rescue Kafka::LeaderNotAvailable
+    rescue Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
       @broker_pool.mark_as_stale!
 
       raise

@@ -194,6 +194,9 @@ module Kafka
 
       loop do
         attempt += 1
+
+        @broker_pool.refresh_metadata_if_necessary!
+
         assign_partitions!
         operation.execute
 

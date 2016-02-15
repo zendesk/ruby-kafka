@@ -30,6 +30,7 @@ module Kafka
       @brokers = {}
       @seed_brokers = seed_brokers
       @cluster_info = nil
+      @stale = true
 
       # This is the set of topics we need metadata for. If empty, metadata for
       # all topics will be fetched.
@@ -49,12 +50,16 @@ module Kafka
     end
 
     def mark_as_stale!
-      @cluster_info = nil
+      @stale = true
     end
 
     def refresh_metadata!
-      mark_as_stale!
+      @cluster_info = nil
       cluster_info
+    end
+
+    def refresh_metadata_if_necessary!
+      refresh_metadata! if @stale
     end
 
     # Finds the broker acting as the leader of the given topic and partition.
@@ -120,6 +125,8 @@ module Kafka
 
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
+          @stale = false
+
           @logger.info "Discovered cluster metadata; nodes: #{cluster_info.brokers.join(', ')}"
 
           return cluster_info
@@ -130,7 +137,7 @@ module Kafka
         end
       end
 
-      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.inspect}"
+      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
     end
 
     def connect_to_broker(broker_id)

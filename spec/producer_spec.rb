@@ -17,6 +17,7 @@ describe Kafka::Producer do
 
   before do
     allow(broker_pool).to receive(:mark_as_stale!)
+    allow(broker_pool).to receive(:refresh_metadata_if_necessary!)
     allow(broker_pool).to receive(:add_target_topics)
 
     allow(broker_pool).to receive(:get_leader).with("greetings", 0) { broker1 }
