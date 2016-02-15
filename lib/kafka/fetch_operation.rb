@@ -3,7 +3,7 @@ module Kafka
   # Fetches messages from one or more partitions.
   #
   #     operation = Kafka::FetchOperation.new(
-  #       broker_pool: broker_pool,
+  #       cluster: cluster,
   #       logger: logger,
   #       min_bytes: 1,
   #       max_wait_time: 10,
@@ -16,8 +16,8 @@ module Kafka
   #     operation.execute
   #
   class FetchOperation
-    def initialize(broker_pool:, logger:, min_bytes:, max_wait_time:)
-      @broker_pool = broker_pool
+    def initialize(cluster:, logger:, min_bytes:, max_wait_time:)
+      @cluster = cluster
       @logger = logger
       @min_bytes = min_bytes
       @max_wait_time = max_wait_time
@@ -39,14 +39,14 @@ module Kafka
     end
 
     def execute
-      @broker_pool.add_target_topics(@topics.keys)
-      @broker_pool.refresh_metadata_if_necessary!
+      @cluster.add_target_topics(@topics.keys)
+      @cluster.refresh_metadata_if_necessary!
 
       topics_by_broker = {}
 
       @topics.each do |topic, partitions|
         partitions.each do |partition, options|
-          broker = @broker_pool.get_leader(topic, partition)
+          broker = @cluster.get_leader(topic, partition)
 
           topics_by_broker[broker] ||= {}
           topics_by_broker[broker][topic] ||= {}
@@ -82,7 +82,7 @@ module Kafka
         }
       }
     rescue Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
-      @broker_pool.mark_as_stale!
+      @cluster.mark_as_stale!
 
       raise
     end
