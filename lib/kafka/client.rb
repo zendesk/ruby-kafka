@@ -95,7 +95,7 @@ module Kafka
     #   the latest offset.
     #
     # @param max_wait_time [Integer] the maximum amount of time to wait before
-    #   the server responds.
+    #   the server responds, in seconds.
     #
     # @param min_bytes [Integer] the minimum number of bytes to wait for. If set to
     #   zero, the broker will respond immediately, but the response may be empty.
@@ -107,7 +107,7 @@ module Kafka
     #   expect messages to be larger than this.
     #
     # @return [Array<Kafka::FetchedMessage>] the messages returned from the broker.
-    def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 10, min_bytes: 1, max_bytes: 1048576)
+    def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576)
       operation = FetchOperation.new(
         broker_pool: @broker_pool,
         logger: @logger,
