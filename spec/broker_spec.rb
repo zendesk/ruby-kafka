@@ -3,7 +3,7 @@ require "kafka/protocol/message"
 describe Kafka::Broker do
   let(:logger) { Logger.new(LOG) }
   let(:connection) { FakeConnection.new }
-  let(:broker) { Kafka::Broker.new(connection: connection, logger: logger) }
+  let(:broker) { Kafka::Broker.new(connection: connection) }
 
   class FakeConnection
     def initialize
@@ -14,7 +14,7 @@ describe Kafka::Broker do
       @mocked_response = response
     end
 
-    def send_request(request, response_decoder)
+    def send_request(request)
       @mocked_response
     end
   end

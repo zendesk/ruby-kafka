@@ -1,6 +1,7 @@
 describe Kafka::Cluster do
   describe "#get_leader" do
     let(:broker) { double(:broker) }
+    let(:connection) { double(:connection) }
     let(:connection_pool) { double(:connection_pool) }
 
     let(:cluster) {
@@ -12,7 +13,7 @@ describe Kafka::Cluster do
     }
 
     before do
-      allow(connection_pool).to receive(:connect) { broker }
+      allow(connection_pool).to receive(:connect) { connection }
       allow(broker).to receive(:disconnect)
     end
 
@@ -39,7 +40,7 @@ describe Kafka::Cluster do
         ],
       )
 
-      allow(broker).to receive(:fetch_metadata) { metadata }
+      allow(connection).to receive(:send_request) { metadata }
 
       expect {
         cluster.get_leader("greetings", 42)
@@ -64,7 +65,7 @@ describe Kafka::Cluster do
         ],
       )
 
-      allow(broker).to receive(:fetch_metadata) { metadata }
+      allow(connection).to receive(:send_request) { metadata }
 
       expect {
         cluster.get_leader("greetings", 42)

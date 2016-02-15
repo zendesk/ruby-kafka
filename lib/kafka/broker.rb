@@ -23,30 +23,26 @@ module Kafka
 
     def fetch_metadata(**options)
       request = Protocol::TopicMetadataRequest.new(**options)
-      response_class = Protocol::MetadataResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     def fetch_messages(**options)
       request = Protocol::FetchRequest.new(**options)
-      response_class = Protocol::FetchResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     def list_offsets(**options)
       request = Protocol::ListOffsetRequest.new(**options)
-      response_class = Protocol::ListOffsetResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     def produce(**options)
       request = Protocol::ProduceRequest.new(**options)
-      response_class = request.requires_acks? ? Protocol::ProduceResponse : nil
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
   end
 end

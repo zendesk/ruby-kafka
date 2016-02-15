@@ -26,6 +26,10 @@ module Kafka
         1
       end
 
+      def response_class
+        Protocol::FetchResponse
+      end
+
       def encode(encoder)
         encoder.write_int32(@replica_id)
         encoder.write_int32(@max_wait_time)
