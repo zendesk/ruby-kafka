@@ -5,7 +5,8 @@ module Kafka
   # Assigns partitions to messages.
   class Partitioner
 
-    # Assigns a partition number based on a key.
+    # Assigns a partition number based on a partition key. If no explicit
+    # partition key is provided, the message key will be used instead.
     #
     # If the key is nil, then a random partition is selected. Otherwise, a digest
     # of the key is used to deterministically find a partition. As long as the
@@ -13,10 +14,14 @@ module Kafka
     # to the same partition.
     #
     # @param partition_count [Integer] the number of partitions in the topic.
-    # @param key [String, nil] the key to base the partition assignment on, or nil.
+    # @param message [Kafka::PendingMessage] the message that should be assigned
+    #   a partition.
     # @return [Integer] the partition number.
-    def self.partition_for_key(partition_count, key)
+    def self.partition_for_key(partition_count, message)
       raise ArgumentError if partition_count == 0
+
+      # If no explicit partition key is specified we use the message key instead.
+      key = message.partition_key || message.key
 
       if key.nil?
         rand(partition_count)
