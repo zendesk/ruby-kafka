@@ -12,7 +12,7 @@ describe "Producing a lot of messages with an unreliable cluster", fuzz: true do
 
     thread = Thread.new do
       loop do
-        sleep 30
+        sleep 40
         broker = rand(3) # 0-2
 
         puts
@@ -21,7 +21,7 @@ describe "Producing a lot of messages with an unreliable cluster", fuzz: true do
 
         KAFKA_CLUSTER.kill_kafka_broker(broker)
 
-        sleep 30
+        sleep 20
 
         KAFKA_CLUSTER.start_kafka_broker(broker)
       end
