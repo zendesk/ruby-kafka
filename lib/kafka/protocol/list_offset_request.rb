@@ -23,6 +23,10 @@ module Kafka
         2
       end
 
+      def response_class
+        Protocol::ListOffsetResponse
+      end
+
       def encode(encoder)
         encoder.write_int32(@replica_id)
 

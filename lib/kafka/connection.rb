@@ -68,11 +68,11 @@ module Kafka
 
     # Sends a request over the connection.
     #
-    # @param request [#encode] the request that should be encoded and written.
-    # @param response_class [#decode] an object that can decode the response.
+    # @param request [#encode, #response_class] the request that should be
+    #   encoded and written.
     #
-    # @return [Object] the response that was decoded by `response_class`.
-    def send_request(request, response_class)
+    # @return [Object] the response.
+    def send_request(request)
       # Default notification payload.
       notification = {
         api: Protocol.api_name(request.api_key),
@@ -86,6 +86,8 @@ module Kafka
         @correlation_id += 1
 
         write_request(request, notification)
+
+        response_class = request.response_class
         wait_for_response(response_class, notification) unless response_class.nil?
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e

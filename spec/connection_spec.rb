@@ -73,6 +73,7 @@ describe Kafka::Connection do
 
     before do
       allow(request).to receive(:encode) {|encoder| encoder.write_string("hello!") }
+      allow(request).to receive(:response_class) { response_decoder }
 
       allow(response_decoder).to receive(:decode) {|decoder|
         decoder.string
@@ -80,7 +81,7 @@ describe Kafka::Connection do
     end
 
     it "sends requests to a broker and reads back the response" do
-      response = connection.send_request(request, response_decoder)
+      response = connection.send_request(request)
 
       expect(response).to eq "hello!"
     end
@@ -92,39 +93,42 @@ describe Kafka::Connection do
       # causing a mismatch. This simulates the client killing the connection due
       # to e.g. a timeout, then resuming with a new request -- the old response
       # still sits in the connection waiting to be read.
-      connection.send_request(request, nil)
+      allow(request).to receive(:response_class) { nil }
+
+      connection.send_request(request)
 
       allow(request).to receive(:encode) {|encoder| encoder.write_string("goodbye!") }
-      response = connection.send_request(request, response_decoder)
+      allow(request).to receive(:response_class) { response_decoder }
+      response = connection.send_request(request)
 
       expect(response).to eq "goodbye!"
     end
 
     it "disconnects on network errors" do
-      response = connection.send_request(request, response_decoder)
+      response = connection.send_request(request)
 
       expect(response).to eq "hello!"
 
       broker.kill
 
       expect {
-        connection.send_request(request, response_decoder)
+        connection.send_request(request)
       }.to raise_error(Kafka::ConnectionError)
     end
 
     it "re-opens the connection after a network error" do
-      connection.send_request(request, response_decoder)
+      connection.send_request(request)
       broker.kill
 
       # Connection is torn down
-      connection.send_request(request, response_decoder) rescue nil
+      connection.send_request(request) rescue nil
 
       server.close
       server = TCPServer.new(host, port)
       broker = FakeServer.start(server)
 
       # Connection is re-established
-      response = connection.send_request(request, response_decoder)
+      response = connection.send_request(request)
 
       expect(response).to eq "hello!"
     end
@@ -137,7 +141,7 @@ describe Kafka::Connection do
       }
 
       ActiveSupport::Notifications.subscribed(subscriber, "request.kafka") do
-        connection.send_request(request, response_decoder)
+        connection.send_request(request)
       end
 
       expect(events.count).to eq 1
