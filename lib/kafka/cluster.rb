@@ -113,8 +113,6 @@ module Kafka
           return cluster_info
         rescue Error => e
           @logger.error "Failed to fetch metadata from #{node}: #{e}"
-        ensure
-          broker.disconnect unless broker.nil?
         end
       end
 
@@ -124,7 +122,7 @@ module Kafka
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
 
-      @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+      @broker_pool.connect(info.host, info.port)
     end
   end
 end
