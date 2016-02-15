@@ -1,3 +1,5 @@
+require "kafka/protocol/list_offset_request"
+
 module Kafka
 
   # Fetches messages from one or more partitions.
@@ -46,24 +48,24 @@ module Kafka
 
       @topics.each do |topic, partitions|
         partitions.each do |partition, options|
-          broker = @cluster.get_leader(topic, partition)
+          connection = @cluster.get_leader(topic, partition)
 
-          topics_by_broker[broker] ||= {}
-          topics_by_broker[broker][topic] ||= {}
-          topics_by_broker[broker][topic][partition] = options
+          topics_by_broker[connection] ||= {}
+          topics_by_broker[connection][topic] ||= {}
+          topics_by_broker[connection][topic][partition] = options
         end
       end
 
-      topics_by_broker.flat_map {|broker, topics|
-        resolve_offsets(broker, topics)
+      topics_by_broker.flat_map {|connection, topics|
+        resolve_offsets(connection, topics)
 
-        options = {
+        request = Protocol::FetchRequest.new(
           max_wait_time: @max_wait_time * 1000, # Kafka expects ms, not secs
           min_bytes: @min_bytes,
           topics: topics,
-        }
+        )
 
-        response = broker.fetch_messages(**options)
+        response = connection.send_request(request)
 
         response.topics.flat_map {|fetched_topic|
           fetched_topic.partitions.flat_map {|fetched_partition|
@@ -89,7 +91,7 @@ module Kafka
 
     private
 
-    def resolve_offsets(broker, topics)
+    def resolve_offsets(connection, topics)
       pending_topics = {}
 
       topics.each do |topic, partitions|
@@ -110,7 +112,8 @@ module Kafka
 
       return topics if pending_topics.empty?
 
-      response = broker.list_offsets(topics: pending_topics)
+      request = Protocol::ListOffsetRequest.new(topics: pending_topics)
+      response = connection.send_request(request)
 
       pending_topics.each do |topic, partitions|
         partitions.each do |options|

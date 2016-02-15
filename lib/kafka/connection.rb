@@ -1,6 +1,7 @@
 require "stringio"
 require "kafka/socket_with_timeout"
 require "kafka/instrumentation"
+require "kafka/protocol"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
@@ -72,7 +73,7 @@ module Kafka
     # @param response_class [#decode] an object that can decode the response.
     #
     # @return [Object] the response that was decoded by `response_class`.
-    def send_request(request, response_class)
+    def send_request(request)
       Instrumentation.instrument("request.kafka") do |notification|
         open unless open?
 
@@ -84,6 +85,7 @@ module Kafka
         # We may not read a response, in which case the size is zero.
         notification[:response_size] = 0
 
+        response_class = request.response_class
         write_request(request, notification)
         wait_for_response(response_class, notification) unless response_class.nil?
       end

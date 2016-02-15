@@ -9,6 +9,10 @@ module Kafka
         3
       end
 
+      def response_class
+        Protocol::MetadataResponse
+      end
+
       def encode(encoder)
         encoder.write_array(@topics) {|topic| encoder.write_string(topic) }
       end

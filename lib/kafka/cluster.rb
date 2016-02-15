@@ -1,5 +1,6 @@
 require "set"
-require "kafka/broker_pool"
+require "kafka/connection_pool"
+require "kafka/protocol/topic_metadata_request"
 
 module Kafka
 
@@ -14,16 +15,16 @@ module Kafka
     # The cluster will try to fetch cluster metadata from one of the brokers.
     #
     # @param seed_brokers [Array<String>]
-    # @param broker_pool [Kafka::BrokerPool]
+    # @param connection_pool [Kafka::ConnectionPool]
     # @param logger [Logger]
-    def initialize(seed_brokers:, broker_pool:, logger:)
+    def initialize(seed_brokers:, connection_pool:, logger:)
       if seed_brokers.empty?
         raise ArgumentError, "At least one seed broker must be configured"
       end
 
       @logger = logger
       @seed_brokers = seed_brokers
-      @broker_pool = broker_pool
+      @connection_pool = connection_pool
       @cluster_info = nil
       @stale = true
 
@@ -61,7 +62,7 @@ module Kafka
     #
     # @param topic [String]
     # @param partition [Integer]
-    # @return [Broker] the broker that's currently leader.
+    # @return [Kafka::Connection] connection to the broker that's currently leader.
     def get_leader(topic, partition)
       connect_to_broker(get_leader_id(topic, partition))
     end
@@ -75,7 +76,7 @@ module Kafka
     end
 
     def disconnect
-      @broker_pool.close
+      @connection_pool.close
     end
 
     private
@@ -103,8 +104,9 @@ module Kafka
         begin
           host, port = node.split(":", 2)
 
-          broker = @broker_pool.connect(host, port.to_i)
-          cluster_info = broker.fetch_metadata(topics: @target_topics)
+          connection = @connection_pool.connect(host, port.to_i)
+          request = Protocol::TopicMetadataRequest.new(topics: @target_topics)
+          cluster_info = connection.send_request(request)
 
           @stale = false
 
@@ -113,8 +115,6 @@ module Kafka
           return cluster_info
         rescue Error => e
           @logger.error "Failed to fetch metadata from #{node}: #{e}"
-        ensure
-          broker.disconnect unless broker.nil?
         end
       end
 
@@ -124,7 +124,7 @@ module Kafka
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
 
-      @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+      @connection_pool.connect(info.host, info.port)
     end
   end
 end

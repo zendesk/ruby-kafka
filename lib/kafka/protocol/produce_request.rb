@@ -37,6 +37,10 @@ module Kafka
         0
       end
 
+      def response_class
+        requires_acks? ? Protocol::ProduceResponse : nil
+      end
+
       # Whether this request requires any acknowledgements at all. If no acknowledgements
       # are required, the server will not send back a response at all.
       #
