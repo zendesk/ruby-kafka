@@ -73,16 +73,17 @@ module Kafka
     #
     # @return [Object] the response that was decoded by `response_class`.
     def send_request(request, response_class)
-      Instrumentation.instrument("request.kafka") do |notification|
+      # Default notification payload.
+      notification = {
+        api: Protocol.api_name(request.api_key),
+        request_size: 0,
+        response_size: 0,
+      }
+
+      Instrumentation.instrument("request.kafka", notification) do
         open unless open?
 
         @correlation_id += 1
-
-        # Look up the API name.
-        notification[:api] = Protocol.api_name(request.api_key)
-
-        # We may not read a response, in which case the size is zero.
-        notification[:response_size] = 0
 
         write_request(request, notification)
         wait_for_response(response_class, notification) unless response_class.nil?
