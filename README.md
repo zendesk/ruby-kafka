@@ -41,7 +41,7 @@ kafka = Kafka.new(
 )
 
 # A producer buffers messages and sends them to the broker that is the leader of
-# the partition a given message is being produced to.
+# the partition a given message is assigned to.
 producer = kafka.get_producer
 
 # `produce` will buffer the message in the producer.
@@ -50,19 +50,22 @@ producer.produce("hello1", topic: "test-messages")
 # It's possible to specify a message key:
 producer.produce("hello2", key: "x", topic: "test-messages")
 
-# If you need to control which partition a message should be written to, you
+# If you need to control which partition a message should be assigned to, you
 # can pass in the `partition` parameter:
 producer.produce("hello3", topic: "test-messages", partition: 1)
 
 # If you don't know exactly how many partitions are in the topic, or you'd
 # rather have some level of indirection, you can pass in `partition_key`.
-# Two messages with the same partition key will always be written to the
+# Two messages with the same partition key will always be assigned to the
 # same partition.
 producer.produce("hello4", topic: "test-messages", partition_key: "yo")
 
 # `send_messages` will send the buffered messages to the cluster. Since messages
 # may be destined for different partitions, this could involve writing to more
-# than one Kafka broker.
+# than one Kafka broker. Note that a failure to send all buffered messages after
+# the configured number of retries will result in Kafka::FailedToSendMessages
+# being raised. This can be rescued and ignored; the messages will be kept in
+# the buffer until the next attempt.
 producer.send_messages
 ```
 
