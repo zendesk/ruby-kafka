@@ -31,9 +31,8 @@ module Kafka
     # @return [Kafka::Protocol::MetadataResponse]
     def fetch_metadata(**options)
       request = Protocol::TopicMetadataRequest.new(**options)
-      response_class = Protocol::MetadataResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     # Fetches messages from a specified topic and partition.
@@ -42,9 +41,8 @@ module Kafka
     # @return [Kafka::Protocol::FetchResponse]
     def fetch_messages(**options)
       request = Protocol::FetchRequest.new(**options)
-      response_class = Protocol::FetchResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     # Lists the offset of the specified topics and partitions.
@@ -53,9 +51,8 @@ module Kafka
     # @return [Kafka::Protocol::ListOffsetResponse]
     def list_offsets(**options)
       request = Protocol::ListOffsetRequest.new(**options)
-      response_class = Protocol::ListOffsetResponse
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
 
     # Produces a set of messages to the broker.
@@ -64,9 +61,8 @@ module Kafka
     # @return [Kafka::Protocol::ProduceResponse]
     def produce(**options)
       request = Protocol::ProduceRequest.new(**options)
-      response_class = request.requires_acks? ? Protocol::ProduceResponse : nil
 
-      @connection.send_request(request, response_class)
+      @connection.send_request(request)
     end
   end
 end
