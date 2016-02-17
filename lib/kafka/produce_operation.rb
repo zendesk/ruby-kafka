@@ -19,6 +19,14 @@ module Kafka
   # appended and will possibly be retried later. Check this key before reporting the
   # operation as successful.
   #
+  # In addition to these notifications, a `send_messages.kafka` notification will
+  # be emitted after the operation completes, regardless of whether it succeeds. This
+  # notification will have the following keys:
+  #
+  # * `message_count` – the total number of messages that the operation tried to
+  #   send. Note that not all messages may get delivered.
+  # * `sent_message_count` – the number of messages that were successfully sent.
+  #
   class ProduceOperation
     def initialize(cluster:, buffer:, required_acks:, ack_timeout:, logger:)
       @cluster = cluster
@@ -29,6 +37,22 @@ module Kafka
     end
 
     def execute
+      Instrumentation.instrument("send_messages.kafka") do |notification|
+        message_count = @buffer.size
+
+        notification[:message_count] = message_count
+
+        begin
+          send_buffered_messages
+        ensure
+          notification[:sent_message_count] = message_count - @buffer.size
+        end
+      end
+    end
+
+    private
+
+    def send_buffered_messages
       messages_for_broker = {}
 
       @buffer.each do |topic, partition, messages|
@@ -67,8 +91,6 @@ module Kafka
         end
       end
     end
-
-    private
 
     def handle_response(response)
       response.each_partition do |topic_info, partition_info|
