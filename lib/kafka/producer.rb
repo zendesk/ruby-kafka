@@ -23,10 +23,10 @@ module Kafka
   #
   # ## Buffering
   #
-  # The producer buffers pending messages until {#send_messages} is called. Note that there is
+  # The producer buffers pending messages until {#deliver_messages} is called. Note that there is
   # a maximum buffer size (default is 1,000 messages) and writing messages after the
   # buffer has reached this size will result in a BufferOverflow exception. Make sure
-  # to periodically call {#send_messages} or set `max_buffer_size` to an appropriate value.
+  # to periodically call {#deliver_messages} or set `max_buffer_size` to an appropriate value.
   #
   # Buffering messages and sending them in batches greatly improves performance, so
   # try to avoid sending messages after every write. The tradeoff between throughput and
@@ -73,11 +73,11 @@ module Kafka
   #         producer.produce(line, topic: topic)
   #
   #         # Send messages for every 10 lines.
-  #         producer.send_messages if index % 10 == 0
+  #         producer.deliver_messages if index % 10 == 0
   #       end
   #     ensure
   #       # Make sure to send any remaining messages.
-  #       producer.send_messages
+  #       producer.deliver_messages
   #
   #       producer.shutdown
   #     end
@@ -123,7 +123,7 @@ module Kafka
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
-    # the producer until {#send_messages} is called.
+    # the producer until {#deliver_messages} is called.
     #
     # ## Partitioning
     #
@@ -176,7 +176,7 @@ module Kafka
     #
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
-    def send_messages
+    def deliver_messages
       attempt = 0
 
       # Make sure we get metadata for this topic.
