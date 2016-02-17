@@ -46,6 +46,16 @@ module Kafka
   # not, we do another round of requests, this time with just the remaining messages.
   # We do this for as long as `max_retries` permits.
   #
+  # ## Instrumentation
+  #
+  # After {#deliver_messages} completes, the notification `deliver_messages.kafka`
+  #
+  # * `message_count` – the total number of messages that the producer tried to
+  #   deliver. Note that not all messages may get delivered.
+  # * `delivered_message_count` – the number of messages that were successfully
+  #   delivered.
+  # * `attempts` – the number of attempts made to deliver the messages.
+  #
   # ## Example
   #
   # This is an example of an application which reads lines from stdin and writes them
@@ -177,6 +187,37 @@ module Kafka
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
     def deliver_messages
+      Instrumentation.instrument("deliver_messages.kafka") do |notification|
+        message_count = buffer_size
+
+        notification[:message_count] = message_count
+        notification[:attempts] = 0
+
+        begin
+          deliver_messages_with_retries(notification)
+        ensure
+          notification[:delivered_message_count] = message_count - buffer_size
+        end
+      end
+    end
+
+    # Returns the number of messages currently held in the buffer.
+    #
+    # @return [Integer] buffer size.
+    def buffer_size
+      @pending_messages.size + @buffer.size
+    end
+
+    # Closes all connections to the brokers.
+    #
+    # @return [nil]
+    def shutdown
+      @cluster.disconnect
+    end
+
+    private
+
+    def deliver_messages_with_retries(notification)
       attempt = 0
 
       # Make sure we get metadata for this topic.
@@ -193,6 +234,8 @@ module Kafka
 
       loop do
         attempt += 1
+
+        notification[:attempts] = attempt
 
         @cluster.refresh_metadata_if_necessary!
 
@@ -224,22 +267,6 @@ module Kafka
         raise FailedToSendMessages, "Failed to send messages to #{partitions}"
       end
     end
-
-    # Returns the number of messages currently held in the buffer.
-    #
-    # @return [Integer] buffer size.
-    def buffer_size
-      @pending_messages.size + @buffer.size
-    end
-
-    # Closes all connections to the brokers.
-    #
-    # @return [nil]
-    def shutdown
-      @cluster.disconnect
-    end
-
-    private
 
     def assign_partitions!
       until @pending_messages.empty?
