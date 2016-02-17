@@ -26,6 +26,8 @@ Or install it yourself as:
 
 Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release.
 
+### Producing Messages to Kafka
+
 A client must be initialized with at least one Kafka broker. Each client keeps a separate pool of broker connections. Don't use the same client from more than one thread.
 
 ```ruby
@@ -46,7 +48,7 @@ producer = kafka.get_producer
 producer.produce("hello1", topic: "test-messages")
 ```
 
-It's possible to specify a message key:
+It's possible to specify a message key.
 
 ```ruby
 producer.produce("hello2", key: "x", topic: "test-messages")
@@ -64,7 +66,7 @@ If you don't know exactly how many partitions are in the topic, or you'd rather 
 producer.produce("hello4", topic: "test-messages", partition_key: "yo")
 ```
 
-`send_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in Kafka::FailedToSendMessages being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
+`send_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::FailedToSendMessages` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
 
 ```ruby
 producer.send_messages
