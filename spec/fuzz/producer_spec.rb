@@ -42,7 +42,7 @@ describe "Producing a lot of messages with an unreliable cluster", fuzz: true do
       producer.produce("message#{i}", key: i.to_s, topic: "fuzz")
 
       if i % publish_interval == 0
-        producer.send_messages
+        producer.deliver_messages
       end
     end
   end

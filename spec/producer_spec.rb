@@ -74,17 +74,17 @@ describe Kafka::Producer do
 
       # Only when we try to send the messages to Kafka do we experience the issue.
       expect {
-        producer.send_messages
+        producer.deliver_messages
       }.to raise_exception(Kafka::Error)
     end
   end
 
-  describe "#send_messages" do
+  describe "#deliver_messages" do
     it "sends messages to the leader of the partition being written to" do
       producer.produce("hello1", key: "greeting1", topic: "greetings", partition: 0)
       producer.produce("hello2", key: "greeting2", topic: "greetings", partition: 1)
 
-      producer.send_messages
+      producer.deliver_messages
 
       expect(broker1.messages).to eq ["hello1"]
       expect(broker2.messages).to eq ["hello2"]
@@ -95,7 +95,7 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.send_messages }.to raise_error(Kafka::FailedToSendMessages)
+      expect { producer.deliver_messages }.to raise_error(Kafka::FailedToSendMessages)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -103,7 +103,7 @@ describe Kafka::Producer do
       # Clear the error.
       broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 0)
 
-      producer.send_messages
+      producer.deliver_messages
 
       expect(producer.buffer_size).to eq 0
     end
@@ -113,7 +113,7 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.send_messages }.to raise_error(Kafka::FailedToSendMessages)
+      expect { producer.deliver_messages }.to raise_error(Kafka::FailedToSendMessages)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -121,7 +121,7 @@ describe Kafka::Producer do
       # Clear the error.
       allow(cluster).to receive(:get_leader) { broker1 }
 
-      producer.send_messages
+      producer.deliver_messages
 
       expect(producer.buffer_size).to eq 0
     end
@@ -136,7 +136,7 @@ describe Kafka::Producer do
       )
 
       producer.produce("hello1", topic: "greetings", partition: 0)
-      producer.send_messages
+      producer.deliver_messages
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0

@@ -22,7 +22,7 @@ describe "Producer API", functional: true do
     producer.produce(value1, key: "x", topic: "test-messages", partition: 0)
     producer.produce(value2, key: "y", topic: "test-messages", partition: 1)
 
-    producer.send_messages
+    producer.deliver_messages
 
     message1 = kafka.fetch_messages(topic: "test-messages", partition: 0, offset: :earliest).last
     message2 = kafka.fetch_messages(topic: "test-messages", partition: 1, offset: :earliest).last
@@ -35,21 +35,21 @@ describe "Producer API", functional: true do
     producer.produce("hello1", key: "x", topic: "test-messages", partition_key: "xk")
     producer.produce("hello2", key: "y", topic: "test-messages", partition_key: "yk")
 
-    producer.send_messages
+    producer.deliver_messages
   end
 
   example "having the producer assign partitions based on message keys" do
     producer.produce("hello1", key: "x", topic: "test-messages")
     producer.produce("hello2", key: "y", topic: "test-messages")
 
-    producer.send_messages
+    producer.deliver_messages
   end
 
   example "omitting message keys entirely" do
     producer.produce("hello1", topic: "test-messages")
     producer.produce("hello2", topic: "test-messages")
 
-    producer.send_messages
+    producer.deliver_messages
   end
 
   example "writing to a an explicit partition of a topic that doesn't yet exist" do
@@ -57,7 +57,7 @@ describe "Producer API", functional: true do
 
     producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic, partition: 0)
-    producer.send_messages
+    producer.deliver_messages
 
     expect(producer.buffer_size).to eq 0
 
@@ -71,7 +71,7 @@ describe "Producer API", functional: true do
 
     producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic)
-    producer.send_messages
+    producer.deliver_messages
 
     expect(producer.buffer_size).to eq 0
 
@@ -91,7 +91,7 @@ describe "Producer API", functional: true do
       producer.produce("hello1", key: "x", topic: "test-messages", partition: 1)
       producer.produce("hello1", key: "x", topic: "test-messages", partition: 2)
 
-      producer.send_messages
+      producer.deliver_messages
     ensure
       KAFKA_CLUSTER.start_kafka_broker(0)
     end

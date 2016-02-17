@@ -66,10 +66,10 @@ If you don't know exactly how many partitions are in the topic, or you'd rather 
 producer.produce("hello4", topic: "test-messages", partition_key: "yo")
 ```
 
-`send_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::FailedToSendMessages` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
+`deliver_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::FailedToSendMessages` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
 
 ```ruby
-producer.send_messages
+producer.deliver_messages
 ```
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
@@ -78,11 +78,11 @@ Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafk
 
 The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
 
-Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::FailedToSendMessages` is raised from `Kafka::Producer#send_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#send_messages` will still attempt to send them.
+Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::FailedToSendMessages` is raised from `Kafka::Producer#deliver_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#deliver_messages` will still attempt to send them.
 
 Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#get_producer` in order to configure this.
 
-A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#send_messages` immediately after `#produce`.
+A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
 ### Understanding Timeouts
 
@@ -98,7 +98,7 @@ It's important to understand how timeouts work if you have a latency sensitive a
 * `ack_timeout` is a timeout executed by a broker when the client is sending messages to it. It defines the number of seconds the broker should wait for replicas to acknowledge the write before responding to the client with an error. As such, it relates to the `required_acks` setting. It should be set lower than `socket_timeout`.
 * `retry_backoff` configures the number of seconds to wait after a failed attempt to send messages to a Kafka broker before retrying. The `max_retries` setting defines the maximum number of retries to attempt, and so the total duration could be up to `max_retries * retry_backoff` seconds. The timeout can be arbitrarily long, and shouldn't be too short: if a broker goes down its partitions will be handed off to another broker, and that can take tens of seconds.
 
-When sending many messages, it's likely that the client needs to send some messages to each broker in the cluster. Given `n` brokers in the cluster, the total wait time when calling `Kafka::Producer#send_messages` can be up to
+When sending many messages, it's likely that the client needs to send some messages to each broker in the cluster. Given `n` brokers in the cluster, the total wait time when calling `Kafka::Producer#deliver_messages` can be up to
 
     n * (connect_timeout + socket_timeout + retry_backoff) * max_retries
 

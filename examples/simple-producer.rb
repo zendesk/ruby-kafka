@@ -30,11 +30,11 @@ begin
     producer.produce(line, topic: topic)
 
     # Send messages for every 10 lines.
-    producer.send_messages if index % 10 == 0
+    producer.deliver_messages if index % 10 == 0
   end
 ensure
   # Make sure to send any remaining messages.
-  producer.send_messages
+  producer.deliver_messages
 
   producer.shutdown
 end
