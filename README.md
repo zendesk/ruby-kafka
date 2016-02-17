@@ -26,46 +26,47 @@ Or install it yourself as:
 
 Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release.
 
-An example of a fairly simple Kafka producer:
+A client must be initialized with at least one Kafka broker. Each client keeps a separate pool of broker connections. Don't use the same client from more than one thread.
 
 ```ruby
 require "kafka"
 
-# A client must be initialized with at least one Kafka broker. Each client keeps
-# a separate pool of broker connections. Don't use the same client from more than
-# one thread.
-kafka = Kafka.new(
-  seed_brokers: ["kafka1:9092", "kafka2:9092"],
-  client_id: "my-app",
-  logger: Logger.new($stderr),
-)
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+```
 
-# A producer buffers messages and sends them to the broker that is the leader of
-# the partition a given message is assigned to.
+A producer buffers messages and sends them to the broker that is the leader of the partition a given message is assigned to.
+
+```ruby
 producer = kafka.get_producer
+```
 
-# `produce` will buffer the message in the producer.
+`produce` will buffer the message in the producer but will _not_ actually send it to the Kafka cluster.
+
+```ruby
 producer.produce("hello1", topic: "test-messages")
+```
 
-# It's possible to specify a message key:
+It's possible to specify a message key:
+
+```ruby
 producer.produce("hello2", key: "x", topic: "test-messages")
+```
 
-# If you need to control which partition a message should be assigned to, you
-# can pass in the `partition` parameter:
+If you need to control which partition a message should be assigned to, you can pass in the `partition` parameter.
+
+```ruby
 producer.produce("hello3", topic: "test-messages", partition: 1)
+```
 
-# If you don't know exactly how many partitions are in the topic, or you'd
-# rather have some level of indirection, you can pass in `partition_key`.
-# Two messages with the same partition key will always be assigned to the
-# same partition.
+If you don't know exactly how many partitions are in the topic, or you'd rather have some level of indirection, you can pass in `partition_key`. Two messages with the same partition key will always be assigned to the same partition.
+
+```ruby
 producer.produce("hello4", topic: "test-messages", partition_key: "yo")
+```
 
-# `send_messages` will send the buffered messages to the cluster. Since messages
-# may be destined for different partitions, this could involve writing to more
-# than one Kafka broker. Note that a failure to send all buffered messages after
-# the configured number of retries will result in Kafka::FailedToSendMessages
-# being raised. This can be rescued and ignored; the messages will be kept in
-# the buffer until the next attempt.
+`send_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in Kafka::FailedToSendMessages being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
+
+```ruby
 producer.send_messages
 ```
 
