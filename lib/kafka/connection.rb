@@ -15,7 +15,7 @@ module Kafka
   #
   # ## Instrumentation
   #
-  # Connections emit a `request.kafka` notification on each request. The following
+  # Connections emit a `request.connection.kafka` notification on each request. The following
   # keys will be found in the payload:
   #
   # * `:api` — the name of the API being invoked.
@@ -80,7 +80,7 @@ module Kafka
         response_size: 0,
       }
 
-      Instrumentation.instrument("request.kafka", notification) do
+      Instrumentation.instrument("request.connection.kafka", notification) do
         open unless open?
 
         @correlation_id += 1

@@ -5,7 +5,7 @@ module Kafka
   #
   # ## Instrumentation
   #
-  # When executing the operation, an `ack_messages.kafka` notification will be
+  # When executing the operation, an `ack_messages.producer.kafka` notification will be
   # emitted for each message set that was successfully appended to a topic partition.
   # The following keys will be found in the payload:
   #
@@ -14,7 +14,7 @@ module Kafka
   # * `:offset` — the offset of the first message in the message set.
   # * `:message_count` — the number of messages that were appended.
   #
-  # In addition to these notifications, a `send_messages.kafka` notification will
+  # In addition to these notifications, a `send_messages.producer.kafka` notification will
   # be emitted after the operation completes, regardless of whether it succeeds. This
   # notification will have the following keys:
   #
@@ -32,7 +32,7 @@ module Kafka
     end
 
     def execute
-      Instrumentation.instrument("send_messages.kafka") do |notification|
+      Instrumentation.instrument("send_messages.producer.kafka") do |notification|
         message_count = @buffer.size
 
         notification[:message_count] = message_count
@@ -97,7 +97,7 @@ module Kafka
         begin
           Protocol.handle_error(partition_info.error_code)
 
-          Instrumentation.instrument("ack_messages.kafka", {
+          Instrumentation.instrument("ack_messages.producer.kafka", {
             topic: topic,
             partition: partition,
             offset: offset,
