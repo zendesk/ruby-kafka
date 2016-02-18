@@ -132,6 +132,14 @@ module Kafka
       @cluster.topics
     end
 
+    # Counts the number of partitions in a topic.
+    #
+    # @param topic [String]
+    # @return [Integer] the number of partitions in the topic.
+    def partitions_for(topic)
+      @cluster.partitions_for(topic).count
+    end
+
     def close
       @cluster.disconnect
     end
