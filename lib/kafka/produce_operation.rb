@@ -5,7 +5,7 @@ module Kafka
   #
   # ## Instrumentation
   #
-  # When executing the operation, an `append_message_set.kafka` notification will be
+  # When executing the operation, an `ack_messages.kafka` notification will be
   # emitted for each message set that was successfully appended to a topic partition.
   # The following keys will be found in the payload:
   #
@@ -13,11 +13,6 @@ module Kafka
   # * `:partition` — the partition that the message set was appended to.
   # * `:offset` — the offset of the first message in the message set.
   # * `:message_count` — the number of messages that were appended.
-  #
-  # If there was an error appending the message set, the key `:exception` will be set
-  # in the payload. In that case, the message set will most likely not have been
-  # appended and will possibly be retried later. Check this key before reporting the
-  # operation as successful.
   #
   # In addition to these notifications, a `send_messages.kafka` notification will
   # be emitted after the operation completes, regardless of whether it succeeds. This
@@ -100,16 +95,14 @@ module Kafka
         message_count = @buffer.message_count_for_partition(topic: topic, partition: partition)
 
         begin
-          payload = {
+          Protocol.handle_error(partition_info.error_code)
+
+          Instrumentation.instrument("ack_messages.kafka", {
             topic: topic,
             partition: partition,
             offset: offset,
             message_count: message_count,
-          }
-
-          Instrumentation.instrument("append_message_set.kafka", payload) do
-            Protocol.handle_error(partition_info.error_code)
-          end
+          })
         rescue Kafka::CorruptMessage
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition
