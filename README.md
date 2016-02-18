@@ -74,6 +74,65 @@ producer.deliver_messages
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
 
+### Partitioning
+
+Kafka topics are partitioned, with messages being assigned to a partition by the client. This allows a great deal of flexibility for the users. This section describes several strategies for partitioning and how they impact performance, data locality, etc.
+
+
+#### Load Balanced Partitioning
+
+When optimizing for efficiency, we either distribute messages as evenly as possible to all partitions, or make sure each producer always writes to a single partition. The former ensures an even load for downstream consumers; the latter ensures the highest producer performance, since message batching is done per partition.
+
+If no explicit partition is specified, the producer will look to the partition key or the message key for a value that can be used to deterministically assign the message to a partition. If there is a big number of different keys, the resulting distribution will be pretty even. If no keys are passed, the producer will randomly assign a partition. Random partitioning can be achieved even if you use message keys by passing a random partition key, e.g. `partition_key: rand(100)`.
+
+If you wish to have the producer write all messages to a single partition, simply generate a random value and re-use that as the partition key:
+
+```ruby
+partition_key = rand(100)
+
+producer.produce(msg1, topic: "messages", partition_key: partition_key)
+producer.produce(msg2, topic: "messages", partition_key: partition_key)
+
+# ...
+```
+
+You can also base the partition key on some property of the producer, for example the host name.
+
+#### Semantic Partitioning
+
+By assigning messages to a partition based on some property of the message, e.g. making sure all events tracked in a user session are assigned to the same partition, downstream consumers can make simplifying assumptions about data locality. In this example, a consumer can keep process local state pertaining to a user session knowing that all events for the session will be read from a single partition. This is also called _semantic partitioning_, since the partition assignment is part of the application behavior.
+
+Typically it's sufficient to simply pass a partition key in order to guarantee that a set of messages will be assigned to the same partition, e.g.
+
+```ruby
+# All messages with the same `session_id` will be assigned to the same partition.
+producer.produce(event, topic: "user-events", partition_key: session_id)
+```
+
+However, sometimes it's necessary to select a specific partition. When doing this, make sure that you don't pick a partition number outside the range of partitions for the topic:
+
+```ruby
+partitions = kafka.partitions_for("events")
+
+# Make sure that we don't exceed the partition count!
+partition = some_number % partitions
+
+producer.produce(event, topic: "events", partition: partition)
+```
+
+#### Compatibility with Other Clients
+
+There's no standardized way to assign messages to partitions across different Kafka client implementations. If you have a heterogeneous set of clients producing messages to the same topics it may be important to ensure a consistent partitioning scheme. This library doesn't try to implement all schemes, so you'll have to figure out which scheme the other client is using and replicate it. An example:
+
+```ruby
+partitions = kafka.partitions_for("events")
+
+# Insert your custom partitioning scheme here:
+partition = PartitioningScheme.assign(partitions, event)
+
+producer.produce(event, topic: "events", partition: partition)
+```
+
 ### Buffering and Error Handling
 
 The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
