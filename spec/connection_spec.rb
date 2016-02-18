@@ -140,7 +140,7 @@ describe Kafka::Connection do
         events << ActiveSupport::Notifications::Event.new(*args)
       }
 
-      ActiveSupport::Notifications.subscribed(subscriber, "request.kafka") do
+      ActiveSupport::Notifications.subscribed(subscriber, "request.connection.kafka") do
         connection.send_request(request)
       end
 

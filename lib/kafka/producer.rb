@@ -48,7 +48,8 @@ module Kafka
   #
   # ## Instrumentation
   #
-  # After {#deliver_messages} completes, the notification `deliver_messages.kafka`
+  # After {#deliver_messages} completes, the notification
+  # `deliver_messages.producer.kafka` will be emitted.
   #
   # * `message_count` – the total number of messages that the producer tried to
   #   deliver. Note that not all messages may get delivered.
@@ -190,7 +191,7 @@ module Kafka
       # There's no need to do anything if the buffer is empty.
       return if buffer_size == 0
 
-      Instrumentation.instrument("deliver_messages.kafka") do |notification|
+      Instrumentation.instrument("deliver_messages.producer.kafka") do |notification|
         message_count = buffer_size
 
         notification[:message_count] = message_count
