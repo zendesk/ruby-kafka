@@ -67,6 +67,7 @@ module Kafka
     end
 
     def partitions_for(topic)
+      add_target_topics([topic])
       cluster_info.partitions_for(topic)
     end
 
