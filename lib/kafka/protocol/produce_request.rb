@@ -60,42 +60,17 @@ module Kafka
           encoder.write_string(topic)
 
           encoder.write_array(messages_for_partition) do |partition, messages|
-            # When encoding the message set into the request, the bytesize of the message
-            # set must precede the actual bytes. Therefore we need to encode the entire
-            # message set into a separate buffer first.
-            encoded_message_set = encode_message_set(messages)
-
             encoder.write_int32(partition)
 
-            # When encoding bytes, the 32 bit size of the byte buffer is encoded first.
+            # When encoding the message set into the request, the bytesize of the message
+            # set must precede the actual data. Therefore we need to encode the entire
+            # message set into a separate buffer first.
+            message_set = MessageSet.new(messages: messages)
+            encoded_message_set = Encoder.encode_with(message_set)
+
             encoder.write_bytes(encoded_message_set)
           end
         end
-      end
-
-      private
-
-      def encode_message_set(messages)
-        buffer = StringIO.new
-        encoder = Encoder.new(buffer)
-
-        # Messages in a message set are *not* encoded as an array. Rather,
-        # they are written in sequence with only the byte size prepended.
-        messages.each do |message|
-          offset = -1 # offsets don't matter here.
-
-          # When encoding a message into a message set, the bytesize of the message must
-          # precede the actual bytes. Therefore we need to encode the message into a
-          # separate buffer first.
-          encoded_message = Encoder.encode_with(message)
-
-          encoder.write_int64(offset)
-
-          # When encoding bytes, the 32 bit size of the byte buffer is encoded first.
-          encoder.write_bytes(encoded_message)
-        end
-
-        buffer.string
       end
     end
   end
