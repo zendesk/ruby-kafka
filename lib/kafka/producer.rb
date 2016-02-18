@@ -187,6 +187,9 @@ module Kafka
     # @raise [FailedToSendMessages] if not all messages could be successfully sent.
     # @return [nil]
     def deliver_messages
+      # There's no need to do anything if the buffer is empty.
+      return if buffer_size == 0
+
       Instrumentation.instrument("deliver_messages.kafka") do |notification|
         message_count = buffer_size
 
