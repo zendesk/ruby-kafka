@@ -59,13 +59,12 @@ module Kafka
         encoder.write_array(@messages_for_topics) do |topic, messages_for_partition|
           encoder.write_string(topic)
 
-          encoder.write_array(messages_for_partition) do |partition, messages|
+          encoder.write_array(messages_for_partition) do |partition, message_set|
             encoder.write_int32(partition)
 
             # When encoding the message set into the request, the bytesize of the message
             # set must precede the actual data. Therefore we need to encode the entire
             # message set into a separate buffer first.
-            message_set = MessageSet.new(messages: messages)
             encoded_message_set = Encoder.encode_with(message_set)
 
             encoder.write_bytes(encoded_message_set)

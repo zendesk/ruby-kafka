@@ -16,42 +16,76 @@ module Kafka
     class Message
       MAGIC_BYTE = 0
 
-      attr_reader :key, :value, :attributes
+      attr_reader :key, :value, :attributes, :offset
 
-      def initialize(key:, value:, attributes: 0)
+      def initialize(value:, key: nil, attributes: 0, offset: -1)
         @key = key
         @value = value
         @attributes = attributes
+        @offset = offset
       end
 
       def encode(encoder)
-        data = encode_without_crc
-        crc = Zlib.crc32(data)
+        data = encode_with_crc
 
-        encoder.write_int32(crc)
-        encoder.write(data)
+        encoder.write_int64(offset)
+        encoder.write_bytes(data)
       end
 
       def ==(other)
-        @key == other.key && @value == other.value && @attributes == other.attributes
+        @key == other.key &&
+          @value == other.value &&
+          @attributes == other.attributes &&
+          @offset == other.offset
+      end
+
+      def compressed?
+        @attributes != 0
+      end
+
+      # @return [Kafka::Protocol::MessageSet]
+      def decompress
+        codec = Compression.find_codec_by_id(@attributes)
+
+        # For some weird reason we need to cut out the first 20 bytes.
+        data = codec.decompress(value)
+        message_set_decoder = Decoder.from_string(data)
+
+        MessageSet.decode(message_set_decoder)
       end
 
       def self.decode(decoder)
-        crc = decoder.int32
-        magic_byte = decoder.int8
+        offset = decoder.int64
+        message_decoder = Decoder.from_string(decoder.bytes)
+
+        crc = message_decoder.int32
+        magic_byte = message_decoder.int8
 
         unless magic_byte == MAGIC_BYTE
           raise Kafka::Error, "Invalid magic byte: #{magic_byte}"
         end
 
-        attributes = decoder.int8
-        key = decoder.bytes
-        value = decoder.bytes
+        attributes = message_decoder.int8
+        key = message_decoder.bytes
+        value = message_decoder.bytes
 
-        new(key: key, value: value, attributes: attributes)
+        new(key: key, value: value, attributes: attributes, offset: offset)
       end
 
       private
+
+      def encode_with_crc
+        buffer = StringIO.new
+        encoder = Encoder.new(buffer)
+
+        data = encode_without_crc
+        crc = Zlib.crc32(data)
+
+        encoder.write_int32(crc)
+        encoder.write(data)
+
+        buffer.string
+      end
 
       def encode_without_crc
         buffer = StringIO.new
