@@ -2,6 +2,7 @@ require "kafka/partitioner"
 require "kafka/message_buffer"
 require "kafka/produce_operation"
 require "kafka/pending_message"
+require "kafka/compression"
 
 module Kafka
 
@@ -117,7 +118,7 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
-    def initialize(cluster:, logger:, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    def initialize(cluster:, logger:, compression_codec: nil, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @cluster = cluster
       @logger = logger
       @required_acks = required_acks
@@ -125,6 +126,7 @@ module Kafka
       @max_retries = max_retries
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
+      @compression_codec = Compression.find_codec(compression_codec)
 
       # A buffer organized by topic/partition.
       @buffer = MessageBuffer.new
@@ -233,6 +235,7 @@ module Kafka
         buffer: @buffer,
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,
+        compression_codec: @compression_codec,
         logger: @logger,
       )
 

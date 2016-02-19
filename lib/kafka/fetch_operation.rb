@@ -69,13 +69,13 @@ module Kafka
           fetched_topic.partitions.flat_map {|fetched_partition|
             Protocol.handle_error(fetched_partition.error_code)
 
-            fetched_partition.messages.map {|offset, message|
+            fetched_partition.messages.map {|message|
               FetchedMessage.new(
                 value: message.value,
                 key: message.key,
                 topic: fetched_topic.name,
                 partition: fetched_partition.partition,
-                offset: offset,
+                offset: message.offset,
               )
             }
           }

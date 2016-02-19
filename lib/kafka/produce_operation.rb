@@ -1,3 +1,5 @@
+require "kafka/protocol/message_set"
+
 module Kafka
   # A produce operation attempts to send all messages in a buffer to the Kafka cluster.
   # Since topics and partitions are spread among all brokers in a cluster, this usually
@@ -23,11 +25,12 @@ module Kafka
   # * `sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, required_acks:, ack_timeout:, logger:)
+    def initialize(cluster:, buffer:, compression_codec:, required_acks:, ack_timeout:, logger:)
       @cluster = cluster
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
+      @compression_codec = compression_codec
       @logger = logger
     end
 
@@ -67,12 +70,20 @@ module Kafka
         end
       end
 
-      messages_for_broker.each do |broker, message_set|
+      messages_for_broker.each do |broker, message_buffer|
         begin
-          @logger.info "Sending #{message_set.size} messages to #{broker}"
+          @logger.info "Sending #{message_buffer.size} messages to #{broker}"
+
+          messages_for_topics = {}
+
+          message_buffer.each do |topic, partition, messages|
+            message_set = Protocol::MessageSet.new(messages: messages, compression_codec: @compression_codec)
+            messages_for_topics[topic] ||= {}
+            messages_for_topics[topic][partition] = message_set
+          end
 
           response = broker.produce(
-            messages_for_topics: message_set.to_h,
+            messages_for_topics: messages_for_topics,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
           )
