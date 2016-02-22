@@ -74,6 +74,51 @@ producer.deliver_messages
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
 
+### Asynchronously Producing Messages
+
+A normal producer will block while `#deliver_messages` is sending messages to Kafka, possible for tens of seconds or even minutes at a time, depending on your timeout and retry settings. Furthermore, you have to call `#deliver_messages` manually, with a frequency that balances batch size with message delay.
+
+In order to avoid blocking during message deliveries you can use the _asynchronous producer_ API. It is mostly similar to the synchronous API, with calls to `#produce` and `#deliver_messages`. The main difference is that rather than blocking, these calls will return immediately. The actual work will be done in a background thread, with the messages and operations being sent from the caller over a thread safe queue.
+
+```ruby
+# `#async_producer` will create a new asynchronous producer.
+producer = kafka.async_producer
+
+# The `#produce` API works as normal.
+producer.produce("hello", topic: "greetings")
+
+# `#deliver_messages` will return immediately.
+producer.deliver_messages
+
+# Make sure to call `#shutdown` on the producer in order to
+# avoid leaking resources.
+producer.shutdown
+```
+
+By default, the delivery policy will be the same as for a synchronous producer: only when `#deliver_messages` is called will the messages be delivered. However, the asynchronous producer offers two complementary policies for _automatic delivery_:
+
+1. Trigger a delivery once the producer's message buffer reaches a specified _threshold_. This can be used to improve efficiency by increasing the batch size when sending messages to the Kafka cluster.
+2. Trigger a delivery at a _fixed time interval_. This puts an upper bound on message delays.
+
+These policies can be used alone or in combination.
+
+```ruby
+# `async_producer` will create a new asynchronous producer.
+producer = kafka.async_producer(
+  # Trigger a delivery once 100 messages have been buffered.
+  delivery_threshold: 100,
+  
+  # Trigger a delivery every 30 seconds.
+  delivery_interval: 30,
+)
+
+producer.produce("hello", topic: "greetings")
+
+# ...
+```
+
+**Note:** if the calling thread produces messages faster than the producer can write them to Kafka, you'll eventually run into problems. The internal queue used for sending messages from the calling thread to the background worker has a size limit; once this limit is reached, a call to `#produce` will raise `Kafka::BufferOverflow`.
+
 ### Partitioning
 
 Kafka topics are partitioned, with messages being assigned to a partition by the client. This allows a great deal of flexibility for the users. This section describes several strategies for partitioning and how they impact performance, data locality, etc.
