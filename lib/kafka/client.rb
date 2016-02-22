@@ -1,5 +1,6 @@
 require "kafka/cluster"
 require "kafka/producer"
+require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
 
@@ -49,6 +50,17 @@ module Kafka
     # @return [Kafka::Producer] the Kafka producer.
     def producer(**options)
       Producer.new(cluster: @cluster, logger: @logger, **options)
+    end
+
+    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+      sync_producer = producer(**options)
+
+      AsyncProducer.new(
+        sync_producer: sync_producer,
+        delivery_interval: delivery_interval,
+        delivery_threshold: delivery_threshold,
+        max_queue_size: max_queue_size,
+      )
     end
 
     # Fetches a batch of messages from a single partition. Note that it's possible

@@ -11,10 +11,6 @@ describe "Producer API", functional: true do
     producer.shutdown
   end
 
-  example "listing all topics in the cluster" do
-    expect(kafka.topics).to include "test-messages"
-  end
-
   example "writing messages using the buffered producer" do
     value1 = rand(10_000).to_s
     value2 = rand(10_000).to_s
