@@ -118,6 +118,10 @@ module Kafka
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
     #   before new writes will raise BufferOverflow exceptions.
     #
+    # @param compression_codec [Symbol, nil] the name of the compression codec to
+    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
+    #   and `:gzip`.
+    #
     def initialize(cluster:, logger:, compression_codec: nil, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @cluster = cluster
       @logger = logger
