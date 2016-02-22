@@ -23,7 +23,7 @@ kafka = Kafka.new(
   logger: logger,
 )
 
-producer = kafka.get_producer
+producer = kafka.producer
 
 begin
   $stdin.each_with_index do |line, index|

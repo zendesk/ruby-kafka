@@ -9,7 +9,7 @@ describe "Compression", functional: true do
   end
 
   example "producing and consuming snappy-compressed messages" do
-    producer = kafka.get_producer(
+    producer = kafka.producer(
       compression_codec: :snappy,
       max_retries: 0,
       retry_backoff: 0
@@ -26,7 +26,7 @@ describe "Compression", functional: true do
   end
 
   example "producing and consuming gzip-compressed messages" do
-    producer = kafka.get_producer(
+    producer = kafka.producer(
       compression_codec: :gzip,
       max_retries: 0,
       retry_backoff: 0

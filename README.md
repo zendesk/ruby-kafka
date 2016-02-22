@@ -39,7 +39,7 @@ kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
 A producer buffers messages and sends them to the broker that is the leader of the partition a given message is assigned to.
 
 ```ruby
-producer = kafka.get_producer
+producer = kafka.producer
 ```
 
 `produce` will buffer the message in the producer but will _not_ actually send it to the Kafka cluster.
@@ -139,7 +139,7 @@ The producer is designed for resilience in the face of temporary network errors,
 
 Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::FailedToSendMessages` is raised from `Kafka::Producer#deliver_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#deliver_messages` will still attempt to send them.
 
-Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#get_producer` in order to configure this.
+Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
@@ -152,7 +152,7 @@ It's important to understand how timeouts work if you have a latency sensitive a
 * `connect_timeout` sets the number of seconds to wait while connecting to a broker for the first time. When ruby-kafka initializes, it needs to connect to at least one host in `seed_brokers` in order to discover the Kafka cluster. Each host is tried until there's one that works. Usually that means the first one, but if your entire cluster is down, or there's a network partition, you could wait up to `n * connect_timeout` seconds, where `n` is the number of seed brokers.
 * `socket_timeout` sets the number of seconds to wait when reading from or writing to a socket connection to a broker. After this timeout expires the connection will be killed. Note that some Kafka operations are by definition long-running, such as waiting for new messages to arrive in a partition, so don't set this value too low. When configuring timeouts relating to specific Kafka operations, make sure to make them shorter than this one.
 
-**Producer timeouts** can be configured when calling `#get_producer` on a client instance:
+**Producer timeouts** can be configured when calling `#producer` on a client instance:
 
 * `ack_timeout` is a timeout executed by a broker when the client is sending messages to it. It defines the number of seconds the broker should wait for replicas to acknowledge the write before responding to the client with an error. As such, it relates to the `required_acks` setting. It should be set lower than `socket_timeout`.
 * `retry_backoff` configures the number of seconds to wait after a failed attempt to send messages to a Kafka broker before retrying. The `max_retries` setting defines the maximum number of retries to attempt, and so the total duration could be up to `max_retries * retry_backoff` seconds. The timeout can be arbitrarily long, and shouldn't be too short: if a broker goes down its partitions will be handed off to another broker, and that can take tens of seconds.

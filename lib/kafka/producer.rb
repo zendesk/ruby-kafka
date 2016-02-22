@@ -15,11 +15,11 @@ module Kafka
   #     kafka = Kafka.new(...)
   #
   #     # Will instantiate Kafka::Producer
-  #     producer = kafka.get_producer
+  #     producer = kafka.producer
   #
   # This is done in order to share a logger as well as a pool of broker connections across
   # different producers. This also means that you don't need to pass the `cluster` and
-  # `logger` options to `#get_producer`. See {#initialize} for the list of other options
+  # `logger` options to `#producer`. See {#initialize} for the list of other options
   # you can pass in.
   #
   # ## Buffering
@@ -78,7 +78,7 @@ module Kafka
   #       logger: logger,
   #     )
   #
-  #     producer = kafka.get_producer
+  #     producer = kafka.producer
   #
   #     begin
   #       $stdin.each_with_index do |line, index|

@@ -47,7 +47,7 @@ module Kafka
     #
     # @see Producer#initialize
     # @return [Kafka::Producer] the Kafka producer.
-    def get_producer(**options)
+    def producer(**options)
       Producer.new(cluster: @cluster, logger: @logger, **options)
     end
 

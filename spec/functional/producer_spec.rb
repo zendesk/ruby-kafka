@@ -1,7 +1,7 @@
 describe "Producer API", functional: true do
   let(:logger) { Logger.new(LOG) }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
-  let(:producer) { kafka.get_producer(max_retries: 1, retry_backoff: 0) }
+  let(:producer) { kafka.producer(max_retries: 1, retry_backoff: 0) }
 
   before do
     require "test_cluster"
@@ -55,7 +55,7 @@ describe "Producer API", functional: true do
   example "writing to a an explicit partition of a topic that doesn't yet exist" do
     topic = "topic#{rand(1000)}"
 
-    producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
+    producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic, partition: 0)
     producer.deliver_messages
 
@@ -69,7 +69,7 @@ describe "Producer API", functional: true do
   example "writing to a an unspecified partition of a topic that doesn't yet exist" do
     topic = "topic#{rand(1000)}"
 
-    producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
+    producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic)
     producer.deliver_messages
 
@@ -82,7 +82,7 @@ describe "Producer API", functional: true do
 
   example "handle a broker going down after the initial discovery" do
     begin
-      producer = kafka.get_producer(max_retries: 10, retry_backoff: 1)
+      producer = kafka.producer(max_retries: 10, retry_backoff: 1)
 
       KAFKA_CLUSTER.kill_kafka_broker(0)
 
