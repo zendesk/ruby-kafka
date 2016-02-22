@@ -3,16 +3,16 @@ describe Kafka::MessageBuffer do
     let(:buffer) { Kafka::MessageBuffer.new }
 
     it "returns the number of messages in the buffer" do
-      buffer.concat(["a", "b", "c"], topic: "foo", partition: 3)
+      buffer.concat(["a", "b", "c"], topic: "bar", partition: 3)
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 1)
 
       expect(buffer.size).to eq 6
     end
 
     it "keeps track of how many messages have been cleared" do
-      buffer.concat(["a", "b", "c"], topic: "foo", partition: 3)
+      buffer.concat(["a", "b", "c"], topic: "bar", partition: 3)
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 1)
-      buffer.clear_messages(topic: "foo", partition: 3)
+      buffer.clear_messages(topic: "bar", partition: 3)
 
       expect(buffer.size).to eq 3
     end

@@ -98,7 +98,7 @@ module Kafka
   end
 
   # Raised if not all messages could be sent by a producer.
-  class FailedToSendMessages < Error
+  class DeliveryFailed < Error
   end
 
   # Initializes a new Kafka client.

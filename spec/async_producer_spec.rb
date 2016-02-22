@@ -46,7 +46,7 @@ describe Kafka::AsyncProducer do
 
       producer.produce("hello", topic: "greetings")
 
-      allow(sync_producer).to receive(:deliver_messages).and_raise(Kafka::FailedToSendMessages)
+      allow(sync_producer).to receive(:deliver_messages).and_raise(Kafka::DeliveryFailed)
 
       producer.deliver_messages
       producer.shutdown

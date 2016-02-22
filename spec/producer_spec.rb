@@ -95,7 +95,7 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.deliver_messages }.to raise_error(Kafka::FailedToSendMessages)
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -113,7 +113,7 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.deliver_messages }.to raise_error(Kafka::FailedToSendMessages)
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1

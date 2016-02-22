@@ -168,7 +168,7 @@ module Kafka
 
       def deliver_messages
         @producer.deliver_messages
-      rescue FailedToSendMessages
+      rescue DeliveryFailed
         # Delivery failed.
       end
 

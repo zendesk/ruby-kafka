@@ -66,7 +66,7 @@ If you don't know exactly how many partitions are in the topic, or you'd rather 
 producer.produce("hello4", topic: "test-messages", partition_key: "yo")
 ```
 
-`deliver_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::FailedToSendMessages` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
+`deliver_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::DeliveryFailed` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
 
 ```ruby
 producer.deliver_messages
@@ -137,7 +137,7 @@ producer.produce(event, topic: "events", partition: partition)
 
 The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
 
-Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::FailedToSendMessages` is raised from `Kafka::Producer#deliver_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#deliver_messages` will still attempt to send them.
+Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::DeliveryFailed` is raised from `Kafka::Producer#deliver_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#deliver_messages` will still attempt to send them.
 
 Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
 

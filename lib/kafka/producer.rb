@@ -187,7 +187,7 @@ module Kafka
     # the writes. The `ack_timeout` setting places an upper bound on the amount of
     # time the call will block before failing.
     #
-    # @raise [FailedToSendMessages] if not all messages could be successfully sent.
+    # @raise [DeliveryFailed] if not all messages could be successfully sent.
     # @return [nil]
     def deliver_messages
       # There's no need to do anything if the buffer is empty.
@@ -271,7 +271,7 @@ module Kafka
       unless @buffer.empty?
         partitions = @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
 
-        raise FailedToSendMessages, "Failed to send messages to #{partitions}"
+        raise DeliveryFailed, "Failed to send messages to #{partitions}"
       end
     end
 
