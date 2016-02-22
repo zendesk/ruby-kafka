@@ -24,7 +24,7 @@ Or install it yourself as:
 
 ## Usage
 
-Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release.
+Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release. Note that the documentation on GitHub may not match the version of the library you're using – there are still being made many changes to the API.
 
 ### Producing Messages to Kafka
 
