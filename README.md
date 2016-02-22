@@ -119,6 +119,26 @@ producer.produce("hello", topic: "greetings")
 
 **Note:** if the calling thread produces messages faster than the producer can write them to Kafka, you'll eventually run into problems. The internal queue used for sending messages from the calling thread to the background worker has a size limit; once this limit is reached, a call to `#produce` will raise `Kafka::BufferOverflow`.
 
+### Serialization
+
+This library is agnostic to which serialization format you prefer. Both the value and key of a message is treated as a binary string of data. This makes it easier to use whatever serialization format you want, since you don't have to do anything special to make it work with ruby-kafka. Here's an example of encoding data with JSON:
+
+```ruby
+require "json"
+
+# ...
+
+event = {
+  "name" => "pageview",
+  "url" => "https://example.com/posts/123",
+  # ...
+}
+
+data = JSON.dump(event)
+
+producer.produce(data, topic: "events")
+```
+
 ### Partitioning
 
 Kafka topics are partitioned, with messages being assigned to a partition by the client. This allows a great deal of flexibility for the users. This section describes several strategies for partitioning and how they impact performance, data locality, etc.
