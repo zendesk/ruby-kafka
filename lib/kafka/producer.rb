@@ -49,8 +49,17 @@ module Kafka
   #
   # ## Instrumentation
   #
+  # Whenever {#produce} is called, the notification `produce_message.producer.kafka`
+  # will be emitted with the following payload:
+  #
+  # * `value` – the message value.
+  # * `key` – the message key.
+  # * `topic` – the topic that was produced to.
+  # * `buffer_size` – the buffer size after adding the message.
+  # * `max_buffer_size` – the maximum allowed buffer size for the producer.
+  #
   # After {#deliver_messages} completes, the notification
-  # `deliver_messages.producer.kafka` will be emitted.
+  # `deliver_messages.producer.kafka` will be emitted with the following payload:
   #
   # * `message_count` – the total number of messages that the producer tried to
   #   deliver. Note that not all messages may get delivered.
@@ -180,6 +189,14 @@ module Kafka
         partition: partition,
         partition_key: partition_key,
       )
+
+      Instrumentation.instrument("produce_message.producer.kafka", {
+        value: value,
+        key: key,
+        topic: topic,
+        buffer_size: buffer_size,
+        max_buffer_size: @max_buffer_size,
+      })
 
       nil
     end
