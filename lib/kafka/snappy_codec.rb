@@ -4,6 +4,10 @@ module Kafka
       require "snappy"
     end
 
+    def name
+      :snappy
+    end
+
     def codec_id
       2
     end
