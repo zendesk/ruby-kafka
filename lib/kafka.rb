@@ -59,6 +59,12 @@ module Kafka
   class OffsetMetadataTooLarge < ProtocolError
   end
 
+  class GroupCoordinatorNotAvailable < ProtocolError
+  end
+
+  class NotCoordinatorForGroup < ProtocolError
+  end
+
   # For a request which attempts to access an invalid topic (e.g. one which has
   # an illegal name), or if an attempt is made to write to an internal topic
   # (such as the consumer offsets topic).
@@ -87,6 +93,15 @@ module Kafka
 
   # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
   class ReplicaNotAvailable < ProtocolError
+  end
+
+  class UnknownMemberId < ProtocolError
+  end
+
+  class IllegalGeneration < ProtocolError
+  end
+
+  class InvalidSessionTimeout < ProtocolError
   end
 
   # Raised when there's a network connection error.

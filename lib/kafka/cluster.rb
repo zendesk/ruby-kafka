@@ -66,6 +66,36 @@ module Kafka
       connect_to_broker(get_leader_id(topic, partition))
     end
 
+    def get_group_coordinator(group_id:)
+      @logger.debug "Getting group coordinator for `#{group_id}`"
+
+      refresh_metadata_if_necessary!
+
+      cluster_info.brokers.each do |broker_info|
+        begin
+          broker = connect_to_broker(broker_info.node_id)
+          response = broker.find_group_coordinator(group_id: group_id)
+
+          Protocol.handle_error(response.error_code)
+
+          coordinator_id = response.coordinator_id
+          coordinator = connect_to_broker(coordinator_id)
+
+          @logger.debug "Coordinator for group `#{group_id}` is #{coordinator}"
+
+          return coordinator
+        rescue GroupCoordinatorNotAvailable
+          @logger.debug "Coordinator not available; retrying in 1s"
+          sleep 1
+          retry
+        rescue => e
+          @logger.error "Failed to get group coordinator info from #{broker}: #{e}"
+        end
+      end
+
+      raise Kafka::Error, "Failed to find group coordinator"
+    end
+
     def partitions_for(topic)
       add_target_topics([topic])
       cluster_info.partitions_for(topic)
