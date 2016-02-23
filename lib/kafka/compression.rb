@@ -3,21 +3,25 @@ require "kafka/gzip_codec"
 
 module Kafka
   module Compression
+    CODECS = [SnappyCodec.new, GzipCodec.new]
+
+    CODECS_BY_NAME = CODECS.map {|codec| [codec.name, codec] }.to_h
+    CODECS_BY_ID = CODECS.map {|codec| [codec.codec_id, codec] }.to_h
+
     def self.find_codec(name)
-      case name
-      when nil then nil
-      when :snappy then SnappyCodec.new
-      when :gzip then GzipCodec.new
-      else raise "Unknown compression codec #{name}"
-      end
+      return nil if name.nil?
+
+      CODECS_BY_NAME.fetch(name) {
+        raise "Unknown compression codec #{name}"
+      }
     end
 
     def self.find_codec_by_id(codec_id)
-      case codec_id
-      when 1 then GzipCodec.new
-      when 2 then SnappyCodec.new
-      else raise "Unknown codec id #{codec_id}"
-      end
+      return nil if codec_id.nil?
+
+      CODECS_BY_ID.fetch(codec_id) {
+        raise "Unknown codec id #{codec_id}"
+      }
     end
 
     def self.compress(codec, data)
@@ -31,6 +35,7 @@ module Kafka
       message_set = Protocol::MessageSet.new(messages: [wrapper_message])
 
       Instrumentation.instrument("compress.producer.kafka", {
+        codec_name: codec.name,
         codec_id: codec.codec_id,
         original_bytesize: data.bytesize,
         compressed_bytesize: compressed_data.bytesize,

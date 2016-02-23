@@ -4,6 +4,10 @@ module Kafka
       require "zlib"
     end
 
+    def name
+      :gzip
+    end
+
     def codec_id
       1
     end
