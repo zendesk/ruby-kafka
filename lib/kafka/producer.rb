@@ -1,6 +1,8 @@
+require "set"
 require "kafka/partitioner"
 require "kafka/message_buffer"
 require "kafka/produce_operation"
+require "kafka/pending_message_queue"
 require "kafka/pending_message"
 require "kafka/compression"
 
@@ -148,7 +150,11 @@ module Kafka
     # @param retry_backoff [Integer] the number of seconds to wait between retries.
     #
     # @param max_buffer_size [Integer] the number of messages allowed in the buffer
-    #   before new writes will raise BufferOverflow exceptions.
+    #   before new writes will raise {BufferOverflow} exceptions.
+    #
+    # @param max_buffer_bytesize [Integer] the maximum size of the buffer in bytes.
+    #   attempting to produce messages when the buffer reaches this size will
+    #   result in {BufferOverflow} being raised.
     #
     # @param compression_codec [Symbol, nil] the name of the compression codec to
     #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
@@ -158,7 +164,7 @@ module Kafka
     #   be in a message set before it should be compressed. Note that message sets
     #   are per-partition rather than per-topic or per-producer.
     #
-    def initialize(cluster:, logger:, compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    def initialize(cluster:, logger:, compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
       @cluster = cluster
       @logger = logger
       @required_acks = required_acks
@@ -166,14 +172,18 @@ module Kafka
       @max_retries = max_retries
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
+      @max_buffer_bytesize = max_buffer_bytesize
       @compression_codec = Compression.find_codec(compression_codec)
       @compression_threshold = compression_threshold
+
+      # The set of topics that are produced to.
+      @target_topics = Set.new
 
       # A buffer organized by topic/partition.
       @buffer = MessageBuffer.new
 
       # Messages added by `#produce` but not yet assigned a partition.
-      @pending_messages = []
+      @pending_message_queue = PendingMessageQueue.new
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
@@ -206,17 +216,24 @@ module Kafka
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
     def produce(value, key: nil, topic:, partition: nil, partition_key: nil)
-      unless buffer_size < @max_buffer_size
-        raise BufferOverflow, "Max buffer size #{@max_buffer_size} exceeded"
-      end
-
-      @pending_messages << PendingMessage.new(
+      message = PendingMessage.new(
         value: value,
         key: key,
         topic: topic,
         partition: partition,
         partition_key: partition_key,
       )
+
+      if buffer_size >= @max_buffer_size
+        raise BufferOverflow, "Max buffer size (#{@max_buffer_size} messages) exceeded"
+      end
+
+      if buffer_bytesize + message.bytesize >= @max_buffer_bytesize
+        raise BufferOverflow, "Max buffer bytesize (#{@max_buffer_bytesize} bytes) exceeded"
+      end
+
+      @target_topics.add(topic)
+      @pending_message_queue.write(message)
 
       Instrumentation.instrument("produce_message.producer.kafka", {
         value: value,
@@ -260,7 +277,11 @@ module Kafka
     #
     # @return [Integer] buffer size.
     def buffer_size
-      @pending_messages.size + @buffer.size
+      @pending_message_queue.size + @buffer.size
+    end
+
+    def buffer_bytesize
+      @pending_message_queue.bytesize + @buffer.bytesize
     end
 
     # Closes all connections to the brokers.
@@ -275,9 +296,7 @@ module Kafka
     def deliver_messages_with_retries(notification)
       attempt = 0
 
-      # Make sure we get metadata for this topic.
-      target_topics = @pending_messages.map(&:topic).uniq
-      @cluster.add_target_topics(target_topics)
+      @cluster.add_target_topics(@target_topics)
 
       operation = ProduceOperation.new(
         cluster: @cluster,
@@ -299,7 +318,7 @@ module Kafka
         assign_partitions!
         operation.execute
 
-        if @pending_messages.empty? && @buffer.empty?
+        if buffer_size.zero?
           break
         elsif attempt <= @max_retries
           @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
@@ -326,10 +345,7 @@ module Kafka
     end
 
     def assign_partitions!
-      until @pending_messages.empty?
-        # We want to keep the message in the first-stage buffer in case there's an error.
-        message = @pending_messages.first
-
+      @pending_message_queue.dequeue_each do |message|
         partition = message.partition
 
         if partition.nil?
@@ -343,9 +359,6 @@ module Kafka
           topic: message.topic,
           partition: partition,
         )
-
-        # Now it's safe to remove the message from the first-stage buffer.
-        @pending_messages.shift
       end
     rescue Kafka::Error => e
       @logger.error "Failed to assign pending message to a partition: #{e}"
