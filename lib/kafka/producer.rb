@@ -47,6 +47,29 @@ module Kafka
   # not, we do another round of requests, this time with just the remaining messages.
   # We do this for as long as `max_retries` permits.
   #
+  # ## Compression
+  #
+  # Depending on what kind of data you produce, enabling compression may yield improved
+  # bandwidth and space usage. Compression in Kafka is done on entire messages sets
+  # rather than on individual messages. This improves the compression rate and generally
+  # means that compressions works better the larger your buffers get, since the message
+  # sets will be larger by the time they're compressed.
+  #
+  # Since many workloads have variations in throughput and distribution across partitions,
+  # it's possible to configure a threshold for when to enable compression by setting
+  # `compression_threshold`. Only if the defined number of messages are buffered for a
+  # partition will the messages be compressed.
+  #
+  # Compression is enabled by passing the `compression_codec` parameter with the
+  # name of one of the algorithms allowed by Kafka:
+  #
+  # * `:snappy` for [Snappy](http://google.github.io/snappy/) compression.
+  # * `:gzip` for [gzip](https://en.wikipedia.org/wiki/Gzip) compression.
+  #
+  # By default, all message sets will be compressed if you specify a compression
+  # codec. To increase the compression threshold, set `compression_threshold` to
+  # an integer value higher than one.
+  #
   # ## Instrumentation
   #
   # Whenever {#produce} is called, the notification `produce_message.producer.kafka`
@@ -131,7 +154,11 @@ module Kafka
     #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
     #   and `:gzip`.
     #
-    def initialize(cluster:, logger:, compression_codec: nil, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
+    # @param compression_threshold [Integer] the number of messages that needs to
+    #   be in a message set before it should be compressed. Note that message sets
+    #   are per-partition rather than per-topic or per-producer.
+    #
+    def initialize(cluster:, logger:, compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000)
       @cluster = cluster
       @logger = logger
       @required_acks = required_acks
@@ -140,6 +167,7 @@ module Kafka
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
       @compression_codec = Compression.find_codec(compression_codec)
+      @compression_threshold = compression_threshold
 
       # A buffer organized by topic/partition.
       @buffer = MessageBuffer.new
@@ -257,6 +285,7 @@ module Kafka
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,
         compression_codec: @compression_codec,
+        compression_threshold: @compression_threshold,
         logger: @logger,
       )
 

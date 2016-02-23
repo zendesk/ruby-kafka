@@ -3,9 +3,14 @@ module Kafka
     class MessageSet
       attr_reader :messages
 
-      def initialize(messages: [], compression_codec: nil)
+      def initialize(messages: [], compression_codec: nil, compression_threshold: 1)
         @messages = messages
         @compression_codec = compression_codec
+        @compression_threshold = compression_threshold
+      end
+
+      def size
+        @messages.size
       end
 
       def ==(other)
@@ -13,10 +18,10 @@ module Kafka
       end
 
       def encode(encoder)
-        if @compression_codec.nil?
-          encode_without_compression(encoder)
-        else
+        if compress?
           encode_with_compression(encoder)
+        else
+          encode_without_compression(encoder)
         end
       end
 
@@ -38,6 +43,10 @@ module Kafka
       end
 
       private
+
+      def compress?
+        !@compression_codec.nil? && size >= @compression_threshold
+      end
 
       def encode_with_compression(encoder)
         codec = @compression_codec
