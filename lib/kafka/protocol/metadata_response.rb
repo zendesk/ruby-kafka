@@ -121,7 +121,11 @@ module Kafka
       # @param node_id [Integer] the node id of the broker.
       # @return [BrokerInfo] information about the broker.
       def find_broker(node_id)
-        @brokers.find {|broker| broker.node_id == node_id }
+        broker = @brokers.find {|broker| broker.node_id == node_id }
+
+        raise Kafka::Error, "No broker with id #{node_id}" if broker.nil?
+
+        broker
       end
 
       def partitions_for(topic_name)
