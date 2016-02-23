@@ -49,18 +49,10 @@ module Kafka
       end
 
       def encode_with_compression(encoder)
-        codec = @compression_codec
-
         buffer = StringIO.new
         encode_without_compression(Encoder.new(buffer))
-        data = codec.compress(buffer.string)
 
-        wrapper_message = Protocol::Message.new(
-          value: data,
-          attributes: codec.codec_id,
-        )
-
-        message_set = MessageSet.new(messages: [wrapper_message])
+        message_set = Compression.compress(@compression_codec, buffer.string)
         message_set.encode(encoder)
       end
 

@@ -19,5 +19,16 @@ module Kafka
       else raise "Unknown codec id #{codec_id}"
       end
     end
+
+    def self.compress(codec, data)
+      compressed_data = codec.compress(data)
+
+      wrapper_message = Protocol::Message.new(
+        value: compressed_data,
+        attributes: codec.codec_id,
+      )
+
+      Protocol::MessageSet.new(messages: [wrapper_message])
+    end
   end
 end
