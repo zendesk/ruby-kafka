@@ -18,11 +18,15 @@ module Kafka
 
       attr_reader :key, :value, :attributes, :offset
 
+      attr_reader :bytesize
+
       def initialize(value:, key: nil, attributes: 0, offset: -1)
         @key = key
         @value = value
         @attributes = attributes
         @offset = offset
+
+        @bytesize = @key.to_s.bytesize + @value.to_s.bytesize
       end
 
       def encode(encoder)

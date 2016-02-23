@@ -1,7 +1,7 @@
 describe Kafka::MessageBuffer do
-  describe "#size" do
-    let(:buffer) { Kafka::MessageBuffer.new }
+  let(:buffer) { Kafka::MessageBuffer.new }
 
+  describe "#size" do
     it "returns the number of messages in the buffer" do
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 3)
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 1)
@@ -30,6 +30,33 @@ describe Kafka::MessageBuffer do
       end
 
       expect { buffer.size }.to perform_at_least(10000).ips
+    end
+  end
+
+  describe "#bytesize" do
+    it "returns the bytesize of the messages in the buffer" do
+      buffer.write(value: "foo", key: "bar", topic: "yolos", partition: 1)
+      buffer.write(value: "baz", key: "bim", topic: "yolos", partition: 1)
+
+      expect(buffer.bytesize).to eq 12
+    end
+
+    it "keeps track of concatenations" do
+      message = Kafka::Protocol::Message.new(value: "baz", key: "bim")
+
+      buffer.write(value: "foo", key: "bar", topic: "yolos", partition: 1)
+      buffer.concat([message], topic: "yolos", partition: 1)
+
+      expect(buffer.bytesize).to eq 12
+    end
+
+    it "keeps track of when messages are cleared" do
+      buffer.write(value: "foo", key: "bar", topic: "yolos", partition: 1)
+      buffer.write(value: "baz", key: "bim", topic: "yolos", partition: 2)
+
+      buffer.clear_messages(topic: "yolos", partition: 1)
+
+      expect(buffer.bytesize).to eq 6
     end
   end
 end

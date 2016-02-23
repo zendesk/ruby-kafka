@@ -6,22 +6,28 @@ module Kafka
   class MessageBuffer
     include Enumerable
 
-    attr_reader :size
+    attr_reader :size, :bytesize
 
     def initialize
       @buffer = {}
       @size = 0
+      @bytesize = 0
     end
 
     def write(value:, key:, topic:, partition:)
-      @size += 1
       message = Protocol::Message.new(key: key, value: value)
+
       buffer_for(topic, partition) << message
+
+      @size += 1
+      @bytesize += message.bytesize
     end
 
     def concat(messages, topic:, partition:)
-      @size += messages.count
       buffer_for(topic, partition).concat(messages)
+
+      @size += messages.count
+      @bytesize += messages.map(&:bytesize).reduce(:+)
     end
 
     def to_h
@@ -48,6 +54,7 @@ module Kafka
     # @return [nil]
     def clear_messages(topic:, partition:)
       @size -= @buffer[topic][partition].count
+      @bytesize -= @buffer[topic][partition].map(&:bytesize).reduce(:+)
 
       @buffer[topic].delete(partition)
       @buffer.delete(topic) if @buffer[topic].empty?
