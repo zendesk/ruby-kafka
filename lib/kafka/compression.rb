@@ -28,7 +28,15 @@ module Kafka
         attributes: codec.codec_id,
       )
 
-      Protocol::MessageSet.new(messages: [wrapper_message])
+      message_set = Protocol::MessageSet.new(messages: [wrapper_message])
+
+      Instrumentation.instrument("compress.producer.kafka", {
+        codec_id: codec.codec_id,
+        original_bytesize: data.bytesize,
+        compressed_bytesize: compressed_data.bytesize,
+      })
+
+      message_set
     end
   end
 end
