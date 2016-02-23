@@ -34,6 +34,30 @@ describe Kafka::AsyncProducer do
         end
       }.to raise_exception(Kafka::BufferOverflow)
     end
+
+    it "handles the sync producer raising BufferOverflow" do
+      sync_producer = double(:sync_producer, shutdown: nil, deliver_messages: nil)
+
+      producer = Kafka::AsyncProducer.new(
+        sync_producer: sync_producer,
+        max_queue_size: 2,
+      )
+
+      allow(sync_producer).to receive(:produce).and_raise(Kafka::BufferOverflow)
+
+      2.times do
+        producer.produce("hello", topic: "greetings")
+      end
+
+      expect {
+        producer.produce("hello", topic: "greetings")
+      }.to raise_exception(Kafka::BufferOverflow)
+
+      # Allow the producer thread to get rid of the queued messages.
+      allow(sync_producer).to receive(:produce)
+
+      producer.shutdown
+    end
   end
 
   describe "#deliver_messages" do
