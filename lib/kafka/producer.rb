@@ -4,7 +4,7 @@ require "kafka/message_buffer"
 require "kafka/produce_operation"
 require "kafka/pending_message_queue"
 require "kafka/pending_message"
-require "kafka/compression"
+require "kafka/compressor"
 
 module Kafka
 
@@ -173,8 +173,11 @@ module Kafka
       @retry_backoff = retry_backoff
       @max_buffer_size = max_buffer_size
       @max_buffer_bytesize = max_buffer_bytesize
-      @compression_codec = Compression.find_codec(compression_codec)
-      @compression_threshold = compression_threshold
+
+      @compressor = Compressor.new(
+        codec_name: @compression_codec,
+        threshold: @compression_threshold,
+      )
 
       # The set of topics that are produced to.
       @target_topics = Set.new
@@ -303,8 +306,7 @@ module Kafka
         buffer: @buffer,
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,
-        compression_codec: @compression_codec,
-        compression_threshold: @compression_threshold,
+        compressor: @compressor,
         logger: @logger,
       )
 

@@ -25,13 +25,12 @@ module Kafka
   # * `sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, compression_codec:, compression_threshold:, required_acks:, ack_timeout:, logger:)
+    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:)
       @cluster = cluster
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
-      @compression_codec = compression_codec
-      @compression_threshold = compression_threshold
+      @compressor = compressor
       @logger = logger
     end
 
@@ -78,11 +77,8 @@ module Kafka
           messages_for_topics = {}
 
           message_buffer.each do |topic, partition, messages|
-            message_set = Protocol::MessageSet.new(
-              messages: messages,
-              compression_codec: @compression_codec,
-              compression_threshold: @compression_threshold,
-            )
+            message_set = Protocol::MessageSet.new(messages: messages)
+            message_set = @compressor.compress(message_set)
 
             messages_for_topics[topic] ||= {}
             messages_for_topics[topic][partition] = message_set
