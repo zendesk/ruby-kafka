@@ -88,7 +88,7 @@ module Kafka
           @logger.debug "Coordinator not available; retrying in 1s"
           sleep 1
           retry
-        rescue => e
+        rescue ConnectionError => e
           @logger.error "Failed to get group coordinator info from #{broker}: #{e}"
         end
       end
