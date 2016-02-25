@@ -126,6 +126,7 @@ module Kafka
 
       message = Kafka::Protocol::RequestMessage.new(
         api_key: request.api_key,
+        api_version: request.respond_to?(:api_version) ? request.api_version : 0,
         correlation_id: @correlation_id,
         client_id: @client_id,
         request: request,

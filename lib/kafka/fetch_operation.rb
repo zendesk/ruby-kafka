@@ -16,7 +16,7 @@ module Kafka
   #     operation.execute
   #
   class FetchOperation
-    def initialize(cluster:, logger:, min_bytes:, max_wait_time:)
+    def initialize(cluster:, logger:, min_bytes: 1, max_wait_time: 5)
       @cluster = cluster
       @logger = logger
       @min_bytes = min_bytes
@@ -24,7 +24,7 @@ module Kafka
       @topics = {}
     end
 
-    def fetch_from_partition(topic, partition, offset:, max_bytes:)
+    def fetch_from_partition(topic, partition, offset: :latest, max_bytes: 1048576)
       if offset == :earliest
         offset = -2
       elsif offset == :latest

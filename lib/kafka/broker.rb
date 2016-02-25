@@ -64,5 +64,47 @@ module Kafka
 
       @connection.send_request(request)
     end
+
+    def fetch_offsets(**options)
+      request = Protocol::OffsetFetchRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def commit_offsets(**options)
+      request = Protocol::OffsetCommitRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def join_group(**options)
+      request = Protocol::JoinGroupRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def sync_group(**options)
+      request = Protocol::SyncGroupRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def leave_group(**options)
+      request = Protocol::LeaveGroupRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def find_group_coordinator(**options)
+      request = Protocol::GroupCoordinatorRequest.new(**options)
+
+      @connection.send_request(request)
+    end
+
+    def heartbeat(**options)
+      request = Protocol::HeartbeatRequest.new(**options)
+
+      @connection.send_request(request)
+    end
   end
 end

@@ -1,5 +1,6 @@
 require "kafka/cluster"
 require "kafka/producer"
+require "kafka/consumer"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
@@ -60,6 +61,14 @@ module Kafka
         delivery_interval: delivery_interval,
         delivery_threshold: delivery_threshold,
         max_queue_size: max_queue_size,
+      )
+    end
+
+    def consumer(**options)
+      Consumer.new(
+        cluster: @cluster,
+        logger: @logger,
+        **options,
       )
     end
 

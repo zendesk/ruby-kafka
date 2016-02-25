@@ -8,6 +8,13 @@ module Kafka
       1 => :fetch,
       2 => :list_offset,
       3 => :topic_metadata,
+      8 => :offset_commit,
+      9 => :offset_fetch,
+      10 => :group_coordinator,
+      11 => :join_group,
+      12 => :heartbeat,
+      13 => :leave_group,
+      14 => :sync_group,
     }
 
     ERRORS = {
@@ -23,11 +30,16 @@ module Kafka
       9 => ReplicaNotAvailable,
       10 => MessageSizeTooLarge,
       12 => OffsetMetadataTooLarge,
+      15 => GroupCoordinatorNotAvailable,
+      16 => NotCoordinatorForGroup,
       17 => InvalidTopic,
       18 => RecordListTooLarge,
       19 => NotEnoughReplicas,
       20 => NotEnoughReplicasAfterAppend,
       21 => InvalidRequiredAcks,
+      22 => IllegalGeneration,
+      25 => UnknownMemberId,
+      26 => InvalidSessionTimeout,
     }
 
     def self.handle_error(error_code)
@@ -54,3 +66,17 @@ require "kafka/protocol/fetch_request"
 require "kafka/protocol/fetch_response"
 require "kafka/protocol/list_offset_request"
 require "kafka/protocol/list_offset_response"
+require "kafka/protocol/group_coordinator_request"
+require "kafka/protocol/group_coordinator_response"
+require "kafka/protocol/join_group_request"
+require "kafka/protocol/join_group_response"
+require "kafka/protocol/sync_group_request"
+require "kafka/protocol/sync_group_response"
+require "kafka/protocol/leave_group_request"
+require "kafka/protocol/leave_group_response"
+require "kafka/protocol/heartbeat_request"
+require "kafka/protocol/heartbeat_response"
+require "kafka/protocol/offset_fetch_request"
+require "kafka/protocol/offset_fetch_response"
+require "kafka/protocol/offset_commit_request"
+require "kafka/protocol/offset_commit_response"
