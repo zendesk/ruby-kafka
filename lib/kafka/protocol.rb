@@ -40,6 +40,7 @@ module Kafka
       22 => IllegalGeneration,
       25 => UnknownMemberId,
       26 => InvalidSessionTimeout,
+      27 => RebalanceInProgress,
     }
 
     def self.handle_error(error_code)
