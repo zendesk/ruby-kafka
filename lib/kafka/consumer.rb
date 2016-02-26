@@ -3,15 +3,17 @@ require "kafka/fetch_operation"
 
 module Kafka
   class Consumer
-    def initialize(cluster:, logger:, group_id:)
+    def initialize(cluster:, logger:, group_id:, session_timeout: 30)
       @cluster = cluster
       @logger = logger
       @group_id = group_id
+      @session_timeout = session_timeout
 
       @group = ConsumerGroup.new(
         cluster: cluster,
         logger: logger,
         group_id: group_id,
+        session_timeout: @session_timeout,
       )
 
       @offsets = {}
