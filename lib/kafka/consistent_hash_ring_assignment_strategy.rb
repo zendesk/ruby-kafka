@@ -20,7 +20,7 @@ module Kafka
         group_assignment[member_id] = Protocol::MemberAssignment.new
       end
 
-      replicas = 100
+      replicas = 1000
       ring = {}
 
       members.each do |member_id|
@@ -59,7 +59,7 @@ module Kafka
     private
 
     def hash(key)
-      Zlib.crc32(key)
+      Digest::SHA256.hexdigest(key).to_i(16)
     end
   end
 end

@@ -4,34 +4,33 @@ describe Kafka::ConsistentHashRingAssignmentStrategy, "#assign" do
   let(:cluster) { double(:cluster) }
   let(:strategy) { described_class.new(cluster: cluster) }
   let(:topics) { ["greetings"] }
+  let(:num_partitions) { 100 }
+  let(:members) { ["a", "b", "c", "d"] }
 
   before do
     allow(cluster).to receive(:partitions_for).with("greetings") {
-      40.times.map {|i| double(partition_id: i) }
+      num_partitions.times.map {|i| double(partition_id: i) }
     }
   end
 
   it "assigns all partitions" do
-    members = ["a", "b", "c", "d"]
     assignments = strategy.assign(members: members, topics: topics)
 
     expect(
       assignments.values.map(&:partition_count).inject(0, &:+)
-    ).to eq 40
+    ).to eq num_partitions
   end
 
   it "assigns partitions to all members" do
-    members = ["a", "b", "c", "d"]
     assignments = strategy.assign(members: members, topics: topics)
 
     assignments.each do |member_id, assignment|
-      expect(assignment.partition_count).to be >= 1
+      expect(assignment.partition_count).to be >= 15
     end
   end
 
   context "when a member is removed from the group" do
     it "lets the other members keep their partitions" do
-      members = ["a", "b", "c", "d"]
       first_assignments = strategy.assign(members: members, topics: topics)
 
       members.delete("b")
