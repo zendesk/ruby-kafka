@@ -31,7 +31,7 @@ module Kafka
           mark_message_as_processed(message)
         end
 
-        commit_offsets
+        commit_offsets unless batch.empty?
       end
     end
 
