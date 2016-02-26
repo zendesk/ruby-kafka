@@ -31,10 +31,12 @@ module Kafka
       join_group
       synchronize
     rescue NotCoordinatorForGroup
+      @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
+      sleep 1
       @coordinator = nil
       retry
-    rescue ConnectionError => e
-      @logger.error "Connection error (#{e}), retrying..."
+    rescue ConnectionError
+      @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
       @coordinator = nil
       retry
     end
@@ -116,7 +118,11 @@ module Kafka
       @logger.info "[#{@member_id}] Joined group `#{@group_id}` with member id `#{@member_id}`"
       @logger.info "[#{@member_id}] Leader for group `#{@group_id}` is `#{response.leader_id}`"
     rescue UnknownMemberId
+      @logger.error "Failed to join group; retrying"
+
       @member_id = nil
+
+      sleep 1
 
       retry
     end
