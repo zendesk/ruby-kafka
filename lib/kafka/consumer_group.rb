@@ -87,6 +87,9 @@ module Kafka
     rescue ConnectionError => e
       @logger.error "Connection error while sending heartbeat; rejoining"
       join
+    rescue UnknownMemberId
+      @logger.error "Kicked out of group; rejoining"
+      join
     rescue RebalanceInProgress
       @logger.error "Group is rebalancing; rejoining"
       join
