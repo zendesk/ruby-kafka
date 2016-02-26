@@ -116,12 +116,10 @@ module Kafka
       @members = response.members
 
       @logger.info "[#{@member_id}] Joined group `#{@group_id}` with member id `#{@member_id}`"
-      @logger.info "[#{@member_id}] Leader for group `#{@group_id}` is `#{response.leader_id}`"
     rescue UnknownMemberId
-      @logger.error "Failed to join group; retrying"
+      @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
       @member_id = nil
-
       sleep 1
 
       retry
