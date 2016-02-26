@@ -98,6 +98,9 @@ module Kafka
   class UnknownMemberId < ProtocolError
   end
 
+  class RebalanceInProgress < ProtocolError
+  end
+
   class IllegalGeneration < ProtocolError
   end
 

@@ -83,6 +83,12 @@ module Kafka
       )
 
       Protocol.handle_error(response.error_code)
+    rescue ConnectionError => e
+      @logger.error "Connection error while sending heartbeat; rejoining"
+      join
+    rescue RebalanceInProgress
+      @logger.error "Group is rebalancing; rejoining"
+      join
     end
 
     private
