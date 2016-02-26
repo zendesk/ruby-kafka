@@ -25,15 +25,26 @@ module Kafka
     end
 
     def each_message(&block)
-      while true
-        batch = fetch_batch
+      loop do
+        begin
+          batch = fetch_batch
+          last_heartbeat = Time.now
 
-        batch.each do |message|
-          yield message
-          mark_message_as_processed(message)
+          batch.each do |message|
+            if last_heartbeat <= Time.now - @session_timeout + 2
+              # Make sure we're not kicked out of the group.
+              @group.heartbeat
+              last_heartbeat = Time.now
+            end
+
+            yield message
+            mark_message_as_processed(message)
+          end
+        rescue ConnectionError => e
+          @logger.error "Connection error while fetching messages: #{e}"
+        else
+          commit_offsets unless batch.nil? || batch.empty?
         end
-
-        commit_offsets unless batch.empty?
       end
     end
 
