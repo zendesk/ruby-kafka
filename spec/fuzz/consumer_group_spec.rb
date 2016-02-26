@@ -1,6 +1,6 @@
 describe "Consumer groups", fuzz: true do
   let(:logger) { Logger.new(LOG) }
-  let(:num_messages) { 750_000 }
+  let(:num_messages) { 100_000 }
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }
   let(:topic) { "fuzz-consumer-group" }
@@ -25,25 +25,57 @@ describe "Consumer groups", fuzz: true do
 
   example "consuming messages in a group with unreliable members" do
     result_queue = Queue.new
+    consumer_threads = num_consumers.times.map { start_consumer(result_queue) }
 
-    consumer_threads = num_consumers.times.map do
-      thread = Thread.new do
-        kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, logger: logger)
-        consumer = kafka.consumer(group_id: "fuzz")
-        consumer.subscribe(topic)
+    nemesis = Thread.new do
+      loop do
+        sleep 60
 
-        consumer.each_message do
-          result_queue << :ok
-        end
+        target = consumer_threads.sample
+        consumer_threads.delete(target)
+
+        logger.info "=== KILLING THREAD #{target} ==="
+        target.kill
+
+        sleep 60
+
+        logger.info "=== STARTING NEW CONSUMER THREAD ==="
+        consumer_threads << start_consumer(result_queue)
       end
-
-      thread.abort_on_exception = true
-
-      thread
     end
 
     expect {
-      num_messages.times { result_queue.deq }
+      num_messages.times {|i|
+        result_queue.deq
+        puts "===> Received #{i} messages" if i % 100 == 0
+      }
     }.to_not raise_exception
+  end
+
+  def start_consumer(result_queue)
+    thread = Thread.new do
+      begin
+        kafka = Kafka.new(
+          seed_brokers: KAFKA_BROKERS,
+          logger: logger,
+          socket_timeout: 20,
+          connect_timeout: 20,
+        )
+
+        consumer = kafka.consumer(group_id: "fuzz", session_timeout: 10)
+        consumer.subscribe(topic)
+
+        consumer.each_message do
+          sleep 0.1 # simulate work
+          result_queue << :ok
+        end
+      ensure
+        consumer.shutdown
+      end
+    end
+
+    thread.abort_on_exception = true
+
+    thread
   end
 end
