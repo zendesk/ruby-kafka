@@ -28,13 +28,16 @@ module Kafka
 
         batch.each do |message|
           yield message
-
-          @offsets[message.topic] ||= {}
-          @offsets[message.topic][message.partition] = message.offset + 1
+          mark_message_as_processed(message)
         end
 
         commit_offsets
       end
+    end
+
+    def mark_message_as_processed(message)
+      @offsets[message.topic] ||= {}
+      @offsets[message.topic][message.partition] = message.offset + 1
     end
 
     def fetch_batch
