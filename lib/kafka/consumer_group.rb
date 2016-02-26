@@ -1,5 +1,5 @@
 require "set"
-require "kafka/protocol/member_assignment"
+require "kafka/round_robin_assignment_strategy"
 
 module Kafka
   class ConsumerGroup
@@ -15,6 +15,7 @@ module Kafka
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
+      @assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: @cluster)
     end
 
     def subscribe(topic)
@@ -123,22 +124,10 @@ module Kafka
       if group_leader?
         @logger.info "[#{@member_id}] Chosen as leader of group `#{@group_id}`"
 
-        member_ids = @members.keys
-
-        member_ids.each do |member_id|
-          group_assignment[member_id] = Protocol::MemberAssignment.new
-        end
-
-        @topics.each do |topic|
-          partitions = @cluster.partitions_for(topic).map(&:partition_id)
-          partitions_per_member = partitions.group_by {|partition_id|
-            partition_id % member_ids.count
-          }.values
-
-          member_ids.zip(partitions_per_member).each do |member_id, member_partitions|
-            group_assignment[member_id].assign(topic, member_partitions)
-          end
-        end
+        group_assignment = @assignment_strategy.assign(
+          members: @members.keys,
+          topics: @topics,
+        )
       end
 
       response = coordinator.sync_group(
