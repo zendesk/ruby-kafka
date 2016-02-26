@@ -14,6 +14,10 @@ module Kafka
         @topics[topic].concat(partitions)
       end
 
+      def partition_count
+        @topics.values.map(&:count).inject(0, &:+)
+      end
+
       def encode(encoder)
         encoder.write_int16(@version)
 

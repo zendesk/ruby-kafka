@@ -1,5 +1,5 @@
 require "set"
-require "kafka/round_robin_assignment_strategy"
+require "kafka/consistent_hash_ring_assignment_strategy"
 
 module Kafka
   class ConsumerGroup
@@ -15,7 +15,7 @@ module Kafka
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
-      @assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: @cluster)
+      @assignment_strategy = ConsistentHashRingAssignmentStrategy.new(cluster: @cluster)
     end
 
     def subscribe(topic)
