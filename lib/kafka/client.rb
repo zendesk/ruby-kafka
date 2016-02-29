@@ -53,6 +53,20 @@ module Kafka
       Producer.new(cluster: @cluster, logger: @logger, **options)
     end
 
+    # Creates a new AsyncProducer instance.
+    #
+    # All parameters allowed by {#producer} can be passed. In addition to this,
+    # a few extra parameters can be passed when creating an async producer.
+    #
+    # @param max_queue_size [Integer] the maximum number of messages allowed in
+    #   the queue.
+    # @param delivery_threshold [Integer] if greater than zero, the number of
+    #   buffered messages that will automatically trigger a delivery.
+    # @param delivery_interval [Integer] if greater than zero, the number of
+    #   seconds between automatic message deliveries.
+    #
+    # @see AsyncProducer
+    # @return [AsyncProducer]
     def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
       sync_producer = producer(**options)
 
@@ -64,6 +78,12 @@ module Kafka
       )
     end
 
+    # Creates a new Consumer instance.
+    #
+    # `options` are passed to {Consumer#initialize}.
+    #
+    # @see Consumer
+    # @return [Consumer]
     def consumer(**options)
       Consumer.new(
         cluster: @cluster,
