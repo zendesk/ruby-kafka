@@ -119,6 +119,18 @@ module Kafka
       end
     end
 
+    # Shuts down the consumer.
+    #
+    # In order to quickly have the consumer group re-balance itself, it's
+    # important that members explicitly tell Kafka when they're leaving.
+    # Therefore it's a good idea to call this method whenever your consumer
+    # is about to quit. If this method is not called, it may take up to
+    # the amount of time defined by the `session_timeout` parameter for
+    # Kafka to realize that this consumer is no longer present and trigger
+    # a group re-balance. In that period of time, the partitions that used
+    # to be assigned to this consumer won't be processed.
+    #
+    # @return [nil]
     def shutdown
       @group.leave
     end
