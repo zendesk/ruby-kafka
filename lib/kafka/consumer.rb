@@ -106,10 +106,11 @@ module Kafka
       end
     end
 
-    def mark_message_as_processed(message)
-      @offsets[message.topic] ||= {}
-      @offsets[message.topic][message.partition] = message.offset + 1
+    def shutdown
+      @group.leave
     end
+
+    private
 
     def fetch_batch
       @group.join unless @group.member?
@@ -158,8 +159,9 @@ module Kafka
       @group.commit_offsets(@offsets)
     end
 
-    def shutdown
-      @group.leave
+    def mark_message_as_processed(message)
+      @offsets[message.topic] ||= {}
+      @offsets[message.topic][message.partition] = message.offset + 1
     end
   end
 end
