@@ -61,11 +61,25 @@ module Kafka
       )
 
       @offsets = {}
-      @default_offset = :earliest
+      @default_offsets = {}
     end
 
-    def subscribe(topic)
+    # Subscribes the consumer to a topic.
+    #
+    # Typically you either want to start reading messages from the very
+    # beginning of the topic's partitions or you simply want to wait for new
+    # messages to be written. In the former case, set `default_offsets` to
+    # `:earliest` (the default); in the latter, set it to `:latest`.
+    #
+    # @param topic [String] the name of the topic to subscribe to.
+    # @param default_offset [Symbol] whether to start from the beginning or the
+    #   end of the topic's partitions.
+    # @return [nil]
+    def subscribe(topic, default_offset: :earliest)
       @group.subscribe(topic)
+      @default_offsets[topic] = default_offset
+
+      nil
     end
 
     def each_message(&block)
@@ -124,7 +138,7 @@ module Kafka
             offset_response.offset_for(topic, partition)
           }
 
-          offset = @default_offset if offset < 0
+          offset = @default_offsets.fetch(topic) if offset < 0
 
           @logger.debug "Fetching from #{topic}/#{partition} starting at offset #{offset}"
 
