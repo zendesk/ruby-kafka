@@ -3,6 +3,9 @@ require "kafka/fetch_operation"
 
 module Kafka
 
+  # @note This code is still alpha level. Don't use this for anything important.
+  #   The API may also change without warning.
+  #
   # A client that consumes messages from a Kafka cluster in coordination with
   # other clients.
   #
