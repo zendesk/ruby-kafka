@@ -2,7 +2,51 @@ require "kafka/consumer_group"
 require "kafka/fetch_operation"
 
 module Kafka
+
+  # A client that consumes messages from a Kafka cluster in coordination with
+  # other clients.
+  #
+  # A Consumer subscribes to one or more Kafka topics; all consumers with the
+  # same *group id* then agree on who should read from the individual topic
+  # partitions. When group members join or leave, the group synchronizes,
+  # making sure that all partitions are assigned to a single member, and that
+  # all members have some partitions to read from.
+  #
+  # ## Example
+  #
+  # A simple producer that simply writes the messages it consumes to the
+  # console.
+  #
+  #     require "kafka"
+  #
+  #     kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+  #
+  #     # Create a new Consumer instance:
+  #     consumer = kafka.consumer
+  #
+  #     # Subscribe to a Kafka topic:
+  #     consumer.subscribe("messages")
+  #
+  #     begin
+  #       # Loop forever, reading in messages from all topics that have been
+  #       # subscribed to.
+  #       consumer.each_message do |message|
+  #         puts message.topic
+  #         puts message.partition
+  #         puts message.key
+  #         puts message.value
+  #         puts message.offset
+  #       end
+  #     ensure
+  #       # Make sure to shut down the consumer after use. This lets
+  #       # the consumer notify the Kafka cluster that it's leaving
+  #       # the group, causing a synchronization and re-balancing of
+  #       # the group.
+  #       consumer.shutdown
+  #     end
+  #
   class Consumer
+
     def initialize(cluster:, logger:, group_id:, session_timeout: 30)
       @cluster = cluster
       @logger = logger
