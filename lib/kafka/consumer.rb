@@ -99,16 +99,11 @@ module Kafka
       loop do
         begin
           batch = fetch_batch
-          last_heartbeat = Time.now
 
           batch.each do |message|
-            if last_heartbeat <= Time.now - @session_timeout + 2
-              # Make sure we're not kicked out of the group.
-              @group.heartbeat
-              last_heartbeat = Time.now
-            end
-
             yield message
+
+            send_heartbeat_if_necessary
             mark_message_as_processed(message)
           end
         rescue ConnectionError => e
@@ -144,8 +139,7 @@ module Kafka
 
       assigned_partitions = @group.assigned_partitions
 
-      # Make sure we're not kicked out of the group.
-      @group.heartbeat
+      send_heartbeat_if_necessary
 
       raise "No partitions assigned!" if assigned_partitions.empty?
 
@@ -182,6 +176,21 @@ module Kafka
     def commit_offsets
       @logger.debug "Committing offsets"
       @group.commit_offsets(@offsets)
+    end
+
+    # Sends a heartbeat if it would be necessary in order to avoid getting
+    # kicked out of the consumer group.
+    #
+    # Each consumer needs to send a heartbeat with a frequency defined by
+    # `session_timeout`.
+    #
+    def send_heartbeat_if_necessary
+      @last_heartbeat ||= Time.at(0)
+
+      if @last_heartbeat <= Time.now - @session_timeout + 2
+        @group.heartbeat
+        @last_heartbeat = Time.now
+      end
     end
 
     def mark_message_as_processed(message)
