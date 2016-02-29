@@ -208,6 +208,17 @@ Note that there's a maximum buffer size; pass in a different value for `max_buff
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
+### Logging
+
+It's a very good idea to configure the Kafka client with a logger. All important operations and errors are logged. When instantiating your client, simply pass in a valid logger:
+
+```ruby
+logger = Logger.new("log/kafka.log")
+kafka = Kafka.new(logger: logger, ...)
+```
+
+By default, nothing is logged.
+
 ### Understanding Timeouts
 
 It's important to understand how timeouts work if you have a latency sensitive application. This library allows configuring timeouts on different levels:
