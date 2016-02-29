@@ -7,8 +7,6 @@ require "kafka/fetch_operation"
 
 module Kafka
   class Client
-    DEFAULT_CLIENT_ID = "ruby-kafka"
-    DEFAULT_LOGGER = Logger.new("/dev/null")
 
     # Initializes a new Kafka client.
     #
@@ -17,7 +15,7 @@ module Kafka
     #
     # @param client_id [String] the identifier for this application.
     #
-    # @param logger [Logger]
+    # @param logger [Logger] the logger that should be used by the client.
     #
     # @param connect_timeout [Integer, nil] the timeout setting for connecting
     #   to brokers. See {BrokerPool#initialize}.
@@ -26,8 +24,8 @@ module Kafka
     #   connections. See {BrokerPool#initialize}.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: DEFAULT_CLIENT_ID, logger: DEFAULT_LOGGER, connect_timeout: nil, socket_timeout: nil)
-      @logger = logger
+    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil)
+      @logger = logger || Logger.new("/dev/null")
 
       broker_pool = BrokerPool.new(
         client_id: client_id,
