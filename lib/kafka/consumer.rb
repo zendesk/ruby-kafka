@@ -82,7 +82,20 @@ module Kafka
       nil
     end
 
-    def each_message(&block)
+    # Fetches and enumerates the messages in the topics that the consumer group
+    # subscribes to.
+    #
+    # Each message is yielded to the provided block. If the block returns
+    # without raising an exception, the message will be considered successfully
+    # processed. At regular intervals the offset of the most recent successfully
+    # processed message in each partition will be committed to the Kafka
+    # offset store. If the consumer crashes or leaves the group, the group member
+    # that is tasked with taking over processing of these partitions will resume
+    # at the last committed offsets.
+    #
+    # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
+    # @return [nil]
+    def each_message
       loop do
         begin
           batch = fetch_batch
