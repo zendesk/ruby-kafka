@@ -21,8 +21,8 @@ module Kafka
   #
   #     kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
   #
-  #     # Create a new Consumer instance:
-  #     consumer = kafka.consumer
+  #     # Create a new Consumer instance in the group `my-group`:
+  #     consumer = kafka.consumer(group_id: "my-group")
   #
   #     # Subscribe to a Kafka topic:
   #     consumer.subscribe("messages")
@@ -47,6 +47,13 @@ module Kafka
   #
   class Consumer
 
+    # Creates a new Consumer.
+    #
+    # @param cluster [Kafka::Cluster]
+    # @param logger [Logger]
+    # @param group_id [String] the id of the group that the consumer should join.
+    # @param session_timeout [Integer] the interval between consumer heartbeats,
+    #   in seconds.
     def initialize(cluster:, logger:, group_id:, session_timeout: 30)
       @cluster = cluster
       @logger = logger
