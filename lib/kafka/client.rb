@@ -179,6 +179,9 @@ module Kafka
       @cluster.partitions_for(topic).count
     end
 
+    # Closes all connections to the Kafka brokers and frees up used resources.
+    #
+    # @return [nil]
     def close
       @cluster.disconnect
     end
