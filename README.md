@@ -4,7 +4,7 @@
 
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-Currently, only the Producer API has been implemented, but a fully-fledged Consumer implementation compatible with Kafka 0.9 is on the roadmap.
+The Producer API is currently beta level and used in production. There's an alpha level Consumer Group API that has not yet been used in production and that may change without warning. Feel free to try it out but don't expect it to be stable or correct quite yet.
 
 ## Installation
 
