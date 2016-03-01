@@ -111,7 +111,17 @@ module Kafka
           batch = fetch_batch
 
           batch.each do |message|
-            yield message
+            Instrumentation.instrument("process_message.consumer.kafka") do |notification|
+              notification.update(
+                topic: message.topic,
+                partition: message.partition,
+                offset: message.offset,
+                key: message.key,
+                value: message.value,
+              )
+
+              yield message
+            end
 
             send_heartbeat_if_necessary
             mark_message_as_processed(message)
