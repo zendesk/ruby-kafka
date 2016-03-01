@@ -157,7 +157,10 @@ module Kafka
     private
 
     def fetch_batch
-      @group.join unless @group.member?
+      unless @group.member?
+        @group.join
+        @offset_manager.clear_offsets
+      end
 
       @logger.debug "Fetching a batch of messages"
 

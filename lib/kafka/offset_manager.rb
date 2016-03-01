@@ -3,9 +3,9 @@ module Kafka
     def initialize(group:, logger:)
       @group = group
       @logger = logger
+
       @processed_offsets = {}
       @default_offsets = {}
-
       @committed_offsets = nil
     end
 
@@ -35,7 +35,7 @@ module Kafka
 
     def clear_offsets
       @processed_offsets.clear
-      @committed_offsets.clear
+      @committed_offsets = nil
     end
 
     private
