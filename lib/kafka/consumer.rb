@@ -147,6 +147,7 @@ module Kafka
     #
     # @return [nil]
     def shutdown
+      commit_offsets
       @group.leave
     end
 
