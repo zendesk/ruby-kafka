@@ -18,11 +18,14 @@ module Kafka
       end
 
       def offset_for(topic, partition)
-        offset_info = topics.fetch(topic).fetch(partition)
+        offset_info = topics.fetch(topic).fetch(partition, nil)
 
-        Protocol.handle_error(offset_info.error_code)
-
-        offset_info.offset
+        if offset_info
+          Protocol.handle_error(offset_info.error_code)
+          offset_info.offset
+        else
+          -1
+        end
       end
 
       def self.decode(decoder)
