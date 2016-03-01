@@ -1,4 +1,5 @@
 require "kafka/consumer_group"
+require "kafka/offset_manager"
 require "kafka/fetch_operation"
 
 module Kafka
@@ -70,8 +71,10 @@ module Kafka
         session_timeout: @session_timeout,
       )
 
-      @offsets = {}
-      @default_offsets = {}
+      @offset_manager = OffsetManager.new(
+        group: @group,
+        logger: @logger,
+      )
     end
 
     # Subscribes the consumer to a topic.
@@ -87,7 +90,7 @@ module Kafka
     # @return [nil]
     def subscribe(topic, default_offset: :earliest)
       @group.subscribe(topic)
-      @default_offsets[topic] = default_offset
+      @offset_manager.set_default_offset(topic, default_offset)
 
       nil
     end
@@ -129,7 +132,7 @@ module Kafka
         rescue ConnectionError => e
           @logger.error "Connection error while fetching messages: #{e}"
         else
-          commit_offsets unless batch.nil? || batch.empty?
+          @offset_manager.commit_offsets unless batch.nil? || batch.empty?
         end
       end
     end
@@ -147,13 +150,17 @@ module Kafka
     #
     # @return [nil]
     def shutdown
+      @offset_manager.commit_offsets
       @group.leave
     end
 
     private
 
     def fetch_batch
-      @group.join unless @group.member?
+      unless @group.member?
+        @group.join
+        @offset_manager.clear_offsets
+      end
 
       @logger.debug "Fetching a batch of messages"
 
@@ -170,15 +177,9 @@ module Kafka
         max_wait_time: 5,
       )
 
-      offset_response = @group.fetch_offsets
-
       assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
-          offset = @offsets.fetch(topic, {}).fetch(partition) {
-            offset_response.offset_for(topic, partition)
-          }
-
-          offset = @default_offsets.fetch(topic) if offset < 0
+          offset = @offset_manager.next_offset_for(topic, partition)
 
           @logger.debug "Fetching from #{topic}/#{partition} starting at offset #{offset}"
 
@@ -191,11 +192,6 @@ module Kafka
       @logger.debug "Fetched #{messages.count} messages"
 
       messages
-    end
-
-    def commit_offsets
-      @logger.debug "Committing offsets"
-      @group.commit_offsets(@offsets)
     end
 
     # Sends a heartbeat if it would be necessary in order to avoid getting
@@ -214,8 +210,7 @@ module Kafka
     end
 
     def mark_message_as_processed(message)
-      @offsets[message.topic] ||= {}
-      @offsets[message.topic][message.partition] = message.offset + 1
+      @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
   end
 end
