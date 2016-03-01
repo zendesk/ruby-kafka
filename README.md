@@ -208,6 +208,59 @@ Note that there's a maximum buffer size; pass in a different value for `max_buff
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
+### Consuming Messages from Kafka
+
+**Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
+
+The simplest way to consume messages from a Kafka topic is using the `#fetch_messages` API:
+
+```ruby
+require "kafka"
+
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+
+messages = kafka.fetch_messages(topic: "greetings", partition: 42)
+
+messages.each do |message|
+  puts message.offset, message.key, message.value
+end
+```
+
+While this is great for extremely simple use cases, there are a number of downsides:
+
+- You can only fetch from a single topic and partition at a time.
+- If you want to have multiple processes consume from the same topic, there's no way of coordinating which processes should fetch from which partitions.
+- If a process dies, there's no way to have another process resume fetching from the point in the partition that the original process had reached.
+
+The Consumer API solves all of these issues, and more. It uses the Consumer Groups feature released in Kafka 0.9 to allow multiple consumer processes to coordinate access to a topic, assigning each partition to a single consumer. When a consumer fails, the partitions that were assigned to it are re-assigned to other members of the group.
+
+Using the API is simple:
+
+```ruby
+require "kafka"
+
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+
+# Consumers with the same group id will form a Consumer Group together.
+consumer = kafka.consumer(group_id: "my-consumer")
+
+consumer.subscribe("greetings")
+
+begin
+  # This will loop indefinitely, yielding each message in turn.
+  consumer.each_message do |message|
+    puts message.topic, message.partition
+    puts message.offset, message.key, message.value
+  end
+ensure
+  # Always make sure to shut down the consumer properly.
+  consumer.shutdown
+end
+```
+
+Each consumer process will be assigned one or more partitions from each topic that the group subscribes to. In order to handle more messages, simply start more processes.
+
+
 ### Logging
 
 It's a very good idea to configure the Kafka client with a logger. All important operations and errors are logged. When instantiating your client, simply pass in a valid logger:
