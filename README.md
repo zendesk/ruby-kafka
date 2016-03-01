@@ -6,6 +6,8 @@ A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distribute
 
 The Producer API is currently beta level and used in production. There's an alpha level Consumer Group API that has not yet been used in production and that may change without warning. Feel free to try it out but don't expect it to be stable or correct quite yet.
 
+Although parts of this library work with Kafka 0.8 – specifically, the Producer API – it's being tested and developed against Kafka 0.9. The Consumer API will be 0.9 only.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -247,19 +249,15 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 ## Roadmap
 
-The current stable release is v0.1. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
+The current stable release is v0.2. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
 
-The API may still be changed in v0.2.
+### v0.3
 
-### v0.2: Stable Producer API
+Beta release of the Consumer API, allowing balanced Consumer Groups coordinating access to partitions. Kafka 0.9 only.
 
-Target date: end of February.
+### v1.0
 
-The API should now have stabilized and the library should be battle tested enough to deploy for critical use cases.
-
-### v1.0: Consumer API
-
-The Consumer API defined by Kafka 0.9 will be implemented.
+API freeze. All new changes will be backwards compatible.
 
 ## Why a new library?
 
