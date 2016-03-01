@@ -130,8 +130,6 @@ module Kafka
     end
 
     def synchronize
-      @logger.info "[#{@member_id}] Synchronizing group"
-
       group_assignment = {}
 
       if group_leader?
