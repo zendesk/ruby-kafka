@@ -76,7 +76,7 @@ producer.deliver_messages
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
 
-### Asynchronously Producing Messages
+#### Asynchronously Producing Messages
 
 A normal producer will block while `#deliver_messages` is sending messages to Kafka, possible for tens of seconds or even minutes at a time, depending on your timeout and retry settings. Furthermore, you have to call `#deliver_messages` manually, with a frequency that balances batch size with message delay.
 
@@ -121,7 +121,7 @@ producer.produce("hello", topic: "greetings")
 
 **Note:** if the calling thread produces messages faster than the producer can write them to Kafka, you'll eventually run into problems. The internal queue used for sending messages from the calling thread to the background worker has a size limit; once this limit is reached, a call to `#produce` will raise `Kafka::BufferOverflow`.
 
-### Serialization
+#### Serialization
 
 This library is agnostic to which serialization format you prefer. Both the value and key of a message is treated as a binary string of data. This makes it easier to use whatever serialization format you want, since you don't have to do anything special to make it work with ruby-kafka. Here's an example of encoding data with JSON:
 
@@ -141,12 +141,12 @@ data = JSON.dump(event)
 producer.produce(data, topic: "events")
 ```
 
-### Partitioning
+#### Partitioning
 
 Kafka topics are partitioned, with messages being assigned to a partition by the client. This allows a great deal of flexibility for the users. This section describes several strategies for partitioning and how they impact performance, data locality, etc.
 
 
-#### Load Balanced Partitioning
+##### Load Balanced Partitioning
 
 When optimizing for efficiency, we either distribute messages as evenly as possible to all partitions, or make sure each producer always writes to a single partition. The former ensures an even load for downstream consumers; the latter ensures the highest producer performance, since message batching is done per partition.
 
@@ -165,7 +165,7 @@ producer.produce(msg2, topic: "messages", partition_key: partition_key)
 
 You can also base the partition key on some property of the producer, for example the host name.
 
-#### Semantic Partitioning
+##### Semantic Partitioning
 
 By assigning messages to a partition based on some property of the message, e.g. making sure all events tracked in a user session are assigned to the same partition, downstream consumers can make simplifying assumptions about data locality. In this example, a consumer can keep process local state pertaining to a user session knowing that all events for the session will be read from a single partition. This is also called _semantic partitioning_, since the partition assignment is part of the application behavior.
 
@@ -187,7 +187,7 @@ partition = some_number % partitions
 producer.produce(event, topic: "events", partition: partition)
 ```
 
-#### Compatibility with Other Clients
+##### Compatibility with Other Clients
 
 There's no standardized way to assign messages to partitions across different Kafka client implementations. If you have a heterogeneous set of clients producing messages to the same topics it may be important to ensure a consistent partitioning scheme. This library doesn't try to implement all schemes, so you'll have to figure out which scheme the other client is using and replicate it. An example:
 
@@ -200,7 +200,7 @@ partition = PartitioningScheme.assign(partitions, event)
 producer.produce(event, topic: "events", partition: partition)
 ```
 
-### Buffering and Error Handling
+#### Buffering and Error Handling
 
 The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
 
@@ -209,6 +209,59 @@ Typically, you'd configure the producer to retry failed attempts at sending mess
 Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
+
+### Consuming Messages from Kafka
+
+**Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
+
+The simplest way to consume messages from a Kafka topic is using the `#fetch_messages` API:
+
+```ruby
+require "kafka"
+
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+
+messages = kafka.fetch_messages(topic: "greetings", partition: 42)
+
+messages.each do |message|
+  puts message.offset, message.key, message.value
+end
+```
+
+While this is great for extremely simple use cases, there are a number of downsides:
+
+- You can only fetch from a single topic and partition at a time.
+- If you want to have multiple processes consume from the same topic, there's no way of coordinating which processes should fetch from which partitions.
+- If a process dies, there's no way to have another process resume fetching from the point in the partition that the original process had reached.
+
+The Consumer API solves all of these issues, and more. It uses the Consumer Groups feature released in Kafka 0.9 to allow multiple consumer processes to coordinate access to a topic, assigning each partition to a single consumer. When a consumer fails, the partitions that were assigned to it are re-assigned to other members of the group.
+
+Using the API is simple:
+
+```ruby
+require "kafka"
+
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+
+# Consumers with the same group id will form a Consumer Group together.
+consumer = kafka.consumer(group_id: "my-consumer")
+
+consumer.subscribe("greetings")
+
+begin
+  # This will loop indefinitely, yielding each message in turn.
+  consumer.each_message do |message|
+    puts message.topic, message.partition
+    puts message.offset, message.key, message.value
+  end
+ensure
+  # Always make sure to shut down the consumer properly.
+  consumer.shutdown
+end
+```
+
+Each consumer process will be assigned one or more partitions from each topic that the group subscribes to. In order to handle more messages, simply start more processes.
+
 
 ### Logging
 
