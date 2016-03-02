@@ -6,6 +6,19 @@ The Producer API is currently beta level and used in production. There's an alph
 
 Although parts of this library work with Kafka 0.8 – specifically, the Producer API – it's being tested and developed against Kafka 0.9. The Consumer API will be 0.9 only.
 
+#### Table of Contents
+
+1. [Installation](#installation)
+2. [Usage](#usage)
+  1. [Producing Messages to Kafka](#producing-messages-to-kafka)
+    1. [Asynchronously Producing Messages](#asynchronously-producing-messages)
+    2. [Serialization](#serialization)
+    3. [Partitioning](#partitioning)
+    4. [Buffering and Error Handling](#buffering-and-error-handling)
+  2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
+3. [Logging](#logging)
+4. [Understanding Timeouts](#understanding-timeouts)
+
 ## Installation
 
 Add this line to your application's Gemfile:
