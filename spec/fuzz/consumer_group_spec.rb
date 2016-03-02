@@ -4,6 +4,7 @@ describe "Consumer groups", fuzz: true do
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }
   let(:topic) { "fuzz-consumer-group" }
+  let(:messages) { Set.new((1..num_messages).to_a) }
 
   before do
     require "test_cluster"
@@ -15,8 +16,8 @@ describe "Consumer groups", fuzz: true do
     kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, logger: logger)
     producer = kafka.producer(max_buffer_size: 5000)
 
-    (1..num_messages).each do |i|
-      producer.produce("message#{i}", topic: topic, partition: i % num_partitions)
+    messages.each do |i|
+      producer.produce(i.to_s, topic: topic, partition: i % num_partitions)
       producer.deliver_messages if i % 3000 == 0
     end
 
@@ -44,12 +45,25 @@ describe "Consumer groups", fuzz: true do
       end
     end
 
+    missing_messages = messages.dup
+    duplicate_messages = Set.new
+
     expect {
-      num_messages.times {|i|
-        result_queue.deq
-        puts "===> Received #{i} messages" if i % 100 == 0
-      }
+      until missing_messages.empty?
+        message = result_queue.deq
+
+        if missing_messages.delete?(message)
+          size = num_messages - missing_messages.size
+          puts "===> Received #{size} messages" if size % 100 == 0
+        else
+          duplicate_messages.add(message)
+        end
+      end
     }.to_not raise_exception
+
+    expect(missing_messages).to eq Set.new
+
+    puts "#{duplicate_messages.size} duplicate messages!"
   end
 
   def start_consumer(result_queue)
@@ -65,9 +79,9 @@ describe "Consumer groups", fuzz: true do
         consumer = kafka.consumer(group_id: "fuzz", session_timeout: 10)
         consumer.subscribe(topic)
 
-        consumer.each_message do
+        consumer.each_message do |message|
           sleep 0.1 # simulate work
-          result_queue << :ok
+          result_queue << Integer(message.value)
         end
       ensure
         consumer.shutdown
