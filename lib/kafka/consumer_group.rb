@@ -44,6 +44,7 @@ module Kafka
     def leave
       @logger.info "[#{@member_id}] Leaving group `#{@group_id}`"
       coordinator.leave_group(group_id: @group_id, member_id: @member_id)
+    rescue ConnectionError
     end
 
     def fetch_offsets
@@ -66,14 +67,6 @@ module Kafka
           Protocol.handle_error(error_code)
         end
       end
-    rescue UnknownMemberId
-      @logger.error "Kicked out of group; rejoining"
-      join
-      retry
-    rescue IllegalGeneration
-      @logger.error "Illegal generation #{@generation_id}; rejoining group"
-      join
-      retry
     end
 
     def heartbeat
@@ -86,15 +79,6 @@ module Kafka
       )
 
       Protocol.handle_error(response.error_code)
-    rescue ConnectionError => e
-      @logger.error "Connection error while sending heartbeat; rejoining"
-      join
-    rescue UnknownMemberId
-      @logger.error "Kicked out of group; rejoining"
-      join
-    rescue RebalanceInProgress
-      @logger.error "Group is rebalancing; rejoining"
-      join
     end
 
     private

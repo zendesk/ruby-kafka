@@ -1,6 +1,6 @@
 describe "Consumer groups", fuzz: true do
   let(:logger) { Logger.new(LOG) }
-  let(:num_messages) { 100_000 }
+  let(:num_messages) { 10_000 }
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }
   let(:topic) { "fuzz-consumer-group" }
@@ -56,6 +56,7 @@ describe "Consumer groups", fuzz: true do
           size = num_messages - missing_messages.size
           puts "===> Received #{size} messages" if size % 100 == 0
         else
+          puts "===> Duplicate message #{message} received"
           duplicate_messages.add(message)
         end
       end
@@ -76,7 +77,7 @@ describe "Consumer groups", fuzz: true do
           connect_timeout: 20,
         )
 
-        consumer = kafka.consumer(group_id: "fuzz", session_timeout: 10)
+        consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30)
         consumer.subscribe(topic)
 
         consumer.each_message do |message|
