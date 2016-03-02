@@ -18,6 +18,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
 3. [Logging](#logging)
 4. [Understanding Timeouts](#understanding-timeouts)
+5. [Development](#development)
+6. [Roadmap](#roadmap)
 
 ## Installation
 
