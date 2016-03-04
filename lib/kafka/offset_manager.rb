@@ -1,12 +1,14 @@
 module Kafka
   class OffsetManager
-    def initialize(group:, logger:)
+    def initialize(group:, logger:, commit_interval: 10)
       @group = group
       @logger = logger
+      @commit_interval = commit_interval
 
       @processed_offsets = {}
       @default_offsets = {}
       @committed_offsets = nil
+      @last_commit = Time.at(0)
     end
 
     def set_default_offset(topic, default_offset)
@@ -29,8 +31,17 @@ module Kafka
     end
 
     def commit_offsets
-      @logger.debug "Committing offsets"
-      @group.commit_offsets(@processed_offsets)
+      unless @processed_offsets.empty?
+        @logger.info "Committing offsets"
+        @group.commit_offsets(@processed_offsets)
+        @last_commit = Time.now
+      end
+    end
+
+    def commit_offsets_if_necessary
+      if seconds_since_last_commit >= @commit_interval
+        commit_offsets
+      end
     end
 
     def clear_offsets
@@ -39,6 +50,10 @@ module Kafka
     end
 
     private
+
+    def seconds_since_last_commit
+      Time.now - @last_commit
+    end
 
     def committed_offset_for(topic, partition)
       @committed_offsets ||= @group.fetch_offsets

@@ -74,6 +74,7 @@ module Kafka
       @offset_manager = OffsetManager.new(
         group: @group,
         logger: @logger,
+        commit_interval: 10,
       )
     end
 
@@ -126,13 +127,20 @@ module Kafka
               yield message
             end
 
+            @offset_manager.commit_offsets_if_necessary
+
             send_heartbeat_if_necessary
             mark_message_as_processed(message)
           end
         rescue ConnectionError => e
-          @logger.error "Connection error while fetching messages: #{e}"
-        else
-          @offset_manager.commit_offsets unless batch.nil? || batch.empty?
+          @logger.error "Connection error while sending heartbeat; rejoining"
+          join_group
+        rescue UnknownMemberId
+          @logger.error "Kicked out of group; rejoining"
+          join_group
+        rescue RebalanceInProgress
+          @logger.error "Group is rebalancing; rejoining"
+          join_group
         end
       end
     end
@@ -152,15 +160,18 @@ module Kafka
     def shutdown
       @offset_manager.commit_offsets
       @group.leave
+    rescue ConnectionError
     end
 
     private
 
+    def join_group
+      @offset_manager.clear_offsets
+      @group.join
+    end
+
     def fetch_batch
-      unless @group.member?
-        @group.join
-        @offset_manager.clear_offsets
-      end
+      join_group unless @group.member?
 
       @logger.debug "Fetching a batch of messages"
 
@@ -189,9 +200,13 @@ module Kafka
 
       messages = operation.execute
 
-      @logger.debug "Fetched #{messages.count} messages"
+      @logger.info "Fetched #{messages.count} messages"
 
       messages
+    rescue ConnectionError => e
+      @logger.error "Connection error while fetching messages: #{e}"
+
+      return []
     end
 
     # Sends a heartbeat if it would be necessary in order to avoid getting
