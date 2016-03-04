@@ -4,16 +4,9 @@ describe Kafka::Producer do
   let(:logger) { Logger.new(LOG) }
   let(:broker1) { FakeBroker.new }
   let(:broker2) { FakeBroker.new }
+  let(:compressor) { double(:compressor) }
   let(:cluster) { double(:cluster) }
-
-  let(:producer) {
-    Kafka::Producer.new(
-      cluster: cluster,
-      logger: logger,
-      max_retries: 2,
-      retry_backoff: 0,
-    )
-  }
+  let(:producer) { initialize_producer }
 
   before do
     allow(cluster).to receive(:mark_as_stale!)
@@ -22,6 +15,8 @@ describe Kafka::Producer do
 
     allow(cluster).to receive(:get_leader).with("greetings", 0) { broker1 }
     allow(cluster).to receive(:get_leader).with("greetings", 1) { broker2 }
+
+    allow(compressor).to receive(:compress) {|message_set| message_set }
   end
 
   describe "#produce" do
@@ -48,11 +43,7 @@ describe Kafka::Producer do
     end
 
     it "raises BufferOverflow if the max buffer size is exceeded" do
-      producer = Kafka::Producer.new(
-        cluster: cluster,
-        logger: logger,
-        max_buffer_size: 2, # <-- this is the important bit.
-      )
+      producer = initialize_producer(max_buffer_size: 2)
 
       producer.produce("hello1", topic: "greetings", partition: 0)
       producer.produce("hello1", topic: "greetings", partition: 0)
@@ -127,12 +118,9 @@ describe Kafka::Producer do
     end
 
     it "clears the buffer after sending messages if no acknowledgements are required" do
-      producer = Kafka::Producer.new(
-        cluster: cluster,
-        logger: logger,
+      producer = initialize_producer(
         required_acks: 0, # <-- this is the important bit.
         max_retries: 2,
-        retry_backoff: 0,
       )
 
       producer.produce("hello1", topic: "greetings", partition: 0)
@@ -141,5 +129,21 @@ describe Kafka::Producer do
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0
     end
+  end
+
+  def initialize_producer(**options)
+    default_options = {
+      cluster: cluster,
+      logger: logger,
+      max_retries: 2,
+      retry_backoff: 0,
+      compressor: compressor,
+      ack_timeout: 10,
+      required_acks: 1,
+      max_buffer_size: 1000,
+      max_buffer_bytesize: 10_000_000,
+    }
+
+    Kafka::Producer.new(**default_options.merge(options))
   end
 end
