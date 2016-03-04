@@ -31,13 +31,15 @@ module Kafka
     end
 
     def commit_offsets
-      @logger.info "Committing offsets"
-      @group.commit_offsets(@processed_offsets)
-      @last_commit = Time.now
+      unless @processed_offsets.empty?
+        @logger.info "Committing offsets"
+        @group.commit_offsets(@processed_offsets)
+        @last_commit = Time.now
+      end
     end
 
     def commit_offsets_if_necessary
-      if Time.now - @last_commit >= @commit_interval
+      if seconds_since_last_commit >= @commit_interval
         commit_offsets
       end
     end
@@ -48,6 +50,10 @@ module Kafka
     end
 
     private
+
+    def seconds_since_last_commit
+      Time.now - @last_commit
+    end
 
     def committed_offset_for(topic, partition)
       @committed_offsets ||= @group.fetch_offsets
