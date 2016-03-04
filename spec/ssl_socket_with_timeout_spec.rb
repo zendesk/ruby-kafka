@@ -9,7 +9,7 @@ describe Kafka::SSLSocketWithTimeout, ".open" do
     start = Time.now
 
     expect {
-      Kafka::SSLSocketWithTimeout.new(host, port, connect_timeout: timeout, timeout: 1)
+      Kafka::SSLSocketWithTimeout.new(host, port, connect_timeout: timeout, timeout: 1, ssl_context: OpenSSL::SSL::SSLContext.new)
     }.to raise_exception(Errno::ETIMEDOUT)
 
     finish = Time.now

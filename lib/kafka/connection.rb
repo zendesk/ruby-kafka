@@ -43,13 +43,12 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil, ssl: nil, ssl_context: nil)
+    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
-      @ssl = ssl
       @ssl_context = ssl_context
     end
 
@@ -104,7 +103,7 @@ module Kafka
     def open
       @logger.debug "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      if @ssl
+      if @ssl_context
         @socket = SSLSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout, ssl_context: @ssl_context)
       else
         @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)

@@ -23,16 +23,44 @@ module Kafka
     # @param socket_timeout [Integer, nil] the timeout setting for socket
     #   connections. See {BrokerPool#initialize}.
     #
+    # @param ssl_ca_cert [String, nil] a PEM encoded CA cert to use with an
+    #   SSL connection.
+    #
+    # @param ssl_client_cert [String, nil] a PEM encoded client cert to use with an
+    #   SSL connection. Must be used in combination with ssl_client_cert_key.
+    #
+    # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
+    #   SSL connection. Must be used in combination with ssl_client_cert.
+    #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl: nil, ssl_context: nil)
+    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
       @logger = logger || Logger.new("/dev/null")
+
+      ssl_context = nil
+      if ssl_ca_cert || ssl_client_cert || ssl_client_cert_key
+        ssl_context = OpenSSL::SSL::SSLContext.new
+        if ssl_client_cert && ssl_client_cert_key
+          ssl_context.set_params(
+            cert: OpenSSL::X509::Certificate.new(ssl_client_cert),
+            key: OpenSSL::PKey::RSA.new(ssl_client_cert_key)
+          )
+        elsif ssl_client_cert && !ssl_client_cert_key
+          raise ArgumentError, "Kafka client initialized with ssl client cert #{ssl_client_cert}, but no ssl_client_cert_key. Please provide both."
+        elsif !ssl_client_cert && ssl_client_cert_key
+          raise ArgumentError, "Kafka client initialized with ssl client cert key #{ssl_client_cert_key}, but no ssl_client_cert. Please provide both."
+        end
+        if ssl_ca_cert
+          store = OpenSSL::X509::Store.new
+          store.add_cert(OpenSSL::X509::Certificate.new(ssl_ca_cert))
+          ssl_context.cert_store = store
+        end
+      end
 
       broker_pool = BrokerPool.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
         logger: logger,
-        ssl: ssl,
         ssl_context: ssl_context,
       )
 
