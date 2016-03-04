@@ -21,7 +21,8 @@ module Kafka
         raise ArgumentError, "At least one seed broker must be configured"
       end
 
-      @logger = logger
+      warn("No logger was configured, defaulting to not log output.") if logger.nil?
+      @logger = logger || Logger.new(nil)
       @seed_brokers = seed_brokers
       @broker_pool = broker_pool
       @cluster_info = nil

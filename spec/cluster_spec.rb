@@ -1,4 +1,42 @@
 describe Kafka::Cluster do
+  describe "#initialize" do
+    let(:seed_brokers) { ["test1:9092"] }
+    let(:broker_pool) { double(:broker_pool) }
+    let(:logger) { Logger.new(LOG) }
+
+    subject {
+      Kafka::Cluster.new(
+        seed_brokers: seed_brokers,
+        broker_pool: broker_pool,
+        logger: logger
+      )
+    }
+
+    context "when logger is not nil" do
+      it "sets the logger and does not warn" do
+        expect {
+          subject
+        }.to_not output.to_stderr
+        set_logger = subject.instance_variable_get("@logger")
+        expect(set_logger).to be_a Logger
+        expect(set_logger.instance_variable_get("@logdev")).to_not be_nil
+      end
+    end
+
+    context "when logger is nil" do
+      let(:logger) { nil }
+
+      it "sets a no output logger and warns about no logging" do
+        expect {
+          subject
+        }.to output("No logger was configured, defaulting to not log output.\n").to_stderr
+        set_logger = subject.instance_variable_get("@logger")
+        expect(set_logger).to be_a Logger
+        expect(set_logger.instance_variable_get("@logdev")).to be_nil
+      end
+    end
+  end
+
   describe "#get_leader" do
     let(:broker) { double(:broker) }
     let(:broker_pool) { double(:broker_pool) }
