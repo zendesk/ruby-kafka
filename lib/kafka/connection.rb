@@ -1,5 +1,6 @@
 require "stringio"
 require "kafka/socket_with_timeout"
+require "kafka/ssl_socket_with_timeout"
 require "kafka/instrumentation"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
@@ -42,12 +43,14 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil)
+    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil, ssl: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
+      @ssl = ssl
+      @ssl_context = ssl_context
     end
 
     def to_s
@@ -101,7 +104,11 @@ module Kafka
     def open
       @logger.debug "Opening connection to #{@host}:#{@port} with client id #{@client_id}..."
 
-      @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
+      if @ssl
+        @socket = SSLSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout, ssl_context: @ssl_context)
+      else
+        @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
+      end
 
       @encoder = Kafka::Protocol::Encoder.new(@socket)
       @decoder = Kafka::Protocol::Decoder.new(@socket)

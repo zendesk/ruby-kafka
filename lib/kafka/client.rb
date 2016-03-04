@@ -24,7 +24,7 @@ module Kafka
     #   connections. See {BrokerPool#initialize}.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil)
+    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl: nil, ssl_context: nil)
       @logger = logger || Logger.new("/dev/null")
 
       broker_pool = BrokerPool.new(
@@ -32,6 +32,8 @@ module Kafka
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
         logger: logger,
+        ssl: ssl,
+        ssl_context: ssl_context,
       )
 
       @cluster = Cluster.new(

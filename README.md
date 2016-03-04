@@ -19,8 +19,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
 3. [Logging](#logging)
 4. [Understanding Timeouts](#understanding-timeouts)
-5. [Development](#development)
-6. [Roadmap](#roadmap)
+5. [SSL](#ssl)
+6. [Development](#development)
+7. [Roadmap](#roadmap)
 
 ## Installation
 
@@ -336,6 +337,33 @@ When sending many messages, it's likely that the client needs to send some messa
     n * (connect_timeout + socket_timeout + retry_backoff) * max_retries
 
 Make sure your application can survive being blocked for so long.
+
+### SSL
+
+Kafka 0.9+ supports SSL for authentication and authorization. There are two possible modes of operation:
+
+#### You have a 0.9 broker with SSL setup and only want to encrypt traffic to it:
+
+In this case you just need to pass `ssl: true` to `Kafka.new`. You don't need an SSL context.
+
+```ruby
+kafka = Kafka.new(ssl: true, ...)
+```
+
+#### You have a 0.9 broker with SSL setup and want to use client certificates and Kafka's authentication mechanism:
+
+In this case you need to pass `ssl: true`, and an `ssl_context` setup with the client certificate you want to use:
+
+```ruby
+ssl_context = OpenSSL::SSL::SSLContext.new
+ssl_context.set_params(
+  cert: OpenSSL::X509::Certificate.new(YOUR_CLIENT_CERTIFICATE),
+  key: OpenSSL::PKey::RSA.new(YOUR_CLIENT_CERTIFICATE_KEY),
+)
+kafka = Kafka.new(ssl: true, ssl_context: ssl_context ...)
+```
+
+Without these options, ssl support is disabled, and ruby-kafka will throw exceptions when trying to connect to an SSL socket.
 
 ## Development
 
