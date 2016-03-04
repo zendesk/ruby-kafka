@@ -82,7 +82,7 @@ module Kafka
     #
     # @see Consumer
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10)
       group = ConsumerGroup.new(
         cluster: @cluster,
         logger: @logger,
@@ -93,7 +93,7 @@ module Kafka
       offset_manager = OffsetManager.new(
         group: group,
         logger: @logger,
-        commit_interval: 10,
+        commit_interval: offset_commit_interval,
       )
 
       Consumer.new(
