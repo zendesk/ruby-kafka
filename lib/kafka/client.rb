@@ -83,8 +83,11 @@ module Kafka
     #   hasn't contacted the Kafka cluster, it will be kicked out of the group.
     # @param offset_commit_interval [Integer] the interval between offset commits,
     #   in seconds.
+    # @param offset_commit_threshold [Integer] the number of messages that can be
+    #   processed before their offsets are committed. If zero, offset commits are
+    #   not triggered by message processing.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0)
       group = ConsumerGroup.new(
         cluster: @cluster,
         logger: @logger,
@@ -96,6 +99,7 @@ module Kafka
         group: group,
         logger: @logger,
         commit_interval: offset_commit_interval,
+        commit_threshold: offset_commit_threshold,
       )
 
       Consumer.new(
