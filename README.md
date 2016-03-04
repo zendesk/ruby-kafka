@@ -231,6 +231,18 @@ There are basically two different and incompatible guarantees that can be made i
 1. _at-most-once_ delivery guarantees that a message is at most delivered to the recipient _once_. This is useful only if delivering the message twice carries some risk and should be avoided. Implicit is the fact that there's guarantee that a message will be delivered at all.
 2. _at-least-once_ delivery guarantees that a message is delivered, but it may be delivered more than once. If the final recipient does de-duplication, e.g. by checking a unique message id, then it's even possible to implement _exactly-once_ delivery.
 
+Of these two options, ruby-kafka implements the second one: when in doubt about whether a message has been delivered, a producer will try to deliver it again. This may be configurable in the future if concrete exactly-once use cases are discovered.
+
+The guarantee is made only for the synchronous producer, and boils down to this:
+
+```ruby
+producer = kafka.producer
+
+producer.produce("hello", topic: "greetings")
+producer.deliver_messages
+# If we get to this line we can be sure that the message has been delivered to Kafka!
+```
+
 ### Consuming Messages from Kafka
 
 **Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
