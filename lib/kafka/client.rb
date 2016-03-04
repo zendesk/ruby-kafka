@@ -76,17 +76,34 @@ module Kafka
       )
     end
 
-    # Creates a new Consumer instance.
+    # Creates a new Kafka consumer.
     #
-    # `options` are passed to {Consumer#initialize}.
-    #
-    # @see Consumer
+    # @param group_id [String] the id of the group that the consumer should join.
+    # @param session_timeout [Integer] the number of seconds after which, if a client
+    #   hasn't contacted the Kafka cluster, it will be kicked out of the group.
+    # @param offset_commit_interval [Integer] the interval between offset commits,
+    #   in seconds.
     # @return [Consumer]
-    def consumer(**options)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10)
+      group = ConsumerGroup.new(
+        cluster: @cluster,
+        logger: @logger,
+        group_id: group_id,
+        session_timeout: session_timeout,
+      )
+
+      offset_manager = OffsetManager.new(
+        group: group,
+        logger: @logger,
+        commit_interval: offset_commit_interval,
+      )
+
       Consumer.new(
         cluster: @cluster,
         logger: @logger,
-        **options,
+        group: group,
+        offset_manager: offset_manager,
+        session_timeout: session_timeout,
       )
     end
 
