@@ -228,12 +228,12 @@ A final note on buffers: local buffers give resilience against broker and networ
 
 There are basically two different and incompatible guarantees that can be made in a message delivery system such as Kafka:
 
-1. _at-most-once_ delivery guarantees that a message is at most delivered to the recipient _once_. This is useful only if delivering the message twice carries some risk and should be avoided. Implicit is the fact that there's guarantee that a message will be delivered at all.
-2. _at-least-once_ delivery guarantees that a message is delivered, but it may be delivered more than once. If the final recipient does de-duplication, e.g. by checking a unique message id, then it's even possible to implement _exactly-once_ delivery.
+1. _at-most-once_ delivery guarantees that a message is at most delivered to the recipient _once_. This is useful only if delivering the message twice carries some risk and should be avoided. Implicit is the fact that there's no guarantee that the message will be delivered at all.
+2. _at-least-once_ delivery guarantees that a message is delivered, but it may be delivered more than once. If the final recipient de-duplicates messages, e.g. by checking a unique message id, then it's even possible to implement _exactly-once_ delivery.
 
-Of these two options, ruby-kafka implements the second one: when in doubt about whether a message has been delivered, a producer will try to deliver it again. This may be configurable in the future if concrete exactly-once use cases are discovered.
+Of these two options, ruby-kafka implements the second one: when in doubt about whether a message has been delivered, a producer will try to deliver it again.
 
-The guarantee is made only for the synchronous producer, and boils down to this:
+The guarantee is made only for the synchronous producer and boils down to this:
 
 ```ruby
 producer = kafka.producer
@@ -241,7 +241,7 @@ producer = kafka.producer
 producer.produce("hello", topic: "greetings")
 
 # If this line fails with Kafka::DeliveryFailed we *may* have succeeded in deliverying
-# the message to Kafka.
+# the message to Kafka but won't know for sure.
 producer.deliver_messages
 
 # If we get to this line we can be sure that the message has been delivered to Kafka!
@@ -249,7 +249,7 @@ producer.deliver_messages
 
 That is, once `#deliver_messages` returns we can be sure that Kafka has received the message. Note that there are some big caveats here:
 
-- Depending on how your topic is configured the message could still be lost by Kafka.
+- Depending on how your cluster and topic is configured the message could still be lost by Kafka.
 - If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the messsage will ever make it to a Kafka broker.
 - If you use the asynchronous producer there's no guarantee that messages will have been delivered after `#deliver_messages` returns. A way of blocking until a message has been delivered with the asynchronous producer may be implemented in the future.
 
