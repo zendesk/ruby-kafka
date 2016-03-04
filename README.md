@@ -344,26 +344,31 @@ Kafka 0.9+ supports SSL for authentication and authorization. There are two poss
 
 #### You have a 0.9 broker with SSL setup and only want to encrypt traffic to it:
 
-In this case you just need to pass `ssl: true` to `Kafka.new`. You don't need an SSL context.
+In this case you just need to pass `ssl_ca_cert: ` to `Kafka.new`:
 
 ```ruby
-kafka = Kafka.new(ssl: true, ...)
+kafka = Kafka.new(
+          ssl_ca_cert: File.read('my_ca_cert.pem'),
+          ...
+        )
 ```
+
+You need the CA cert to prevent against MITM attacks.
 
 #### You have a 0.9 broker with SSL setup and want to use client certificates and Kafka's authentication mechanism:
 
-In this case you need to pass `ssl: true`, and an `ssl_context` setup with the client certificate you want to use:
+In this case you need to pass `ssl_ca_cert:`, `ssl_client_cert:` and `ssl_client_cert_key:` to `Kafka.new`:
 
 ```ruby
-ssl_context = OpenSSL::SSL::SSLContext.new
-ssl_context.set_params(
-  cert: OpenSSL::X509::Certificate.new(YOUR_CLIENT_CERTIFICATE),
-  key: OpenSSL::PKey::RSA.new(YOUR_CLIENT_CERTIFICATE_KEY),
-)
-kafka = Kafka.new(ssl: true, ssl_context: ssl_context ...)
+kafka = Kafka.new(
+          ssl_ca_cert: File.read('my_ca_cert.pem'),
+          ssl_client_cert: File.read('my_client_cert.pem'),
+          ssl_client_cert_key: File.read('my_client_cert_key.pem'),
+          ...
+        )
 ```
 
-Without these options, ssl support is disabled, and ruby-kafka will throw exceptions when trying to connect to an SSL socket.
+Without any SSL options, SSL support is disabled, and `ruby-kafka` will throw exceptions when trying to connect to an SSL socket.
 
 ## Development
 

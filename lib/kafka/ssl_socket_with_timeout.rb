@@ -19,7 +19,7 @@ module Kafka
     # @param timeout [Integer] the read and write timeout, in seconds.
     # @param ssl_context [OpenSSL::SSL::SSLContext] which SSLContext the ssl connection should use
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
-    def initialize(host, port, connect_timeout: nil, timeout: nil, ssl_context: nil)
+    def initialize(host, port, connect_timeout: nil, timeout: nil, ssl_context:)
       addr = Socket.getaddrinfo(host, nil)
       sockaddr = Socket.pack_sockaddr_in(port, addr[0][3])
 
@@ -53,11 +53,7 @@ module Kafka
       end
 
       # once that's connected, we can start initiating the ssl socket
-      if ssl_context
-        @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, ssl_context)
-      else
-        @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket)
-      end
+      @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, ssl_context)
 
       begin
         # Initiate the socket connection in the background. If it doesn't fail 

@@ -2,13 +2,12 @@ require "kafka/broker"
 
 module Kafka
   class BrokerPool
-    def initialize(client_id:, connect_timeout: nil, socket_timeout: nil, logger:, ssl: nil, ssl_context: nil)
+    def initialize(client_id:, connect_timeout: nil, socket_timeout: nil, logger:, ssl_context: nil)
       @client_id = client_id
       @connect_timeout = connect_timeout
       @socket_timeout = socket_timeout
       @logger = logger
       @brokers = {}
-      @ssl = ssl
       @ssl_context = ssl_context
     end
 
@@ -23,7 +22,6 @@ module Kafka
         connect_timeout: @connect_timeout,
         socket_timeout: @socket_timeout,
         logger: @logger,
-        ssl: @ssl,
         ssl_context: @ssl_context,
       )
 
