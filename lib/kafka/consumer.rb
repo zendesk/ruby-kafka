@@ -51,13 +51,6 @@ module Kafka
   #
   class Consumer
 
-    # Creates a new Consumer.
-    #
-    # @param cluster [Kafka::Cluster]
-    # @param logger [Logger]
-    # @param group_id [String] the id of the group that the consumer should join.
-    # @param session_timeout [Integer] the interval between consumer heartbeats,
-    #   in seconds.
     def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:)
       @cluster = cluster
       @logger = logger
