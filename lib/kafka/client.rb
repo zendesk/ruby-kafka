@@ -41,14 +41,53 @@ module Kafka
       )
     end
 
-    # Builds a new producer.
+    # Initializes a new Kafka producer.
     #
-    # `options` are passed to {Producer#initialize}.
+    # @param ack_timeout [Integer] The number of seconds a broker can wait for
+    #   replicas to acknowledge a write before responding with a timeout.
     #
-    # @see Producer#initialize
+    # @param required_acks [Integer] The number of replicas that must acknowledge
+    #   a write.
+    #
+    # @param max_retries [Integer] the number of retries that should be attempted
+    #   before giving up sending messages to the cluster. Does not include the
+    #   original attempt.
+    #
+    # @param retry_backoff [Integer] the number of seconds to wait between retries.
+    #
+    # @param max_buffer_size [Integer] the number of messages allowed in the buffer
+    #   before new writes will raise {BufferOverflow} exceptions.
+    #
+    # @param max_buffer_bytesize [Integer] the maximum size of the buffer in bytes.
+    #   attempting to produce messages when the buffer reaches this size will
+    #   result in {BufferOverflow} being raised.
+    #
+    # @param compression_codec [Symbol, nil] the name of the compression codec to
+    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
+    #   and `:gzip`.
+    #
+    # @param compression_threshold [Integer] the number of messages that needs to
+    #   be in a message set before it should be compressed. Note that message sets
+    #   are per-partition rather than per-topic or per-producer.
+    #
     # @return [Kafka::Producer] the Kafka producer.
-    def producer(**options)
-      Producer.new(cluster: @cluster, logger: @logger, **options)
+    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
+      compressor = Compressor.new(
+        codec_name: compression_codec,
+        threshold: compression_threshold,
+      )
+
+      Producer.new(
+        cluster: @cluster,
+        logger: @logger,
+        compressor: compressor,
+        ack_timeout: ack_timeout,
+        required_acks: required_acks,
+        max_retries: max_retries,
+        retry_backoff: retry_backoff,
+        max_buffer_size: max_buffer_size,
+        max_buffer_bytesize: max_buffer_bytesize,
+      )
     end
 
     # Creates a new AsyncProducer instance.
