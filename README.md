@@ -15,6 +15,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     2. [Serialization](#serialization)
     3. [Partitioning](#partitioning)
     4. [Buffering and Error Handling](#buffering-and-error-handling)
+    5. [Message Delivery Guarantees](#message-delivery-guarantees)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
 3. [Logging](#logging)
 4. [Understanding Timeouts](#understanding-timeouts)
@@ -222,6 +223,35 @@ Typically, you'd configure the producer to retry failed attempts at sending mess
 Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
+
+#### Message Delivery Guarantees
+
+There are basically two different and incompatible guarantees that can be made in a message delivery system such as Kafka:
+
+1. _at-most-once_ delivery guarantees that a message is at most delivered to the recipient _once_. This is useful only if delivering the message twice carries some risk and should be avoided. Implicit is the fact that there's guarantee that a message will be delivered at all.
+2. _at-least-once_ delivery guarantees that a message is delivered, but it may be delivered more than once. If the final recipient does de-duplication, e.g. by checking a unique message id, then it's even possible to implement _exactly-once_ delivery.
+
+Of these two options, ruby-kafka implements the second one: when in doubt about whether a message has been delivered, a producer will try to deliver it again. This may be configurable in the future if concrete exactly-once use cases are discovered.
+
+The guarantee is made only for the synchronous producer, and boils down to this:
+
+```ruby
+producer = kafka.producer
+
+producer.produce("hello", topic: "greetings")
+
+# If this line fails with Kafka::DeliveryFailed we *may* have succeeded in deliverying
+# the message to Kafka.
+producer.deliver_messages
+
+# If we get to this line we can be sure that the message has been delivered to Kafka!
+```
+
+That is, once `#deliver_messages` returns we can be sure that Kafka has received the message. Note that there are some big caveats here:
+
+- Depending on how your topic is configured the message could still be lost by Kafka.
+- If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the messsage will ever make it to a Kafka broker.
+- If you use the asynchronous producer there's no guarantee that messages will have been delivered after `#deliver_messages` returns. A way of blocking until a message has been delivered with the asynchronous producer may be implemented in the future.
 
 ### Consuming Messages from Kafka
 
