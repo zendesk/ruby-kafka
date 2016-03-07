@@ -44,4 +44,6 @@ threads = NUM_THREADS.times.map do
   end
 end
 
+threads.each {|t| t.abort_on_exception = true }
+
 threads.map(&:join)
