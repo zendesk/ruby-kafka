@@ -19,7 +19,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
 3. [Logging](#logging)
 4. [Understanding Timeouts](#understanding-timeouts)
-5. [SSL](#ssl)
+5. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 6. [Development](#development)
 7. [Roadmap](#roadmap)
 
@@ -338,37 +338,39 @@ When sending many messages, it's likely that the client needs to send some messa
 
 Make sure your application can survive being blocked for so long.
 
-### SSL
+### Encryption and Authentication using SSL
 
-Kafka 0.9+ supports SSL for authentication and authorization. There are two possible modes of operation:
+By default, communication between Kafka clients and brokers is unencrypted and unauthenticated. Kafka 0.9 added optional support for [encryption and client authentication and authorization](http://kafka.apache.org/documentation.html#security_ssl). There are two layers of security made possible by this:
 
-#### You have a 0.9 broker with SSL setup and only want to encrypt traffic to it:
+#### Encryption of Communication
 
-In this case you just need to pass `ssl_ca_cert: ` to `Kafka.new`:
+By enabling SSL encryption you can have some confidence that messages can be sent to Kafka over an untrusted network without being intercepted.
 
-```ruby
-kafka = Kafka.new(
-          ssl_ca_cert: File.read('my_ca_cert.pem'),
-          ...
-        )
-```
-
-You need the CA cert to prevent against MITM attacks.
-
-#### You have a 0.9 broker with SSL setup and want to use client certificates and Kafka's authentication mechanism:
-
-In this case you need to pass `ssl_ca_cert:`, `ssl_client_cert:` and `ssl_client_cert_key:` to `Kafka.new`:
+In this case you just need to pass a valid CA certificate as a string when configuring your `Kafka` client:
 
 ```ruby
 kafka = Kafka.new(
-          ssl_ca_cert: File.read('my_ca_cert.pem'),
-          ssl_client_cert: File.read('my_client_cert.pem'),
-          ssl_client_cert_key: File.read('my_client_cert_key.pem'),
-          ...
-        )
+  ssl_ca_cert: File.read('my_ca_cert.pem'),
+  # ...
+)
 ```
 
-Without any SSL options, SSL support is disabled, and `ruby-kafka` will throw exceptions when trying to connect to an SSL socket.
+Without passing the CA certificate to the client it would be impossible to protect against [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
+
+#### Client Authentication
+
+In order to authenticate the client to the cluster, you need to pass in a certificate and key created for the client and trusted by the brokers.
+
+```ruby
+kafka = Kafka.new(
+  ssl_ca_cert: File.read('my_ca_cert.pem'),
+  ssl_client_cert: File.read('my_client_cert.pem'),
+  ssl_client_cert_key: File.read('my_client_cert_key.pem'),
+  # ...
+)
+```
+
+Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
 
 ## Development
 
