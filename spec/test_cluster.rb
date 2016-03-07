@@ -8,7 +8,10 @@ class TestCluster
   DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST", "localhost")).host
   KAFKA_IMAGE = "wurstmeister/kafka:0.9.0.0"
   ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
+  KAFKA_LOG_LOCATION = "/opt/kafka_2.11-0.9.0.0/logs/server.log"
   KAFKA_CLUSTER_SIZE = 3
+
+  ContainerDied = Class.new(StandardError)
 
   def initialize
     [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
@@ -129,7 +132,8 @@ class TestCluster
         rescue
           if container.json.fetch("State").fetch("Dead")
             puts "failed!"
-            raise "Failed to start container"
+            puts container.exec("cat", KAFKA_LOG_LOCATION)
+            raise ContainerDied
           else
             puts "not ready"
             sleep 1
