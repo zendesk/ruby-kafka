@@ -72,8 +72,8 @@ class TestCluster
       port = config.fetch("9092/tcp").first.fetch("HostPort")
       host = DOCKER_HOSTNAME
 
-      "#{host}:#{port}"
-    }
+      [kafka, "#{host}:#{port}"]
+    }.to_h
   end
 
   def kill_kafka_broker(number)
@@ -116,7 +116,7 @@ class TestCluster
   private
 
   def ensure_kafka_is_ready
-    kafka_hosts.each do |host_and_port|
+    kafka_hosts.each do |container, host_and_port|
       host, port = host_and_port.split(":", 2)
 
       loop do
@@ -127,8 +127,13 @@ class TestCluster
           puts "OK"
           break
         rescue
-          puts "not ready"
-          sleep 1
+          if container.json.fetch("State").fetch("Dead")
+            puts "failed!"
+            raise "Failed to start container"
+          else
+            puts "not ready"
+            sleep 1
+          end
         end
       end
     end
