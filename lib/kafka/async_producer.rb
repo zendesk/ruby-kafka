@@ -102,8 +102,10 @@ module Kafka
     # @param (see Kafka::Producer#produce)
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
-    def produce(*args)
-      @queue.enq([:produce, args], timeout: 0)
+    def produce(value, timeout: 0, **options)
+      args = [value, options]
+
+      @queue.enq([:produce, args], timeout: timeout)
 
       nil
     rescue BlockingQueue::Overflow
