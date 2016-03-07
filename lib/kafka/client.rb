@@ -34,7 +34,7 @@ module Kafka
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
-      @logger = logger || Logger.new("/dev/null")
+      @logger = logger || Logger.new(nil)
 
       ssl_context = nil
       if ssl_ca_cert || ssl_client_cert || ssl_client_cert_key
