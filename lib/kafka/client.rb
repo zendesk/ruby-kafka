@@ -1,3 +1,5 @@
+require "openssl"
+
 require "kafka/cluster"
 require "kafka/producer"
 require "kafka/consumer"
