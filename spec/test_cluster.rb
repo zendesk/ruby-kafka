@@ -1,9 +1,11 @@
 require "docker"
 
-Docker.url = ENV.fetch("DOCKER_HOST")
+if ENV.key?("DOCKER_HOST")
+  Docker.url = ENV.fetch("DOCKER_HOST")
+end
 
 class TestCluster
-  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST")).host
+  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST", "localhost")).host
   KAFKA_IMAGE = "wurstmeister/kafka:0.9.0.0"
   ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
