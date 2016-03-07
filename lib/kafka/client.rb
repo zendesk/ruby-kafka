@@ -38,25 +38,7 @@ module Kafka
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
       @logger = logger || Logger.new(nil)
 
-      ssl_context = nil
-      if ssl_ca_cert || ssl_client_cert || ssl_client_cert_key
-        ssl_context = OpenSSL::SSL::SSLContext.new
-        if ssl_client_cert && ssl_client_cert_key
-          ssl_context.set_params(
-            cert: OpenSSL::X509::Certificate.new(ssl_client_cert),
-            key: OpenSSL::PKey::RSA.new(ssl_client_cert_key)
-          )
-        elsif ssl_client_cert && !ssl_client_cert_key
-          raise ArgumentError, "Kafka client initialized with ssl client cert #{ssl_client_cert}, but no ssl_client_cert_key. Please provide both."
-        elsif !ssl_client_cert && ssl_client_cert_key
-          raise ArgumentError, "Kafka client initialized with ssl client cert key #{ssl_client_cert_key}, but no ssl_client_cert. Please provide both."
-        end
-        if ssl_ca_cert
-          store = OpenSSL::X509::Store.new
-          store.add_cert(OpenSSL::X509::Certificate.new(ssl_ca_cert))
-          ssl_context.cert_store = store
-        end
-      end
+      ssl_context = build_ssl_context(ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
 
       broker_pool = BrokerPool.new(
         client_id: client_id,
@@ -276,6 +258,33 @@ module Kafka
     # @return [nil]
     def close
       @cluster.disconnect
+    end
+
+    private
+
+    def build_ssl_context(ca_cert, client_cert, client_cert_key)
+      return nil unless ca_cert || client_cert || client_cert_key
+
+      ssl_context = OpenSSL::SSL::SSLContext.new
+
+      if client_cert && client_cert_key
+        ssl_context.set_params(
+          cert: OpenSSL::X509::Certificate.new(client_cert),
+          key: OpenSSL::PKey::RSA.new(client_cert_key)
+        )
+      elsif client_cert && !client_cert_key
+        raise ArgumentError, "Kafka client initialized with `ssl_client_cert` but no `ssl_client_cert_key`. Please provide both."
+      elsif !client_cert && client_cert_key
+        raise ArgumentError, "Kafka client initialized with `ssl_client_cert_key`, but no `ssl_client_cert`. Please provide both."
+      end
+
+      if ca_cert
+        store = OpenSSL::X509::Store.new
+        store.add_cert(OpenSSL::X509::Certificate.new(ca_cert))
+        ssl_context.cert_store = store
+      end
+
+      ssl_context
     end
   end
 end
