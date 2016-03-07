@@ -60,14 +60,14 @@ module Kafka
         client_id: client_id,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
-        logger: logger,
+        logger: @logger,
         ssl_context: ssl_context,
       )
 
       @cluster = Cluster.new(
         seed_brokers: seed_brokers,
         broker_pool: broker_pool,
-        logger: logger,
+        logger: @logger,
       )
     end
 
