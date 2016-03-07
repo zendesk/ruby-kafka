@@ -1,4 +1,5 @@
 require "thread"
+require "kafka/blocking_queue"
 
 module Kafka
 
@@ -74,8 +75,7 @@ module Kafka
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
 
-      @queue = Queue.new
-      @max_queue_size = max_queue_size
+      @queue = BlockingQueue.new(max_length: max_queue_size)
 
       @worker_thread = Thread.new do
         worker = Worker.new(
@@ -103,11 +103,11 @@ module Kafka
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
     def produce(*args)
-      raise BufferOverflow if @queue.size >= @max_queue_size
-
-      @queue << [:produce, args]
+      @queue.enq([:produce, args], timeout: 0)
 
       nil
+    rescue BlockingQueue::Overflow
+      raise BufferOverflow
     end
 
     # Asynchronously delivers the buffered messages. This method will return
