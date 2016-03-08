@@ -4,6 +4,9 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Simplify the heartbeat algorithm.
+- Handle partial messages at the end of message sets received from the brokers.
+
 ## v0.3.0
 
 - Add support for encryption and authentication with SSL (Tom Crayford).
