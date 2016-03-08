@@ -31,22 +31,14 @@ module Kafka
   #     # Subscribe to a Kafka topic:
   #     consumer.subscribe("messages")
   #
-  #     begin
-  #       # Loop forever, reading in messages from all topics that have been
-  #       # subscribed to.
-  #       consumer.each_message do |message|
-  #         puts message.topic
-  #         puts message.partition
-  #         puts message.key
-  #         puts message.value
-  #         puts message.offset
-  #       end
-  #     ensure
-  #       # Make sure to shut down the consumer after use. This lets
-  #       # the consumer notify the Kafka cluster that it's leaving
-  #       # the group, causing a synchronization and re-balancing of
-  #       # the group.
-  #       consumer.shutdown
+  #     # Loop forever, reading in messages from all topics that have been
+  #     # subscribed to.
+  #     consumer.each_message do |message|
+  #       puts message.topic
+  #       puts message.partition
+  #       puts message.key
+  #       puts message.value
+  #       puts message.offset
   #     end
   #
   class Consumer
@@ -130,24 +122,11 @@ module Kafka
           join_group
         end
       end
-    end
-
-    # Shuts down the consumer.
-    #
-    # In order to quickly have the consumer group re-balance itself, it's
-    # important that members explicitly tell Kafka when they're leaving.
-    # Therefore it's a good idea to call this method whenever your consumer
-    # is about to quit. If this method is not called, it may take up to
-    # the amount of time defined by the `session_timeout` parameter for
-    # Kafka to realize that this consumer is no longer present and trigger
-    # a group re-balance. In that period of time, the partitions that used
-    # to be assigned to this consumer won't be processed.
-    #
-    # @return [nil]
-    def shutdown
+    ensure
+      # In order to quickly have the consumer group re-balance itself, it's
+      # important that members explicitly tell Kafka when they're leaving.
       @offset_manager.commit_offsets
       @group.leave
-    rescue ConnectionError
     end
 
     private

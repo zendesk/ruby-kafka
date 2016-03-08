@@ -35,20 +35,16 @@ threads = NUM_THREADS.times.map do |worker_id|
     consumer = kafka.consumer(group_id: "firehose")
     consumer.subscribe(KAFKA_TOPIC)
 
-    begin
-      i = 0
-      consumer.each_message do |message|
-        i += 1
+    i = 0
+    consumer.each_message do |message|
+      i += 1
 
-        if i % 1000 == 0
-          queue << i
-          i = 0
-        end
-
-        sleep 0.01
+      if i % 1000 == 0
+        queue << i
+        i = 0
       end
-    ensure
-      consumer.shutdown
+
+      sleep 0.01
     end
   end
 end
