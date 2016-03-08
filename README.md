@@ -16,6 +16,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     3. [Partitioning](#partitioning)
     4. [Buffering and Error Handling](#buffering-and-error-handling)
     5. [Message Delivery Guarantees](#message-delivery-guarantees)
+    6. [Compression](#compression)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
 3. [Logging](#logging)
 4. [Understanding Timeouts](#understanding-timeouts)
@@ -253,6 +254,26 @@ That is, once `#deliver_messages` returns we can be sure that Kafka has received
 - Depending on how your cluster and topic is configured the message could still be lost by Kafka.
 - If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the messsage will ever make it to a Kafka broker.
 - If you use the asynchronous producer there's no guarantee that messages will have been delivered after `#deliver_messages` returns. A way of blocking until a message has been delivered with the asynchronous producer may be implemented in the future.
+
+#### Compression
+
+Depending on what kind of data you produce, enabling compression may yield improved bandwidth and space usage. Compression in Kafka is done on entire messages sets rather than on individual messages. This improves the compression rate and generally means that compressions works better the larger your buffers get, since the message sets will be larger by the time they're compressed.
+
+Since many workloads have variations in throughput and distribution across partitions, it's possible to configure a threshold for when to enable compression by setting `compression_threshold`. Only if the defined number of messages are buffered for a partition will the messages be compressed.
+
+Compression is enabled by passing the `compression_codec` parameter to `#producer` with the name of one of the algorithms allowed by Kafka:
+
+* `:snappy` for [Snappy](http://google.github.io/snappy/) compression.
+* `:gzip` for [gzip](https://en.wikipedia.org/wiki/Gzip) compression.
+
+By default, all message sets will be compressed if you specify a compression codec. To increase the compression threshold, set `compression_threshold` to an integer value higher than one.
+
+```ruby
+producer = kafka.producer(
+  compression_codec: :snappy,
+  compression_threshold: 10,
+)
+```
 
 ### Consuming Messages from Kafka
 
