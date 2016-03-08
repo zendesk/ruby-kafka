@@ -16,7 +16,7 @@ queue = Queue.new
 threads = NUM_THREADS.times.map do |worker_id|
   Thread.new do
     logger = Logger.new($stderr)
-    logger.level = Logger::DEBUG
+    logger.level = Logger::INFO
 
     logger.formatter = proc {|severity, datetime, progname, msg|
       "[#{worker_id}] #{severity.ljust(5)} -- #{msg}\n"
@@ -40,10 +40,12 @@ threads = NUM_THREADS.times.map do |worker_id|
       consumer.each_message do |message|
         i += 1
 
-        if i % 100 == 0
+        if i % 1000 == 0
           queue << i
           i = 0
         end
+
+        sleep 0.01
       end
     ensure
       consumer.shutdown
