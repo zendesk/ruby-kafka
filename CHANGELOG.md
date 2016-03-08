@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.0
+
 - Add support for encryption and authentication with SSL (Tom Crayford).
 - Allow configuring consumer offset commit policies.
 - Instrument consumer message processing.
