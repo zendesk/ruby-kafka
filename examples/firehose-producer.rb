@@ -1,6 +1,9 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "kafka"
+require "dotenv"
+
+Dotenv.load
 
 KAFKA_CLIENT_CERT = ENV.fetch("KAFKA_CLIENT_CERT")
 KAFKA_CLIENT_CERT_KEY = ENV.fetch("KAFKA_CLIENT_CERT_KEY")
