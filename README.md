@@ -18,11 +18,11 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     5. [Message Delivery Guarantees](#message-delivery-guarantees)
     6. [Compression](#compression)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
-3. [Logging](#logging)
-4. [Understanding Timeouts](#understanding-timeouts)
-5. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-6. [Development](#development)
-7. [Roadmap](#roadmap)
+  3. [Logging](#logging)
+  4. [Understanding Timeouts](#understanding-timeouts)
+  5. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+3. [Development](#development)
+4. [Roadmap](#roadmap)
 
 ## Installation
 
