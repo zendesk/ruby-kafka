@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.1
+
 - Simplify the heartbeat algorithm.
 - Handle partial messages at the end of message sets received from the brokers.
 
