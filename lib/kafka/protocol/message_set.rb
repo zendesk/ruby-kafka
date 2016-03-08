@@ -27,13 +27,17 @@ module Kafka
         fetched_messages = []
 
         until decoder.eof?
-          message = Message.decode(decoder)
+          begin
+            message = Message.decode(decoder)
 
-          if message.compressed?
-            wrapped_message_set = message.decompress
-            fetched_messages.concat(wrapped_message_set.messages)
-          else
-            fetched_messages << message
+            if message.compressed?
+              wrapped_message_set = message.decompress
+              fetched_messages.concat(wrapped_message_set.messages)
+            else
+              fetched_messages << message
+            end
+          rescue EOFError
+            # We tried to decode a partial message; just skip it.
           end
         end
 
