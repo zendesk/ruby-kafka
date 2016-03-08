@@ -46,7 +46,7 @@ module Kafka
     end
 
     def leave
-      @logger.info "[#{@member_id}] Leaving group `#{@group_id}`"
+      @logger.info "Leaving group `#{@group_id}`"
       coordinator.leave_group(group_id: @group_id, member_id: @member_id)
     rescue ConnectionError
     end
@@ -74,7 +74,7 @@ module Kafka
     end
 
     def heartbeat
-      @logger.info "[#{@member_id}] Sending heartbeat..."
+      @logger.info "Sending heartbeat..."
 
       response = coordinator.heartbeat(
         group_id: @group_id,
@@ -103,7 +103,7 @@ module Kafka
       @leader_id = response.leader_id
       @members = response.members
 
-      @logger.info "[#{@member_id}] Joined group `#{@group_id}` with member id `#{@member_id}`"
+      @logger.info "Joined group `#{@group_id}` with member id `#{@member_id}`"
     rescue UnknownMemberId
       @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
@@ -121,7 +121,7 @@ module Kafka
       group_assignment = {}
 
       if group_leader?
-        @logger.info "[#{@member_id}] Chosen as leader of group `#{@group_id}`"
+        @logger.info "Chosen as leader of group `#{@group_id}`"
 
         group_assignment = @assignment_strategy.assign(
           members: @members.keys,
@@ -139,7 +139,7 @@ module Kafka
       Protocol.handle_error(response.error_code)
 
       response.member_assignment.topics.each do |topic, assigned_partitions|
-        @logger.info "[#{@member_id}] Partitions assigned for `#{topic}`: #{assigned_partitions.join(', ')}"
+        @logger.info "Partitions assigned for `#{topic}`: #{assigned_partitions.join(', ')}"
       end
 
       @assigned_partitions.replace(response.member_assignment.topics)
