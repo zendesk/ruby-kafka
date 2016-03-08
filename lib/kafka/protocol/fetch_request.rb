@@ -30,6 +30,10 @@ module Kafka
         1
       end
 
+      def api_version
+        1
+      end
+
       def response_class
         Protocol::FetchResponse
       end
