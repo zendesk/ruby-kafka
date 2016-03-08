@@ -122,6 +122,9 @@ module Kafka
         rescue RebalanceInProgress
           @logger.error "Group is rebalancing; rejoining"
           join_group
+        rescue IllegalGeneration
+          @logger.error "Group has transitioned to a new generation; rejoining"
+          join_group
         end
       end
     end
