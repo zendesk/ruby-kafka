@@ -57,6 +57,9 @@ module Kafka
       @group = group
       @offset_manager = offset_manager
       @session_timeout = session_timeout
+
+      # Send two heartbeats in each session window, just to be sure.
+      @heartbeat_interval = @session_timeout / 2
     end
 
     # Subscribes the consumer to a topic.
@@ -200,9 +203,9 @@ module Kafka
     # `session_timeout`.
     #
     def send_heartbeat_if_necessary
-      @last_heartbeat ||= Time.at(0)
+      @last_heartbeat ||= Time.now
 
-      if @last_heartbeat <= Time.now - @session_timeout + 2
+      if Time.now > @last_heartbeat + @heartbeat_interval
         @group.heartbeat
         @last_heartbeat = Time.now
       end
