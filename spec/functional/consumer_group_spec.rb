@@ -45,8 +45,6 @@ describe "Producer API", functional: true do
           received_messages += 1
         end
 
-        consumer.shutdown
-
         received_messages
       end
 

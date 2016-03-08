@@ -313,15 +313,10 @@ consumer = kafka.consumer(group_id: "my-consumer")
 
 consumer.subscribe("greetings")
 
-begin
-  # This will loop indefinitely, yielding each message in turn.
-  consumer.each_message do |message|
-    puts message.topic, message.partition
-    puts message.offset, message.key, message.value
-  end
-ensure
-  # Always make sure to shut down the consumer properly.
-  consumer.shutdown
+# This will loop indefinitely, yielding each message in turn.
+consumer.each_message do |message|
+  puts message.topic, message.partition
+  puts message.offset, message.key, message.value
 end
 ```
 
