@@ -13,10 +13,14 @@ NUM_THREADS = 4
 
 queue = Queue.new
 
-threads = NUM_THREADS.times.map do
+threads = NUM_THREADS.times.map do |worker_id|
   Thread.new do
     logger = Logger.new($stderr)
-    logger.level = Logger::INFO
+    logger.level = Logger::DEBUG
+
+    logger.formatter = proc {|severity, datetime, progname, msg|
+      "[#{worker_id}] #{severity.ljust(5)} -- #{msg}\n"
+    }
 
     kafka = Kafka.new(
       seed_brokers: KAFKA_BROKERS,
