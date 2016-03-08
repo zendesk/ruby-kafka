@@ -311,6 +311,8 @@ kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
 # Consumers with the same group id will form a Consumer Group together.
 consumer = kafka.consumer(group_id: "my-consumer")
 
+# It's possible to subscribe to multiple topics by calling `subscribe`
+# repeatedly.
 consumer.subscribe("greetings")
 
 # This will loop indefinitely, yielding each message in turn.
