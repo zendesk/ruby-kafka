@@ -92,7 +92,14 @@ module Kafka
       #
       # @return [String]
       def read(number_of_bytes)
-        @io.read(number_of_bytes) or raise EOFError
+        socket_data = @io.read(number_of_bytes) or raise EOFError
+
+        # check for partial response that should be ignored
+        if socket_data.size != number_of_bytes
+          raise EOFError
+        end
+
+        socket_data
       end
     end
   end
