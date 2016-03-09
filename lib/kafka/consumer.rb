@@ -93,27 +93,28 @@ module Kafka
 
       while @running
         begin
-          batch = fetch_batch
+          fetch_batches.each do |batch|
+            batch.messages.each do |message|
+              Instrumentation.instrument("process_message.consumer.kafka") do |notification|
+                notification.update(
+                  topic: message.topic,
+                  partition: message.partition,
+                  offset: message.offset,
+                  offset_lag: batch.highwater_mark_offset - message.offset,
+                  key: message.key,
+                  value: message.value,
+                )
 
-          batch.each do |message|
-            Instrumentation.instrument("process_message.consumer.kafka") do |notification|
-              notification.update(
-                topic: message.topic,
-                partition: message.partition,
-                offset: message.offset,
-                key: message.key,
-                value: message.value,
-              )
+                yield message
+              end
 
-              yield message
+              @offset_manager.commit_offsets_if_necessary
+
+              send_heartbeat_if_necessary
+              mark_message_as_processed(message)
+
+              break if !@running
             end
-
-            @offset_manager.commit_offsets_if_necessary
-
-            send_heartbeat_if_necessary
-            mark_message_as_processed(message)
-
-            break if !@running
           end
         rescue ConnectionError => e
           @logger.error "Connection error while sending heartbeat; rejoining"
@@ -148,10 +149,8 @@ module Kafka
       @group.join
     end
 
-    def fetch_batch
+    def fetch_batches
       join_group unless @group.member?
-
-      @logger.debug "Fetching a batch of messages"
 
       assigned_partitions = @group.assigned_partitions
 
@@ -170,17 +169,13 @@ module Kafka
         partitions.each do |partition|
           offset = @offset_manager.next_offset_for(topic, partition)
 
-          @logger.debug "Fetching from #{topic}/#{partition} starting at offset #{offset}"
+          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
 
           operation.fetch_from_partition(topic, partition, offset: offset)
         end
       end
 
-      messages = operation.execute
-
-      @logger.info "Fetched #{messages.count} messages"
-
-      messages
+      operation.execute
     rescue ConnectionError => e
       @logger.error "Connection error while fetching messages: #{e}"
 

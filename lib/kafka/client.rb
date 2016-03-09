@@ -235,7 +235,7 @@ module Kafka
 
       operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
 
-      operation.execute
+      operation.execute.flat_map {|batch| batch.messages }
     end
 
     # Lists all topics in the cluster.

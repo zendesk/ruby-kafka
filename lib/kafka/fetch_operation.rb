@@ -1,3 +1,5 @@
+require "kafka/fetched_batch"
+
 module Kafka
 
   # Fetches messages from one or more partitions.
@@ -66,10 +68,10 @@ module Kafka
         response = broker.fetch_messages(**options)
 
         response.topics.flat_map {|fetched_topic|
-          fetched_topic.partitions.flat_map {|fetched_partition|
+          fetched_topic.partitions.map {|fetched_partition|
             Protocol.handle_error(fetched_partition.error_code)
 
-            fetched_partition.messages.map {|message|
+            messages = fetched_partition.messages.map {|message|
               FetchedMessage.new(
                 value: message.value,
                 key: message.key,
@@ -78,6 +80,13 @@ module Kafka
                 offset: message.offset,
               )
             }
+
+            FetchedBatch.new(
+              topic: fetched_topic.name,
+              partition: fetched_partition.partition,
+              highwater_mark_offset: fetched_partition.highwater_mark_offset,
+              messages: messages,
+            )
           }
         }
       }
