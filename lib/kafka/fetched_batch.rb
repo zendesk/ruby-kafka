@@ -8,5 +8,9 @@ module Kafka
       @highwater_mark_offset = highwater_mark_offset
       @messages = messages
     end
+
+    def empty?
+      @messages.empty?
+    end
   end
 end

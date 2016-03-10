@@ -142,6 +142,50 @@ module Kafka
       @running = false
     end
 
+    def each_batch
+      loop do
+        begin
+          fetch_batches.each do |batch|
+            unless batch.empty?
+              Instrumentation.instrument("process_batch.consumer.kafka") do |notification|
+                notification.update(
+                  topic: batch.topic,
+                  partition: batch.partition,
+                  highwater_mark_offset: batch.highwater_mark_offset,
+                  message_count: batch.messages.count,
+                )
+
+                yield batch
+              end
+
+              mark_message_as_processed(batch.messages.last)
+            end
+
+            @offset_manager.commit_offsets_if_necessary
+
+            send_heartbeat_if_necessary
+          end
+        rescue ConnectionError => e
+          @logger.error "Connection error while sending heartbeat; rejoining"
+          join_group
+        rescue UnknownMemberId
+          @logger.error "Kicked out of group; rejoining"
+          join_group
+        rescue RebalanceInProgress
+          @logger.error "Group is rebalancing; rejoining"
+          join_group
+        rescue IllegalGeneration
+          @logger.error "Group has transitioned to a new generation; rejoining"
+          join_group
+        end
+      end
+    ensure
+      # In order to quickly have the consumer group re-balance itself, it's
+      # important that members explicitly tell Kafka when they're leaving.
+      @offset_manager.commit_offsets
+      @group.leave
+    end
+
     private
 
     def join_group
