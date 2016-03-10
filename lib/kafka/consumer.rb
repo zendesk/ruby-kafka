@@ -52,6 +52,9 @@ module Kafka
 
       # Send two heartbeats in each session window, just to be sure.
       @heartbeat_interval = @session_timeout / 2
+
+      # Whether or not the consumer is currently consuming messages.
+      @running = false
     end
 
     # Subscribes the consumer to a topic.
@@ -86,7 +89,9 @@ module Kafka
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @return [nil]
     def each_message
-      loop do
+      @running = true
+
+      while @running
         begin
           batch = fetch_batch
 
@@ -107,6 +112,8 @@ module Kafka
 
             send_heartbeat_if_necessary
             mark_message_as_processed(message)
+
+            break if !@running
           end
         rescue ConnectionError => e
           @logger.error "Connection error while sending heartbeat; rejoining"
@@ -127,6 +134,11 @@ module Kafka
       # important that members explicitly tell Kafka when they're leaving.
       @offset_manager.commit_offsets
       @group.leave
+      @running = false
+    end
+
+    def stop
+      @running = false
     end
 
     private
