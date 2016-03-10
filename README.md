@@ -19,8 +19,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     6. [Compression](#compression)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
   3. [Logging](#logging)
-  4. [Understanding Timeouts](#understanding-timeouts)
-  5. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+  4. [Instrumentation](#instrumentation)
+  5. [Understanding Timeouts](#understanding-timeouts)
+  6. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 3. [Development](#development)
 4. [Roadmap](#roadmap)
 
@@ -335,6 +336,47 @@ kafka = Kafka.new(logger: logger, ...)
 ```
 
 By default, nothing is logged.
+
+### Instrumentation
+
+Most operations are instrumented using [Active Support Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html). In order to subscribe to notifications, make sure to require the notifications library _before_ you require ruby-kafka, e.g.
+
+```ruby
+require "active_support/notifications"
+require "kafka"
+```
+
+The notifications are namespaced based on their origin, with separate namespaces for the producer and the consumer.
+
+In order to receive notifications you can either subscribe to individual notification names or use regular expressions to subscribe to entire namespaces. This example will subscribe to _all_ notifications sent by ruby-kafka:
+
+```ruby
+ActiveSupport::Notifications.subscribe(/.*\.kafka/) do |*args|
+  event = ActiveSupport::Notifications::Event.new(*args)
+  puts "Received notification `#{event.name}` with payload: #{event.payload.inspect}"
+end
+```
+
+#### Producer Notifications
+
+* `produce_message.producer.kafka` is sent whenever a message is produced to a buffer. It includes the following payload:
+  * `value` is the message value.
+  * `key` is the message key.
+  * `topic` is the topic that the message was produced to.
+  * `buffer_size` is the size of the producer buffer after adding the message.
+  * `max_buffer_size` is the maximum size of the producer buffer.
+
+* `deliver_messages.producer.kafka` is sent whenever a producer attempts to deliver its buffered messages to the Kafka brokers. It includes the following payload:
+  * `attempts` is the number of times delivery was attempted.
+  * `message_count` is the number of messages for which delivery was attempted.
+  * `delivered_message_count` is the number of messages that were acknowledged by the brokers - if this number is smaller than `message_count` not all messages were successfully delivered.
+
+#### Connection Notifications
+
+* `request.connection.kafka` is sent whenever a network request is sent to a Kafka broker. It includes the following payload:
+  * `api` is the name of the API that was called, e.g. `produce` or `fetch`.
+  * `request_size` is the number of bytes in the request.
+  * `response_size` is the number of bytes in the response.
 
 ### Understanding Timeouts
 
