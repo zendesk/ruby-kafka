@@ -351,7 +351,7 @@ The notifications are namespaced based on their origin, with separate namespaces
 In order to receive notifications you can either subscribe to individual notification names or use regular expressions to subscribe to entire namespaces. This example will subscribe to _all_ notifications sent by ruby-kafka:
 
 ```ruby
-ActiveSupport::Notifications.subscribe(/.*\.kafka/) do |*args|
+ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
   event = ActiveSupport::Notifications::Event.new(*args)
   puts "Received notification `#{event.name}` with payload: #{event.payload.inspect}"
 end

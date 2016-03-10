@@ -16,7 +16,7 @@ end
 
 logger = Logger.new(LOG)
 
-ActiveSupport::Notifications.subscribe(/.*\.kafka/) do |*args|
+ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
   event = ActiveSupport::Notifications::Event.new(*args)
   logger.debug "Instrumentation event `#{event.name}`: #{event.payload.inspect}"
 end
