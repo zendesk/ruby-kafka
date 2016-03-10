@@ -444,7 +444,7 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 The current stable release is v0.2. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
 
-### v0.3
+### v0.4
 
 Beta release of the Consumer API, allowing balanced Consumer Groups coordinating access to partitions. Kafka 0.9 only.
 
