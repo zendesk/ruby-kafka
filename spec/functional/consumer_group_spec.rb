@@ -1,11 +1,11 @@
-describe "Producer API", functional: true do
+describe "Consumer API", functional: true do
   let(:logger) { Logger.new(LOG) }
 
   before do
     require "test_cluster"
   end
 
-  example "joining a consumer group" do
+  example "consuming messages in a group" do
     num_partitions = 15
     sent_messages = 1_000
 
