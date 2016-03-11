@@ -16,14 +16,14 @@ module Kafka
     class Message
       MAGIC_BYTE = 0
 
-      attr_reader :key, :value, :attributes, :offset
+      attr_reader :key, :value, :codec_id, :offset
 
       attr_reader :bytesize
 
-      def initialize(value:, key: nil, attributes: 0, offset: -1)
+      def initialize(value:, key: nil, codec_id: 0, offset: -1)
         @key = key
         @value = value
-        @attributes = attributes
+        @codec_id = codec_id
         @offset = offset
 
         @bytesize = @key.to_s.bytesize + @value.to_s.bytesize
@@ -39,17 +39,17 @@ module Kafka
       def ==(other)
         @key == other.key &&
           @value == other.value &&
-          @attributes == other.attributes &&
+          @codec_id == other.codec_id &&
           @offset == other.offset
       end
 
       def compressed?
-        @attributes != 0
+        @codec_id != 0
       end
 
       # @return [Kafka::Protocol::MessageSet]
       def decompress
-        codec = Compression.find_codec_by_id(@attributes)
+        codec = Compression.find_codec_by_id(@codec_id)
 
         # For some weird reason we need to cut out the first 20 bytes.
         data = codec.decompress(value)
@@ -73,7 +73,9 @@ module Kafka
         key = message_decoder.bytes
         value = message_decoder.bytes
 
-        new(key: key, value: value, attributes: attributes, offset: offset)
+        codec_id = attributes & 0b111
+
+        new(key: key, value: value, codec_id: codec_id, offset: offset)
       end
 
       private
@@ -96,7 +98,7 @@ module Kafka
         encoder = Encoder.new(buffer)
 
         encoder.write_int8(MAGIC_BYTE)
-        encoder.write_int8(@attributes)
+        encoder.write_int8(@codec_id)
         encoder.write_bytes(@key)
         encoder.write_bytes(@value)
 
