@@ -104,18 +104,21 @@ module Kafka
       response.each_partition do |topic_info, partition_info|
         topic = topic_info.topic
         partition = partition_info.partition
-        offset = partition_info.offset
-        message_count = @buffer.message_count_for_partition(topic: topic, partition: partition)
+        messages = @buffer.messages_for(topic: topic, partition: partition)
+        ack_time = Time.now
 
         begin
           Protocol.handle_error(partition_info.error_code)
 
-          Instrumentation.instrument("ack_messages.producer.kafka", {
-            topic: topic,
-            partition: partition,
-            offset: offset,
-            message_count: message_count,
-          })
+          messages.each do |message|
+            Instrumentation.instrument("ack_message.producer.kafka", {
+              key: message.key,
+              value: message.value,
+              topic: topic,
+              partition: partition,
+              delay: ack_time - message.create_time,
+            })
+          end
         rescue Kafka::CorruptMessage
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition
@@ -133,7 +136,7 @@ module Kafka
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          @logger.debug "Successfully appended #{message_count} messages to #{topic}/#{partition} at offset #{offset}"
+          @logger.debug "Successfully appended #{messages.count} messages to #{topic}/#{partition}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)
