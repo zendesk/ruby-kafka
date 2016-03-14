@@ -73,6 +73,8 @@ module Kafka
         key = message_decoder.bytes
         value = message_decoder.bytes
 
+        # The codec id is encoded in the three least significant bits of the
+        # attributes.
         codec_id = attributes & 0b111
 
         new(key: key, value: value, codec_id: codec_id, offset: offset)
