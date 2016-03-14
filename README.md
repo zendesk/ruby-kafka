@@ -17,6 +17,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     4. [Buffering and Error Handling](#buffering-and-error-handling)
     5. [Message Delivery Guarantees](#message-delivery-guarantees)
     6. [Compression](#compression)
+    7. [Producing Messages from a Rails Application](producing-messages-from-a-rails-application)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
   3. [Logging](#logging)
   4. [Instrumentation](#instrumentation)
@@ -274,6 +275,50 @@ producer = kafka.producer(
   compression_codec: :snappy,
   compression_threshold: 10,
 )
+```
+
+#### Producing Messages from a Rails Application
+
+A typical use case for Kafka is tracking events that occur in web applications. Oftentimes it's advisable to avoid having a hard dependency on Kafka being available, allowing your application to survive a Kafka outage. By using an asynchronous producer, you can avoid doing IO within the individual request/response cycles, instead pushing that to the producer's internal background thread.
+
+```ruby
+# config/initializers/kafka_producer.rb
+require "kafka"
+
+# Configure the Kafka client with the broker hosts and the Rails
+# logger.
+$kafka = Kafka.new(
+  seed_brokers: ["kafka1:9092", "kafka2:9092"],
+  logger: Rails.logger,
+)
+
+# Set up an asynchronous producer that delivers its buffered messages
+# every ten seconds:
+$kafka_producer = $kafka.async_producer(
+  delivery_interval: 10,
+)
+
+# Make sure to shut down the producer when exiting.
+at_exit { $kafka_producer.shutdown }
+```
+
+In your controllers, simply call the producer directly:
+
+```ruby
+# app/controllers/orders_controller.rb
+class OrdersController
+  def create
+    @order = Order.create!(params[:order])
+    
+    event = {
+      order_id: @order.id,
+      amount: @order.amount,
+      timestamp: Time.now,
+    }
+    
+    $kafka_producer.produce(event.to_json, topic: "order_events")
+  end
+end
 ```
 
 ### Consuming Messages from Kafka
