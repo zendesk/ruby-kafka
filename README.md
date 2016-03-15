@@ -17,7 +17,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     4. [Buffering and Error Handling](#buffering-and-error-handling)
     5. [Message Delivery Guarantees](#message-delivery-guarantees)
     6. [Compression](#compression)
-    7. [Producing Messages from a Rails Application](producing-messages-from-a-rails-application)
+    7. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
   3. [Logging](#logging)
   4. [Instrumentation](#instrumentation)
