@@ -281,6 +281,8 @@ producer = kafka.producer(
 
 A typical use case for Kafka is tracking events that occur in web applications. Oftentimes it's advisable to avoid having a hard dependency on Kafka being available, allowing your application to survive a Kafka outage. By using an asynchronous producer, you can avoid doing IO within the individual request/response cycles, instead pushing that to the producer's internal background thread.
 
+In this example, a producer is configured in a Rails initializer:
+
 ```ruby
 # config/initializers/kafka_producer.rb
 require "kafka"
