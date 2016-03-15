@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.2
+
+- Experimental batch consumer API.
+
 ## v0.3.1
 
 - Simplify the heartbeat algorithm.
