@@ -6,7 +6,7 @@ The Producer API is currently beta level and used in production. There's an alph
 
 Although parts of this library work with Kafka 0.8 – specifically, the Producer API – it's being tested and developed against Kafka 0.9. The Consumer API will be 0.9 only.
 
-#### Table of Contents
+## Table of Contents
 
 1. [Installation](#installation)
 2. [Usage](#usage)
