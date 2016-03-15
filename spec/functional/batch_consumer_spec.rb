@@ -11,24 +11,26 @@ describe "Batch Consumer API", functional: true do
     messages = (1...message_count).to_set
     message_queue = Queue.new
 
-    KAFKA_CLUSTER.create_topic("topic-with-consumers", num_partitions: num_partitions, num_replicas: 1)
+    KAFKA_CLUSTER.create_topic("topic-with-batch-consumers", num_partitions: num_partitions, num_replicas: 1)
 
     Thread.new do
       kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
-        producer.produce(i.to_s, topic: "topic-with-consumers", partition_key: i.to_s)
+        producer.produce(i.to_s, topic: "topic-with-batch-consumers", partition_key: i.to_s)
       end
 
       producer.deliver_messages
     end
 
+    group_id = "test#{rand(1000)}"
+
     threads = 2.times.map do |thread_id|
       t = Thread.new do
         kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: "test")
-        consumer.subscribe("topic-with-consumers")
+        consumer = kafka.consumer(group_id: group_id)
+        consumer.subscribe("topic-with-batch-consumers")
 
         consumer.each_batch do |batch|
           batch.messages.each do |message|
