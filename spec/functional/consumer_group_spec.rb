@@ -32,12 +32,14 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
+    group_id = "test#{rand(1000)}"
+
     threads = 2.times.map do |thread_id|
       t = Thread.new do
         received_messages = 0
 
         kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: "test")
+        consumer = kafka.consumer(group_id: group_id)
         consumer.subscribe("topic-with-consumers")
 
         consumer.each_message do |message|
