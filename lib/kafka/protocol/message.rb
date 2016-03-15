@@ -18,13 +18,14 @@ module Kafka
 
       attr_reader :key, :value, :codec_id, :offset
 
-      attr_reader :bytesize
+      attr_reader :bytesize, :create_time
 
-      def initialize(value:, key: nil, codec_id: 0, offset: -1)
+      def initialize(value:, key: nil, create_time: Time.now, codec_id: 0, offset: -1)
         @key = key
         @value = value
         @codec_id = codec_id
         @offset = offset
+        @create_time = create_time
 
         @bytesize = @key.to_s.bytesize + @value.to_s.bytesize
       end

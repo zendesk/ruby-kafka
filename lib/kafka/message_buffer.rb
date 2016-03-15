@@ -14,8 +14,8 @@ module Kafka
       @bytesize = 0
     end
 
-    def write(value:, key:, topic:, partition:)
-      message = Protocol::Message.new(key: key, value: value)
+    def write(value:, key:, topic:, partition:, create_time: Time.now)
+      message = Protocol::Message.new(key: key, value: value, create_time: create_time)
 
       buffer_for(topic, partition) << message
 
@@ -60,8 +60,8 @@ module Kafka
       @buffer.delete(topic) if @buffer[topic].empty?
     end
 
-    def message_count_for_partition(topic:, partition:)
-      buffer_for(topic, partition).count
+    def messages_for(topic:, partition:)
+      buffer_for(topic, partition)
     end
 
     # Clears messages across all topics and partitions.
