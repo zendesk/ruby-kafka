@@ -3,6 +3,7 @@ require "openssl"
 require "kafka/cluster"
 require "kafka/producer"
 require "kafka/consumer"
+require "kafka/heartbeat"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
@@ -157,13 +158,18 @@ module Kafka
         commit_threshold: offset_commit_threshold,
       )
 
+      heartbeat = Heartbeat.new(
+        group: group,
+        interval: heartbeat_interval,
+      )
+
       Consumer.new(
         cluster: @cluster,
         logger: @logger,
         group: group,
         offset_manager: offset_manager,
         session_timeout: session_timeout,
-        heartbeat_interval: heartbeat_interval,
+        heartbeat: heartbeat,
       )
     end
 
