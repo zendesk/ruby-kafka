@@ -69,23 +69,19 @@ describe "Consumer groups", fuzz: true do
 
   def start_consumer(result_queue)
     thread = Thread.new do
-      begin
-        kafka = Kafka.new(
-          seed_brokers: KAFKA_BROKERS,
-          logger: logger,
-          socket_timeout: 20,
-          connect_timeout: 20,
-        )
+      kafka = Kafka.new(
+        seed_brokers: KAFKA_BROKERS,
+        logger: logger,
+        socket_timeout: 20,
+        connect_timeout: 20,
+      )
 
-        consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30)
-        consumer.subscribe(topic)
+      consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30)
+      consumer.subscribe(topic)
 
-        consumer.each_message do |message|
-          sleep 0.1 # simulate work
-          result_queue << Integer(message.value)
-        end
-      ensure
-        consumer.shutdown
+      consumer.each_message do |message|
+        sleep 0.1 # simulate work
+        result_queue << Integer(message.value)
       end
     end
 
