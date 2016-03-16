@@ -122,6 +122,9 @@ module Kafka
   class HeartbeatError < Error
   end
 
+  class OffsetCommitError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize

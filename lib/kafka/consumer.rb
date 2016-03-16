@@ -116,7 +116,7 @@ module Kafka
               break if !@running
             end
           end
-        rescue HeartbeatError
+        rescue HeartbeatError, OffsetCommitError
           join_group
         end
       end
@@ -155,7 +155,7 @@ module Kafka
 
             send_heartbeat_if_necessary
           end
-        rescue HeartbeatError
+        rescue HeartbeatError, OffsetCommitError
           join_group
         end
       end
