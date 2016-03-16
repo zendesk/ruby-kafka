@@ -93,70 +93,68 @@ module Kafka
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @return [nil]
     def each_message
-      @running = true
+      consumer_loop do
+        fetch_batches.each do |batch|
+          batch.messages.each do |message|
+            Instrumentation.instrument("process_message.consumer.kafka") do |notification|
+              notification.update(
+                topic: message.topic,
+                partition: message.partition,
+                offset: message.offset,
+                offset_lag: batch.highwater_mark_offset - message.offset,
+                key: message.key,
+                value: message.value,
+              )
 
-      while @running
-        begin
-          fetch_batches.each do |batch|
-            batch.messages.each do |message|
-              Instrumentation.instrument("process_message.consumer.kafka") do |notification|
-                notification.update(
-                  topic: message.topic,
-                  partition: message.partition,
-                  offset: message.offset,
-                  offset_lag: batch.highwater_mark_offset - message.offset,
-                  key: message.key,
-                  value: message.value,
-                )
-
-                yield message
-              end
-
-              @offset_manager.commit_offsets_if_necessary
-
-              send_heartbeat_if_necessary
-              mark_message_as_processed(message)
-
-              break if !@running
-            end
-          end
-        rescue HeartbeatError, OffsetCommitError, FetchError
-          join_group
-        end
-      end
-    ensure
-      # In order to quickly have the consumer group re-balance itself, it's
-      # important that members explicitly tell Kafka when they're leaving.
-      @offset_manager.commit_offsets
-      @group.leave
-      @running = false
-    end
-
-    def each_batch
-      while @running
-        begin
-          fetch_batches.each do |batch|
-            unless batch.empty?
-              Instrumentation.instrument("process_batch.consumer.kafka") do |notification|
-                notification.update(
-                  topic: batch.topic,
-                  partition: batch.partition,
-                  highwater_mark_offset: batch.highwater_mark_offset,
-                  message_count: batch.messages.count,
-                )
-
-                yield batch
-              end
-
-              mark_message_as_processed(batch.messages.last)
+              yield message
             end
 
             @offset_manager.commit_offsets_if_necessary
 
             send_heartbeat_if_necessary
+            mark_message_as_processed(message)
 
-            break if !@running
+            return if !@running
           end
+        end
+      end
+    end
+
+    def each_batch
+      consumer_loop do
+        fetch_batches.each do |batch|
+          unless batch.empty?
+            Instrumentation.instrument("process_batch.consumer.kafka") do |notification|
+              notification.update(
+                topic: batch.topic,
+                partition: batch.partition,
+                highwater_mark_offset: batch.highwater_mark_offset,
+                message_count: batch.messages.count,
+              )
+
+              yield batch
+            end
+
+            mark_message_as_processed(batch.messages.last)
+          end
+
+          @offset_manager.commit_offsets_if_necessary
+
+          send_heartbeat_if_necessary
+
+          return if !@running
+        end
+      end
+    end
+
+    private
+
+    def consumer_loop
+      @running = true
+
+      while @running
+        begin
+          yield
         rescue HeartbeatError, OffsetCommitError, FetchError
           join_group
         end
@@ -168,8 +166,6 @@ module Kafka
       @group.leave
       @running = false
     end
-
-    private
 
     def join_group
       @offset_manager.clear_offsets
