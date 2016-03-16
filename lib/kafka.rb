@@ -119,6 +119,9 @@ module Kafka
   class DeliveryFailed < Error
   end
 
+  class HeartbeatError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize

@@ -83,6 +83,9 @@ module Kafka
       )
 
       Protocol.handle_error(response.error_code)
+    rescue ConnectionError, UnknownMemberId, RebalanceInProgress, IllegalGeneration => e
+      @logger.error "Error sending heartbeat: #{e}"
+      raise HeartbeatError, e
     end
 
     private

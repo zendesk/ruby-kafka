@@ -116,17 +116,7 @@ module Kafka
               break if !@running
             end
           end
-        rescue ConnectionError => e
-          @logger.error "Connection error while sending heartbeat; rejoining"
-          join_group
-        rescue UnknownMemberId
-          @logger.error "Kicked out of group; rejoining"
-          join_group
-        rescue RebalanceInProgress
-          @logger.error "Group is rebalancing; rejoining"
-          join_group
-        rescue IllegalGeneration
-          @logger.error "Group has transitioned to a new generation; rejoining"
+        rescue HeartbeatError
           join_group
         end
       end
@@ -165,17 +155,7 @@ module Kafka
 
             send_heartbeat_if_necessary
           end
-        rescue ConnectionError => e
-          @logger.error "Connection error while sending heartbeat; rejoining"
-          join_group
-        rescue UnknownMemberId
-          @logger.error "Kicked out of group; rejoining"
-          join_group
-        rescue RebalanceInProgress
-          @logger.error "Group is rebalancing; rejoining"
-          join_group
-        rescue IllegalGeneration
-          @logger.error "Group has transitioned to a new generation; rejoining"
+        rescue HeartbeatError
           join_group
         end
       end
