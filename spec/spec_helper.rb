@@ -7,16 +7,15 @@ require "rspec-benchmark"
 
 Dotenv.load
 
-LOG = ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new
+LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new)
+LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
 RSpec.configure do |config|
   config.filter_run_excluding functional: true, performance: true, fuzz: true
   config.include RSpec::Benchmark::Matchers
 end
 
-logger = Logger.new(LOG)
-
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
   event = ActiveSupport::Notifications::Event.new(*args)
-  logger.debug "Instrumentation event `#{event.name}`: #{event.payload.inspect}"
+  LOGGER.debug "Instrumentation event `#{event.name}`: #{event.payload.inspect}"
 end

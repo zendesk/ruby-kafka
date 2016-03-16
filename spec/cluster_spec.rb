@@ -7,7 +7,7 @@ describe Kafka::Cluster do
       Kafka::Cluster.new(
         seed_brokers: ["test1:9092"],
         broker_pool: broker_pool,
-        logger: Logger.new(LOG),
+        logger: LOGGER,
       )
     }
 
@@ -75,7 +75,7 @@ describe Kafka::Cluster do
       cluster = Kafka::Cluster.new(
         seed_brokers: ["not-there:9092", "not-here:9092"],
         broker_pool: broker_pool,
-        logger: Logger.new(LOG),
+        logger: LOGGER,
       )
 
       allow(broker_pool).to receive(:connect).and_raise(Kafka::ConnectionError)

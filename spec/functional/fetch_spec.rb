@@ -1,5 +1,5 @@
 describe "Fetch API", functional: true do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
 
   before do

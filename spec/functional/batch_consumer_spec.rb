@@ -1,5 +1,5 @@
 describe "Batch Consumer API", functional: true do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
 
   before do
     require "test_cluster"

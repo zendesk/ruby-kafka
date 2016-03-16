@@ -1,5 +1,5 @@
 describe "Producer API", functional: true do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
   let(:producer) { kafka.async_producer(max_retries: 1, retry_backoff: 0) }
 

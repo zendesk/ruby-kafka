@@ -1,7 +1,7 @@
 require "kafka/protocol/message"
 
 describe Kafka::Broker do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:connection) { FakeConnection.new }
   let(:broker) { Kafka::Broker.new(connection: connection, logger: logger) }
 

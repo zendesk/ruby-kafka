@@ -2,7 +2,7 @@ describe "Producer API", functional: true do
   let(:kafka) do
     Kafka.new(
       seed_brokers: KAFKA_BROKERS,
-      logger: Logger.new(LOG),
+      logger: LOGGER,
       connect_timeout: 0.1,
       socket_timeout: 0.1,
     )

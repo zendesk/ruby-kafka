@@ -1,7 +1,7 @@
 require "fake_broker"
 
 describe Kafka::Producer do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:broker1) { FakeBroker.new }
   let(:broker2) { FakeBroker.new }
   let(:compressor) { double(:compressor) }

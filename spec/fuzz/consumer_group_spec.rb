@@ -1,5 +1,5 @@
 describe "Consumer groups", fuzz: true do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:num_messages) { 10_000 }
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }

@@ -1,5 +1,5 @@
 describe Kafka::Connection do
-  let(:logger) { Logger.new(LOG) }
+  let(:logger) { LOGGER }
   let(:host) { "127.0.0.1" }
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
