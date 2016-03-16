@@ -75,6 +75,10 @@ module Kafka
       nil
     end
 
+    def stop
+      @running = false
+    end
+
     # Fetches and enumerates the messages in the topics that the consumer group
     # subscribes to.
     #
@@ -128,12 +132,8 @@ module Kafka
       @running = false
     end
 
-    def stop
-      @running = false
-    end
-
     def each_batch
-      loop do
+      while @running
         begin
           fetch_batches.each do |batch|
             unless batch.empty?
@@ -154,6 +154,8 @@ module Kafka
             @offset_manager.commit_offsets_if_necessary
 
             send_heartbeat_if_necessary
+
+            break if !@running
           end
         rescue HeartbeatError, OffsetCommitError, FetchError
           join_group
@@ -164,6 +166,7 @@ module Kafka
       # important that members explicitly tell Kafka when they're leaving.
       @offset_manager.commit_offsets
       @group.leave
+      @running = false
     end
 
     private
