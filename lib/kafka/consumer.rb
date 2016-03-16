@@ -116,7 +116,7 @@ module Kafka
               break if !@running
             end
           end
-        rescue HeartbeatError, OffsetCommitError
+        rescue HeartbeatError, OffsetCommitError, FetchError
           join_group
         end
       end
@@ -155,7 +155,7 @@ module Kafka
 
             send_heartbeat_if_necessary
           end
-        rescue HeartbeatError, OffsetCommitError
+        rescue HeartbeatError, OffsetCommitError, FetchError
           join_group
         end
       end
@@ -203,7 +203,7 @@ module Kafka
     rescue ConnectionError => e
       @logger.error "Connection error while fetching messages: #{e}"
 
-      return []
+      raise FetchError, e
     end
 
     # Sends a heartbeat if it would be necessary in order to avoid getting

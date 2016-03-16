@@ -125,6 +125,9 @@ module Kafka
   class OffsetCommitError < Error
   end
 
+  class FetchError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize
