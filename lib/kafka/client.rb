@@ -139,8 +139,10 @@ module Kafka
     # @param offset_commit_threshold [Integer] the number of messages that can be
     #   processed before their offsets are committed. If zero, offset commits are
     #   not triggered by message processing.
+    # @param heartbeat_interval [Integer] the interval between heartbeats; must be less
+    #   than the session window.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10)
       group = ConsumerGroup.new(
         cluster: @cluster,
         logger: @logger,
@@ -161,6 +163,7 @@ module Kafka
         group: group,
         offset_manager: offset_manager,
         session_timeout: session_timeout,
+        heartbeat_interval: heartbeat_interval,
       )
     end
 

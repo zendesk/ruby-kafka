@@ -43,15 +43,13 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:)
+    def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:, heartbeat_interval:)
       @cluster = cluster
       @logger = logger
       @group = group
       @offset_manager = offset_manager
       @session_timeout = session_timeout
-
-      # Send two heartbeats in each session window, just to be sure.
-      @heartbeat_interval = @session_timeout / 2
+      @heartbeat_interval = heartbeat_interval
 
       # Whether or not the consumer is currently consuming messages.
       @running = false
