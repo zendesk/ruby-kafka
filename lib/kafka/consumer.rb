@@ -43,15 +43,13 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:)
+    def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
       @logger = logger
       @group = group
       @offset_manager = offset_manager
       @session_timeout = session_timeout
-
-      # Send two heartbeats in each session window, just to be sure.
-      @heartbeat_interval = @session_timeout / 2
+      @heartbeat = heartbeat
 
       # Whether or not the consumer is currently consuming messages.
       @running = false
@@ -111,7 +109,7 @@ module Kafka
 
             @offset_manager.commit_offsets_if_necessary
 
-            send_heartbeat_if_necessary
+            @heartbeat.send_if_necessary
             mark_message_as_processed(message)
 
             return if !@running
@@ -140,7 +138,7 @@ module Kafka
 
           @offset_manager.commit_offsets_if_necessary
 
-          send_heartbeat_if_necessary
+          @heartbeat.send_if_necessary
 
           return if !@running
         end
@@ -177,7 +175,7 @@ module Kafka
 
       assigned_partitions = @group.assigned_partitions
 
-      send_heartbeat_if_necessary
+      @heartbeat.send_if_necessary
 
       raise "No partitions assigned!" if assigned_partitions.empty?
 
@@ -203,21 +201,6 @@ module Kafka
       @logger.error "Connection error while fetching messages: #{e}"
 
       raise FetchError, e
-    end
-
-    # Sends a heartbeat if it would be necessary in order to avoid getting
-    # kicked out of the consumer group.
-    #
-    # Each consumer needs to send a heartbeat with a frequency defined by
-    # `session_timeout`.
-    #
-    def send_heartbeat_if_necessary
-      @last_heartbeat ||= Time.now
-
-      if Time.now > @last_heartbeat + @heartbeat_interval
-        @group.heartbeat
-        @last_heartbeat = Time.now
-      end
     end
 
     def mark_message_as_processed(message)

@@ -3,6 +3,7 @@ require "openssl"
 require "kafka/cluster"
 require "kafka/producer"
 require "kafka/consumer"
+require "kafka/heartbeat"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
@@ -139,8 +140,10 @@ module Kafka
     # @param offset_commit_threshold [Integer] the number of messages that can be
     #   processed before their offsets are committed. If zero, offset commits are
     #   not triggered by message processing.
+    # @param heartbeat_interval [Integer] the interval between heartbeats; must be less
+    #   than the session window.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10)
       group = ConsumerGroup.new(
         cluster: @cluster,
         logger: @logger,
@@ -155,12 +158,18 @@ module Kafka
         commit_threshold: offset_commit_threshold,
       )
 
+      heartbeat = Heartbeat.new(
+        group: group,
+        interval: heartbeat_interval,
+      )
+
       Consumer.new(
         cluster: @cluster,
         logger: @logger,
         group: group,
         offset_manager: offset_manager,
         session_timeout: session_timeout,
+        heartbeat: heartbeat,
       )
     end
 
