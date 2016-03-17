@@ -7,6 +7,7 @@ require "kafka/heartbeat"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
+require "kafka/connection_builder"
 require "kafka/instrumenter"
 
 module Kafka
@@ -43,19 +44,24 @@ module Kafka
 
       ssl_context = build_ssl_context(ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
 
-      broker_pool = BrokerPool.new(
+      connection_builder = ConnectionBuilder.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
-        logger: @logger,
         ssl_context: ssl_context,
+        logger: @logger,
+        instrumenter: @instrumenter,
+      )
+
+      broker_pool = BrokerPool.new(
+        connection_builder: connection_builder,
+        logger: @logger,
       )
 
       @cluster = Cluster.new(
         seed_brokers: seed_brokers,
         broker_pool: broker_pool,
         logger: @logger,
-        instrumenter: @instrumenter,
       )
     end
 
