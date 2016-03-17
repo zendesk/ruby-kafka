@@ -10,6 +10,7 @@ describe Kafka::Connection do
       port: port,
       client_id: "test",
       logger: logger,
+      instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
     )

@@ -20,9 +20,10 @@ module Kafka
     # @param codec_name [Symbol, nil]
     # @param threshold [Integer] the minimum number of messages in a message set
     #   that will trigger compression.
-    def initialize(codec_name:, threshold:)
+    def initialize(codec_name:, threshold:, instrumenter:)
       @codec = Compression.find_codec(codec_name)
       @threshold = threshold
+      @instrumenter = instrumenter
     end
 
     # @param message_set [Protocol::MessageSet]
@@ -45,7 +46,7 @@ module Kafka
     def compress_data(message_set)
       data = Protocol::Encoder.encode_with(message_set)
 
-      Instrumentation.instrument("compress.compressor.kafka") do |notification|
+      @instrumenter.instrument("compress.compressor.kafka") do |notification|
         compressed_data = @codec.compress(data)
 
         notification[:message_count] = message_set.size

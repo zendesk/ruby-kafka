@@ -1,7 +1,9 @@
 describe Kafka::Compressor do
   describe ".compress" do
+    let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }
+
     it "encodes and decodes compressed messages" do
-      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1)
+      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1, instrumenter: instrumenter)
 
       message1 = Kafka::Protocol::Message.new(value: "hello1")
       message2 = Kafka::Protocol::Message.new(value: "hello2")
@@ -18,7 +20,7 @@ describe Kafka::Compressor do
     end
 
     it "only compresses the messages if there are at least the configured threshold" do
-      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 3)
+      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 3, instrumenter: instrumenter)
 
       message1 = Kafka::Protocol::Message.new(value: "hello1")
       message2 = Kafka::Protocol::Message.new(value: "hello2")
@@ -30,7 +32,7 @@ describe Kafka::Compressor do
     end
 
     it "reduces the data size" do
-      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1)
+      compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1, instrumenter: instrumenter)
 
       message1 = Kafka::Protocol::Message.new(value: "hello1" * 100)
       message2 = Kafka::Protocol::Message.new(value: "hello2" * 100)

@@ -25,17 +25,18 @@ module Kafka
   # * `sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:)
+    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
       @cluster = cluster
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
       @compressor = compressor
       @logger = logger
+      @instrumenter = instrumenter
     end
 
     def execute
-      Instrumentation.instrument("send_messages.producer.kafka") do |notification|
+      @instrumenter.instrument("send_messages.producer.kafka") do |notification|
         message_count = @buffer.size
 
         notification[:message_count] = message_count
@@ -111,7 +112,7 @@ module Kafka
           Protocol.handle_error(partition_info.error_code)
 
           messages.each do |message|
-            Instrumentation.instrument("ack_message.producer.kafka", {
+            @instrumenter.instrument("ack_message.producer.kafka", {
               key: message.key,
               value: message.value,
               topic: topic,

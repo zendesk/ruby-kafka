@@ -130,9 +130,10 @@ module Kafka
   #
   class Producer
 
-    def initialize(cluster:, logger:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
+    def initialize(cluster:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
       @cluster = cluster
       @logger = logger
+      @instrumenter = instrumenter
       @required_acks = required_acks
       @ack_timeout = ack_timeout
       @max_retries = max_retries
@@ -203,7 +204,7 @@ module Kafka
       @target_topics.add(topic)
       @pending_message_queue.write(message)
 
-      Instrumentation.instrument("produce_message.producer.kafka", {
+      @instrumenter.instrument("produce_message.producer.kafka", {
         value: value,
         key: key,
         topic: topic,
@@ -228,7 +229,7 @@ module Kafka
       # There's no need to do anything if the buffer is empty.
       return if buffer_size == 0
 
-      Instrumentation.instrument("deliver_messages.producer.kafka") do |notification|
+      @instrumenter.instrument("deliver_messages.producer.kafka") do |notification|
         message_count = buffer_size
 
         notification[:message_count] = message_count
@@ -274,6 +275,7 @@ module Kafka
         ack_timeout: @ack_timeout,
         compressor: @compressor,
         logger: @logger,
+        instrumenter: @instrumenter,
       )
 
       loop do
