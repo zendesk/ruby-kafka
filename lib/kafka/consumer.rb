@@ -125,6 +125,24 @@ module Kafka
       end
     end
 
+    # Fetches and enumerates the messages in the topics that the consumer group
+    # subscribes to.
+    #
+    # Each batch of messages is yielded to the provided block. If the block returns
+    # without raising an exception, the batch will be considered successfully
+    # processed. At regular intervals the offset of the most recent successfully
+    # processed message batch in each partition will be committed to the Kafka
+    # offset store. If the consumer crashes or leaves the group, the group member
+    # that is tasked with taking over processing of these partitions will resume
+    # at the last committed offsets.
+    #
+    # @param min_bytes [Integer] the minimum number of bytes to read before
+    #   returning messages from the server; if `max_wait_time` is reached, this
+    #   is ignored.
+    # @param max_wait_time [Integer] the maximum duration of time to wait before
+    #   returning messages from the server, in seconds.
+    # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
+    # @return [nil]
     def each_batch(min_bytes: 1, max_wait_time: 5)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
