@@ -88,11 +88,18 @@ module Kafka
     # that is tasked with taking over processing of these partitions will resume
     # at the last committed offsets.
     #
+    # @param min_bytes [Integer] the minimum number of bytes to read before
+    #   returning messages from the server; if `max_wait_time` is reached, this
+    #   is ignored.
+    # @param max_wait_time [Integer] the maximum duration of time to wait before
+    #   returning messages from the server, in seconds.
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @return [nil]
-    def each_message
+    def each_message(min_bytes: 1, max_wait_time: 5)
       consumer_loop do
-        fetch_batches.each do |batch|
+        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+
+        batches.each do |batch|
           batch.messages.each do |message|
             Instrumentation.instrument("process_message.consumer.kafka") do |notification|
               notification.update(
@@ -118,9 +125,11 @@ module Kafka
       end
     end
 
-    def each_batch
+    def each_batch(min_bytes: 1, max_wait_time: 5)
       consumer_loop do
-        fetch_batches.each do |batch|
+        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+
+        batches.each do |batch|
           unless batch.empty?
             Instrumentation.instrument("process_batch.consumer.kafka") do |notification|
               notification.update(
@@ -170,7 +179,7 @@ module Kafka
       @group.join
     end
 
-    def fetch_batches
+    def fetch_batches(min_bytes:, max_wait_time:)
       join_group unless @group.member?
 
       assigned_partitions = @group.assigned_partitions
@@ -182,8 +191,8 @@ module Kafka
       operation = FetchOperation.new(
         cluster: @cluster,
         logger: @logger,
-        min_bytes: 1,
-        max_wait_time: 5,
+        min_bytes: min_bytes,
+        max_wait_time: max_wait_time,
       )
 
       assigned_partitions.each do |topic, partitions|
