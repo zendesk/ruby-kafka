@@ -2,6 +2,7 @@ require "fake_broker"
 
 describe Kafka::Producer do
   let(:logger) { LOGGER }
+  let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }
   let(:broker1) { FakeBroker.new }
   let(:broker2) { FakeBroker.new }
   let(:compressor) { double(:compressor) }
@@ -135,6 +136,7 @@ describe Kafka::Producer do
     default_options = {
       cluster: cluster,
       logger: logger,
+      instrumenter: instrumenter,
       max_retries: 2,
       retry_backoff: 0,
       compressor: compressor,

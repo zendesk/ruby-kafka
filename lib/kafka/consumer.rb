@@ -43,9 +43,10 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, group:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
       @logger = logger
+      @instrumenter = instrumenter
       @group = group
       @offset_manager = offset_manager
       @session_timeout = session_timeout
@@ -94,7 +95,7 @@ module Kafka
       consumer_loop do
         fetch_batches.each do |batch|
           batch.messages.each do |message|
-            Instrumentation.instrument("process_message.consumer.kafka") do |notification|
+            @instrumenter.instrument("process_message.consumer") do |notification|
               notification.update(
                 topic: message.topic,
                 partition: message.partition,
@@ -122,7 +123,7 @@ module Kafka
       consumer_loop do
         fetch_batches.each do |batch|
           unless batch.empty?
-            Instrumentation.instrument("process_batch.consumer.kafka") do |notification|
+            @instrumenter.instrument("process_batch.consumer") do |notification|
               notification.update(
                 topic: batch.topic,
                 partition: batch.partition,

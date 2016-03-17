@@ -1,7 +1,6 @@
 require "stringio"
 require "kafka/socket_with_timeout"
 require "kafka/ssl_socket_with_timeout"
-require "kafka/instrumentation"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
@@ -43,9 +42,10 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
+    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
+      @instrumenter = instrumenter
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
@@ -82,7 +82,7 @@ module Kafka
         response_size: 0,
       }
 
-      Instrumentation.instrument("request.connection.kafka", notification) do
+      @instrumenter.instrument("request.connection", notification) do
         open unless open?
 
         @correlation_id += 1
