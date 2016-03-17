@@ -82,7 +82,7 @@ module Kafka
         response_size: 0,
       }
 
-      @instrumenter.instrument("request.connection.kafka", notification) do
+      @instrumenter.instrument("request.connection", notification) do
         open unless open?
 
         @correlation_id += 1

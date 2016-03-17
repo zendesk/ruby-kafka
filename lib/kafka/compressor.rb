@@ -46,7 +46,7 @@ module Kafka
     def compress_data(message_set)
       data = Protocol::Encoder.encode_with(message_set)
 
-      @instrumenter.instrument("compress.compressor.kafka") do |notification|
+      @instrumenter.instrument("compress.compressor") do |notification|
         compressed_data = @codec.compress(data)
 
         notification[:message_count] = message_set.size

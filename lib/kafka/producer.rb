@@ -204,7 +204,7 @@ module Kafka
       @target_topics.add(topic)
       @pending_message_queue.write(message)
 
-      @instrumenter.instrument("produce_message.producer.kafka", {
+      @instrumenter.instrument("produce_message.producer", {
         value: value,
         key: key,
         topic: topic,
@@ -229,7 +229,7 @@ module Kafka
       # There's no need to do anything if the buffer is empty.
       return if buffer_size == 0
 
-      @instrumenter.instrument("deliver_messages.producer.kafka") do |notification|
+      @instrumenter.instrument("deliver_messages.producer") do |notification|
         message_count = buffer_size
 
         notification[:message_count] = message_count

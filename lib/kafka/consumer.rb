@@ -95,7 +95,7 @@ module Kafka
       consumer_loop do
         fetch_batches.each do |batch|
           batch.messages.each do |message|
-            @instrumenter.instrument("process_message.consumer.kafka") do |notification|
+            @instrumenter.instrument("process_message.consumer") do |notification|
               notification.update(
                 topic: message.topic,
                 partition: message.partition,
@@ -123,7 +123,7 @@ module Kafka
       consumer_loop do
         fetch_batches.each do |batch|
           unless batch.empty?
-            @instrumenter.instrument("process_batch.consumer.kafka") do |notification|
+            @instrumenter.instrument("process_batch.consumer") do |notification|
               notification.update(
                 topic: batch.topic,
                 partition: batch.partition,

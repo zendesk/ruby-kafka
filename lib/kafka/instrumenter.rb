@@ -1,5 +1,7 @@
 module Kafka
   class Instrumenter
+    NAMESPACE = "kafka"
+
     def initialize(client_id:)
       @client_id = client_id
 
@@ -12,7 +14,7 @@ module Kafka
 
     def instrument(event_name, payload = {}, &block)
       if @backend
-        @backend.instrument(event_name, payload, &block)
+        @backend.instrument("#{event_name}.#{NAMESPACE}", payload, &block)
       else
         yield payload
       end
