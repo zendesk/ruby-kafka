@@ -290,6 +290,12 @@ module Kafka
 
         if buffer_size.zero?
           break
+        elsif @required_acks.zero?
+          # No response is returned by the brokers, so we can't know which messages
+          # have been successfully written. Our only option is to assume that they all
+          # have.
+          @buffer.clear
+          break
         elsif attempt <= @max_retries
           @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
 
@@ -298,13 +304,6 @@ module Kafka
           @logger.error "Failed to send all messages; keeping remaining messages in buffer"
           break
         end
-      end
-
-      if @required_acks == 0
-        # No response is returned by the brokers, so we can't know which messages
-        # have been successfully written. Our only option is to assume that they all
-        # have.
-        @buffer.clear
       end
 
       unless @buffer.empty?
