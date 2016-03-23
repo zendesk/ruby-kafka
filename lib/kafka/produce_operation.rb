@@ -73,7 +73,7 @@ module Kafka
 
       messages_for_broker.each do |broker, message_buffer|
         begin
-          @logger.info "Sending #{message_buffer.size} messages to #{broker}"
+          @logger.debug "Sending #{message_buffer.size} messages to #{broker}"
 
           messages_for_topics = {}
 
