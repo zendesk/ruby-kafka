@@ -18,7 +18,7 @@ module Kafka
 
         @backend.instrument("#{event_name}.#{NAMESPACE}", payload, &block)
       else
-        yield payload
+        block.call(payload) if block
       end
     end
   end
