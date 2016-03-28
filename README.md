@@ -244,7 +244,7 @@ producer = kafka.producer
 
 producer.produce("hello", topic: "greetings")
 
-# If this line fails with Kafka::DeliveryFailed we *may* have succeeded in deliverying
+# If this line fails with Kafka::DeliveryFailed we *may* have succeeded in delivering
 # the message to Kafka but won't know for sure.
 producer.deliver_messages
 
