@@ -259,6 +259,38 @@ module Kafka
       operation.execute.flat_map {|batch| batch.messages }
     end
 
+    # Returns the earliest or latest offset available for a topic and partition
+    #
+    # @param topic [String] the topic that messages should be fetched from.
+    #
+    # @param partition [Integer] the partition that messages should be fetched from.
+    #
+    # @param offset [Symbol] the offset to start reading from.
+    #   valid options are earliest/latest
+    #
+    # @return [Integer] the offset
+    def list_offset(topic:, partition:, offset:)
+      if offset == :earliest
+        offset = -2
+      elsif offset == :latest
+        offset = -1
+      end
+
+      broker = @cluster.get_leader(topic, partition)
+      response = broker.list_offsets(
+        topics: {
+          topic => [
+            {
+              partition: partition,
+              time: offset,
+              max_offsets: 1
+            }
+          ]
+        }
+      )
+      response.offset_for(topic, partition)
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
