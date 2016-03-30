@@ -115,7 +115,17 @@ module Kafka
         ack_time = Time.now
 
         begin
-          Protocol.handle_error(partition_info.error_code)
+          begin
+            Protocol.handle_error(partition_info.error_code)
+          rescue ProtocolError => e
+            @instrumenter.instrument("partition_error.producer", {
+              topic: topic,
+              partition: partition,
+              exception: [e.class.to_s, e.message],
+            })
+
+            raise e
+          end
 
           messages.each do |message|
             @instrumenter.instrument("ack_message.producer", {
