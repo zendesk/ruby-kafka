@@ -288,13 +288,14 @@ module Kafka
         assign_partitions!
         operation.execute
 
-        if buffer_size.zero?
-          break
-        elsif @required_acks.zero?
+        if @required_acks.zero?
           # No response is returned by the brokers, so we can't know which messages
           # have been successfully written. Our only option is to assume that they all
           # have.
           @buffer.clear
+        end
+
+        if buffer_size.zero?
           break
         elsif attempt <= @max_retries
           @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
