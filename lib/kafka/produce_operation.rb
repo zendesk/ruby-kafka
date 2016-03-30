@@ -63,7 +63,13 @@ module Kafka
           messages_for_broker[broker] ||= MessageBuffer.new
           messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
         rescue Kafka::Error => e
-          @logger.error "Could not connect to leader for partition #{topic}/#{partition}: #{e}"
+          @logger.error "Could not connect to leader for partition #{topic}/#{partition}: #{e.message}"
+
+          @instrumenter.instrument("partition_error.producer", {
+            topic: topic,
+            partition: partition,
+            exception: [e.class.to_s, e.message],
+          })
 
           # We can't send the messages right now, so we'll just keep them in the buffer.
           # We'll mark the cluster as stale in order to force a metadata refresh.
@@ -109,7 +115,17 @@ module Kafka
         ack_time = Time.now
 
         begin
-          Protocol.handle_error(partition_info.error_code)
+          begin
+            Protocol.handle_error(partition_info.error_code)
+          rescue ProtocolError => e
+            @instrumenter.instrument("partition_error.producer", {
+              topic: topic,
+              partition: partition,
+              exception: [e.class.to_s, e.message],
+            })
+
+            raise e
+          end
 
           messages.each do |message|
             @instrumenter.instrument("ack_message.producer", {

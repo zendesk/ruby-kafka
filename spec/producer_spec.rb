@@ -130,6 +130,52 @@ describe Kafka::Producer do
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 0
     end
+
+    it "sends a notification when there's an error finding the leader for a partition" do
+      allow(cluster).to receive(:get_leader).and_raise(Kafka::UnknownTopicOrPartition.new("hello"))
+
+      events = []
+
+      subscriber = proc {|*args|
+        events << ActiveSupport::Notifications::Event.new(*args)
+      }
+
+      ActiveSupport::Notifications.subscribed(subscriber, "partition_error.producer.kafka") do
+        producer.produce("hello1", topic: "greetings", partition: 0)
+        expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+      end
+
+      event = events.last
+
+      expect(event.payload[:topic]).to eq "greetings"
+      expect(event.payload[:partition]).to eq 0
+      expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "hello"]
+    end
+
+    it "sends a notification when there's an error writing messages to a partition" do
+      broker1.mark_partition_with_error(
+        topic: "greetings",
+        partition: 0,
+        error_code: 3,
+      )
+
+      events = []
+
+      subscriber = proc {|*args|
+        events << ActiveSupport::Notifications::Event.new(*args)
+      }
+
+      ActiveSupport::Notifications.subscribed(subscriber, "partition_error.producer.kafka") do
+        producer.produce("hello1", topic: "greetings", partition: 0)
+        expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+      end
+
+      event = events.last
+
+      expect(event.payload[:topic]).to eq "greetings"
+      expect(event.payload[:partition]).to eq 0
+      expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "Kafka::UnknownTopicOrPartition"]
+    end
   end
 
   def initialize_producer(**options)
