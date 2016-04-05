@@ -307,6 +307,10 @@ module Kafka
         end
       end
 
+      unless @pending_message_queue.empty?
+        raise DeliveryFailed, "Failed to assign partitions to #{@pending_message_queue.size} messages"
+      end
+
       unless @buffer.empty?
         partitions = @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
 
