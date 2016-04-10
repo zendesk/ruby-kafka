@@ -254,6 +254,14 @@ module Kafka
       @pending_message_queue.bytesize + @buffer.bytesize
     end
 
+    # Deletes all buffered messages.
+    #
+    # @return [nil]
+    def clear_buffer
+      @buffer.clear
+      @pending_message_queue.dequeue_each {}
+    end
+
     # Closes all connections to the brokers.
     #
     # @return [nil]

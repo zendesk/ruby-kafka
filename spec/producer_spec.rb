@@ -178,6 +178,15 @@ describe Kafka::Producer do
     end
   end
 
+  describe "#clear_buffer" do
+    it "clears all pending messages" do
+      producer.produce("hello1", topic: "greetings", partition: 0)
+      expect(producer.buffer_size).to eq 1
+      producer.clear_buffer
+      expect(producer.buffer_size).to eq 0
+    end
+  end
+
   def initialize_producer(**options)
     default_options = {
       cluster: cluster,
