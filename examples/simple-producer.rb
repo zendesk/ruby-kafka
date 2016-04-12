@@ -11,7 +11,7 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "kafka"
 
 logger = Logger.new($stderr)
-brokers = ENV.fetch("KAFKA_BROKERS").split(",")
+brokers = ENV.fetch("KAFKA_BROKERS")
 
 # Make sure to create this topic in your Kafka cluster or configure the
 # cluster to auto-create topics.
