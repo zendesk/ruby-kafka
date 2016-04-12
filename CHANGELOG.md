@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Allow clearing a producer's buffer (Martin Nowak).
+- Improved Consumer API.
+- Instrument producer errors.
+
 ## v0.3.2
 
 - Experimental batch consumer API.
