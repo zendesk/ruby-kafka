@@ -15,8 +15,10 @@ module Kafka
 
     # Initializes a new Kafka client.
     #
-    # @param seed_brokers [Array<String>] the list of brokers used to initialize
-    #   the client.
+    # @param seed_brokers [Array<String>, String] the list of brokers used to initialize
+    #   the client. Either an Array of connections, or a comma separated string of connections.
+    #   Connections can either be a string of "port:protocol" or a full URI with a scheme.
+    #   If there's a scheme it's ignored and only host/port are used.
     #
     # @param client_id [String] the identifier for this application.
     #
@@ -59,7 +61,7 @@ module Kafka
       )
 
       @cluster = Cluster.new(
-        seed_brokers: seed_brokers,
+        seed_brokers: normalize_seed_brokers(seed_brokers),
         broker_pool: broker_pool,
         logger: @logger,
       )
@@ -306,6 +308,22 @@ module Kafka
       end
 
       ssl_context
+    end
+
+    def normalize_seed_brokers(seed_brokers)
+      if seed_brokers.is_a?(String)
+        seed_brokers = seed_brokers.split(",")
+      end
+      brokers = []
+      seed_brokers.each do |connection|
+        if connection =~ /:\/\//
+          u = URI.parse(connection)
+          brokers << "#{u.host}:#{u.port}"
+        else
+          brokers << connection
+        end
+      end
+      brokers
     end
   end
 end
