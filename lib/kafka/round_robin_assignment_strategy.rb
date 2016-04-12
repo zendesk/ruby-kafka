@@ -30,7 +30,9 @@ module Kafka
         }.values
 
         members.zip(partitions_per_member).each do |member_id, member_partitions|
-          group_assignment[member_id].assign(topic, member_partitions)
+          unless member_partitions.nil?
+            group_assignment[member_id].assign(topic, member_partitions)
+          end
         end
       end
 
