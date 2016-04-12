@@ -345,7 +345,12 @@ module Kafka
             partition: partition,
             create_time: message.create_time,
           )
-        rescue Kafka::Error
+        rescue Kafka::Error => e
+          @instrumenter.instrument("topic_error.producer", {
+            topic: message.topic,
+            exception: [e.class.to_s, e.message],
+          })
+
           failed_messages << message
         end
       end

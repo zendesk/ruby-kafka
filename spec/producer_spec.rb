@@ -140,7 +140,7 @@ describe Kafka::Producer do
         events << ActiveSupport::Notifications::Event.new(*args)
       }
 
-      ActiveSupport::Notifications.subscribed(subscriber, "partition_error.producer.kafka") do
+      ActiveSupport::Notifications.subscribed(subscriber, "topic_error.producer.kafka") do
         producer.produce("hello1", topic: "greetings", partition: 0)
         expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
       end
@@ -148,7 +148,6 @@ describe Kafka::Producer do
       event = events.last
 
       expect(event.payload[:topic]).to eq "greetings"
-      expect(event.payload[:partition]).to eq 0
       expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "hello"]
     end
 
@@ -165,7 +164,7 @@ describe Kafka::Producer do
         events << ActiveSupport::Notifications::Event.new(*args)
       }
 
-      ActiveSupport::Notifications.subscribed(subscriber, "partition_error.producer.kafka") do
+      ActiveSupport::Notifications.subscribed(subscriber, "topic_error.producer.kafka") do
         producer.produce("hello1", topic: "greetings", partition: 0)
         expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
       end
@@ -173,7 +172,6 @@ describe Kafka::Producer do
       event = events.last
 
       expect(event.payload[:topic]).to eq "greetings"
-      expect(event.payload[:partition]).to eq 0
       expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "Kafka::UnknownTopicOrPartition"]
     end
   end

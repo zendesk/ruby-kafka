@@ -65,9 +65,8 @@ module Kafka
         rescue Kafka::Error => e
           @logger.error "Could not connect to leader for partition #{topic}/#{partition}: #{e.message}"
 
-          @instrumenter.instrument("partition_error.producer", {
+          @instrumenter.instrument("topic_error.producer", {
             topic: topic,
-            partition: partition,
             exception: [e.class.to_s, e.message],
           })
 
@@ -118,9 +117,8 @@ module Kafka
           begin
             Protocol.handle_error(partition_info.error_code)
           rescue ProtocolError => e
-            @instrumenter.instrument("partition_error.producer", {
+            @instrumenter.instrument("topic_error.producer", {
               topic: topic,
-              partition: partition,
               exception: [e.class.to_s, e.message],
             })
 
