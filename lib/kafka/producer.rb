@@ -259,7 +259,7 @@ module Kafka
     # @return [nil]
     def clear_buffer
       @buffer.clear
-      @pending_message_queue.dequeue_each {}
+      @pending_message_queue.clear
     end
 
     # Closes all connections to the brokers.

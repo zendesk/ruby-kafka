@@ -7,9 +7,7 @@ module Kafka
     attr_reader :size, :bytesize
 
     def initialize
-      @messages = []
-      @size = 0
-      @bytesize = 0
+      clear
     end
 
     def write(message)
@@ -20,6 +18,12 @@ module Kafka
 
     def empty?
       @messages.empty?
+    end
+
+    def clear
+      @messages = []
+      @size = 0
+      @bytesize = 0
     end
 
     # Yields each message in the queue to the provided block, removing the
