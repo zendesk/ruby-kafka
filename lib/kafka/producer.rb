@@ -327,25 +327,35 @@ module Kafka
     end
 
     def assign_partitions!
-      @pending_message_queue.dequeue_each do |message|
+      failed_messages = []
+
+      @pending_message_queue.each do |message|
         partition = message.partition
 
-        if partition.nil?
-          partition_count = @cluster.partitions_for(message.topic).count
-          partition = Partitioner.partition_for_key(partition_count, message)
-        end
+        begin
+          if partition.nil?
+            partition_count = @cluster.partitions_for(message.topic).count
+            partition = Partitioner.partition_for_key(partition_count, message)
+          end
 
-        @buffer.write(
-          value: message.value,
-          key: message.key,
-          topic: message.topic,
-          partition: partition,
-          create_time: message.create_time,
-        )
+          @buffer.write(
+            value: message.value,
+            key: message.key,
+            topic: message.topic,
+            partition: partition,
+            create_time: message.create_time,
+          )
+        rescue Kafka::Error
+          failed_messages << message
+        end
       end
-    rescue Kafka::Error => e
-      @logger.error "Failed to assign pending message to a partition: #{e}"
-      @cluster.mark_as_stale!
+
+      if failed_messages.any?
+        @logger.error "Failed to assign partitions to #{failed_messages.count} messages"
+        @cluster.mark_as_stale!
+      end
+
+      @pending_message_queue.replace(failed_messages)
     end
   end
 end
