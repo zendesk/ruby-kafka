@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.4
+
+- Make the producer buffer more resilient in the face of isolated topic errors.
+
 ## v0.3.3
 
 - Allow clearing a producer's buffer (Martin Nowak).
