@@ -77,23 +77,14 @@ module Kafka
       @queue = Queue.new
       @max_queue_size = max_queue_size
 
-      @worker_thread = Thread.new do
-        worker = Worker.new(
-          queue: @queue,
-          producer: sync_producer,
-          delivery_threshold: delivery_threshold,
-        )
+      @worker = Worker.new(
+        queue: @queue,
+        producer: sync_producer,
+        delivery_threshold: delivery_threshold,
+      )
 
-        worker.run
-      end
-
-      @worker_thread.abort_on_exception = true
-
-      if delivery_interval > 0
-        Thread.new do
-          Timer.new(queue: @queue, interval: delivery_interval).run
-        end
-      end
+      # The timer will no-op if the delivery interval is zero.
+      @timer = Timer.new(queue: @queue, interval: delivery_interval)
     end
 
     # Produces a message to the specified topic.
@@ -103,6 +94,8 @@ module Kafka
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
     def produce(*args)
+      ensure_threads_running!
+
       raise BufferOverflow if @queue.size >= @max_queue_size
 
       @queue << [:produce, args]
@@ -128,9 +121,25 @@ module Kafka
     # @return [nil]
     def shutdown
       @queue << [:shutdown, nil]
-      @worker_thread.join
+      @worker_thread && @worker_thread.join
 
       nil
+    end
+
+    private
+
+    def ensure_threads_running!
+      @worker_thread = nil unless @worker_thread && @worker_thread.alive?
+      @worker_thread ||= start_thread { @worker.run }
+
+      @timer_thread = nil unless @timer_thread && @timer_thread.alive?
+      @timer_thread ||= start_thread { @timer.run }
+    end
+
+    def start_thread(&block)
+      thread = Thread.new(&block)
+      thread.abort_on_exception = true
+      thread
     end
 
     class Timer
@@ -140,6 +149,9 @@ module Kafka
       end
 
       def run
+        # Permanently sleep if the timer interval is zero.
+        Thread.stop if @interval.zero?
+
         loop do
           sleep(@interval)
           @queue << [:deliver_messages, nil]
