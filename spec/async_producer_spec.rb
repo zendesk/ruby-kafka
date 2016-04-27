@@ -15,6 +15,8 @@ class FakeSyncProducer
 end
 
 describe Kafka::AsyncProducer do
+  let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }
+
   describe "#produce" do
     it "raises BufferOverflow if the queue exceeds the defined max size" do
       # The sync producer will be blocked trying to grab the mutex.
@@ -26,6 +28,7 @@ describe Kafka::AsyncProducer do
       producer = Kafka::AsyncProducer.new(
         sync_producer: sync_producer,
         max_queue_size: 2,
+        instrumenter: instrumenter,
       )
 
       expect {
@@ -41,6 +44,7 @@ describe Kafka::AsyncProducer do
       producer = Kafka::AsyncProducer.new(
         sync_producer: sync_producer,
         max_queue_size: 2,
+        instrumenter: instrumenter,
       )
 
       allow(sync_producer).to receive(:produce).and_raise(Kafka::BufferOverflow)
@@ -66,6 +70,7 @@ describe Kafka::AsyncProducer do
 
       producer = Kafka::AsyncProducer.new(
         sync_producer: sync_producer,
+        instrumenter: instrumenter,
       )
 
       producer.produce("hello", topic: "greetings")

@@ -140,6 +140,7 @@ module Kafka
         delivery_interval: delivery_interval,
         delivery_threshold: delivery_threshold,
         max_queue_size: max_queue_size,
+        instrumenter: @instrumenter,
       )
     end
 
