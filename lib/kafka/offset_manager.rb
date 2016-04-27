@@ -41,7 +41,7 @@ module Kafka
 
         @last_commit = Time.now
 
-        clear_offsets
+        @uncommitted_offsets = 0
       end
     end
 
