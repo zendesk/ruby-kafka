@@ -19,6 +19,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     6. [Compression](#compression)
     7. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
+    1. [Consumer Checkpointing](#consumer-checkpointing)
+    2. [Consuming Messages in Batches](#consuming-messages-in-batches)
   3. [Logging](#logging)
   4. [Instrumentation](#instrumentation)
   5. [Understanding Timeouts](#understanding-timeouts)
