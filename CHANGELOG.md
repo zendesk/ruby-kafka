@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Fix bug that caused the async producer to not work with Unicorn (#166).
+
 ## v0.3.4
 
 - Make the producer buffer more resilient in the face of isolated topic errors.
