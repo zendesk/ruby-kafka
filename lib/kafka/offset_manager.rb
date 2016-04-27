@@ -40,8 +40,8 @@ module Kafka
         @group.commit_offsets(@processed_offsets)
 
         @last_commit = Time.now
-        @processed_offsets.clear
-        @uncommitted_offsets = 0
+
+        clear_offsets
       end
     end
 
