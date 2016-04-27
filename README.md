@@ -372,6 +372,39 @@ end
 
 Each consumer process will be assigned one or more partitions from each topic that the group subscribes to. In order to handle more messages, simply start more processes.
 
+#### Consumer Checkpointing
+
+In order to be able to resume processing after a consumer crashes, each consumer will periodically _checkpoint_ its position within each partition it reads from. Since each partition has a monotonically increasing sequence of message offsets, this works by _committing_ the offset of the last message that was processed in a given partition. Kafka handles these commits and allows another consumer in a group to resume from the last commit when a member crashes or becomes unresponsive.
+
+
+#### Consuming Messages in Batches
+
+Sometimes it is easier to deal with messages in batches rather than individually. A _batch_ is a sequence of one or more Kafka messages that all belong to the same topic and partition. One common reason to want to use batches is when some external system has a batch or transactional API.
+
+```ruby
+# A mock search index that we'll be keeping up to date with new Kafka messages.
+index = SearchIndex.new
+
+consumer.subscribe("posts")
+
+consumer.each_batch do |batch|
+  puts "Received batch: #{batch.topic}/#{batch.partition}"
+
+  transaction = index.transaction
+
+  batch.messages.each do |message|
+    # Let's assume that adding a document is idempotent.
+    transaction.add(id: message.key, body: message.value)
+  end
+
+  # Once this method returns, the messages have been successfully written to the
+  # search index. The consumer will only checkpoint a batch *after* the block
+  # has completed without an exception.
+  transaction.commit!
+end
+```
+
+One important thing to note is that the client commits the offset of the batch's messages only after the _entire_ batch has been processed.
 
 ### Logging
 
