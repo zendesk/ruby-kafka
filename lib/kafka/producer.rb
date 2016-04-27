@@ -194,11 +194,11 @@ module Kafka
       )
 
       if buffer_size >= @max_buffer_size
-        raise BufferOverflow, "Max buffer size (#{@max_buffer_size} messages) exceeded"
+        buffer_overflow topic, "Max buffer size (#{@max_buffer_size} messages) exceeded"
       end
 
       if buffer_bytesize + message.bytesize >= @max_buffer_bytesize
-        raise BufferOverflow, "Max buffer bytesize (#{@max_buffer_bytesize} bytes) exceeded"
+        buffer_overflow topic, "Max buffer bytesize (#{@max_buffer_bytesize} bytes) exceeded"
       end
 
       @target_topics.add(topic)
@@ -361,6 +361,14 @@ module Kafka
       end
 
       @pending_message_queue.replace(failed_messages)
+    end
+
+    def buffer_overflow(topic, message)
+      @instrumenter.instrument("buffer_overflow.producer", {
+        topic: topic,
+      })
+
+      raise BufferOverflow, message
     end
   end
 end
