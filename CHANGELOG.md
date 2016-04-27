@@ -5,6 +5,8 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Fix bug that caused the async producer to not work with Unicorn (#166).
+- Fix bug that caused committed consumer offsets to be lost (#167).
+- Instrument buffer overflows in the producer.
 
 ## v0.3.4
 
