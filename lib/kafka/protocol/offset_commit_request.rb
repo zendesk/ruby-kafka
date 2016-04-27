@@ -1,6 +1,9 @@
 module Kafka
   module Protocol
     class OffsetCommitRequest
+      # This value signals to the broker that its default configuration should be used.
+      DEFAULT_RETENTION_TIME = -1
+
       def api_key
         8
       end
@@ -13,7 +16,7 @@ module Kafka
         OffsetCommitResponse
       end
 
-      def initialize(group_id:, generation_id:, member_id:, retention_time: 0, offsets:)
+      def initialize(group_id:, generation_id:, member_id:, retention_time: DEFAULT_RETENTION_TIME, offsets:)
         @group_id = group_id
         @generation_id = generation_id
         @member_id = member_id
