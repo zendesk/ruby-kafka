@@ -69,13 +69,14 @@ module Kafka
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
     #
-    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0)
+    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:)
       raise ArgumentError unless max_queue_size > 0
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
 
       @queue = Queue.new
       @max_queue_size = max_queue_size
+      @instrumenter = instrumenter
 
       @worker = Worker.new(
         queue: @queue,
@@ -93,11 +94,12 @@ module Kafka
     # @param (see Kafka::Producer#produce)
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
-    def produce(*args)
+    def produce(value, topic:, **options)
       ensure_threads_running!
 
-      raise BufferOverflow if @queue.size >= @max_queue_size
+      buffer_overflow(topic) if @queue.size >= @max_queue_size
 
+      args = [value, **options.merge(topic: topic)]
       @queue << [:produce, args]
 
       nil
@@ -140,6 +142,14 @@ module Kafka
       thread = Thread.new(&block)
       thread.abort_on_exception = true
       thread
+    end
+
+    def buffer_overflow(topic)
+      @instrumenter.instrument("buffer_overflow.producer", {
+        topic: topic,
+      })
+
+      raise BufferOverflow
     end
 
     class Timer
