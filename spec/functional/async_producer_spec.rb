@@ -2,6 +2,7 @@ describe "Producer API", functional: true do
   let(:logger) { LOGGER }
   let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
   let(:producer) { kafka.async_producer(max_retries: 1, retry_backoff: 0) }
+  let(:topic) { create_random_topic(num_partitions: 3) }
 
   before do
     require "test_cluster"
@@ -15,16 +16,16 @@ describe "Producer API", functional: true do
     value1 = rand(10_000).to_s
     value2 = rand(10_000).to_s
 
-    producer.produce(value1, key: "x", topic: "test-messages", partition: 0)
-    producer.produce(value2, key: "y", topic: "test-messages", partition: 1)
+    producer.produce(value1, key: "x", topic: topic, partition: 0)
+    producer.produce(value2, key: "y", topic: topic, partition: 1)
 
     producer.deliver_messages
 
     # Wait for everything to be delivered.
     producer.shutdown
 
-    message1 = kafka.fetch_messages(topic: "test-messages", partition: 0, offset: :earliest).last
-    message2 = kafka.fetch_messages(topic: "test-messages", partition: 1, offset: :earliest).last
+    message1 = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest).last
+    message2 = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest).last
 
     expect(message1.value).to eq value1
     expect(message2.value).to eq value2
@@ -34,12 +35,12 @@ describe "Producer API", functional: true do
     producer = kafka.async_producer(delivery_interval: 0.1)
 
     value = rand(10_000).to_s
-    producer.produce(value, topic: "test-messages", partition: 0)
+    producer.produce(value, topic: topic, partition: 0)
 
     sleep 0.2
 
     messages = kafka.fetch_messages(
-      topic: "test-messages",
+      topic: topic,
       partition: 0,
       offset: 0,
       max_wait_time: 0.1,
@@ -56,13 +57,13 @@ describe "Producer API", functional: true do
     values = 5.times.map { rand(10_000).to_s }
 
     values.each do |value|
-      producer.produce(value, topic: "test-messages", partition: 0)
+      producer.produce(value, topic: topic, partition: 0)
     end
 
     sleep 0.2
 
     messages = kafka.fetch_messages(
-      topic: "test-messages",
+      topic: topic,
       partition: 0,
       offset: 0,
       max_wait_time: 0,

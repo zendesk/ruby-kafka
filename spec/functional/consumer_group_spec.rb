@@ -5,18 +5,18 @@ describe "Consumer API", functional: true do
     require "test_cluster"
   end
 
-  example "consuming messages in a group" do
-    num_partitions = 15
-    sent_messages = 1_000
+  let(:num_partitions) { 15 }
+  let!(:topic) { create_random_topic(num_partitions: 3) }
 
-    KAFKA_CLUSTER.create_topic("topic-with-consumers", num_partitions: num_partitions, num_replicas: 1)
+  example "consuming messages in a group" do
+    sent_messages = 1_000
 
     Thread.new do
       kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test")
       producer = kafka.producer
 
       1.upto(sent_messages) do |i|
-        producer.produce("hello", topic: "topic-with-consumers", partition_key: i.to_s)
+        producer.produce("hello", topic: topic, partition_key: i.to_s)
 
         if i % 100 == 0
           producer.deliver_messages 
@@ -26,7 +26,7 @@ describe "Consumer API", functional: true do
 
       (0...num_partitions).each do |i|
         # Send a tombstone to each partition.
-        producer.produce(nil, topic: "topic-with-consumers", partition: i)
+        producer.produce(nil, topic: topic, partition: i)
       end
 
       producer.deliver_messages
@@ -40,7 +40,7 @@ describe "Consumer API", functional: true do
 
         kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id)
-        consumer.subscribe("topic-with-consumers")
+        consumer.subscribe(topic)
 
         consumer.each_message do |message|
           break if message.value.nil?
