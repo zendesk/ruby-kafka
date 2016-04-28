@@ -37,6 +37,9 @@ module Kafka
       end
 
       group_assignment
+    rescue Kafka::LeaderNotAvailable
+      sleep 1
+      retry
     end
   end
 end
