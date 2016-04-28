@@ -183,6 +183,9 @@ module Kafka
           yield
         rescue HeartbeatError, OffsetCommitError, FetchError
           join_group
+        rescue LeaderNotAvailable => e
+          @logger.error "Leader not available; waiting 1s before retrying"
+          sleep 1
         end
       end
     ensure

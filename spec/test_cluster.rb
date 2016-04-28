@@ -96,12 +96,12 @@ class TestCluster
       "--zookeeper zk",
     ]
 
-    puts "Creating topic #{topic}..."
+    print "Creating topic #{topic}... "
     out, err, status = @kafka.exec(command)
 
     raise "Command failed: #{out}" if status != 0
 
-    sleep 2
+    puts "OK"
   end
 
   def stop
@@ -137,11 +137,8 @@ class TestCluster
   end
 end
 
-KAFKA_TOPIC = "test-messages"
-
 KAFKA_CLUSTER = TestCluster.new
 KAFKA_CLUSTER.start
-KAFKA_CLUSTER.create_topic(KAFKA_TOPIC, num_partitions: 3, num_replicas: 2)
 
 KAFKA_BROKERS = KAFKA_CLUSTER.kafka_hosts
 

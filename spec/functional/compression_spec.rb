@@ -8,6 +8,8 @@ describe "Compression", functional: true do
     require "test_cluster"
   end
 
+  let!(:topic) { create_random_topic(num_partitions: 3) }
+
   example "producing and consuming snappy-compressed messages" do
     producer = kafka.producer(
       compression_codec: :snappy,
@@ -17,13 +19,13 @@ describe "Compression", functional: true do
 
     last_offset = fetch_last_offset
 
-    producer.produce("message1", topic: "test-messages", partition: 0)
-    producer.produce("message2", topic: "test-messages", partition: 0)
+    producer.produce("message1", topic: topic, partition: 0)
+    producer.produce("message2", topic: topic, partition: 0)
 
     producer.deliver_messages
 
     messages = kafka.fetch_messages(
-      topic: "test-messages",
+      topic: topic,
       partition: 0,
       offset: last_offset + 1,
     )
@@ -40,13 +42,13 @@ describe "Compression", functional: true do
 
     last_offset = fetch_last_offset
 
-    producer.produce("message1", topic: "test-messages", partition: 0)
-    producer.produce("message2", topic: "test-messages", partition: 0)
+    producer.produce("message1", topic: topic, partition: 0)
+    producer.produce("message2", topic: topic, partition: 0)
 
     producer.deliver_messages
 
     messages = kafka.fetch_messages(
-      topic: "test-messages",
+      topic: topic,
       partition: 0,
       offset: last_offset + 1,
     )
@@ -55,7 +57,7 @@ describe "Compression", functional: true do
   end
 
   def fetch_last_offset
-    last_message = kafka.fetch_messages(topic: "test-messages", partition: 0, offset: 0).last
+    last_message = kafka.fetch_messages(topic: topic, partition: 0, offset: 0).last
     last_message ? last_message.offset : 0
   end
 end

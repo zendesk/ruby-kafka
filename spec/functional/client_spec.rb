@@ -16,16 +16,18 @@ describe "Producer API", functional: true do
     kafka.close
   end
 
+  let!(:topic) { create_random_topic(num_partitions: 3) }
+
   example "listing all topics in the cluster" do
-    expect(kafka.topics).to include "test-messages"
+    expect(kafka.topics).to include topic
   end
 
   example "fetching the partition count for a topic" do
-    expect(kafka.partitions_for("test-messages")).to eq 3
+    expect(kafka.partitions_for(topic)).to eq 3
   end
 
   example "fetching the partition count for a topic that doesn't yet exist" do
-    topic = "unknown-topic"
+    topic = "unknown-topic-#{rand(1000)}"
 
     expect { kafka.partitions_for(topic) }.to raise_exception(Kafka::LeaderNotAvailable)
 

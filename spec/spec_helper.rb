@@ -10,9 +10,33 @@ Dotenv.load
 LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new)
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
+module SpecHelpers
+  def generate_topic_name
+    @@topic_number ||= 0
+    @@topic_number += 1
+
+    "topic-#{@@topic_number}"
+  end
+
+  def create_random_topic(*args)
+    topic = generate_topic_name
+    create_topic(topic, *args)
+    topic
+  end
+
+  def create_topic(*args)
+    cluster.create_topic(*args)
+  end
+
+  def cluster
+    KAFKA_CLUSTER
+  end
+end
+
 RSpec.configure do |config|
   config.filter_run_excluding functional: true, performance: true, fuzz: true
   config.include RSpec::Benchmark::Matchers
+  config.include SpecHelpers
 end
 
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
