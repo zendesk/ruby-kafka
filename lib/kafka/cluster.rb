@@ -98,7 +98,11 @@ module Kafka
 
     def partitions_for(topic)
       add_target_topics([topic])
+      refresh_metadata_if_necessary!
       cluster_info.partitions_for(topic)
+    rescue Kafka::ProtocolError
+      mark_as_stale!
+      raise
     end
 
     def topics
