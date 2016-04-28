@@ -1,21 +1,4 @@
 describe "Producer API", functional: true do
-  let(:kafka) do
-    Kafka.new(
-      seed_brokers: KAFKA_BROKERS,
-      logger: LOGGER,
-      connect_timeout: 0.1,
-      socket_timeout: 0.1,
-    )
-  end
-
-  before do
-    require "test_cluster"
-  end
-
-  after do
-    kafka.close
-  end
-
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
   example "listing all topics in the cluster" do

@@ -1,10 +1,4 @@
 describe "Consumer API", functional: true do
-  let(:logger) { LOGGER }
-
-  before do
-    require "test_cluster"
-  end
-
   let(:num_partitions) { 15 }
   let!(:topic) { create_random_topic(num_partitions: 3) }
 

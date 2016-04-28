@@ -1,13 +1,6 @@
 require "snappy"
 
 describe "Compression", functional: true do
-  let(:logger) { LOGGER }
-  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
-
-  before do
-    require "test_cluster"
-  end
-
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
   example "producing and consuming snappy-compressed messages" do

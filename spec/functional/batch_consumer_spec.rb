@@ -1,10 +1,4 @@
 describe "Batch Consumer API", functional: true do
-  let(:logger) { LOGGER }
-
-  before do
-    require "test_cluster"
-  end
-
   example "consuming messages using the batch API" do
     num_partitions = 15
     message_count = 1_000

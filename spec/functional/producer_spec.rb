@@ -1,11 +1,5 @@
 describe "Producer API", functional: true do
-  let(:logger) { LOGGER }
-  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
   let(:producer) { kafka.producer(max_retries: 3, retry_backoff: 1) }
-
-  before do
-    require "test_cluster"
-  end
 
   after do
     producer.shutdown

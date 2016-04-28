@@ -1,15 +1,4 @@
 describe "Fetch API", functional: true do
-  let(:logger) { LOGGER }
-  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
-
-  before do
-    require "test_cluster"
-  end
-
-  after do
-    kafka.close
-  end
-
   example "fetching from a non-existing topic when auto-create is enabled" do
     topic = "rand#{rand(1000)}"
     attempt = 1

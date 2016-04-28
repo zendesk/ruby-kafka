@@ -33,10 +33,23 @@ module SpecHelpers
   end
 end
 
+module FunctionalSpecHelpers
+  def self.included(base)
+    base.class_eval do
+      let(:logger) { LOGGER }
+      let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
+
+      before { require "test_cluster" }
+      after { kafka.close }
+    end
+  end
+end
+
 RSpec.configure do |config|
   config.filter_run_excluding functional: true, performance: true, fuzz: true
   config.include RSpec::Benchmark::Matchers
   config.include SpecHelpers
+  config.include FunctionalSpecHelpers, functional: true
 end
 
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
