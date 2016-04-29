@@ -1,12 +1,17 @@
 require "docker"
 
-Docker.url = ENV.fetch("DOCKER_HOST")
+if ENV.key?("DOCKER_HOST")
+  Docker.url = ENV.fetch("DOCKER_HOST")
+end
 
 class TestCluster
-  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST")).host
+  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST", "localhost")).host
   KAFKA_IMAGE = "wurstmeister/kafka:0.9.0.0"
   ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
+  KAFKA_LOG_LOCATION = "/opt/kafka_2.11-0.9.0.0/logs/server.log"
   KAFKA_CLUSTER_SIZE = 3
+
+  ContainerDied = Class.new(StandardError)
 
   def initialize
     [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
@@ -70,8 +75,8 @@ class TestCluster
       port = config.fetch("9092/tcp").first.fetch("HostPort")
       host = DOCKER_HOSTNAME
 
-      "#{host}:#{port}"
-    }
+      [kafka, "#{host}:#{port}"]
+    }.to_h
   end
 
   def kill_kafka_broker(number)
@@ -114,7 +119,7 @@ class TestCluster
   private
 
   def ensure_kafka_is_ready
-    kafka_hosts.each do |host_and_port|
+    kafka_hosts.each do |container, host_and_port|
       host, port = host_and_port.split(":", 2)
 
       loop do
@@ -125,8 +130,14 @@ class TestCluster
           puts "OK"
           break
         rescue
-          puts "not ready"
-          sleep 1
+          if container.json.fetch("State").fetch("Dead")
+            puts "failed!"
+            puts container.exec("cat", KAFKA_LOG_LOCATION)
+            raise ContainerDied
+          else
+            puts "not ready"
+            sleep 1
+          end
         end
       end
     end
