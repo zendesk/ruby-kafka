@@ -7,6 +7,8 @@ require "rspec-benchmark"
 
 Dotenv.load
 
+require "test_cluster"
+
 LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new)
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
@@ -27,19 +29,18 @@ module SpecHelpers
   def create_topic(*args)
     cluster.create_topic(*args)
   end
-
-  def cluster
-    KAFKA_CLUSTER
-  end
 end
+
+KAFKA_CLUSTER = TestCluster.new
 
 module FunctionalSpecHelpers
   def self.included(base)
     base.class_eval do
       let(:logger) { LOGGER }
-      let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
+      let(:kafka) { Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger) }
+      let(:cluster) { KAFKA_CLUSTER }
+      let(:kafka_brokers) { cluster.kafka_hosts }
 
-      before { require "test_cluster" }
       after { kafka.close }
     end
   end
@@ -50,6 +51,18 @@ RSpec.configure do |config|
   config.include RSpec::Benchmark::Matchers
   config.include SpecHelpers
   config.include FunctionalSpecHelpers, functional: true
+
+  config.before(:suite) do
+    if config.inclusion_filter[:functional]
+      KAFKA_CLUSTER.start
+    end
+  end
+
+  config.after(:suite) do
+    if config.inclusion_filter[:functional]
+      KAFKA_CLUSTER.stop
+    end
+  end
 end
 
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|

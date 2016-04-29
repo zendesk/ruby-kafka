@@ -13,7 +13,7 @@ describe "Consumer groups", fuzz: true do
 
     KAFKA_CLUSTER.create_topic(topic, num_partitions: num_partitions, num_replicas: 1)
 
-    kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, logger: logger)
+    kafka = Kafka.new(seed_brokers: kafka_brokers, logger: logger)
     producer = kafka.producer(max_buffer_size: 5000)
 
     messages.each do |i|
@@ -70,7 +70,7 @@ describe "Consumer groups", fuzz: true do
   def start_consumer(result_queue)
     thread = Thread.new do
       kafka = Kafka.new(
-        seed_brokers: KAFKA_BROKERS,
+        seed_brokers: kafka_brokers,
         logger: logger,
         socket_timeout: 20,
         connect_timeout: 20,
