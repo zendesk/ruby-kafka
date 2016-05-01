@@ -115,10 +115,10 @@ module Kafka
               yield message
             end
 
+            mark_message_as_processed(message)
             @offset_manager.commit_offsets_if_necessary
 
             @heartbeat.send_if_necessary
-            mark_message_as_processed(message)
 
             return if !@running
           end
