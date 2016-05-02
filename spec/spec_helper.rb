@@ -4,13 +4,42 @@ require "kafka"
 require "dotenv"
 require "logger"
 require "rspec-benchmark"
+require "colored"
 
 Dotenv.load
 
 require "test_cluster"
 
-LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : StringIO.new)
+LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : nil)
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
+
+class LogFormatter < Logger::Formatter
+  def call(severity, time, progname, msg)
+    str = "#{msg2str(msg)}\n"
+    color = color_for(severity)
+
+    Colored.colorize(str, foreground: color)
+  end
+
+  private
+
+  def color_for(severity)
+    case severity
+    when "INFO"
+      "cyan"
+    when "WARN"
+      "yellow"
+    when "ERROR"
+      "red"
+    else
+      nil
+    end
+  end
+end
+
+if ENV["LOG_COLORS"] == "true"
+  LOGGER.formatter = LogFormatter.new
+end
 
 module SpecHelpers
   def generate_topic_name

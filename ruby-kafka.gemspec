@@ -36,4 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-benchmark"
   spec.add_development_dependency "activesupport", ">= 4.2.0", "< 5.1"
   spec.add_development_dependency "snappy"
+  spec.add_development_dependency "colored"
 end
