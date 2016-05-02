@@ -7,8 +7,6 @@ describe "Consumer groups", fuzz: true do
   let(:messages) { Set.new((1..num_messages).to_a) }
 
   before do
-    require "test_cluster"
-
     logger.level = Logger::INFO
 
     KAFKA_CLUSTER.create_topic(topic, num_partitions: num_partitions, num_replicas: 1)

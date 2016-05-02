@@ -51,15 +51,16 @@ RSpec.configure do |config|
   config.include RSpec::Benchmark::Matchers
   config.include SpecHelpers
   config.include FunctionalSpecHelpers, functional: true
+  config.include FunctionalSpecHelpers, fuzz: true
 
   config.before(:suite) do
-    if config.inclusion_filter[:functional]
+    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
       KAFKA_CLUSTER.start
     end
   end
 
   config.after(:suite) do
-    if config.inclusion_filter[:functional]
+    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
       KAFKA_CLUSTER.stop
     end
   end
