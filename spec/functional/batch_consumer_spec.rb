@@ -8,7 +8,7 @@ describe "Batch Consumer API", functional: true do
     topic = create_random_topic(num_partitions: 15)
 
     Thread.new do
-      kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test")
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
@@ -22,7 +22,7 @@ describe "Batch Consumer API", functional: true do
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
-        kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger)
+        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id)
         consumer.subscribe(topic)
 

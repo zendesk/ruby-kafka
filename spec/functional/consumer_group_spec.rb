@@ -6,7 +6,7 @@ describe "Consumer API", functional: true do
     sent_messages = 1_000
 
     Thread.new do
-      kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test")
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       1.upto(sent_messages) do |i|
@@ -32,7 +32,7 @@ describe "Consumer API", functional: true do
       t = Thread.new do
         received_messages = 0
 
-        kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger)
+        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id)
         consumer.subscribe(topic)
 

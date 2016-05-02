@@ -1,14 +1,46 @@
 require "docker"
 
-Docker.url = ENV.fetch("DOCKER_HOST")
+if ENV.key?("DOCKER_HOST")
+  Docker.url = ENV.fetch("DOCKER_HOST")
+end
 
 class TestCluster
-  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST")).host
-  KAFKA_IMAGE = "wurstmeister/kafka:0.9.0.0"
-  ZOOKEEPER_IMAGE = "wurstmeister/zookeeper:3.4.6"
+  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST", "kafka://localhost")).host
+  KAFKA_IMAGE = "ches/kafka:0.9.0.1"
+  ZOOKEEPER_IMAGE = "jplock/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
 
   def initialize
+    @zookeeper = create(
+      "Image" => ZOOKEEPER_IMAGE,
+      "Hostname" => "localhost",
+      "ExposedPorts" => {
+        "2181/tcp" => {}
+      },
+    )
+
+    @kafka_brokers = KAFKA_CLUSTER_SIZE.times.map {|broker_id|
+      port = 9092 + broker_id
+
+      create(
+        "Image" => KAFKA_IMAGE,
+        "Hostname" => "localhost",
+        "Links" => ["#{@zookeeper.id}:zookeeper"],
+        "ExposedPorts" => {
+          "9092/tcp" => {}
+        },
+        "Env" => [
+          "KAFKA_BROKER_ID=#{broker_id}",
+          "KAFKA_ADVERTISED_HOST_NAME=#{DOCKER_HOSTNAME}",
+          "KAFKA_ADVERTISED_PORT=#{port}",
+        ]
+      )
+    }
+
+    @kafka = @kafka_brokers.first
+  end
+
+  def start
     [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
       print "Fetching image #{image}... "
 
@@ -19,46 +51,38 @@ class TestCluster
       puts "OK"
     end
 
-    @zookeeper = create(
-      "Image" => ZOOKEEPER_IMAGE,
-      "ExposedPorts" => {
-        "2181/tcp" => {}
-      },
-    )
+    puts "Starting cluster..."
 
-    @kafka_brokers = KAFKA_CLUSTER_SIZE.times.map {
-      create(
-        "Image" => KAFKA_IMAGE,
-        "Links" => ["#{@zookeeper.id}:zk"],
-        "ExposedPorts" => {
-          "9092/tcp" => {}
-        },
-        "Volumes" => {
-          "/var/run/docker.sock" => {}
-        },
-        "Env" => [
-          "KAFKA_ADVERTISED_HOST_NAME=#{DOCKER_HOSTNAME}",
-        ]
-      )
-    }
-
-    @kafka = @kafka_brokers.first
-  end
-
-  def start
     @zookeeper.start(
       "PortBindings" => {
         "2181/tcp" => [{ "HostPort" => "" }]
       }
     )
 
-    @kafka_brokers.each do |kafka|
+    Thread.new do
+      File.open("zookeeper.log", "a") do |log|
+        @zookeeper.attach do |stream, chunk|
+          log.puts(chunk)
+        end
+      end
+    end
+
+    @kafka_brokers.each_with_index do |kafka, index|
+      port = 9092 + index
+
       kafka.start(
         "PortBindings" => {
-          "9092/tcp" => [{ "HostPort" => "" }]
+          "9092/tcp" => [{ "HostPort" => "#{port}/tcp" }]
         },
-        "Binds" => ["/var/run/docker.sock:/var/run/docker.sock"],
       )
+
+      Thread.new do
+        File.open("kafka#{index}.log", "a") do |log|
+          kafka.attach do |stream, chunk|
+            log.puts(chunk)
+          end
+        end
+      end
     end
 
     ensure_kafka_is_ready
@@ -87,28 +111,55 @@ class TestCluster
   end
 
   def create_topic(topic, num_partitions: 1, num_replicas: 1)
-    command = [
-      "/opt/kafka_2.11-0.9.0.0/bin/kafka-topics.sh",
+    print "Creating topic #{topic}... "
+
+    kafka_command [
+      "/kafka/bin/kafka-topics.sh",
       "--create",
-      "--topic #{topic}",
-      "--replication-factor #{num_replicas}",
-      "--partitions #{num_partitions}",
-      "--zookeeper zk",
+      "--topic=#{topic}",
+      "--replication-factor=#{num_replicas}",
+      "--partitions=#{num_partitions}",
+      "--zookeeper=zookeeper",
     ]
 
-    print "Creating topic #{topic}... "
-    out, err, status = @kafka.exec(command)
-
-    raise "Command failed: #{out}" if status != 0
-
     puts "OK"
+
+    out = kafka_command [
+      "/kafka/bin/kafka-topics.sh",
+      "--describe",
+      "--topic=#{topic}",
+      "--zookeeper=zookeeper",
+    ]
+    puts out
+  end
+
+  def kafka_command(command)
+    container = create(
+      "Image" => KAFKA_IMAGE,
+      "Links" => ["#{@zookeeper.id}:zookeeper"],
+      "Cmd" => command,
+    )
+
+    begin
+      container.start
+      status = container.wait.fetch('StatusCode')
+
+      if status != 0
+        puts container.logs(stdout: true, stderr: true)
+        raise "Command failed with status #{status}"
+      end
+
+      container.logs(stdout: true, stderr: true)
+    ensure
+      container.delete(force: true) rescue nil
+    end
   end
 
   def stop
     puts "Stopping cluster..."
 
-    @kafka_brokers.each {|kafka| kafka.stop rescue nil }
-    @zookeeper.stop rescue nil
+    @kafka_brokers.each {|kafka| kafka.delete(force: true) rescue nil }
+    @zookeeper.delete(force: true) rescue nil
   end
 
   private
@@ -136,17 +187,3 @@ class TestCluster
     Docker::Container.create(options)
   end
 end
-
-KAFKA_CLUSTER = TestCluster.new
-KAFKA_CLUSTER.start
-
-KAFKA_BROKERS = KAFKA_CLUSTER.kafka_hosts
-
-host, port = KAFKA_BROKERS.first.split(":", 2)
-
-KAFKA_HOST = host
-KAFKA_PORT = port.to_i
-
-at_exit {
-  KAFKA_CLUSTER.stop
-}

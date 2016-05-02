@@ -1,6 +1,6 @@
 describe "Producing a lot of messages with an unreliable cluster", fuzz: true do
   let(:logger) { LOGGER }
-  let(:kafka) { Kafka.new(seed_brokers: KAFKA_BROKERS, client_id: "test", logger: logger) }
+  let(:kafka) { Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger) }
   let(:producer) { kafka.producer(max_retries: 20, retry_backoff: 5) }
 
   before do
