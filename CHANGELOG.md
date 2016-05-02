@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.6
+
+- Fix bug that caused partition information to not be reliably updated.
+
 ## v0.3.5
 
 - Fix bug that caused the async producer to not work with Unicorn (#166).
