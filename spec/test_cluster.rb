@@ -53,11 +53,21 @@ class TestCluster
 
     puts "Starting cluster..."
 
+    start_zookeeper_container
+    start_kafka_containers
+  end
+
+  def start_zookeeper_container
     @zookeeper.start(
       "PortBindings" => {
         "2181/tcp" => [{ "HostPort" => "" }]
       }
     )
+
+    config = @zookeeper.json.fetch("NetworkSettings").fetch("Ports")
+    port = config.fetch("2181/tcp").first.fetch("HostPort")
+
+    wait_for_port(port)
 
     Thread.new do
       File.open("zookeeper.log", "a") do |log|
@@ -66,7 +76,9 @@ class TestCluster
         end
       end
     end
+  end
 
+  def start_kafka_containers
     @kafka_brokers.each_with_index do |kafka, index|
       port = 9093 + index
 
@@ -168,17 +180,22 @@ class TestCluster
     kafka_hosts.each do |host_and_port|
       host, port = host_and_port.split(":", 2)
 
-      loop do
-        begin
-          print "Waiting for #{host_and_port}... "
-          socket = TCPSocket.open(host, port)
-          socket.close
-          puts "OK"
-          break
-        rescue
-          puts "not ready"
-          sleep 1
-        end
+      wait_for_port(port, host: host)
+    end
+  end
+
+  def wait_for_port(port, host: DOCKER_HOSTNAME)
+    print "Waiting for #{host}:#{port}..."
+
+    loop do
+      begin
+        socket = TCPSocket.open(host, port)
+        socket.close
+        puts " OK"
+        break
+      rescue
+        print "."
+        sleep 1
       end
     end
   end
