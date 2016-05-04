@@ -77,6 +77,7 @@ module Kafka
     def send_request(request)
       # Default notification payload.
       notification = {
+        broker_host: @host,
         api: Protocol.api_name(request.api_key),
         request_size: 0,
         response_size: 0,
