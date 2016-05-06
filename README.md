@@ -378,6 +378,22 @@ Each consumer process will be assigned one or more partitions from each topic th
 
 In order to be able to resume processing after a consumer crashes, each consumer will periodically _checkpoint_ its position within each partition it reads from. Since each partition has a monotonically increasing sequence of message offsets, this works by _committing_ the offset of the last message that was processed in a given partition. Kafka handles these commits and allows another consumer in a group to resume from the last commit when a member crashes or becomes unresponsive.
 
+By default, offsets are committed every 10 seconds. You can increase the frequency, known as the _offset commit interval_, to limit the duration of double-processing scenarios, at the cost of a lower throughput due to the added coordination. If you want to improve throughtput, and double-processing is of less concern to you, then you can decrease the frequency.
+
+In addition to the time based trigger it's possible to trigger checkpointing in response to _n_ messages having been processed, known as the _offset commit threshold_. This puts a bound on the number of messages that can be double-processed before the problem is detected. Setting this to 1 will cause an offset commit to take place every time a message has been processed. By default this trigger is disabled.
+
+```ruby
+consumer = kafka.consumer(
+  group_id: "some-group",
+
+  # Increase offset commit frequency to once every 5 seconds.
+  offset_commit_interval: 5,
+
+  # Commit offsets when 100 messages have been processed.
+  offset_commit_threshold: 100,
+)
+```
+
 
 #### Consuming Messages in Batches
 
