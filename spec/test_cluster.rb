@@ -20,7 +20,7 @@ class TestCluster
     )
 
     @kafka_brokers = KAFKA_CLUSTER_SIZE.times.map {|broker_id|
-      port = 9092 + broker_id
+      port = 9093 + broker_id
 
       create(
         "Image" => KAFKA_IMAGE,
@@ -68,7 +68,7 @@ class TestCluster
     end
 
     @kafka_brokers.each_with_index do |kafka, index|
-      port = 9092 + index
+      port = 9093 + index
 
       kafka.start(
         "PortBindings" => {
