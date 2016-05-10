@@ -137,6 +137,7 @@ module Kafka
 
         begin
           host, port = node.split(":", 2)
+          port ||= 9092 # Default Kafka port.
 
           broker = @broker_pool.connect(host, port.to_i)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
