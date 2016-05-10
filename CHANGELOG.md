@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.7
+
+- Default to port 9092 if no port is provided for a seed broker.
+
 ## v0.3.6
 
 - Fix bug that caused partition information to not be reliably updated.
