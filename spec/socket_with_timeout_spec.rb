@@ -1,6 +1,6 @@
 describe Kafka::SocketWithTimeout, ".open" do
   it "times out if the server doesn't accept the connection within the timeout" do
-    host = "10.255.255.1" # this address is non-routable!
+    host = "172.16.0.0" # this address is non-routable!
     port = 4444
 
     timeout = 0.1
