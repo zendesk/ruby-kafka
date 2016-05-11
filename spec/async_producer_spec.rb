@@ -17,6 +17,23 @@ end
 describe Kafka::AsyncProducer do
   let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }
 
+  it "handles connection errors to Kafka" do
+    sync_producer = double(:sync_producer, produce: nil, shutdown: nil)
+
+    producer = Kafka::AsyncProducer.new(
+      sync_producer: sync_producer,
+      max_queue_size: 2,
+      instrumenter: instrumenter,
+    )
+
+    allow(sync_producer).to receive(:deliver_messages).and_raise(Kafka::ConnectionError)
+
+    producer.produce("hello", topic: "greetings")
+    producer.deliver_messages
+
+    producer.shutdown
+  end
+
   describe "#produce" do
     it "raises BufferOverflow if the queue exceeds the defined max size" do
       # The sync producer will be blocked trying to grab the mutex.

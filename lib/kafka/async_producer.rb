@@ -211,8 +211,8 @@ module Kafka
 
       def deliver_messages
         @producer.deliver_messages
-      rescue DeliveryFailed
-        # Delivery failed.
+      rescue DeliveryFailed, ConnectionError
+        # Failed to deliver messages -- nothing to do but try again later.
       end
 
       def threshold_reached?
