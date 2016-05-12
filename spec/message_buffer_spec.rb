@@ -57,6 +57,9 @@ describe Kafka::MessageBuffer do
       buffer.clear_messages(topic: "yolos", partition: 1)
 
       expect(buffer.bytesize).to eq 6
+
+      buffer.clear
+      expect(buffer.bytesize).to eq 0
     end
   end
 end

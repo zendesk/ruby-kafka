@@ -70,6 +70,7 @@ module Kafka
     def clear
       @buffer = {}
       @size = 0
+      @bytesize = 0
     end
 
     private
