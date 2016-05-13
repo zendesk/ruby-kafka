@@ -57,8 +57,12 @@ describe Kafka::MessageBuffer do
       buffer.clear_messages(topic: "yolos", partition: 1)
 
       expect(buffer.bytesize).to eq 6
+    end
 
+    it "is reset when #clear is called" do
+      buffer.write(value: "baz", key: "bim", topic: "yolos", partition: 2)
       buffer.clear
+
       expect(buffer.bytesize).to eq 0
     end
   end
