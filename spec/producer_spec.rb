@@ -197,6 +197,7 @@ describe Kafka::Producer do
       required_acks: 1,
       max_buffer_size: 1000,
       max_buffer_bytesize: 10_000_000,
+      buffer_overflow_policy: :raise,
     }
 
     Kafka::Producer.new(**default_options.merge(options))

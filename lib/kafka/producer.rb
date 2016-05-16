@@ -130,7 +130,7 @@ module Kafka
   #
   class Producer
 
-    def initialize(cluster:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
+    def initialize(cluster:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:, buffer_overflow_policy:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
@@ -141,6 +141,7 @@ module Kafka
       @max_buffer_size = max_buffer_size
       @max_buffer_bytesize = max_buffer_bytesize
       @compressor = compressor
+      @buffer_overflow_policy = buffer_overflow_policy
 
       # The set of topics that are produced to.
       @target_topics = Set.new
@@ -368,7 +369,13 @@ module Kafka
         topic: topic,
       })
 
-      raise BufferOverflow, message
+      case @buffer_overflow_policy
+      when :raise
+        raise BufferOverflow, message
+      when :prune_oldest
+        @logger.error "Producer buffer is full: pruning oldest messages to free up space!"
+        @pending_message_queue.prune_oldest
+      end
     end
   end
 end

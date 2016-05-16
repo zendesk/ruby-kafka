@@ -67,4 +67,30 @@ describe "Producer API", functional: true do
 
     producer.shutdown
   end
+
+  context "when the buffer overflow policy is `prune_oldest`" do
+    example "automatically pruning old messages when the buffer becomes full" do
+      producer = kafka.async_producer(
+        max_buffer_size: 10,
+        buffer_overflow_policy: :prune_oldest,
+        max_retries: 0, # Fail fast.
+      )
+
+      invalid_topic = "invalid!!"
+      topic = create_random_topic(num_partitions: 1, num_replicas: 1)
+
+      10.times do
+        producer.produce("hello", topic: invalid_topic)
+      end
+
+      producer.produce("yolo!", topic: topic)
+
+      producer.deliver_messages
+      producer.shutdown
+
+      messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+      expect(messages.last.value).to eq "yolo!"
+    end
+  end
 end

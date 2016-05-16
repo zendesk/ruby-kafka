@@ -97,7 +97,7 @@ module Kafka
     #   are per-partition rather than per-topic or per-producer.
     #
     # @return [Kafka::Producer] the Kafka producer.
-    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
+    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000, buffer_overflow_policy: :raise)
       compressor = Compressor.new(
         codec_name: compression_codec,
         threshold: compression_threshold,
@@ -115,6 +115,7 @@ module Kafka
         retry_backoff: retry_backoff,
         max_buffer_size: max_buffer_size,
         max_buffer_bytesize: max_buffer_bytesize,
+        buffer_overflow_policy: buffer_overflow_policy,
       )
     end
 
