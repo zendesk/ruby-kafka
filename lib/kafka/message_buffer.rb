@@ -27,7 +27,7 @@ module Kafka
       buffer_for(topic, partition).concat(messages)
 
       @size += messages.count
-      @bytesize += messages.map(&:bytesize).reduce(:+)
+      @bytesize += messages.map(&:bytesize).reduce(0, :+)
     end
 
     def to_h

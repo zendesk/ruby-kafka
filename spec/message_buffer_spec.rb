@@ -1,6 +1,22 @@
 describe Kafka::MessageBuffer do
   let(:buffer) { Kafka::MessageBuffer.new }
 
+  describe "#concat" do
+    it "adds the messages to the buffer" do
+      buffer.concat(["foo"], topic: "foo", partition: 0)
+
+      expect(buffer.size).to eq 1
+      expect(buffer.bytesize).to eq 3
+    end
+
+    it "handles empty arrays" do
+      buffer.concat([], topic: "foo", partition: 0)
+
+      expect(buffer.size).to eq 0
+      expect(buffer.bytesize).to eq 0
+    end
+  end
+
   describe "#size" do
     it "returns the number of messages in the buffer" do
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 3)
