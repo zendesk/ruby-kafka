@@ -17,6 +17,28 @@ describe Kafka::MessageBuffer do
     end
   end
 
+  describe "#clear_messages" do
+    it "clears messages for the given topic and partition" do
+      buffer.concat(["yolo"], topic: "x", partition: 0)
+      buffer.clear_messages(topic: "x", partition: 0)
+
+      expect(buffer.size).to eq 0
+    end
+
+    it "handles clearing a topic that's not in the buffer" do
+      buffer.clear_messages(topic: "x", partition: 0)
+
+      expect(buffer.size).to eq 0
+    end
+
+    it "handles clearing a partition that's not in the buffer" do
+      buffer.concat(["yolo"], topic: "x", partition: 0)
+      buffer.clear_messages(topic: "x", partition: 1)
+
+      expect(buffer.size).to eq 1
+    end
+  end
+
   describe "#size" do
     it "returns the number of messages in the buffer" do
       buffer.concat(["a", "b", "c"], topic: "bar", partition: 3)

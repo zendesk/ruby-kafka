@@ -53,6 +53,8 @@ module Kafka
     #
     # @return [nil]
     def clear_messages(topic:, partition:)
+      return unless @buffer.key?(topic) && @buffer[topic].key?(partition)
+
       @size -= @buffer[topic][partition].count
       @bytesize -= @buffer[topic][partition].map(&:bytesize).reduce(:+)
 
