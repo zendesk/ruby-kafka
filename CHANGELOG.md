@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Keep separate connection pools for consumers and producers initialized from
+  the same client.
+- Handle connection errors automatically in the async producer.
+
 ## v0.3.7
 
 - Default to port 9092 if no port is provided for a seed broker.
