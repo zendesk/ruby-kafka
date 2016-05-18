@@ -43,10 +43,11 @@ module Kafka
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
+      @seed_brokers = normalize_seed_brokers(seed_brokers)
 
       ssl_context = build_ssl_context(ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
 
-      connection_builder = ConnectionBuilder.new(
+      @connection_builder = ConnectionBuilder.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
@@ -55,16 +56,7 @@ module Kafka
         instrumenter: @instrumenter,
       )
 
-      broker_pool = BrokerPool.new(
-        connection_builder: connection_builder,
-        logger: @logger,
-      )
-
-      @cluster = Cluster.new(
-        seed_brokers: normalize_seed_brokers(seed_brokers),
-        broker_pool: broker_pool,
-        logger: @logger,
-      )
+      @cluster = initialize_cluster
     end
 
     # Initializes a new Kafka producer.
@@ -105,7 +97,7 @@ module Kafka
       )
 
       Producer.new(
-        cluster: @cluster,
+        cluster: initialize_cluster,
         logger: @logger,
         instrumenter: @instrumenter,
         compressor: compressor,
@@ -158,8 +150,10 @@ module Kafka
     #   than the session window.
     # @return [Consumer]
     def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10)
+      cluster = initialize_cluster
+
       group = ConsumerGroup.new(
-        cluster: @cluster,
+        cluster: cluster,
         logger: @logger,
         group_id: group_id,
         session_timeout: session_timeout,
@@ -178,7 +172,7 @@ module Kafka
       )
 
       Consumer.new(
-        cluster: @cluster,
+        cluster: cluster,
         logger: @logger,
         instrumenter: @instrumenter,
         group: group,
@@ -285,6 +279,19 @@ module Kafka
     end
 
     private
+
+    def initialize_cluster
+      broker_pool = BrokerPool.new(
+        connection_builder: @connection_builder,
+        logger: @logger,
+      )
+
+      Cluster.new(
+        seed_brokers: @seed_brokers,
+        broker_pool: broker_pool,
+        logger: @logger,
+      )
+    end
 
     def build_ssl_context(ca_cert, client_cert, client_cert_key)
       return nil unless ca_cert || client_cert || client_cert_key
