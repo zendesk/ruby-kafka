@@ -16,7 +16,7 @@ dependencies:
 
 test:
   override:
-    - bundle exec rspec
-    - bundle exec rspec --tag functional
+    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/unit.xml
+    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/functional.xml --tag functional
   post:
     - cp *.log $CIRCLE_ARTIFACTS/ || true
