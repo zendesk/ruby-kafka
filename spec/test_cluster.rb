@@ -5,12 +5,7 @@ if ENV.key?("DOCKER_HOST")
 end
 
 class TestCluster
-  DOCKER_HOST = ENV.fetch("DOCKER_HOST") {
-    ip = `/sbin/ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`.strip
-    "kafka://#{ip}"
-  }
-
-  DOCKER_HOSTNAME = URI(DOCKER_HOST).host
+  HOSTNAME = ENV.fetch("HOSTNAME") { URI(ENV.fetch("DOCKER_HOST")).host }
   KAFKA_IMAGE = "ches/kafka:0.9.0.1"
   ZOOKEEPER_IMAGE = "jplock/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
@@ -36,7 +31,7 @@ class TestCluster
         },
         "Env" => [
           "KAFKA_BROKER_ID=#{broker_id}",
-          "KAFKA_ADVERTISED_HOST_NAME=#{DOCKER_HOSTNAME}",
+          "KAFKA_ADVERTISED_HOST_NAME=#{HOSTNAME}",
           "KAFKA_ADVERTISED_PORT=#{port}",
         ]
       )
@@ -109,7 +104,7 @@ class TestCluster
     @kafka_brokers.map {|kafka|
       config = kafka.json.fetch("NetworkSettings").fetch("Ports")
       port = config.fetch("9092/tcp").first.fetch("HostPort")
-      host = DOCKER_HOSTNAME
+      host = HOSTNAME
 
       "#{host}:#{port}"
     }
@@ -189,7 +184,7 @@ class TestCluster
     end
   end
 
-  def wait_for_port(port, host: DOCKER_HOSTNAME)
+  def wait_for_port(port, host: HOSTNAME)
     print "Waiting for #{host}:#{port}..."
 
     loop do

@@ -5,6 +5,7 @@ machine:
     - docker
   environment:
     LOG_LEVEL: DEBUG
+    HOSTNAME: `/sbin/ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
 
 dependencies:
   pre:
