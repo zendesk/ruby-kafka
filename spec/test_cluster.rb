@@ -5,7 +5,12 @@ if ENV.key?("DOCKER_HOST")
 end
 
 class TestCluster
-  DOCKER_HOSTNAME = URI(ENV.fetch("DOCKER_HOST", "kafka://localhost")).host
+  DOCKER_HOST = ENV.fetch("DOCKER_HOST") {
+    ip = `/sbin/ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`.strip
+    "kafka://#{ip}"
+  }
+
+  DOCKER_HOSTNAME = URI(DOCKER_HOST).host
   KAFKA_IMAGE = "ches/kafka:0.9.0.1"
   ZOOKEEPER_IMAGE = "jplock/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
