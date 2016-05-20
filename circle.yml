@@ -4,7 +4,6 @@ machine:
   services:
     - docker
   environment:
-    LOG_TO_STDERR: true
     LOG_LEVEL: DEBUG
 
 dependencies:
