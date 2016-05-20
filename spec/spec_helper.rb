@@ -10,7 +10,7 @@ Dotenv.load
 
 require "test_cluster"
 
-LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : nil)
+LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log")
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
 class LogFormatter < Logger::Formatter
