@@ -21,10 +21,11 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
     1. [Consumer Checkpointing](#consumer-checkpointing)
     2. [Consuming Messages in Batches](#consuming-messages-in-batches)
-  3. [Logging](#logging)
-  4. [Instrumentation](#instrumentation)
-  5. [Understanding Timeouts](#understanding-timeouts)
-  6. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+  3. [Thread Safety](#thread-safety)
+  4. [Logging](#logging)
+  5. [Instrumentation](#instrumentation)
+  6. [Understanding Timeouts](#understanding-timeouts)
+  7. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 3. [Development](#development)
 4. [Roadmap](#roadmap)
 
@@ -442,6 +443,12 @@ end
 ```
 
 One important thing to note is that the client commits the offset of the batch's messages only after the _entire_ batch has been processed.
+
+### Thread Safety
+
+You typically don't want to share a Kafka client between threads, since the network communication is not synchronized. Furthermore, you should avoid using threads in a consumer unless you're very careful about waiting for all work to complete before returning from the `#each_message` or `#each_batch` block. This is because _checkpointing_ assumes that returning from the block means that the messages that have been yielded have been successfully processed.
+
+You should also avoid sharing a synchronous producer between threads, as the internal buffers are not thread safe. However, the _asynchronous_ producer should be safe to use in a multi-threaded environment.
 
 ### Logging
 
