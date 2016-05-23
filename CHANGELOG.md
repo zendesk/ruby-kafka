@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.8
+
 - Keep separate connection pools for consumers and producers initialized from
   the same client.
 - Handle connection errors automatically in the async producer.
