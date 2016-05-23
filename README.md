@@ -259,6 +259,25 @@ That is, once `#deliver_messages` returns we can be sure that Kafka has received
 - If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the messsage will ever make it to a Kafka broker.
 - If you use the asynchronous producer there's no guarantee that messages will have been delivered after `#deliver_messages` returns. A way of blocking until a message has been delivered with the asynchronous producer may be implemented in the future.
 
+It's possible to improve your chances of success when calling `#deliver_messages`, at the price of a longer max latency:
+
+```ruby
+producer = kafka.producer(
+  # The number of retries when attempting to deliver messages. The default is
+  # 2, so 3 attempts in total, but you can configure a higher or lower number:
+  max_retries: 5,
+
+  # The number of seconds to wait between retries. In order to handle longer
+  # periods of Kafka being unavailable, increase this number. The default is
+  # 1 second.
+  retry_backoff: 5,
+)
+```
+
+Note that these values affect the max latency of the operation; see [Understanding Timeouts](#understanding-timeouts) for an explanation of the various timeouts and latencies.
+
+If you use the asynchronous producer you typically don't have to worry too much about this, as retries will be done in the background.
+
 #### Compression
 
 Depending on what kind of data you produce, enabling compression may yield improved bandwidth and space usage. Compression in Kafka is done on entire messages sets rather than on individual messages. This improves the compression rate and generally means that compressions works better the larger your buffers get, since the message sets will be larger by the time they're compressed.
