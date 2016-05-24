@@ -90,7 +90,7 @@ module Kafka
           }
         }
       }
-    rescue Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
+    rescue Kafka::ConnectionError, Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
       @cluster.mark_as_stale!
 
       raise
