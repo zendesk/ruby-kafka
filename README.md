@@ -122,8 +122,9 @@ producer.produce("hello", topic: "greetings")
 # `#deliver_messages` will return immediately.
 producer.deliver_messages
 
-# Make sure to call `#shutdown` on the producer in order to
-# avoid leaking resources.
+# Make sure to call `#shutdown` on the producer in order to avoid leaking
+# resources. `#shutdown` will wait for any pending messages to be delivered
+# before returning.
 producer.shutdown
 ```
 
@@ -148,6 +149,8 @@ producer.produce("hello", topic: "greetings")
 
 # ...
 ```
+
+When calling `#shutdown`, the producer will attempt to deliver the messages and the method call will block until that has happened. Note that there's no _guarantee_ that the messages will be delivered.
 
 **Note:** if the calling thread produces messages faster than the producer can write them to Kafka, you'll eventually run into problems. The internal queue used for sending messages from the calling thread to the background worker has a size limit; once this limit is reached, a call to `#produce` will raise `Kafka::BufferOverflow`.
 
