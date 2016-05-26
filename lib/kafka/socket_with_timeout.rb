@@ -62,6 +62,8 @@ module Kafka
       end
 
       @socket.read(num_bytes)
+    rescue IO::EAGAINWaitReadable
+      retry
     end
 
     # Writes bytes to the socket, possible with a timeout.
