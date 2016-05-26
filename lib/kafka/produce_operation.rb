@@ -138,6 +138,7 @@ module Kafka
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition
           @logger.error "Unknown topic or partition #{topic}/#{partition}"
+          @cluster.mark_as_stale!
         rescue Kafka::LeaderNotAvailable
           @logger.error "Leader currently not available for #{topic}/#{partition}"
           @cluster.mark_as_stale!
