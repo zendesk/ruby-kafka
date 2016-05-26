@@ -10,7 +10,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 
 1. [Installation](#installation)
 2. [Usage](#usage)
-  1. [Producing Messages to Kafka](#producing-messages-to-kafka)
+  1. [Setting up the Kafka Client](#setting-up-the-kafka-client)
+  2. [Producing Messages to Kafka](#producing-messages-to-kafka)
     1. [Asynchronously Producing Messages](#asynchronously-producing-messages)
     2. [Serialization](#serialization)
     3. [Partitioning](#partitioning)
@@ -18,14 +19,14 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     5. [Message Delivery Guarantees](#message-delivery-guarantees)
     6. [Compression](#compression)
     7. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
-  2. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
+  3. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
     1. [Consumer Checkpointing](#consumer-checkpointing)
     2. [Consuming Messages in Batches](#consuming-messages-in-batches)
-  3. [Thread Safety](#thread-safety)
-  4. [Logging](#logging)
-  5. [Instrumentation](#instrumentation)
-  6. [Understanding Timeouts](#understanding-timeouts)
-  7. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+  4. [Thread Safety](#thread-safety)
+  5. [Logging](#logging)
+  6. [Instrumentation](#instrumentation)
+  7. [Understanding Timeouts](#understanding-timeouts)
+  8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 3. [Development](#development)
 4. [Roadmap](#roadmap)
 
@@ -49,15 +50,23 @@ Or install it yourself as:
 
 Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for detailed documentation on the latest release. Note that the documentation on GitHub may not match the version of the library you're using – there are still being made many changes to the API.
 
-### Producing Messages to Kafka
+### Setting up the Kafka Client
 
-A client must be initialized with at least one Kafka broker. Each client keeps a separate pool of broker connections. Don't use the same client from more than one thread.
+A client must be initialized with at least one Kafka broker, from which the entire Kafka cluster will be discovered. Each client keeps a separate pool of broker connections. Don't use the same client from more than one thread.
 
 ```ruby
 require "kafka"
 
-kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+kafka = Kafka.new(
+  # At least one of these nodes must be available:
+  seed_brokers: ["kafka1:9092", "kafka2:9092"],
+  
+  # Set an optional client id in order to identify the client to Kafka:
+  client_id: "my-application",
+)
 ```
+
+### Producing Messages to Kafka
 
 A producer buffers messages and sends them to the broker that is the leader of the partition a given message is assigned to.
 
