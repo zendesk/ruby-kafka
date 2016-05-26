@@ -154,6 +154,7 @@ module Kafka
               notification.update(
                 topic: batch.topic,
                 partition: batch.partition,
+                offset_lag: batch.offset_lag,
                 highwater_mark_offset: batch.highwater_mark_offset,
                 message_count: batch.messages.count,
               )
