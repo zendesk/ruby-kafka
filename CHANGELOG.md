@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Handle rebalances in the producer (#196)
+
+  *Mpampis Kostas*
+
 ## v0.3.8
 
 - Keep separate connection pools for consumers and producers initialized from
