@@ -103,6 +103,11 @@ module Kafka
       @queue << [:produce, args]
 
       nil
+    ensure
+      @instrumenter.instrument("enqueue.producer", {
+        queue_size: @queue.size,
+        max_queue_size: @max_queue_size,
+      })
     end
 
     # Asynchronously delivers the buffered messages. This method will return
