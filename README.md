@@ -22,6 +22,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   3. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
     1. [Consumer Checkpointing](#consumer-checkpointing)
     2. [Consuming Messages in Batches](#consuming-messages-in-batches)
+    3. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
   4. [Thread Safety](#thread-safety)
   5. [Logging](#logging)
   6. [Instrumentation](#instrumentation)
@@ -381,7 +382,10 @@ While this is great for extremely simple use cases, there are a number of downsi
 - If you want to have multiple processes consume from the same topic, there's no way of coordinating which processes should fetch from which partitions.
 - If a process dies, there's no way to have another process resume fetching from the point in the partition that the original process had reached.
 
-The Consumer API solves all of these issues, and more. It uses the Consumer Groups feature released in Kafka 0.9 to allow multiple consumer processes to coordinate access to a topic, assigning each partition to a single consumer. When a consumer fails, the partitions that were assigned to it are re-assigned to other members of the group.
+
+#### Consumer Groups
+
+The Consumer API solves all of the above issues, and more. It uses the Consumer Groups feature released in Kafka 0.9 to allow multiple consumer processes to coordinate access to a topic, assigning each partition to a single consumer. When a consumer fails, the partitions that were assigned to it are re-assigned to other members of the group.
 
 Using the API is simple:
 
@@ -455,6 +459,32 @@ end
 ```
 
 One important thing to note is that the client commits the offset of the batch's messages only after the _entire_ batch has been processed.
+
+
+#### Balancing Throughput and Latency
+
+There are two performance properties that can at times be at odds: _throughput_ and _latency_. Throughput is the number of messages that can be processed in a given timespan; latency is the time it takes from a message is written to a topic until it has been processed.
+
+In order to optimize for throughput, you want to make sure to fetch as many messages as possible every time you do a round trip to the Kafka cluster. This minimizes network overhead and allows processing data in big chunks.
+
+In order to optimize for low latency, you want to process a message as soon as possible, even if that means fetching a smaller batch of messages.
+
+There are two values that can be tuned in order to balance these two concerns: `min_bytes` and `max_wait_time`.
+
+* `min_bytes` is the minimum number of bytes to return from a single message fetch. By setting this to a high value you can increase the processing throughput. The default value is one byte.
+* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds.
+
+Both settings can be passed to either `#each_message` or `#each_batch`, e.g.
+
+```ruby
+# Waits for data for up to 30 seconds, preferring to fetch at least 5KB at a time.
+consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 30) do |message|
+  # ...
+end
+```
+
+If you want to have at most one second of latency, set `max_wait_time: 1`.
+
 
 ### Thread Safety
 
