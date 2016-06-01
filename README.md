@@ -9,7 +9,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 ## Table of Contents
 
 1. [Installation](#installation)
-2. [Usage](#usage)
+2. [Compatibility](#compatibility)
+3. [Usage](#usage)
   1. [Setting up the Kafka Client](#setting-up-the-kafka-client)
   2. [Producing Messages to Kafka](#producing-messages-to-kafka)
     1. [Asynchronously Producing Messages](#asynchronously-producing-messages)
@@ -28,8 +29,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   6. [Instrumentation](#instrumentation)
   7. [Understanding Timeouts](#understanding-timeouts)
   8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-3. [Development](#development)
-4. [Roadmap](#roadmap)
+4. [Development](#development)
+5. [Roadmap](#roadmap)
 
 ## Installation
 
@@ -46,6 +47,36 @@ And then execute:
 Or install it yourself as:
 
     $ gem install ruby-kafka
+
+## Compatibility
+
+<table>
+  <tr>
+    <th></th>
+    <th>Kafka 0.8</th>
+    <th>Kafka 0.9</th>
+    <th>Kafka 0.10</th>
+  </tr>
+  <tr>
+    <th>Producer API</th>
+    <td>Full support</td>
+    <td>Full support</td>
+    <td>Limited support</td>
+  </tr>
+  <tr>
+    <th>Consumer API</th>
+    <td>Unsupported</td>
+    <td>Full support</td>
+    <td>Limited support</td>
+  </tr>
+</table>
+
+This library is targeting Kafka 0.9, although there is limited support for versions 0.8 and 0.10:
+
+- **Kafka 0.8:** Full support for the Producer API, but no support for consumer groups. Simple message fetching works.
+- **Kafka 0.10:** Full support for both the Producer and Consumer APIs, but the addition of message timestamps is not supported. However, ruby-kafka should be completely compatible with Kafka 0.10 brokers.
+
+This library requires Ruby 2.1 or higher.
 
 ## Usage
 
