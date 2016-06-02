@@ -472,7 +472,7 @@ For each topic subscription it's possible to decide whether to consume messages 
 consumer.subscribe("users", default_offset: :earliest)
 
 # Only consume new messages.
-consumer.subscribe("users", default_offset: :latest)
+consumer.subscribe("notifications", default_offset: :latest)
 ```
 
 Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of the `default_offset`. As such, this setting only applies when the consumer initially starts consuming from a topic.
