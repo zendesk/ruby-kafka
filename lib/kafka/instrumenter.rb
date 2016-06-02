@@ -22,4 +22,15 @@ module Kafka
       end
     end
   end
+
+  class DecoratingInstrumenter
+    def initialize(backend, extra_payload = {})
+      @backend = backend
+      @extra_payload = extra_payload
+    end
+
+    def instrument(event_name, payload = {}, &block)
+      @backend.instrument(event_name, @extra_payload.merge(payload), &block)
+    end
+  end
 end
