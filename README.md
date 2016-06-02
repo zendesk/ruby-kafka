@@ -22,8 +22,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     7. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
   3. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
     1. [Consumer Checkpointing](#consumer-checkpointing)
-    2. [Consuming Messages in Batches](#consuming-messages-in-batches)
-    3. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
+    2. [Topic Subscriptions](#topic-subscriptions)
+    3. [Consuming Messages in Batches](#consuming-messages-in-batches)
+    4. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
   4. [Thread Safety](#thread-safety)
   5. [Logging](#logging)
   6. [Instrumentation](#instrumentation)
@@ -460,6 +461,21 @@ consumer = kafka.consumer(
   offset_commit_threshold: 100,
 )
 ```
+
+
+#### Topic Subscriptions
+
+For each topic subscription it's possible to decide whether to consume messages starting at the beginning of the topic or to just consume new messages that are produced to the topic. This policy is configured by setting the `default_offset` argument when calling `#subscribe`:
+
+```ruby
+# Consume messages from the very beginning of the topic. This is the default.
+consumer.subscribe("users", default_offset: :earliest)
+
+# Only consume new messages.
+consumer.subscribe("users", default_offset: :latest)
+```
+
+Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of the `default_offset`. As such, this setting only applies when the consumer initially starts consuming from a topic.
 
 
 #### Consuming Messages in Batches
