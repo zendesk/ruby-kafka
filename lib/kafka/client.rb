@@ -152,6 +152,10 @@ module Kafka
     def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10)
       cluster = initialize_cluster
 
+      instrumenter = DecoratingInstrumenter.new(@instrumenter, {
+        group_id: group_id,
+      })
+
       group = ConsumerGroup.new(
         cluster: cluster,
         logger: @logger,
@@ -174,7 +178,7 @@ module Kafka
       Consumer.new(
         cluster: cluster,
         logger: @logger,
-        instrumenter: @instrumenter,
+        instrumenter: instrumenter,
         group: group,
         offset_manager: offset_manager,
         session_timeout: session_timeout,
