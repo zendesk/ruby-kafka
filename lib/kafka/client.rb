@@ -59,6 +59,56 @@ module Kafka
       @cluster = initialize_cluster
     end
 
+    def deliver_message(value, key: nil, topic:, partition: nil, partition_key: nil)
+      create_time = Time.now
+
+      message = PendingMessage.new(
+        value: value,
+        key: key,
+        topic: topic,
+        partition: partition,
+        partition_key: partition_key,
+        create_time: create_time,
+      )
+
+      if partition.nil?
+        partition_count = @cluster.partitions_for(topic).count
+        partition = Partitioner.partition_for_key(partition_count, message)
+      end
+
+      buffer = MessageBuffer.new
+
+      buffer.write(
+        value: message.value,
+        key: message.key,
+        topic: message.topic,
+        partition: partition,
+        create_time: message.create_time,
+      )
+
+      @cluster.add_target_topics([topic])
+
+      compressor = Compressor.new(
+        instrumenter: @instrumenter,
+      )
+
+      operation = ProduceOperation.new(
+        cluster: @cluster,
+        buffer: buffer,
+        required_acks: 1,
+        ack_timeout: 10,
+        compressor: compressor,
+        logger: @logger,
+        instrumenter: @instrumenter,
+      )
+
+      operation.execute
+
+      unless buffer.empty?
+        raise DeliveryFailed
+      end
+    end
+
     # Initializes a new Kafka producer.
     #
     # @param ack_timeout [Integer] The number of seconds a broker can wait for

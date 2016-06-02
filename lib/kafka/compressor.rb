@@ -20,7 +20,7 @@ module Kafka
     # @param codec_name [Symbol, nil]
     # @param threshold [Integer] the minimum number of messages in a message set
     #   that will trigger compression.
-    def initialize(codec_name:, threshold:, instrumenter:)
+    def initialize(codec_name: nil, threshold: 1, instrumenter:)
       @codec = Compression.find_codec(codec_name)
       @threshold = threshold
       @instrumenter = instrumenter
