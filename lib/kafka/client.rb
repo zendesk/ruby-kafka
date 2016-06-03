@@ -328,12 +328,10 @@ module Kafka
       end
       brokers = []
       seed_brokers.each do |connection|
-        if connection =~ /:\/\//
-          u = URI.parse(connection)
-          brokers << "#{u.host}:#{u.port}"
-        else
-          brokers << connection
-        end
+        connection.prepend("kafka://") unless connection =~ /:\/\//
+        uri = URI.parse(connection)
+        uri.port ||= 9092 # Default Kafka port.
+        brokers << uri
       end
       brokers
     end

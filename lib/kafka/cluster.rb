@@ -13,7 +13,7 @@ module Kafka
     #
     # The cluster will try to fetch cluster metadata from one of the brokers.
     #
-    # @param seed_brokers [Array<String>]
+    # @param seed_brokers [Array<URI>]
     # @param broker_pool [Kafka::BrokerPool]
     # @param logger [Logger]
     def initialize(seed_brokers:, broker_pool:, logger:)
@@ -136,10 +136,7 @@ module Kafka
         @logger.info "Fetching cluster metadata from #{node}"
 
         begin
-          host, port = node.split(":", 2)
-          port ||= 9092 # Default Kafka port.
-
-          broker = @broker_pool.connect(host, port.to_i)
+          broker = @broker_pool.connect(node.hostname, node.port)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
           @stale = false
