@@ -65,9 +65,16 @@ module Kafka
     #
     # @param topic [String] the name of the topic to subscribe to.
     # @param default_offset [Symbol] whether to start from the beginning or the
-    #   end of the topic's partitions.
+    #   end of the topic's partitions. Deprecated.
+    # @param start_from_beginning [Boolean] whether to start from the beginning
+    #   of the topic or just subscribe to new messages being produced. This
+    #   only applies when first consuming a topic partition – once the consumer
+    #   has checkpointed its progress, it will always resume from the last
+    #   checkpoint.
     # @return [nil]
-    def subscribe(topic, default_offset: :earliest)
+    def subscribe(topic, default_offset: nil, start_from_beginning: true)
+      default_offset ||= start_from_beginning ? :earliest : :latest
+
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)
 

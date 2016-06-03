@@ -465,17 +465,17 @@ consumer = kafka.consumer(
 
 #### Topic Subscriptions
 
-For each topic subscription it's possible to decide whether to consume messages starting at the beginning of the topic or to just consume new messages that are produced to the topic. This policy is configured by setting the `default_offset` argument when calling `#subscribe`:
+For each topic subscription it's possible to decide whether to consume messages starting at the beginning of the topic or to just consume new messages that are produced to the topic. This policy is configured by setting the `start_from_beginning` argument when calling `#subscribe`:
 
 ```ruby
 # Consume messages from the very beginning of the topic. This is the default.
-consumer.subscribe("users", default_offset: :earliest)
+consumer.subscribe("users", start_from_beginning: true)
 
 # Only consume new messages.
-consumer.subscribe("notifications", default_offset: :latest)
+consumer.subscribe("notifications", start_from_beginning: false)
 ```
 
-Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of the `default_offset`. As such, this setting only applies when the consumer initially starts consuming from a topic.
+Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of `start_from_beginning`. As such, this setting only applies when the consumer initially starts consuming from a topic.
 
 
 #### Consuming Messages in Batches
