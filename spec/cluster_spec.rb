@@ -5,7 +5,7 @@ describe Kafka::Cluster do
 
     let(:cluster) {
       Kafka::Cluster.new(
-        seed_brokers: ["test1:9092"],
+        seed_brokers: [URI("kafka://test1:9092")],
         broker_pool: broker_pool,
         logger: LOGGER,
       )
@@ -73,7 +73,7 @@ describe Kafka::Cluster do
 
     it "raises ConnectionError if unable to connect to any of the seed brokers" do
       cluster = Kafka::Cluster.new(
-        seed_brokers: ["not-there:9092", "not-here:9092"],
+        seed_brokers: [URI("kafka://not-there:9092"), URI("kafka://not-here:9092")],
         broker_pool: broker_pool,
         logger: LOGGER,
       )
