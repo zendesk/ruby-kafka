@@ -31,11 +31,11 @@ module Kafka
       @statsd ||= Statsd.new(Statsd::DEFAULT_HOST, Statsd::DEFAULT_HOST, namespace: STATSD_NAMESPACE)
     end
 
-    def self.statsd_host=(host)
+    def self.host=(host)
       statsd.host = host
     end
 
-    def self.statsd_port=(port)
+    def self.port=(port)
       statsd.port = port
     end
 
