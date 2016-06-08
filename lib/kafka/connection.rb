@@ -4,6 +4,7 @@ require "kafka/ssl_socket_with_timeout"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
+require "kafka/future_response"
 
 module Kafka
 
@@ -79,8 +80,6 @@ module Kafka
       notification = {
         broker_host: @host,
         api: Protocol.api_name(request.api_key),
-        request_size: 0,
-        response_size: 0,
       }
 
       @instrumenter.instrument("request.connection", notification) do
@@ -89,9 +88,19 @@ module Kafka
         @correlation_id += 1
 
         write_request(request, notification)
+      end
 
-        response_class = request.response_class
-        wait_for_response(response_class, notification) unless response_class.nil?
+      FutureResponse.new do
+        @instrumenter.instrument("response.connection", notification) do
+          begin
+            response_class = request.response_class
+            wait_for_response(response_class, notification) unless response_class.nil?
+          rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
+            close
+
+            raise ConnectionError, "Connection error: #{e}"
+          end
+        end
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       close

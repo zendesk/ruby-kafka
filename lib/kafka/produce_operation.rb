@@ -76,7 +76,7 @@ module Kafka
         end
       end
 
-      messages_for_broker.each do |broker, message_buffer|
+      futures = messages_for_broker.map do |broker, message_buffer|
         begin
           @logger.info "Sending #{message_buffer.size} messages to #{broker}"
 
@@ -90,19 +90,22 @@ module Kafka
             messages_for_topics[topic][partition] = message_set
           end
 
-          response = broker.produce(
+          broker.produce(
             messages_for_topics: messages_for_topics,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
           )
-
-          handle_response(response) if response
         rescue ConnectionError => e
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
           # Mark the cluster as stale in order to force a cluster metadata refresh.
           @cluster.mark_as_stale!
         end
+      end
+
+      futures.each do |future|
+        response = future.value
+        handle_response(response) if response
       end
     end
 

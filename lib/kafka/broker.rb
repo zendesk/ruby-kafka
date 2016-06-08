@@ -27,7 +27,7 @@ module Kafka
     def fetch_metadata(**options)
       request = Protocol::TopicMetadataRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     # Fetches messages from a specified topic and partition.
@@ -37,7 +37,7 @@ module Kafka
     def fetch_messages(**options)
       request = Protocol::FetchRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     # Lists the offset of the specified topics and partitions.
@@ -47,7 +47,7 @@ module Kafka
     def list_offsets(**options)
       request = Protocol::ListOffsetRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     # Produces a set of messages to the broker.
@@ -63,43 +63,43 @@ module Kafka
     def fetch_offsets(**options)
       request = Protocol::OffsetFetchRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def commit_offsets(**options)
       request = Protocol::OffsetCommitRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def join_group(**options)
       request = Protocol::JoinGroupRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def sync_group(**options)
       request = Protocol::SyncGroupRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def leave_group(**options)
       request = Protocol::LeaveGroupRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def find_group_coordinator(**options)
       request = Protocol::GroupCoordinatorRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
 
     def heartbeat(**options)
       request = Protocol::HeartbeatRequest.new(**options)
 
-      @connection.send_request(request)
+      @connection.send_request(request).value
     end
   end
 end
