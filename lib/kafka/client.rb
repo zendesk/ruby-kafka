@@ -64,8 +64,8 @@ module Kafka
     # @param ack_timeout [Integer] The number of seconds a broker can wait for
     #   replicas to acknowledge a write before responding with a timeout.
     #
-    # @param required_acks [Integer] The number of replicas that must acknowledge
-    #   a write.
+    # @param required_acks [Integer, Symbol] The number of replicas that must acknowledge
+    #   a write, or `:all` if all in-sync replicas must acknowledge.
     #
     # @param max_retries [Integer] the number of retries that should be attempted
     #   before giving up sending messages to the cluster. Does not include the
@@ -89,7 +89,7 @@ module Kafka
     #   are per-partition rather than per-topic or per-producer.
     #
     # @return [Kafka::Producer] the Kafka producer.
-    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: 1, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
+    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: :all, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
       compressor = Compressor.new(
         codec_name: compression_codec,
         threshold: compression_threshold,

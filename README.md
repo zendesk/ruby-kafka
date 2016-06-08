@@ -17,9 +17,10 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     2. [Serialization](#serialization)
     3. [Partitioning](#partitioning)
     4. [Buffering and Error Handling](#buffering-and-error-handling)
-    5. [Message Delivery Guarantees](#message-delivery-guarantees)
-    6. [Compression](#compression)
-    7. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
+    5. [Message Durability](#message-durability)
+    6. [Message Delivery Guarantees](#message-delivery-guarantees)
+    7. [Compression](#compression)
+    8. [Producing Messages from a Rails Application](#producing-messages-from-a-rails-application)
   3. [Consuming Messages from Kafka](#consuming-messages-from-kafka)
     1. [Consumer Checkpointing](#consumer-checkpointing)
     2. [Topic Subscriptions](#topic-subscriptions)
@@ -275,6 +276,28 @@ Typically, you'd configure the producer to retry failed attempts at sending mess
 Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
+
+#### Message Durability
+
+Once the client has delivered a set of messages to a Kafka broker the broker will forward them to its replicas, thus ensuring that a single broker failure will not result in message loss. However, the client can choose _when the leader acknowledges the write_. At one extreme, the client can choose fire-and-forget delivery, not even bothering to check whether the messages have been acknowledged. At the other end, the client can ask the broker to wait until _all_ its replicas have acknowledged the write before returning. This is the safest option, and the default. It's also possible to have the broker return as soon as it has written the messages to its own log but before the replicas have done so. This leaves a window of time where a failure of the leader will result in the messages being lost, although this should not be a common occurence.
+
+Write latency and throughput are negativaly impacted by having more replicas acknowledge a write, so if you require low-latency, high throughput writes you may want to accept lower durability.
+
+This behavior is controlled by the `required_acks` option to `#producer` and `#async_producer`:
+
+```ruby
+# This is the default: all replicas must acknowledge.
+producer = kafka.producer(required_acks: :all)
+
+# This is fire-and-forget: messages can easily be lost.
+producer = kafka.producer(required_acks: 0)
+
+# This only waits for the leader to acknowledge.
+producer = kafka.producer(required_acks: 1)
+```
+
+Unless you absolutely need lower latency it's highly recommended to use the default setting (`:all`).
+
 
 #### Message Delivery Guarantees
 

@@ -134,7 +134,7 @@ module Kafka
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
-      @required_acks = required_acks
+      @required_acks = required_acks == :all ? -1 : required_acks
       @ack_timeout = ack_timeout
       @max_retries = max_retries
       @retry_backoff = retry_backoff
