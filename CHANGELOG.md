@@ -4,7 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-- Handle rebalances in the producer (#196)
+- Improve the default durability setting. The producer setting `required_acks` now defaults to `:all` (#210).
+- Handle rebalances in the producer (#196).
 
   *Mpampis Kostas*
 
