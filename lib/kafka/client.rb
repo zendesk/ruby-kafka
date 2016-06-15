@@ -311,6 +311,32 @@ module Kafka
       operation.execute.flat_map {|batch| batch.messages }
     end
 
+    # EXPERIMENTAL: Enumerates all messages in a topic.
+    def each_message(topic:, offset: :earliest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, &block)
+      offsets = Hash.new { offset }
+
+      loop do
+        operation = FetchOperation.new(
+          cluster: @cluster,
+          logger: @logger,
+          min_bytes: min_bytes,
+          max_wait_time: max_wait_time,
+        )
+
+        @cluster.partitions_for(topic).map(&:partition_id).each do |partition|
+          partition_offset = offsets[partition]
+          operation.fetch_from_partition(topic, partition, offset: partition_offset, max_bytes: max_bytes)
+        end
+
+        batches = operation.execute
+
+        batches.each do |batch|
+          batch.messages.each(&block)
+          offsets[batch.partition] = batch.last_offset
+        end
+      end
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
