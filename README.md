@@ -13,6 +13,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 3. [Usage](#usage)
   1. [Setting up the Kafka Client](#setting-up-the-kafka-client)
   2. [Producing Messages to Kafka](#producing-messages-to-kafka)
+    1. [Efficiently Producing Messages](#efficiently-producing-messages)
     1. [Asynchronously Producing Messages](#asynchronously-producing-messages)
     2. [Serialization](#serialization)
     3. [Partitioning](#partitioning)
@@ -102,7 +103,24 @@ kafka = Kafka.new(
 
 ### Producing Messages to Kafka
 
-A producer buffers messages and sends them to the broker that is the leader of the partition a given message is assigned to.
+The simplest way to write a message to a Kafka topic is to call `#deliver_message`:
+
+```ruby
+kafka = Kafka.new(...)
+kafka.deliver_message("Hello, World!", topic: "greetings")
+```
+
+This will write the message to a random partition in the `greetings` topic.
+
+#### Efficiently Producing Messages
+
+While `#deliver_message` works fine for infrequent writes, there are a number of downside:
+
+* Kafka is optimized for transmitting _batches_ of messages rather than individual messages, so there's a significant overhead and performance penalty in using the single-message API.
+* The message delivery can fail in a number of different ways, but this simplistic API does not provide automatic retries.
+* The message is not buffered, so if there is an error, it is lost.
+
+The Producer API solves all these problems and more:
 
 ```ruby
 producer = kafka.producer
