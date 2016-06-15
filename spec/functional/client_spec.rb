@@ -21,4 +21,13 @@ describe "Producer API", functional: true do
 
     expect(kafka.partitions_for(topic)).to be > 0
   end
+
+  example "delivering a message to a topic" do
+    kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0)
+
+    message = kafka.fetch_messages(topic: topic, partition: 0, offset: 0).first
+
+    expect(message.value).to eq "yolo"
+    expect(message.key).to eq "xoxo"
+  end
 end
