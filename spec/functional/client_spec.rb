@@ -30,4 +30,26 @@ describe "Producer API", functional: true do
     expect(message.value).to eq "yolo"
     expect(message.key).to eq "xoxo"
   end
+
+  example "enumerating the messages in a topic" do
+    values = (1..10).to_a
+
+    values.each do |value|
+      kafka.deliver_message(value.to_s, topic: topic)
+    end
+
+    kafka.each_message(topic: topic) do |message|
+      value = Integer(message.value)
+      values.delete(value)
+
+      if message.value == "5"
+        values << 666
+        kafka.deliver_message("666", topic: topic)
+      end
+
+      break if values.empty?
+    end
+
+    expect(values).to eq []
+  end
 end
