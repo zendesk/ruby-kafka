@@ -311,9 +311,32 @@ module Kafka
       operation.execute.flat_map {|batch| batch.messages }
     end
 
-    # EXPERIMENTAL: Enumerates all messages in a topic.
-    def each_message(topic:, offset: :earliest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, &block)
-      offsets = Hash.new { offset }
+    # Enumerate all messages in a topic.
+    #
+    # @param topic [String] the topic to consume messages from.
+    #
+    # @param start_from_beginning [Boolean] whether to start from the beginning
+    #   of the topic or just subscribe to new messages being produced. This
+    #   only applies when first consuming a topic partition – once the consumer
+    #   has checkpointed its progress, it will always resume from the last
+    #   checkpoint.
+    #
+    # @param max_wait_time [Integer] the maximum amount of time to wait before
+    #   the server responds, in seconds.
+    #
+    # @param min_bytes [Integer] the minimum number of bytes to wait for. If set to
+    #   zero, the broker will respond immediately, but the response may be empty.
+    #   The default is 1 byte, which means that the broker will respond as soon as
+    #   a message is written to the partition.
+    #
+    # @param max_bytes [Integer] the maximum number of bytes to include in the
+    #   response message set. Default is 1 MB. You need to set this higher if you
+    #   expect messages to be larger than this.
+    #
+    # @return [nil]
+    def each_message(topic:, start_from_beginning: true, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, &block)
+      default_offset ||= start_from_beginning ? :earliest : :latest
+      offsets = Hash.new { default_offset }
 
       loop do
         operation = FetchOperation.new(
