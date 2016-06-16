@@ -312,8 +312,9 @@ module Kafka
     end
 
     # EXPERIMENTAL: Enumerates all messages in a topic.
-    def each_message(topic:, offset: :earliest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, &block)
-      offsets = Hash.new { offset }
+    def each_message(topic:, start_from_beginning: true, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, &block)
+      default_offset ||= start_from_beginning ? :earliest : :latest
+      offsets = Hash.new { default_offset }
 
       loop do
         operation = FetchOperation.new(
