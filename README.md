@@ -110,7 +110,28 @@ kafka = Kafka.new(...)
 kafka.deliver_message("Hello, World!", topic: "greetings")
 ```
 
-This will write the message to a random partition in the `greetings` topic.
+This will write the message to a random partition in the `greetings` topic. If you want to write to a _specific_ partition, pass the `partition` parameter:
+
+```ruby
+# Will write to partition 42.
+kafka.deliver_message("Hello, World!", topic: "greetings", partition: 42)
+```
+
+If you don't know exactly how many partitions are in the topic, or if you'd rather have some level of indirection, you can pass in `partition_key` instead. Two messages with the same partition key will always be assigned to the same partition. This is useful if you want to make sure all messages with a given attribute are always written to the same partition, e.g. all purchase events for a given customer id.
+
+```ruby
+# Partition keys assign a partition deterministically.
+kafka.deliver_message("Hello, World!", topic: "greetings", partition_key: "hello")
+```
+
+Kafka also supports _message keys_. When passed, a message key can be used instead of a partition key. The message key is written alongside the message value and can be read by consumers. Message keys in Kafka can be used for interesting things such as [Log Compaction](http://kafka.apache.org/documentation.html#compaction). See [Partitioning](#partitioning) for more information.
+
+```ruby
+# Set a message key; the key will be used for partitioning since no explicit
+# `partition_key` is set.
+kafka.deliver_message("Hello, World!", key: "hello", topic: "greetings")
+```
+
 
 #### Efficiently Producing Messages
 
@@ -123,38 +144,17 @@ While `#deliver_message` works fine for infrequent writes, there are a number of
 The Producer API solves all these problems and more:
 
 ```ruby
+# Instantiate a new producer.
 producer = kafka.producer
-```
 
-`produce` will buffer the message in the producer but will _not_ actually send it to the Kafka cluster.
-
-```ruby
+# Add a message to the producer buffer.
 producer.produce("hello1", topic: "test-messages")
-```
 
-It's possible to specify a message key.
-
-```ruby
-producer.produce("hello2", key: "x", topic: "test-messages")
-```
-
-If you need to control which partition a message should be assigned to, you can pass in the `partition` parameter.
-
-```ruby
-producer.produce("hello3", topic: "test-messages", partition: 1)
-```
-
-If you don't know exactly how many partitions are in the topic, or you'd rather have some level of indirection, you can pass in `partition_key`. Two messages with the same partition key will always be assigned to the same partition.
-
-```ruby
-producer.produce("hello4", topic: "test-messages", partition_key: "yo")
-```
-
-`deliver_messages` will send the buffered messages to the cluster. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::DeliveryFailed` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
-
-```ruby
+# Deliver the messages to Kafka.
 producer.deliver_messages
 ```
+
+`#produce` will buffer the message in the producer but will _not_ actually send it to the Kafka cluster. Buffered messages are only delivered to the Kafka cluster once `#deliver_messages` is called. Since messages may be destined for different partitions, this could involve writing to more than one Kafka broker. Note that a failure to send all buffered messages after the configured number of retries will result in `Kafka::DeliveryFailed` being raised. This can be rescued and ignored; the messages will be kept in the buffer until the next attempt.
 
 Read the docs for [Kafka::Producer](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) for more details.
 
