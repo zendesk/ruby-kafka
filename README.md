@@ -436,25 +436,23 @@ end
 
 **Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
 
-The simplest way to consume messages from a Kafka topic is using the `#fetch_messages` API:
+Consuming messages from a Kafka topic is simple:
 
 ```ruby
 require "kafka"
 
 kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
 
-messages = kafka.fetch_messages(topic: "greetings", partition: 42)
-
-messages.each do |message|
+kafka.each_message(topic: "greetings") do |message|
   puts message.offset, message.key, message.value
 end
 ```
 
 While this is great for extremely simple use cases, there are a number of downsides:
 
-- You can only fetch from a single topic and partition at a time.
+- You can only fetch from a single topic at a time.
 - If you want to have multiple processes consume from the same topic, there's no way of coordinating which processes should fetch from which partitions.
-- If a process dies, there's no way to have another process resume fetching from the point in the partition that the original process had reached.
+- If the process dies, there's no way to have another process resume fetching from the point in the partition that the original process had reached.
 
 
 #### Consumer Groups
