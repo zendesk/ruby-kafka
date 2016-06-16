@@ -4,10 +4,13 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-- Improve the default durability setting. The producer setting `required_acks` now defaults to `:all` (#210).
-- Handle rebalances in the producer (#196).
+## v0.3.9
 
-  *Mpampis Kostas*
+- Improve the default durability setting. The producer setting `required_acks` now defaults to `:all` (#210).
+- Handle rebalances in the producer (#196). *Mpampis Kostas*
+- Add simplified producer and consumer APIs for simple use cases.
+- Add out-of-the-box Datadog reporting.
+- Improve producer performance.
 
 ## v0.3.8
 
