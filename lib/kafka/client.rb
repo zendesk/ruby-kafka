@@ -1,4 +1,5 @@
 require "openssl"
+require "uri"
 
 require "kafka/cluster"
 require "kafka/producer"
