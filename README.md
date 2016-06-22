@@ -695,7 +695,7 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 ## Roadmap
 
-The current stable release is v0.2. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
+The current stable release is v0.3. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
 
 ### v0.4
 
