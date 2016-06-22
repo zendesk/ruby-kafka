@@ -71,7 +71,7 @@ module Kafka
           Protocol.handle_error(error_code)
         end
       end
-    rescue ConnectionError, UnknownMemberId, RebalanceInProgress, IllegalGeneration => e
+    rescue ConnectionError, UnknownMemberId, RebalanceInProgress, RequestTimedOut, IllegalGeneration => e
       @logger.error "Error committing offsets: #{e}"
       raise OffsetCommitError, e
     end
