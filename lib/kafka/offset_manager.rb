@@ -1,6 +1,7 @@
 module Kafka
   class OffsetManager
-    def initialize(group:, logger:, commit_interval:, commit_threshold:)
+    def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:)
+      @cluster = cluster
       @group = group
       @logger = logger
       @commit_interval = commit_interval
@@ -28,7 +29,16 @@ module Kafka
         committed_offset_for(topic, partition)
       }
 
-      offset = @default_offsets.fetch(topic) if offset < 0
+      # A negative offset means that no offset has been committed, so we need to
+      # resolve the default offset for the topic.
+      if offset < 0
+        offset = @default_offsets.fetch(topic)
+        offset = @cluster.resolve_offset(topic, partition, offset)
+
+        # Make sure we commit this offset so that we don't repeat have to
+        # resolve the default offset every time.
+        mark_as_processed(topic, partition, offset)
+      end
 
       offset
     end

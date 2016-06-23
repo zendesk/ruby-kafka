@@ -105,6 +105,32 @@ module Kafka
       raise
     end
 
+    def resolve_offset(topic, partition, offset)
+      add_target_topics([topic])
+      refresh_metadata_if_necessary!
+      broker = get_leader(topic, partition)
+
+      if offset == :earliest
+        offset = -2
+      elsif offset == :latest
+        offset = -1
+      end
+
+      response = broker.list_offsets(
+        topics: {
+          topic => [
+            {
+              partition: partition,
+              time: offset,
+              max_offsets: 1,
+            }
+          ]
+        }
+      )
+
+      response.offset_for(topic, partition)
+    end
+
     def topics
       cluster_info.topics.map(&:topic_name)
     end

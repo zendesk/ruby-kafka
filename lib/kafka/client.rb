@@ -216,6 +216,7 @@ module Kafka
       )
 
       offset_manager = OffsetManager.new(
+        cluster: cluster,
         group: group,
         logger: @logger,
         commit_interval: offset_commit_interval,
