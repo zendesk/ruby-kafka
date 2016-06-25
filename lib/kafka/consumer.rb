@@ -189,8 +189,10 @@ module Kafka
       while @running
         begin
           yield
-        rescue HeartbeatError, OffsetCommitError, FetchError
+        rescue HeartbeatError, OffsetCommitError
           join_group
+        rescue FetchError
+          @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"
           sleep 1
