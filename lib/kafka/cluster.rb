@@ -105,6 +105,41 @@ module Kafka
       raise
     end
 
+    def resolve_offset(topic, partition, offset)
+      add_target_topics([topic])
+      refresh_metadata_if_necessary!
+      broker = get_leader(topic, partition)
+
+      if offset == :earliest
+        offset = -2
+      elsif offset == :latest
+        offset = -1
+      end
+
+      response = broker.list_offsets(
+        topics: {
+          topic => [
+            {
+              partition: partition,
+              time: offset,
+              max_offsets: 1,
+            }
+          ]
+        }
+      )
+
+      resolved_offset = response.offset_for(topic, partition)
+
+      # If we're resolving the latest offset for a partition, we get back the
+      # offset of the *next* message to be appended, rather than the offset of
+      # the message that's currently last. We'll have to correct for that.
+      if offset == -1
+        resolved_offset - 1
+      else
+        resolved_offset
+      end
+    end
+
     def topics
       cluster_info.topics.map(&:topic_name)
     end
