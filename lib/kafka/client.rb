@@ -378,6 +378,19 @@ module Kafka
       @cluster.partitions_for(topic).count
     end
 
+    # Retrieve the offset of the last message in a partition. If there are no
+    # messages in the partition -1 is returned.
+    #
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [Integer] the offset of the last message in the partition, or -1 if
+    #   there are no messages in the partition.
+    def last_offset_for(topic, partition)
+      # The offset resolution API will return the offset of the "next" message to
+      # be written when resolving the "latest" offset, so we subtract one.
+      @cluster.resolve_offset(topic, partition, :latest) - 1
+    end
+
     # Closes all connections to the Kafka brokers and frees up used resources.
     #
     # @return [nil]
