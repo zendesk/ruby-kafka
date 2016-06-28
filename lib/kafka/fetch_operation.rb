@@ -69,7 +69,14 @@ module Kafka
 
         response.topics.flat_map {|fetched_topic|
           fetched_topic.partitions.map {|fetched_partition|
-            Protocol.handle_error(fetched_partition.error_code)
+            begin
+              Protocol.handle_error(fetched_partition.error_code)
+            rescue Kafka::Error => e
+              topic = fetched_topic.name
+              partition = fetched_partition.partition
+              @logger.error "Failed to fetch from #{topic}/#{partition}: #{e.message}"
+              raise e
+            end
 
             messages = fetched_partition.messages.map {|message|
               FetchedMessage.new(

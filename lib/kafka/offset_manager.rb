@@ -37,7 +37,7 @@ module Kafka
 
         # Make sure we commit this offset so that we don't repeat have to
         # resolve the default offset every time.
-        mark_as_processed(topic, partition, offset)
+        mark_as_processed(topic, partition, offset - 1)
       end
 
       offset
