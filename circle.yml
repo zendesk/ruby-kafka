@@ -15,7 +15,11 @@ dependencies:
 
 test:
   override:
-    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/unit.xml
-    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/functional.xml --tag functional
+    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/unit.xml:
+        parallel: true
+        files: spec/*_spec.rb
+    - bundle exec rspec -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/functional.xml --tag functional:
+        parallel: true
+        files: spec/functional/*_spec.rb
   post:
     - cp *.log $CIRCLE_ARTIFACTS/ || true
