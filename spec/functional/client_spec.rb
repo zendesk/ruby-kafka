@@ -3,6 +3,10 @@ describe "Producer API", functional: true do
 
   example "listing all topics in the cluster" do
     expect(kafka.topics).to include topic
+
+    topic2 = create_random_topic(num_partitions: 1)
+
+    expect(kafka.topics).to include(topic, topic2)
   end
 
   example "fetching the partition count for a topic" do

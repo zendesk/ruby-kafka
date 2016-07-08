@@ -32,6 +32,11 @@ module Kafka
       @target_topics = Set.new
     end
 
+    # Adds a list of topics to the target list. Only the topics on this list will
+    # be queried for metadata.
+    #
+    # @param topics [Array<String>]
+    # @return [nil]
     def add_target_topics(topics)
       new_topics = Set.new(topics) - @target_topics
 
@@ -42,6 +47,15 @@ module Kafka
 
         refresh_metadata!
       end
+    end
+
+    # Clears the list of target topics.
+    #
+    # @see #add_target_topics
+    # @return [nil]
+    def clear_target_topics
+      @target_topics.clear
+      refresh_metadata!
     end
 
     def mark_as_stale!
