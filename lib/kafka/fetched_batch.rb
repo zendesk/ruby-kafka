@@ -26,6 +26,7 @@ module Kafka
     end
 
     def last_offset
+      return -2 if messages.empty?
       messages.last.offset
     end
 
