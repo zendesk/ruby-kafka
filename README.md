@@ -302,13 +302,13 @@ producer = kafka.producer(
 )
 ```
 
-A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
+A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availability and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
 #### Message Durability
 
-Once the client has delivered a set of messages to a Kafka broker the broker will forward them to its replicas, thus ensuring that a single broker failure will not result in message loss. However, the client can choose _when the leader acknowledges the write_. At one extreme, the client can choose fire-and-forget delivery, not even bothering to check whether the messages have been acknowledged. At the other end, the client can ask the broker to wait until _all_ its replicas have acknowledged the write before returning. This is the safest option, and the default. It's also possible to have the broker return as soon as it has written the messages to its own log but before the replicas have done so. This leaves a window of time where a failure of the leader will result in the messages being lost, although this should not be a common occurence.
+Once the client has delivered a set of messages to a Kafka broker the broker will forward them to its replicas, thus ensuring that a single broker failure will not result in message loss. However, the client can choose _when the leader acknowledges the write_. At one extreme, the client can choose fire-and-forget delivery, not even bothering to check whether the messages have been acknowledged. At the other end, the client can ask the broker to wait until _all_ its replicas have acknowledged the write before returning. This is the safest option, and the default. It's also possible to have the broker return as soon as it has written the messages to its own log but before the replicas have done so. This leaves a window of time where a failure of the leader will result in the messages being lost, although this should not be a common occurrence.
 
-Write latency and throughput are negativaly impacted by having more replicas acknowledge a write, so if you require low-latency, high throughput writes you may want to accept lower durability.
+Write latency and throughput are negatively impacted by having more replicas acknowledge a write, so if you require low-latency, high throughput writes you may want to accept lower durability.
 
 This behavior is controlled by the `required_acks` option to `#producer` and `#async_producer`:
 
@@ -352,7 +352,7 @@ producer.deliver_messages
 That is, once `#deliver_messages` returns we can be sure that Kafka has received the message. Note that there are some big caveats here:
 
 - Depending on how your cluster and topic is configured the message could still be lost by Kafka.
-- If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the messsage will ever make it to a Kafka broker.
+- If you configure the producer to not require acknowledgements from the Kafka brokers by setting `required_acks` to zero there is no guarantee that the message will ever make it to a Kafka broker.
 - If you use the asynchronous producer there's no guarantee that messages will have been delivered after `#deliver_messages` returns. A way of blocking until a message has been delivered with the asynchronous producer may be implemented in the future.
 
 It's possible to improve your chances of success when calling `#deliver_messages`, at the price of a longer max latency:
@@ -494,7 +494,7 @@ Each consumer process will be assigned one or more partitions from each topic th
 
 In order to be able to resume processing after a consumer crashes, each consumer will periodically _checkpoint_ its position within each partition it reads from. Since each partition has a monotonically increasing sequence of message offsets, this works by _committing_ the offset of the last message that was processed in a given partition. Kafka handles these commits and allows another consumer in a group to resume from the last commit when a member crashes or becomes unresponsive.
 
-By default, offsets are committed every 10 seconds. You can increase the frequency, known as the _offset commit interval_, to limit the duration of double-processing scenarios, at the cost of a lower throughput due to the added coordination. If you want to improve throughtput, and double-processing is of less concern to you, then you can decrease the frequency.
+By default, offsets are committed every 10 seconds. You can increase the frequency, known as the _offset commit interval_, to limit the duration of double-processing scenarios, at the cost of a lower throughput due to the added coordination. If you want to improve throughput, and double-processing is of less concern to you, then you can decrease the frequency.
 
 In addition to the time based trigger it's possible to trigger checkpointing in response to _n_ messages having been processed, known as the _offset commit threshold_. This puts a bound on the number of messages that can be double-processed before the problem is detected. Setting this to 1 will cause an offset commit to take place every time a message has been processed. By default this trigger is disabled.
 
