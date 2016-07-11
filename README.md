@@ -292,7 +292,15 @@ The producer is designed for resilience in the face of temporary network errors,
 
 Typically, you'd configure the producer to retry failed attempts at sending messages, but sometimes all retries are exhausted. In that case, `Kafka::DeliveryFailed` is raised from `Kafka::Producer#deliver_messages`. If you wish to have your application be resilient to this happening (e.g. if you're logging to Kafka from a web application) you can rescue this exception. The failed messages are still retained in the buffer, so a subsequent call to `#deliver_messages` will still attempt to send them.
 
-Note that there's a maximum buffer size; pass in a different value for `max_buffer_size` when calling `#producer` in order to configure this.
+Note that there's a maximum buffer size; by default, it's set to 1,000 messages and 10MB. It's possible to configure both these numbers:
+
+```ruby
+producer = kafka.producer(
+  max_buffer_size: 5_000,           # Allow at most 5K messages to be buffered.
+  max_buffer_bytesize: 100_000_000, # Allow at most 100MB to be buffered.
+  ...
+)
+```
 
 A final note on buffers: local buffers give resilience against broker and network failures, and allow higher throughput due to message batching, but they also trade off consistency guarantees for higher availibility and resilience. If your local process dies while messages are buffered, those messages will be lost. If you require high levels of consistency, you should call `#deliver_messages` immediately after `#produce`.
 
