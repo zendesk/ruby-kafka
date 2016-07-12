@@ -26,7 +26,11 @@ module Kafka
     end
 
     def last_offset
-      messages.last.offset
+      if empty?
+        highwater_mark_offset - 1
+      else
+        messages.last.offset
+      end
     end
 
     def offset_lag
