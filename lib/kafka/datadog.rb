@@ -93,6 +93,7 @@ module Kafka
 
         tags = {
           client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
           topic: event.payload.fetch(:topic),
           partition: event.payload.fetch(:partition),
         }
@@ -112,6 +113,7 @@ module Kafka
 
         tags = {
           client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
           topic: event.payload.fetch(:topic),
           partition: event.payload.fetch(:partition),
         }
