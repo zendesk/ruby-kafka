@@ -27,22 +27,6 @@ kafka = Kafka.new(
   logger: logger,
 )
 
-begin
-  offset = :latest
-  partition = 0
-
-  loop do
-    messages = kafka.fetch_messages(
-      topic: topic,
-      partition: partition,
-      offset: offset
-    )
-
-    messages.each do |message|
-      puts message.value
-      offset = message.offset + 1
-    end
-  end
-ensure
-  kafka.close
+kafka.each_message(topic: topic) do |message|
+  puts message.value
 end
