@@ -57,7 +57,7 @@ module Kafka
     end
 
     def open?
-      !@socket.nil?
+      !@socket.nil? && !@socket.closed?
     end
 
     def close
