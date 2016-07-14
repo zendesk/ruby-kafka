@@ -27,6 +27,24 @@ module Kafka
       @socket = Socket.new(Socket.const_get(addr[0][0]), Socket::SOCK_STREAM, 0)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
+      # Send keepalive probes to the socket in order to avoid having the server
+      # kill the connection after a period of inactivity.
+      @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
+
+      if defined?(Socket::TCP_KEEPALIVE)
+        # Start sending probes after one minute of inactivity.
+        @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPALIVE, 60)
+      elsif defined?(Socket::TCP_KEEPIDLE)
+        # Start sending probes after one minute of inactivity.
+        @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPIDLE, 60)
+
+        # Send probes 10 seconds apart.
+        @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPINTVL, 10)
+
+        # Send up to 5 probes before giving up.
+        @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_KEEPCNT, 5)
+      end
+
       begin
         # Initiate the socket connection in the background. If it doesn't fail
         # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS)
