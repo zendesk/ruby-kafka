@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.11
+
+- Fix bug in the simple consumer loop.
+
 ## v0.3.10
 
 - Handle brokers becoming unavailable while in a consumer loop (#228).
