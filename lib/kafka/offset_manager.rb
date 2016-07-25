@@ -11,7 +11,7 @@ module Kafka
       @processed_offsets = {}
       @default_offsets = {}
       @committed_offsets = nil
-      @last_commit = Time.at(0)
+      @last_commit = Time.now
     end
 
     def set_default_offset(topic, default_offset)
