@@ -211,8 +211,14 @@ module Kafka
     end
 
     def join_group
-      @offset_manager.clear_offsets
       @group.join
+
+      # After rejoining the group we may have been assigned a new set of
+      # partitions. Keeping the old offset commits around forever would risk
+      # having the consumer go back and reprocess messages if it's assigned
+      # a partition it used to be assigned to way back. For that reason, we
+      # only keep commits for the partitions that we're still assigned.
+      @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
     end
 
     def fetch_batches(min_bytes:, max_wait_time:)

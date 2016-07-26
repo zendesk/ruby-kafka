@@ -64,9 +64,15 @@ module Kafka
       end
     end
 
-    def clear_offsets
-      @uncommitted_offsets = 0
-      @processed_offsets.clear
+    def clear_offsets_excluding(excluded)
+      # Clear all offsets that aren't in `excluded`.
+      @processed_offsets.each do |topic, partitions|
+        partitions.keep_if do |partition, _|
+          excluded.fetch(topic, []).include?(partition)
+        end
+      end
+
+      # Clear the cached commits from the brokers.
       @committed_offsets = nil
     end
 
