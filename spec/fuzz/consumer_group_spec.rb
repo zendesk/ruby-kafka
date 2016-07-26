@@ -28,7 +28,7 @@ describe "Consumer groups", fuzz: true do
 
     nemesis = Thread.new do
       loop do
-        sleep 60
+        sleep 45
 
         target = consumer_threads.sample
         consumer_threads.delete(target)
