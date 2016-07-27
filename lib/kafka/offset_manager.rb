@@ -21,7 +21,8 @@ module Kafka
     def mark_as_processed(topic, partition, offset)
       @uncommitted_offsets += 1
       @processed_offsets[topic] ||= {}
-      @processed_offsets[topic][partition] = offset + 1
+      @processed_offsets[topic][partition] = offset
+      @logger.debug "Marking #{topic}/#{partition}:#{offset} as committed"
     end
 
     def next_offset_for(topic, partition)
@@ -32,20 +33,21 @@ module Kafka
       # A negative offset means that no offset has been committed, so we need to
       # resolve the default offset for the topic.
       if offset < 0
-        offset = @default_offsets.fetch(topic)
-        offset = @cluster.resolve_offset(topic, partition, offset)
-
-        # Make sure we commit this offset so that we don't repeat have to
-        # resolve the default offset every time.
-        mark_as_processed(topic, partition, offset - 1)
+        default_offset = @default_offsets.fetch(topic)
+        @cluster.resolve_offset(topic, partition, default_offset)
+      else
+        # The next offset is the last offset plus one.
+        offset + 1
       end
-
-      offset
     end
 
     def commit_offsets
       unless @processed_offsets.empty?
-        @logger.info "Committing offsets for #{@uncommitted_offsets} messages"
+        pretty_offsets = @processed_offsets.flat_map {|topic, partitions|
+          partitions.map {|partition, offset| "#{topic}/#{partition}:#{offset}" }
+        }.join(", ")
+
+        @logger.info "Committing offsets: #{pretty_offsets}"
 
         @group.commit_offsets(@processed_offsets)
 
