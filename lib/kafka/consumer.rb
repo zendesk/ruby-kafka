@@ -211,7 +211,13 @@ module Kafka
     end
 
     def join_group
+      old_generation_id = @group.generation_id
+
       @group.join
+
+      if old_generation_id && @group.generation_id != old_generation_id + 1
+        raise "unexpected generation id #{@group.generation_id}"
+      end
 
       # After rejoining the group we may have been assigned a new set of
       # partitions. Keeping the old offset commits around forever would risk

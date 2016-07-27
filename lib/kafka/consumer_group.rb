@@ -3,7 +3,7 @@ require "kafka/round_robin_assignment_strategy"
 
 module Kafka
   class ConsumerGroup
-    attr_reader :assigned_partitions
+    attr_reader :assigned_partitions, :generation_id
 
     def initialize(cluster:, logger:, group_id:, session_timeout:)
       @cluster = cluster
