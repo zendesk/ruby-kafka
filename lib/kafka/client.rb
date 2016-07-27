@@ -60,6 +60,21 @@ module Kafka
       @cluster = initialize_cluster
     end
 
+    # Delivers a single message to the Kafka cluster.
+    #
+    # **Note:** Only use this API for low-throughput scenarios. If you want to deliver
+    # many messages at a high rate, or if you want to configure the way messages are
+    # sent, use the {#producer} or {#async_producer} APIs instead.
+    #
+    # @param value [String, nil] the message value.
+    # @param key [String, nil] the message key.
+    # @param topic [String] the topic that the message should be written to.
+    # @param partition [Integer, nil] the partition that the message should be written
+    #   to, or `nil` if either `partition_key` is passed or the partition should be
+    #   chosen at random.
+    # @param partition_key [String] a value used to deterministically choose a
+    #   partition to write to.
+    # @return [nil]
     def deliver_message(value, key: nil, topic:, partition: nil, partition_key: nil)
       create_time = Time.now
 
