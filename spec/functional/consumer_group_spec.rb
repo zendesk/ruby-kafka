@@ -3,14 +3,14 @@ describe "Consumer API", functional: true do
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
   example "consuming messages from the beginning of a topic" do
-    sent_messages = 1_000
+    messages = (1..1000).to_a
 
     Thread.new do
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
       producer = kafka.producer
 
-      1.upto(sent_messages) do |i|
-        producer.produce("hello", topic: topic, partition_key: i.to_s)
+      messages.each do |i|
+        producer.produce(i.to_s, topic: topic, partition_key: i.to_s)
 
         if i % 100 == 0
           producer.deliver_messages 
@@ -30,7 +30,7 @@ describe "Consumer API", functional: true do
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
-        received_messages = 0
+        received_messages = []
 
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id)
@@ -38,7 +38,7 @@ describe "Consumer API", functional: true do
 
         consumer.each_message do |message|
           break if message.value.nil?
-          received_messages += 1
+          received_messages << Integer(message.value)
         end
 
         received_messages
@@ -49,9 +49,9 @@ describe "Consumer API", functional: true do
       t
     end
 
-    received_messages = threads.map(&:value).inject(0, &:+)
+    received_messages = threads.map(&:value).flatten
 
-    expect(received_messages).to eq sent_messages
+    expect(received_messages.sort).to eq messages
   end
 
   example "consuming messages from the end of a topic" do
