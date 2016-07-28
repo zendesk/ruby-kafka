@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.12
+
+- Fix a bug in the consumer.
+
 ## v0.3.11
 
 - Fix bug in the simple consumer loop.
