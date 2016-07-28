@@ -37,8 +37,11 @@ describe "Consumer API", functional: true do
         consumer.subscribe(topic)
 
         consumer.each_message do |message|
-          break if message.value.nil?
-          received_messages << Integer(message.value)
+          if message.value.nil?
+            consumer.stop
+          else
+            received_messages << Integer(message.value)
+          end
         end
 
         received_messages
@@ -68,8 +71,11 @@ describe "Consumer API", functional: true do
         consumer.subscribe(topic, start_from_beginning: false)
 
         consumer.each_message do |message|
-          break if message.value.nil?
-          received_messages += 1
+          if message.value.nil?
+            consumer.stop
+          else
+            received_messages += 1
+          end
         end
 
         received_messages
@@ -106,5 +112,40 @@ describe "Consumer API", functional: true do
     received_messages = threads.map(&:value).inject(0, &:+)
 
     expect(received_messages).to eq sent_messages
+  end
+
+  example "stopping and restarting a consumer group" do
+    topic = create_random_topic(num_partitions: 1)
+    num_messages = 10
+    processed_messages = 0
+
+    producer = kafka.producer
+    (1..num_messages).each {|i| producer.produce(i.to_s, topic: topic) }
+    producer.deliver_messages
+
+    group_id = "test#{rand(1000)}"
+
+    consumer = kafka.consumer(group_id: group_id)
+    consumer.subscribe(topic, start_from_beginning: true)
+
+    consumer.each_message do |message|
+      processed_messages += 1
+      consumer.stop if Integer(message.value) == num_messages
+    end
+
+    expect(processed_messages).to eq num_messages
+
+    (1..num_messages).each {|i| producer.produce(i.to_s, topic: topic) }
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: group_id)
+    consumer.subscribe(topic, start_from_beginning: true)
+
+    consumer.each_message do |message|
+      processed_messages += 1
+      consumer.stop if Integer(message.value) == num_messages
+    end
+
+    expect(processed_messages).to eq(num_messages * 2)
   end
 end
