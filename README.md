@@ -26,8 +26,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     1. [Consumer Groups](#consumer-groups)
     2. [Consumer Checkpointing](#consumer-checkpointing)
     3. [Topic Subscriptions](#topic-subscriptions)
-    4. [Consuming Messages in Batches](#consuming-messages-in-batches)
-    5. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
+    4. [Shutting Down a Consumer](#shutting-down-a-consumer)
+    5. [Consuming Messages in Batches](#consuming-messages-in-batches)
+    6. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
   4. [Thread Safety](#thread-safety)
   5. [Logging](#logging)
   6. [Instrumentation](#instrumentation)
@@ -524,6 +525,23 @@ consumer.subscribe("notifications", start_from_beginning: false)
 ```
 
 Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of `start_from_beginning`. As such, this setting only applies when the consumer initially starts consuming from a topic.
+
+
+#### Shutting Down a Consumer
+
+In order to shut down a running consumer process cleanly, call `#stop` on it. A common pattern is to trap a process signal and initiate the shutdown from there:
+
+```ruby
+consumer = kafka.consumer(...)
+
+# The consumer can be stopped from the command line by executing
+# `kill -s QUIT <process-id>`.
+trap("QUIT") { consumer.stop }
+
+consumer.each_message do |message|
+  ...
+end
+```
 
 
 #### Consuming Messages in Batches
