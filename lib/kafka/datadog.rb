@@ -206,5 +206,27 @@ module Kafka
 
       attach_to "producer.kafka"
     end
+
+    class AsyncProducerSubscriber < StatsdSubscriber
+      def enqueue_message(event)
+        client = event.payload.fetch(:client_id)
+        topic = event.payload.fetch(:topic)
+        queue_size = event.payload.fetch(:queue_size)
+        max_queue_size = event.payload.fetch(:max_queue_size)
+        queue_fill_ratio = queue_size.to_f / max_queue_size.to_f
+
+        tags = {
+          client: client,
+        }
+
+        # This gets us the avg/max queue size per producer.
+        histogram("producer.queue.size", queue_size, tags: tags)
+
+        # This gets us the avg/max queue fill ratio per producer.
+        histogram("producer.queue.fill_ratio", queue_fill_ratio, tags: tags)
+      end
+
+      attach_to "async_producer.kafka"
+    end
   end
 end
