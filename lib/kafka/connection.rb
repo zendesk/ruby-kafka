@@ -145,29 +145,14 @@ module Kafka
       )
 
       data = Kafka::Protocol::Encoder.encode_with(message)
-      retried = false
       notification[:request_size] = data.bytesize
 
-      begin
-        @encoder.write_bytes(data)
-      rescue Errno::ETIMEDOUT
-        @logger.error "Timed out while writing request #{@correlation_id}"
-        raise
-      rescue Errno::EPIPE, Errno::ECONNRESET, EOFError
-        # Kafka brokers automatically close client connections after a period of
-        # inactivity. If this has happened, it's safe to re-open the connection
-        # and retry the request.
-        if retried
-          raise
-        else
-          @logger.warn "Connection has been closed by the server, retrying..."
-          retried = true
-          reopen
-          retry
-        end
-      end
+      with_retry { @encoder.write_bytes(data) }
 
       nil
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while writing request #{@correlation_id}"
+      raise
     end
 
     # Reads a response from the connection.
@@ -179,7 +164,7 @@ module Kafka
     def read_response(response_class, notification)
       @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
 
-      data = @decoder.bytes
+      data = with_retry { @decoder.bytes }
       notification[:response_size] = data.bytesize
 
       buffer = StringIO.new(data)
@@ -194,6 +179,21 @@ module Kafka
     rescue Errno::ETIMEDOUT
       @logger.error "Timed out while waiting for response #{@correlation_id}"
       raise
+    end
+
+    # Kafka brokers automatically close client connections after a period of
+    # inactivity. If this has happened, it's safe to re-open the connection
+    # and retry the request.
+    def with_retry
+      yield
+    rescue Errno::EPIPE, Errno::ECONNRESET, EOFError
+      @logger.warn "Connection has been closed by the server, retrying..."
+
+      # Set up a new socket.
+      reopen
+
+      # Let's try again.
+      yield
     end
 
     def wait_for_response(response_class, notification)
