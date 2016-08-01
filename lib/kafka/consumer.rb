@@ -211,8 +211,22 @@ module Kafka
     end
 
     def join_group
-      @offset_manager.clear_offsets
+      old_generation_id = @group.generation_id
+
       @group.join
+
+      if old_generation_id && @group.generation_id != old_generation_id + 1
+        # We've been out of the group for at least an entire generation, no
+        # sense in trying to hold on to offset data
+        @offset_manager.clear_offsets
+      else
+        # After rejoining the group we may have been assigned a new set of
+        # partitions. Keeping the old offset commits around forever would risk
+        # having the consumer go back and reprocess messages if it's assigned
+        # a partition it used to be assigned to way back. For that reason, we
+        # only keep commits for the partitions that we're still assigned.
+        @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
+      end
     end
 
     def fetch_batches(min_bytes:, max_wait_time:)

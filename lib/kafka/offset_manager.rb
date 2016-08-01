@@ -59,14 +59,27 @@ module Kafka
     end
 
     def commit_offsets_if_necessary
-      if seconds_since_last_commit >= @commit_interval || commit_threshold_reached?
+      if commit_timeout_reached? || commit_threshold_reached?
         commit_offsets
       end
     end
 
     def clear_offsets
-      @uncommitted_offsets = 0
       @processed_offsets.clear
+
+      # Clear the cached commits from the brokers.
+      @committed_offsets = nil
+    end
+
+    def clear_offsets_excluding(excluded)
+      # Clear all offsets that aren't in `excluded`.
+      @processed_offsets.each do |topic, partitions|
+        partitions.keep_if do |partition, _|
+          excluded.fetch(topic, []).include?(partition)
+        end
+      end
+
+      # Clear the cached commits from the brokers.
       @committed_offsets = nil
     end
 
@@ -79,6 +92,10 @@ module Kafka
     def committed_offset_for(topic, partition)
       @committed_offsets ||= @group.fetch_offsets
       @committed_offsets.offset_for(topic, partition)
+    end
+
+    def commit_timeout_reached?
+      @commit_interval != 0 && seconds_since_last_commit >= @commit_interval
     end
 
     def commit_threshold_reached?

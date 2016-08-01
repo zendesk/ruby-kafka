@@ -54,7 +54,7 @@ describe "Consumer API", functional: true do
 
     received_messages = threads.map(&:value).flatten
 
-    expect(received_messages.sort).to eq messages
+    expect(received_messages.sort).to match_array messages
   end
 
   example "consuming messages from the end of a topic" do
