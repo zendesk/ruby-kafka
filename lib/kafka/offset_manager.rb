@@ -59,7 +59,7 @@ module Kafka
     end
 
     def commit_offsets_if_necessary
-      if seconds_since_last_commit >= @commit_interval || commit_threshold_reached?
+      if commit_timeout_reached? || commit_threshold_reached?
         commit_offsets
       end
     end
@@ -92,6 +92,10 @@ module Kafka
     def committed_offset_for(topic, partition)
       @committed_offsets ||= @group.fetch_offsets
       @committed_offsets.offset_for(topic, partition)
+    end
+
+    def commit_timeout_reached?
+      @commit_interval != 0 && seconds_since_last_commit >= @commit_interval
     end
 
     def commit_threshold_reached?
