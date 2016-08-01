@@ -69,7 +69,7 @@ module Kafka
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
     #
-    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:)
+    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:, logger:)
       raise ArgumentError unless max_queue_size > 0
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
@@ -77,6 +77,7 @@ module Kafka
       @queue = Queue.new
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
+      @logger = logger
 
       @worker = Worker.new(
         queue: @queue,
@@ -101,6 +102,12 @@ module Kafka
 
       args = [value, **options.merge(topic: topic)]
       @queue << [:produce, args]
+
+      @instrumenter.instrument("enqueue_message.async_producer", {
+        topic: topic,
+        queue_size: @queue.size,
+        max_queue_size: @max_queue_size,
+      })
 
       nil
     end
@@ -149,6 +156,8 @@ module Kafka
       @instrumenter.instrument("buffer_overflow.producer", {
         topic: topic,
       })
+
+      @logger.error "Buffer overflow: failed to enqueue message for #{topic}"
 
       raise BufferOverflow
     end

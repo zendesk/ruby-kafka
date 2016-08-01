@@ -200,6 +200,7 @@ module Kafka
         delivery_threshold: delivery_threshold,
         max_queue_size: max_queue_size,
         instrumenter: @instrumenter,
+        logger: @logger,
       )
     end
 
