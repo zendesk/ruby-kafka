@@ -133,6 +133,7 @@ module Kafka
       def produce_message(event)
         client = event.payload.fetch(:client_id)
         topic = event.payload.fetch(:topic)
+        message_size = event.payload.fetch(:message_size)
         buffer_size = event.payload.fetch(:buffer_size)
         max_buffer_size = event.payload.fetch(:max_buffer_size)
         buffer_fill_ratio = buffer_size.to_f / max_buffer_size.to_f
@@ -143,6 +144,8 @@ module Kafka
 
         # This gets us the write rate.
         increment("producer.produce.messages", tags: tags.merge(topic: topic))
+
+        histogram("producer.produce.message_size", message_size, tags: tags.merge(topic: topic))
 
         # This gets us the avg/max buffer size per producer.
         histogram("producer.buffer.size", buffer_size, tags: tags)

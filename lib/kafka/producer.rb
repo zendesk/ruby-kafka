@@ -212,6 +212,7 @@ module Kafka
         key: key,
         topic: topic,
         create_time: create_time,
+        message_size: message.bytesize,
         buffer_size: buffer_size,
         max_buffer_size: @max_buffer_size,
       })
