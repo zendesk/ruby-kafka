@@ -54,6 +54,9 @@ module Kafka
 
       # Whether or not the consumer is currently consuming messages.
       @running = false
+
+      # The maximum number of bytes to fetch from a single partition, by topic.
+      @max_bytes = {}
     end
 
     # Subscribes the consumer to a topic.
@@ -71,12 +74,15 @@ module Kafka
     #   only applies when first consuming a topic partition – once the consumer
     #   has checkpointed its progress, it will always resume from the last
     #   checkpoint.
+    # @param max_bytes_per_partition [Integer] the maximum amount of data fetched
+    #   from a single partition at a time.
     # @return [nil]
-    def subscribe(topic, default_offset: nil, start_from_beginning: true)
+    def subscribe(topic, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
       default_offset ||= start_from_beginning ? :earliest : :latest
 
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)
+      @max_bytes[topic] = max_bytes_per_partition
 
       nil
     end
@@ -248,10 +254,11 @@ module Kafka
       assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
           offset = @offset_manager.next_offset_for(topic, partition)
+          max_bytes = @max_bytes.fetch(topic)
 
           @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
 
-          operation.fetch_from_partition(topic, partition, offset: offset)
+          operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
         end
       end
 
