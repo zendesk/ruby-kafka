@@ -195,11 +195,13 @@ module Kafka
       )
 
       if buffer_size >= @max_buffer_size
-        buffer_overflow topic, "Max buffer size (#{@max_buffer_size} messages) exceeded"
+        buffer_overflow topic,
+          "Cannot produce to #{topic}, max buffer size (#{@max_buffer_size} messages) reached"
       end
 
       if buffer_bytesize + message.bytesize >= @max_buffer_bytesize
-        buffer_overflow topic, "Max buffer bytesize (#{@max_buffer_bytesize} bytes) exceeded"
+        buffer_overflow topic,
+          "Cannot produce to #{topic}, max buffer bytesize (#{@max_buffer_bytesize} bytes) reached"
       end
 
       @target_topics.add(topic)

@@ -220,10 +220,19 @@ module Kafka
         }
 
         # This gets us the avg/max queue size per producer.
-        histogram("producer.queue.size", queue_size, tags: tags)
+        histogram("async_producer.queue.size", queue_size, tags: tags)
 
         # This gets us the avg/max queue fill ratio per producer.
-        histogram("producer.queue.fill_ratio", queue_fill_ratio, tags: tags)
+        histogram("async_producer.queue.fill_ratio", queue_fill_ratio, tags: tags)
+      end
+
+      def buffer_overflow(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+          topic: event.payload.fetch(:topic),
+        }
+
+        increment("async_producer.produce.errors", tags: tags)
       end
 
       attach_to "async_producer.kafka"
