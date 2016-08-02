@@ -153,11 +153,11 @@ module Kafka
     end
 
     def buffer_overflow(topic)
-      @instrumenter.instrument("buffer_overflow.producer", {
+      @instrumenter.instrument("buffer_overflow.async_producer", {
         topic: topic,
       })
 
-      @logger.error "Buffer overflow: failed to enqueue message for #{topic}"
+      @logger.error "Cannot produce message to #{topic}, max queue size (#{@max_queue_size}) reached"
 
       raise BufferOverflow
     end
