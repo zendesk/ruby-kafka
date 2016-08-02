@@ -4,6 +4,11 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.13.beta1
+
+- Minimize the number of times messages are reprocessed after a consumer group resync.
+- Improve instrumentation of the async producer.
+
 ## v0.3.12
 
 - Fix a bug in the consumer.
