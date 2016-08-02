@@ -123,11 +123,6 @@ module Kafka
       raise ConnectionError, e
     end
 
-    def reopen
-      close
-      open
-    end
-
     # Writes a request over the connection.
     #
     # @param request [#encode] the request that should be encoded and written.
@@ -145,29 +140,14 @@ module Kafka
       )
 
       data = Kafka::Protocol::Encoder.encode_with(message)
-      retried = false
       notification[:request_size] = data.bytesize
 
-      begin
-        @encoder.write_bytes(data)
-      rescue Errno::ETIMEDOUT
-        @logger.error "Timed out while writing request #{@correlation_id}"
-        raise
-      rescue Errno::EPIPE, Errno::ECONNRESET, EOFError
-        # Kafka brokers automatically close client connections after a period of
-        # inactivity. If this has happened, it's safe to re-open the connection
-        # and retry the request.
-        if retried
-          raise
-        else
-          @logger.warn "Connection has been closed by the server, retrying..."
-          retried = true
-          reopen
-          retry
-        end
-      end
+      @encoder.write_bytes(data)
 
       nil
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while writing request #{@correlation_id}"
+      raise
     end
 
     # Reads a response from the connection.
