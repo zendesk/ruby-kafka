@@ -360,7 +360,10 @@ module Kafka
       end
 
       if failed_messages.any?
-        @logger.error "Failed to assign partitions to #{failed_messages.count} messages"
+        failed_messages.group_by(&:topic).each do |topic, messages|
+          @logger.error "Failed to assign partitions to #{messages.count} messages in #{topic}"
+        end
+
         @cluster.mark_as_stale!
       end
 
