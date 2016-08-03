@@ -113,7 +113,7 @@ module Kafka
     rescue UnknownMemberId
       @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
-      @member_id = nil
+      @member_id = ""
       sleep 1
 
       retry
