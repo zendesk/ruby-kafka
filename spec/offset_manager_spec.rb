@@ -51,8 +51,9 @@ describe Kafka::OffsetManager do
     end
 
     it "returns the default offset if none have been committed" do
+      allow(group).to receive(:assigned_partitions) { { "greetings" => [0] } }
       allow(fetched_offsets).to receive(:offset_for).with("greetings", 0) { -1 }
-      allow(cluster).to receive(:resolve_offset).with("greetings", 0, :latest) { 42 }
+      allow(cluster).to receive(:resolve_offsets).with("greetings", [0], :latest) { { 0 => 42 } }
       offset_manager.set_default_offset("greetings", :latest)
 
       offset = offset_manager.next_offset_for("greetings", 0)

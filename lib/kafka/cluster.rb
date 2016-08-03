@@ -119,10 +119,16 @@ module Kafka
       raise
     end
 
-    def resolve_offset(topic, partition, offset)
+    def resolve_offsets(topic, partitions, offset)
       add_target_topics([topic])
       refresh_metadata_if_necessary!
-      broker = get_leader(topic, partition)
+
+      partitions_by_broker = partitions.each_with_object({}) {|partition, hsh|
+        broker = get_leader(topic, partition)
+
+        hsh[broker] ||= []
+        hsh[broker] << partition
+      }
 
       if offset == :earliest
         offset = -2
@@ -130,19 +136,31 @@ module Kafka
         offset = -1
       end
 
-      response = broker.list_offsets(
-        topics: {
-          topic => [
-            {
-              partition: partition,
-              time: offset,
-              max_offsets: 1,
-            }
-          ]
-        }
-      )
+      offsets = {}
 
-      response.offset_for(topic, partition)
+      partitions_by_broker.each do |broker, broker_partitions|
+        response = broker.list_offsets(
+          topics: {
+            topic => broker_partitions.map {|partition|
+              {
+                partition: partition,
+                time: offset,
+                max_offsets: 1,
+              }
+            }
+          }
+        )
+
+        broker_partitions.each do |partition|
+          offsets[partition] = response.offset_for(topic, partition)
+        end
+      end
+
+      offsets
+    end
+
+    def resolve_offset(topic, partition, offset)
+      resolve_offsets(topic, [partition], offset).fetch(partition)
     end
 
     def topics
