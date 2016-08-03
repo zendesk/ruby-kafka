@@ -11,6 +11,7 @@ module Kafka
       @processed_offsets = {}
       @default_offsets = {}
       @committed_offsets = nil
+      @resolved_offsets = {}
       @last_commit = Time.now
     end
 
@@ -33,8 +34,7 @@ module Kafka
       # A negative offset means that no offset has been committed, so we need to
       # resolve the default offset for the topic.
       if offset < 0
-        default_offset = @default_offsets.fetch(topic)
-        @cluster.resolve_offset(topic, partition, default_offset)
+        resolve_offset(topic, partition)
       else
         # The next offset is the last offset plus one.
         offset + 1
@@ -84,6 +84,18 @@ module Kafka
     end
 
     private
+
+    def resolve_offset(topic, partition)
+      @resolved_offsets[topic] ||= fetch_resolved_offsets(topic)
+      @resolved_offsets[topic].fetch(partition)
+    end
+
+    def fetch_resolved_offsets(topic)
+      default_offset = @default_offsets.fetch(topic)
+      partitions = @group.assigned_partitions.fetch(topic)
+
+      @cluster.resolve_offsets(topic, partitions, default_offset)
+    end
 
     def seconds_since_last_commit
       Time.now - @last_commit
