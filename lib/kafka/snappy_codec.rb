@@ -2,6 +2,9 @@ module Kafka
   class SnappyCodec
     def initialize
       require "snappy"
+    rescue LoadError
+      raise LoadError,
+        "Using snappy compression requires adding a dependency on the `snappy` gem to your Gemfile."
     end
 
     def codec_id
