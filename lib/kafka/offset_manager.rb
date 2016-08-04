@@ -26,6 +26,11 @@ module Kafka
       @logger.debug "Marking #{topic}/#{partition}:#{offset} as committed"
     end
 
+    def seek_to_default(topic, partition)
+      @processed_offsets[topic] ||= {}
+      @processed_offsets[topic][partition] = -1
+    end
+
     def next_offset_for(topic, partition)
       offset = @processed_offsets.fetch(topic, {}).fetch(partition) {
         committed_offset_for(topic, partition)
