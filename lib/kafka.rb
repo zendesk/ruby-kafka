@@ -19,6 +19,7 @@ module Kafka
   end
 
   class OffsetOutOfRange < ProtocolError
+    attr_accessor :topic, :partition
   end
 
   # The request is for a topic or partition that does not exist on the broker.

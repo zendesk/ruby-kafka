@@ -71,6 +71,11 @@ module Kafka
           fetched_topic.partitions.map {|fetched_partition|
             begin
               Protocol.handle_error(fetched_partition.error_code)
+            rescue Kafka::OffsetOutOfRange => e
+              e.topic = fetched_topic.name
+              e.partition = fetched_partition.partition
+
+              raise e
             rescue Kafka::Error => e
               topic = fetched_topic.name
               partition = fetched_partition.partition
