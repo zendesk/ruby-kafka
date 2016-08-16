@@ -228,6 +228,8 @@ data = JSON.dump(event)
 producer.produce(data, topic: "events")
 ```
 
+There's also an example of [encoding messages with Apache Avro](https://github.com/zendesk/ruby-kafka/wiki/Encoding-messages-with-Avro).
+
 #### Partitioning
 
 Kafka topics are partitioned, with messages being assigned to a partition by the client. This allows a great deal of flexibility for the users. This section describes several strategies for partitioning and how they impact performance, data locality, etc.
