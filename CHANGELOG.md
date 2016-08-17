@@ -4,12 +4,9 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-## v0.3.13.beta4
+## v0.3.14
 
 - Automatically recover from invalid consumer checkpoints.
-
-## v0.3.13.beta1
-
 - Minimize the number of times messages are reprocessed after a consumer group resync.
 - Improve instrumentation of the async producer.
 
