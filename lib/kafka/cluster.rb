@@ -66,14 +66,12 @@ module Kafka
     end
 
     def refresh_metadata!
-      if cluster_info_refreshed_at > Time.now - @metadata_refresh_interval
-        @cluster_info = nil
-        cluster_info
-      end
+      @cluster_info = nil
+      cluster_info
     end
 
     def refresh_metadata_if_necessary!
-      refresh_metadata! if @stale
+      refresh_metadata! if @stale && time_to_refresh_metadata?
     end
 
     # Finds the broker acting as the leader of the given topic and partition.
@@ -217,6 +215,10 @@ module Kafka
       raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
 
       @cluster_info_refreshed_at = Time.now
+    end
+
+    def time_to_refresh_metadata?
+      cluster_info_refreshed_at > Time.now - @metadata_refresh_interval
     end
 
     def cluster_info_refreshed_at
