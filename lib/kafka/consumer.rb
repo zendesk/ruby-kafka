@@ -125,7 +125,15 @@ module Kafka
                 value: message.value,
               )
 
-              yield message
+              begin
+                yield message
+              rescue => e
+                location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
+                backtrace = e.backtrace.join("\n")
+                @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
+
+                raise
+              end
             end
 
             mark_message_as_processed(message)
@@ -176,7 +184,17 @@ module Kafka
                 message_count: batch.messages.count,
               )
 
-              yield batch
+              begin
+                yield batch
+              rescue => e
+                offset_range = batch.empty? ? "N/A" : [batch.first_offset, batch.last_offset].join("..")
+                location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
+                backtrace = e.backtrace.join("\n")
+
+                @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
+
+                raise
+              end
             end
 
             mark_message_as_processed(batch.messages.last)
