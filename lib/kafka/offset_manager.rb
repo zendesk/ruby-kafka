@@ -1,3 +1,5 @@
+require "kafka/partition_hash"
+
 module Kafka
   class OffsetManager
     def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:)
@@ -8,7 +10,7 @@ module Kafka
       @commit_threshold = commit_threshold
 
       @uncommitted_offsets = 0
-      @processed_offsets = {}
+      @processed_offsets = PartitionHash.new
       @default_offsets = {}
       @committed_offsets = nil
       @resolved_offsets = {}
@@ -21,18 +23,16 @@ module Kafka
 
     def mark_as_processed(topic, partition, offset)
       @uncommitted_offsets += 1
-      @processed_offsets[topic] ||= {}
-      @processed_offsets[topic][partition] = offset
+      @processed_offsets[topic, partition] = offset
       @logger.debug "Marking #{topic}/#{partition}:#{offset} as committed"
     end
 
     def seek_to_default(topic, partition)
-      @processed_offsets[topic] ||= {}
-      @processed_offsets[topic][partition] = -1
+      @processed_offsets[topic, partition] = -1
     end
 
     def next_offset_for(topic, partition)
-      offset = @processed_offsets.fetch(topic, {}).fetch(partition) {
+      offset = @processed_offsets.fetch(topic, partition) {
         committed_offset_for(topic, partition)
       }
 
@@ -48,13 +48,13 @@ module Kafka
 
     def commit_offsets
       unless @processed_offsets.empty?
-        pretty_offsets = @processed_offsets.flat_map {|topic, partitions|
-          partitions.map {|partition, offset| "#{topic}/#{partition}:#{offset}" }
+        pretty_offsets = @processed_offsets.map {|topic, partition, offset|
+          "#{topic}/#{partition}:#{offset}"
         }.join(", ")
 
         @logger.info "Committing offsets: #{pretty_offsets}"
 
-        @group.commit_offsets(@processed_offsets)
+        @group.commit_offsets(@processed_offsets.to_h)
 
         @last_commit = Time.now
 
@@ -78,10 +78,8 @@ module Kafka
 
     def clear_offsets_excluding(excluded)
       # Clear all offsets that aren't in `excluded`.
-      @processed_offsets.each do |topic, partitions|
-        partitions.keep_if do |partition, _|
-          excluded.fetch(topic, []).include?(partition)
-        end
+      @processed_offsets.keep_if do |topic, partition|
+        excluded.fetch(topic, []).include?(partition)
       end
 
       # Clear the cached commits from the brokers.
