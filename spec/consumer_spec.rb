@@ -29,7 +29,9 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
 
     allow(offset_manager).to receive(:commit_offsets)
+    allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
+    allow(offset_manager).to receive(:mark_as_processed)
     allow(offset_manager).to receive(:next_offset_for) { 42 }
 
     allow(group).to receive(:subscribe)
@@ -77,6 +79,26 @@ describe Kafka::Consumer do
       }.to raise_exception(RuntimeError, "hello")
 
       expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: hello"
+    end
+
+    it "seeks to the default offset when the checkpoint is invalid " do
+      done = false
+
+      allow(offset_manager).to receive(:seek_to_default) { done = true }
+
+      allow(fetch_operation).to receive(:execute) {
+        if done
+          fetched_batches
+        else
+          raise Kafka::OffsetOutOfRange
+        end
+      }
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(offset_manager).to have_received(:seek_to_default)
     end
   end
 end
