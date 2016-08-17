@@ -25,6 +25,14 @@ module Kafka
       @messages.empty?
     end
 
+    def first_offset
+      if empty?
+        nil
+      else
+        messages.first.offset
+      end
+    end
+
     def last_offset
       if empty?
         highwater_mark_offset - 1
