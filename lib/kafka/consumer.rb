@@ -63,7 +63,7 @@ module Kafka
     #
     # Typically you either want to start reading messages from the very
     # beginning of the topic's partitions or you simply want to wait for new
-    # messages to be written. In the former case, set `start_from_beginnign`
+    # messages to be written. In the former case, set `start_from_beginning`
     # true (the default); in the latter, set it to false.
     #
     # @param topic [String] the name of the topic to subscribe to.
