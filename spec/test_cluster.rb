@@ -15,7 +15,19 @@ class TestCluster
   ZOOKEEPER_IMAGE = "jplock/zookeeper:3.4.6"
   KAFKA_CLUSTER_SIZE = 3
 
-  def initialize
+  def start
+    [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
+      print "Fetching image #{image}... "
+
+      unless Docker::Image.exist?(image)
+        Docker::Image.create("fromImage" => image)
+      end
+
+      puts "OK"
+    end
+
+    puts "Starting cluster..."
+
     @zookeeper = create(
       "Image" => ZOOKEEPER_IMAGE,
       "Hostname" => "localhost",
@@ -43,20 +55,6 @@ class TestCluster
     }
 
     @kafka = @kafka_brokers.first
-  end
-
-  def start
-    [KAFKA_IMAGE, ZOOKEEPER_IMAGE].each do |image|
-      print "Fetching image #{image}... "
-
-      unless Docker::Image.exist?(image)
-        Docker::Image.create("fromImage" => image)
-      end
-
-      puts "OK"
-    end
-
-    puts "Starting cluster..."
 
     start_zookeeper_container
     start_kafka_containers
