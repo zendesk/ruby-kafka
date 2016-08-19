@@ -52,6 +52,9 @@ module Kafka
       @session_timeout = session_timeout
       @heartbeat = heartbeat
 
+      # A list of partitions that have been paused, per topic.
+      @paused_partitions = {}
+
       # Whether or not the consumer is currently consuming messages.
       @running = false
 
@@ -89,6 +92,15 @@ module Kafka
 
     def stop
       @running = false
+    end
+
+    def pause(topic, partition)
+      @paused_partitions[topic] ||= Set.new
+      @paused_partitions[topic] << partition
+    end
+
+    def paused?(topic, partition)
+      @paused_partitions.fetch(topic, []).include?(partition)
     end
 
     # Fetches and enumerates the messages in the topics that the consumer group
@@ -274,9 +286,12 @@ module Kafka
           offset = @offset_manager.next_offset_for(topic, partition)
           max_bytes = @max_bytes.fetch(topic)
 
-          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-
-          operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
+          if paused?(topic, partition)
+            @logger.warn "Partition #{topic}/#{partition} is currently paused, skipping"
+          else
+            @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
+            operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
+          end
         end
       end
 

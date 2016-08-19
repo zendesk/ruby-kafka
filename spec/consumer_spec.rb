@@ -100,5 +100,17 @@ describe Kafka::Consumer do
 
       expect(offset_manager).to have_received(:seek_to_default)
     end
+
+    it "does not fetch messages from paused partitions" do
+      assigned_partitions["greetings"] << 42
+
+      consumer.pause("greetings", 42)
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(fetch_operation).to_not have_received(:fetch_from_partition).with("greetings", 42, anything)
+    end
   end
 end
