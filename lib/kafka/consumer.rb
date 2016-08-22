@@ -146,6 +146,9 @@ module Kafka
     # @param max_wait_time [Integer] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
+    # @raise [Kafka::ProcessingError] if there was an error processing a message.
+    #   The original exception will be returned by calling `#cause` on the
+    #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_wait_time: 5)
       consumer_loop do
