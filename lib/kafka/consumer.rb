@@ -52,6 +52,9 @@ module Kafka
       @session_timeout = session_timeout
       @heartbeat = heartbeat
 
+      # A list of partitions that have been paused, per topic.
+      @paused_partitions = {}
+
       # Whether or not the consumer is currently consuming messages.
       @running = false
 
@@ -89,6 +92,41 @@ module Kafka
 
     def stop
       @running = false
+    end
+
+    # Pause processing of a specific topic partition.
+    #
+    # When a specific message causes the processor code to fail, it can be a good
+    # idea to simply pause the partition until the error can be resolved, allowing
+    # the rest of the partitions to continue being processed.
+    #
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [nil]
+    def pause(topic, partition)
+      @paused_partitions[topic] ||= Set.new
+      @paused_partitions[topic] << partition
+    end
+
+    # Resume processing of a topic partition.
+    #
+    # @see #pause
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [nil]
+    def resume(topic, partition)
+      paused_partitions = @paused_partitions.fetch(topic, [])
+      paused_partitions.delete(partition)
+    end
+
+    # Whether the topic partition is currently paused.
+    #
+    # @see #pause
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [Boolean] true if the partition is paused, false otherwise.
+    def paused?(topic, partition)
+      @paused_partitions.fetch(topic, []).include?(partition)
     end
 
     # Fetches and enumerates the messages in the topics that the consumer group
@@ -132,7 +170,7 @@ module Kafka
                 backtrace = e.backtrace.join("\n")
                 @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
 
-                raise
+                raise ProcessingError.new(message.topic, message.partition, message.offset)
               end
             end
 
@@ -274,9 +312,12 @@ module Kafka
           offset = @offset_manager.next_offset_for(topic, partition)
           max_bytes = @max_bytes.fetch(topic)
 
-          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-
-          operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
+          if paused?(topic, partition)
+            @logger.warn "Partition #{topic}/#{partition} is currently paused, skipping"
+          else
+            @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
+            operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
+          end
         end
       end
 

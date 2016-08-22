@@ -4,6 +4,19 @@ module Kafka
   class Error < StandardError
   end
 
+  # There was an error processing a message.
+  class ProcessingError < Error
+    attr_reader :topic, :partition, :offset
+
+    def initialize(topic, partition, offset)
+      @topic = topic
+      @partition = partition
+      @offset = offset
+
+      super()
+    end
+  end
+
   # Subclasses of this exception class map to an error code described in the
   # Kafka protocol specification.
   #

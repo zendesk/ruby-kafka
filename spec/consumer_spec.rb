@@ -71,14 +71,23 @@ describe Kafka::Consumer do
       ]
     }
 
-    it "logs exceptions raised in the block" do
+    it "raises ProcessingError if the processing code fails" do
       expect {
         consumer.each_message do |message|
-          raise "hello"
+          raise "yolo"
         end
-      }.to raise_exception(RuntimeError, "hello")
+      }.to raise_exception(Kafka::ProcessingError) {|exception|
+        expect(exception.topic).to eq "greetings"
+        expect(exception.partition).to eq 0
+        expect(exception.offset).to eq 13
 
-      expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: hello"
+        cause = exception.cause
+
+        expect(cause.class).to eq RuntimeError
+        expect(cause.message).to eq "yolo"
+      }
+
+      expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: yolo"
     end
 
     it "seeks to the default offset when the checkpoint is invalid " do
@@ -99,6 +108,26 @@ describe Kafka::Consumer do
       end
 
       expect(offset_manager).to have_received(:seek_to_default)
+    end
+
+    it "does not fetch messages from paused partitions" do
+      assigned_partitions["greetings"] << 42
+
+      consumer.pause("greetings", 42)
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(fetch_operation).to_not have_received(:fetch_from_partition).with("greetings", 42, anything)
+
+      consumer.resume("greetings", 42)
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(fetch_operation).to have_received(:fetch_from_partition).with("greetings", 42, anything)
     end
   end
 end
