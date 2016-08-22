@@ -144,7 +144,7 @@ module Kafka
                 backtrace = e.backtrace.join("\n")
                 @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
 
-                raise
+                raise ProcessingError.new(message.topic, message.partition, message.offset)
               end
             end
 

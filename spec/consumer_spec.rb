@@ -71,14 +71,14 @@ describe Kafka::Consumer do
       ]
     }
 
-    it "logs exceptions raised in the block" do
+    it "raises ProcessingError if the processing code fails" do
       expect {
         consumer.each_message do |message|
-          raise "hello"
+          raise "yolo"
         end
-      }.to raise_exception(RuntimeError, "hello")
+      }.to raise_exception(Kafka::ProcessingError)
 
-      expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: hello"
+      expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: yolo"
     end
 
     it "seeks to the default offset when the checkpoint is invalid " do
