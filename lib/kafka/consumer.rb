@@ -94,11 +94,26 @@ module Kafka
       @running = false
     end
 
+    # Pause processing of a specific topic partition.
+    #
+    # When a specific message causes the processor code to fail, it can be a good
+    # idea to simply pause the partition until the error can be resolved, allowing
+    # the rest of the partitions to continue being processed.
+    #
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [nil]
     def pause(topic, partition)
       @paused_partitions[topic] ||= Set.new
       @paused_partitions[topic] << partition
     end
 
+    # Whether the topic partition is currently paused.
+    #
+    # @see #pause
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [Boolean] true if the partition is paused, false otherwise.
     def paused?(topic, partition)
       @paused_partitions.fetch(topic, []).include?(partition)
     end
