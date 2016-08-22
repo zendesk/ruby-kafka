@@ -80,6 +80,11 @@ describe Kafka::Consumer do
         expect(exception.topic).to eq "greetings"
         expect(exception.partition).to eq 0
         expect(exception.offset).to eq 13
+
+        cause = exception.cause
+
+        expect(cause.class).to eq RuntimeError
+        expect(cause.message).to eq "yolo"
       }
 
       expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: yolo"
