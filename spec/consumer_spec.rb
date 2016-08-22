@@ -76,7 +76,11 @@ describe Kafka::Consumer do
         consumer.each_message do |message|
           raise "yolo"
         end
-      }.to raise_exception(Kafka::ProcessingError)
+      }.to raise_exception(Kafka::ProcessingError) {|exception|
+        expect(exception.topic).to eq "greetings"
+        expect(exception.partition).to eq 0
+        expect(exception.offset).to eq 13
+      }
 
       expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: yolo"
     end

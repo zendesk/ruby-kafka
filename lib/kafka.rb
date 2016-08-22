@@ -9,6 +9,10 @@ module Kafka
     attr_reader :topic, :partition, :offset
 
     def initialize(topic, partition, offset)
+      @topic = topic
+      @partition = partition
+      @offset = offset
+
       super()
     end
   end
