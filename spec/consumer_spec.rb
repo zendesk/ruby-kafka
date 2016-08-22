@@ -111,6 +111,14 @@ describe Kafka::Consumer do
       end
 
       expect(fetch_operation).to_not have_received(:fetch_from_partition).with("greetings", 42, anything)
+
+      consumer.resume("greetings", 42)
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(fetch_operation).to have_received(:fetch_from_partition).with("greetings", 42, anything)
     end
   end
 end

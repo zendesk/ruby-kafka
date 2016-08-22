@@ -108,6 +108,17 @@ module Kafka
       @paused_partitions[topic] << partition
     end
 
+    # Resume processing of a topic partition.
+    #
+    # @see #pause
+    # @param topic [String]
+    # @param partition [Integer]
+    # @return [nil]
+    def resume(topic, partition)
+      paused_partitions = @paused_partitions.fetch(topic, [])
+      paused_partitions.delete(partition)
+    end
+
     # Whether the topic partition is currently paused.
     #
     # @see #pause
