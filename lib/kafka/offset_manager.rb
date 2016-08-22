@@ -71,6 +71,7 @@ module Kafka
 
     def clear_offsets
       @processed_offsets.clear
+      @resolved_offsets.clear
 
       # Clear the cached commits from the brokers.
       @committed_offsets = nil
@@ -86,6 +87,7 @@ module Kafka
 
       # Clear the cached commits from the brokers.
       @committed_offsets = nil
+      @resolved_offsets.clear
     end
 
     private
