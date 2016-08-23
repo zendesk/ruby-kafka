@@ -270,8 +270,8 @@ module Kafka
     ensure
       # In order to quickly have the consumer group re-balance itself, it's
       # important that members explicitly tell Kafka when they're leaving.
-      @offset_manager.commit_offsets
-      @group.leave
+      @offset_manager.commit_offsets rescue nil
+      @group.leave rescue nil
       @running = false
     end
 
