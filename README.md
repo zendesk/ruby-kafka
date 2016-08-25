@@ -34,8 +34,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   6. [Instrumentation](#instrumentation)
   7. [Understanding Timeouts](#understanding-timeouts)
   8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-4. [Development](#development)
-5. [Roadmap](#roadmap)
+4. [Design](#design)
+5. [Development](#development)
+6. [Roadmap](#roadmap)
 
 ## Installation
 
@@ -712,6 +713,20 @@ kafka = Kafka.new(
 ```
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
+
+## Design
+
+The ruby-kafka library was designed first and foremost for stability, resiliency, and operational ease of use. That means that performance is sometimes sacrificed.
+
+There are two major components in ruby-kafka, the Producer API and the Consumer API. Each has its own behaviors, error conditions, and performance considerations.
+
+### Producer Design
+
+The Producer in ruby-kafka is built for best-effort message delivery while going to great lengths to insulate the client from temporary (and oftentimes frequent) instability in the Kafka clusters. If a message delivery fails, it will be tried again at a later time.
+
+There are two ways to use the Producer API: synchronous and asynchronous. With the first option, you have direct control over when to deliver the messages that have been produced. You also have the ability to define fine-grained error handling policies by handling the various exceptions raised by `#deliver_messages`. This makes sense if you're building some kind of framework on top of ruby-kafka, but it's not recommended for typical use cases.
+
+The asynchronous API handles most error conditions for you: it runs in the background and automatically retries failed deliveries; has a simple delivery scheduler; and is generally very resilient to failures. You do need to monitor it, as errors will be less obvious.
 
 ## Development
 
