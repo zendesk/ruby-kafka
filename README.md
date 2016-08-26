@@ -35,6 +35,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   7. [Understanding Timeouts](#understanding-timeouts)
   8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 4. [Design](#design)
+  1. [Producer Design](#producer-design)
+  2. [Asynchronous Producer Design](#asynchronous-producer-design)
 5. [Development](#development)
 6. [Roadmap](#roadmap)
 
