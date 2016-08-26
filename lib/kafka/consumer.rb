@@ -137,7 +137,15 @@ module Kafka
         # automatically resumed. When pausing, the timeout is translated to an
         # absolute point in time.
         timeout = partitions.fetch(partition)
-        timeout.nil? || Time.now < timeout
+
+        if timeout.nil?
+          true
+        elsif Time.now < timeout
+          true
+        else
+          resume(topic, partition)
+          false
+        end
       end
     end
 
