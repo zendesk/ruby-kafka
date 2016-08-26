@@ -726,6 +726,14 @@ The library has been designed as a layered system, with each layer having a clea
 
 Note that only the API and configuration layers have any backwards compatibility guarantees – the other layers are considered internal and may change without warning. Don't use them directly.
 
+### Producer Design
+
+The producer is designed with resilience and operational ease of use in mind, sometimes at the cost of raw performance. For instance, the operation is heavily instrumented, allowing operators to monitor the producer at a very granular level.
+
+The producer has two main internal data structures: a list of _pending messages_ and a _message buffer_. When the user calls [`Kafka::Producer#produce`](http://www.rubydoc.info/gems/ruby-kafka/Kafka%2FProducer%3Aproduce), a message is appended to the pending message list, but no network communication takes place. This means that the call site does not have to handle the broad range of errors that can happen at the network or protocol level. Instead, those errors will only happen once [`Kafka::Producer#deliver_messages`](http://www.rubydoc.info/gems/ruby-kafka/Kafka%2FProducer%3Adeliver_messages) is called. This method will go through the pending messages one by one, making sure they're assigned a partition. This may fail for some messages, as it could require knowing the current configuration for the message's topic, necessitating API calls to Kafka. Messages that cannot be assigned a partition are kept in the list, while the others are written into the message buffer. The producer then figures out which topic partitions are led by which Kafka brokers so that messages can be sent to the right place – in Kafka, it is the responsibility of the client to do this routing. A separate _produce_ API request will be sent to each broker; the response will be inspected; and messages that were acknowledged by the broker will be removed from the message buffer. Any messages that were _not_ acknowledged will be kept in the buffer.
+
+If there are any messages left in either the pending message list _or_ the message buffer after this operation, [`Kafka::DeliveryFailed`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/DeliveryFailed) will be raised.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
