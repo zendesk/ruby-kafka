@@ -137,14 +137,14 @@ describe Kafka::Consumer do
 
       Timecop.freeze time do
         consumer.pause("greetings", 0, timeout: 30)
-      end
 
-      Timecop.freeze time + 29 do
-        expect(consumer.paused?("greetings", 0)).to eq true
-      end
+        Timecop.travel 29 do
+          expect(consumer.paused?("greetings", 0)).to eq true
+        end
 
-      Timecop.freeze time + 31 do
-        expect(consumer.paused?("greetings", 0)).to eq false
+        Timecop.travel 31 do
+          expect(consumer.paused?("greetings", 0)).to eq false
+        end
       end
     end
   end
