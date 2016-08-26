@@ -34,8 +34,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   6. [Instrumentation](#instrumentation)
   7. [Understanding Timeouts](#understanding-timeouts)
   8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-4. [Development](#development)
-5. [Roadmap](#roadmap)
+4. [Design](#design)
+5. [Development](#development)
+6. [Roadmap](#roadmap)
 
 ## Installation
 
@@ -712,6 +713,18 @@ kafka = Kafka.new(
 ```
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
+
+## Design
+
+The library has been designed as a layered system, with each layer having a clear responsibility:
+
+* The _network layer_ handles low-level connection tasks, such as keeping open connections to each Kafka broker, reconnecting when there's an error, etc. See [`Kafka::Connection`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Connection) for more details.
+* The _protocol layer_ is responsible for encoding and decoding the Kafka protocol's various structures. See [`Kafka::Protocol`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Protocol) for more details.
+* The _operational layer_ provides high-level operations, such as fetching messages from a topic, that may involve more than one API request to the Kafka cluster. Some complex operations are made available through [`Kafka::Cluster`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Cluster), which represents an entire cluster, while simpler ones are only available through [`Kafka::Broker`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Broker), which represents a single Kafka broker. In general, `Kafka::Cluster` is the high-level API, with more polish.
+* The _API layer_ provides APIs to users of the libraries. The Consumer API is implemented in [`Kafka::Consumer`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Consumer) while the Producer API is implemented in [`Kafka::Producer`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Producer) and [`Kafka::AsyncProducer`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/AsyncProducer).
+* The _configuration layer_ provides a way to set up and configure the client, as well as easy entrypoints to the various APIs. [`Kafka::Client`](http://www.rubydoc.info/gems/ruby-kafka/Kafka/Client) implements the public APIs. For convenience, the method [`Kafka.new`](http://www.rubydoc.info/gems/ruby-kafka/Kafka.new) can instantiate the class for you.
+
+Note that only the API and configuration layers have any backwards compatibility guarantees – the other layers are considered internal and may change without warning. Don't use them directly.
 
 ## Development
 
