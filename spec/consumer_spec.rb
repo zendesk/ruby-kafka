@@ -1,3 +1,5 @@
+require "timecop"
+
 describe Kafka::Consumer do
   let(:cluster) { double(:cluster) }
   let(:log) { StringIO.new }
@@ -128,6 +130,22 @@ describe Kafka::Consumer do
       end
 
       expect(fetch_operation).to have_received(:fetch_from_partition).with("greetings", 42, anything)
+    end
+
+    it "automatically resumes partitions if a timeout is set" do
+      time = Time.now
+
+      Timecop.freeze time do
+        consumer.pause("greetings", 0, timeout: 30)
+      end
+
+      Timecop.freeze time + 29 do
+        expect(consumer.paused?("greetings", 0)).to eq true
+      end
+
+      Timecop.freeze time + 31 do
+        expect(consumer.paused?("greetings", 0)).to eq false
+      end
     end
   end
 end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.3.8)
+    ruby-kafka (0.3.15.beta2)
 
 GEM
   remote: https://rubygems.org/
@@ -55,6 +55,7 @@ GEM
     slop (3.6.0)
     snappy (0.0.12)
     thread_safe (0.3.5)
+    timecop (0.8.0)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
 
@@ -76,6 +77,7 @@ DEPENDENCIES
   ruby-kafka!
   ruby-prof
   snappy
+  timecop
 
 BUNDLED WITH
    1.10.6
