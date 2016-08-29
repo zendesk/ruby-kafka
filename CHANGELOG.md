@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Allow setting a timeout on a partition pause (#272).
+
 ## v0.3.15.beta1
 
 - Allow pausing consumption of a partition (#268).
