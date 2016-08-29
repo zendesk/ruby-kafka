@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.15.beta3
+
 - Allow setting a timeout on a partition pause (#272).
 
 ## v0.3.15.beta1
