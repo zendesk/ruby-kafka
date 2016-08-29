@@ -100,12 +100,16 @@ module Kafka
     # idea to simply pause the partition until the error can be resolved, allowing
     # the rest of the partitions to continue being processed.
     #
+    # If the `timeout` argument is passed, the partition will automatically be
+    # resumed when the timeout expires.
+    #
     # @param topic [String]
     # @param partition [Integer]
+    # @param timeout [Integer] the number of seconds to pause the partition for.
     # @return [nil]
-    def pause(topic, partition)
-      @paused_partitions[topic] ||= Set.new
-      @paused_partitions[topic] << partition
+    def pause(topic, partition, timeout: nil)
+      @paused_partitions[topic] ||= {}
+      @paused_partitions[topic][partition] = timeout && Time.now + timeout
     end
 
     # Resume processing of a topic partition.
@@ -115,7 +119,7 @@ module Kafka
     # @param partition [Integer]
     # @return [nil]
     def resume(topic, partition)
-      paused_partitions = @paused_partitions.fetch(topic, [])
+      paused_partitions = @paused_partitions.fetch(topic, {})
       paused_partitions.delete(partition)
     end
 
@@ -126,7 +130,23 @@ module Kafka
     # @param partition [Integer]
     # @return [Boolean] true if the partition is paused, false otherwise.
     def paused?(topic, partition)
-      @paused_partitions.fetch(topic, []).include?(partition)
+      partitions = @paused_partitions.fetch(topic, {})
+
+      if partitions.key?(partition)
+        # Users can set an optional timeout, after which the partition is
+        # automatically resumed. When pausing, the timeout is translated to an
+        # absolute point in time.
+        timeout = partitions.fetch(partition)
+
+        if timeout.nil?
+          true
+        elsif Time.now < timeout
+          true
+        else
+          resume(topic, partition)
+          false
+        end
+      end
     end
 
     # Fetches and enumerates the messages in the topics that the consumer group
