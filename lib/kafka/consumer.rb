@@ -143,6 +143,7 @@ module Kafka
         elsif Time.now < timeout
           true
         else
+          @logger.info "Automatically resuming partition #{topic}/#{partition}, pause timeout expired"
           resume(topic, partition)
           false
         end
