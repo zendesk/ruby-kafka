@@ -744,6 +744,10 @@ Instead of writing directly into the pending message list, [`Kafka::AsyncProduce
 
 Rather than triggering message deliveries directly, users of the async producer will typically set up _automatic triggers_, such as a timer.
 
+### Consumer Design
+
+The Consumer API is designed for flexibility and stability. The first is accomplished by not dictating any high-level object model, instead opting for a simple loop-based approach. The second is accomplished by handling group membership, heartbeats, and checkpointing automatically. Messages are marked as processed as soon as they've been successfully yielded to the user-supplied processing block, minimizing the cost of processing errors.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
