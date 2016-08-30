@@ -764,7 +764,7 @@ Beta release of the Consumer API, allowing balanced Consumer Groups coordinating
 
 API freeze. All new changes will be backwards compatible.
 
-## Why a new library?
+## Why Create A New Library?
 
 There are a few existing Kafka clients in Ruby:
 
