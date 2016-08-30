@@ -27,6 +27,7 @@ module Kafka
   class Connection
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
+    IDLE_TIMEOUT = 60 * 5
 
     # Opens a connection to a Kafka broker.
     #
@@ -85,13 +86,18 @@ module Kafka
 
       @instrumenter.instrument("request.connection", notification) do
         open unless open?
+        reopen if idle?
 
         @correlation_id += 1
 
         write_request(request, notification)
 
         response_class = request.response_class
-        wait_for_response(response_class, notification) unless response_class.nil?
+        response = wait_for_response(response_class, notification) unless response_class.nil?
+
+        @last_request = Time.now
+
+        response
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       close
@@ -115,12 +121,23 @@ module Kafka
 
       # Correlation id is initialized to zero and bumped for each request.
       @correlation_id = 0
+
+      @last_request = nil
     rescue Errno::ETIMEDOUT => e
       @logger.error "Timed out while trying to connect to #{self}: #{e}"
       raise ConnectionError, e
     rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
+    end
+
+    def reopen
+      close
+      open
+    end
+
+    def idle?
+      @last_request && @last_request < Time.now - IDLE_TIMEOUT
     end
 
     # Writes a request over the connection.
