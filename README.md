@@ -37,6 +37,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 4. [Design](#design)
   1. [Producer Design](#producer-design)
   2. [Asynchronous Producer Design](#asynchronous-producer-design)
+  3. [Consumer Design](#consumer-design)
 5. [Development](#development)
 6. [Roadmap](#roadmap)
 
