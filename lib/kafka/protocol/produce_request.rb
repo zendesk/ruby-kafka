@@ -37,6 +37,10 @@ module Kafka
       end
 
       def api_key
+        0
+      end
+
+      def api_version
         2
       end
 
