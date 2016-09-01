@@ -90,6 +90,7 @@ module Kafka
                 topic: fetched_topic.name,
                 partition: fetched_partition.partition,
                 offset: message.offset,
+                create_time: message.create_time,
               )
             }
 
