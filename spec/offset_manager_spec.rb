@@ -72,7 +72,7 @@ describe Kafka::OffsetManager do
 
       expected_offsets = {
         "x" => {
-          0 => kind_of(Numeric),
+          0 => 43,
         }
       }
 
