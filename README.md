@@ -141,9 +141,9 @@ kafka.deliver_message("Hello, World!", key: "hello", topic: "greetings")
 
 #### Efficiently Producing Messages
 
-While `#deliver_message` works fine for infrequent writes, there are a number of downside:
+While `#deliver_message` works fine for infrequent writes, there are a number of downsides:
 
-* Kafka is optimized for transmitting _batches_ of messages rather than individual messages, so there's a significant overhead and performance penalty in using the single-message API.
+* Kafka is optimized for transmitting messages in _batches_ rather than individually, so there's a significant overhead and performance penalty in using the single-message API.
 * The message delivery can fail in a number of different ways, but this simplistic API does not provide automatic retries.
 * The message is not buffered, so if there is an error, it is lost.
 
