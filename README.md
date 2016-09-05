@@ -32,8 +32,10 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   4. [Thread Safety](#thread-safety)
   5. [Logging](#logging)
   6. [Instrumentation](#instrumentation)
-  7. [Understanding Timeouts](#understanding-timeouts)
-  8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+  7. [Monitoring](#monitoring)
+    1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
+  8. [Understanding Timeouts](#understanding-timeouts)
+  9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 4. [Design](#design)
   1. [Producer Design](#producer-design)
   2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -662,6 +664,37 @@ end
   * `api` is the name of the API that was called, e.g. `produce` or `fetch`.
   * `request_size` is the number of bytes in the request.
   * `response_size` is the number of bytes in the response.
+
+
+### Monitoring
+
+It is highly recommended that you monitor your Kafka client applications in production. Typical problems you'll see are:
+
+* high network errors rates, which may impact performance and time-to-delivery;
+* producer buffer growth, which may indicate that producers are unable to deliver messages at the rate they're being produced;
+* consumer processing errors, indicating exceptions are being raised in the processing code;
+* frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
+
+You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+
+
+#### Reporting Metrics to Datadog
+
+The Datadog reporter is automatically enabled when the `kafka/datadog` library is required. You can optionally change the configuration.
+
+```ruby
+# This enables the reporter:
+require "kafka/datadog"
+
+# Default is "ruby_kafka".
+Kafka::Datadog.namespace = "custom-namespace"
+
+# Default is "127.0.0.1".
+Kafka::Datadog.host = "statsd.something.com"
+
+# Default is 8125.
+Kafka::Datadog.port = 1234
+```
 
 ### Understanding Timeouts
 
