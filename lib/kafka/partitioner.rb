@@ -17,11 +17,13 @@ module Kafka
     # @param message [Kafka::PendingMessage] the message that should be assigned
     #   a partition.
     # @return [Integer] the partition number.
-    def self.partition_for_key(partition_count, message)
-      raise ArgumentError if partition_count == 0
-
+    def self.partition_for_message(partition_count, message)
       # If no explicit partition key is specified we use the message key instead.
-      key = message.partition_key || message.key
+      partition_for_key(partition_count, message.partition_key || message.key)
+    end
+
+    def self.partition_for_key(partition_count, key)
+      raise ArgumentError if partition_count == 0
 
       if key.nil?
         rand(partition_count)

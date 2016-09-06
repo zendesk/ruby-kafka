@@ -339,7 +339,7 @@ module Kafka
         begin
           if partition.nil?
             partition_count = @cluster.partitions_for(message.topic).count
-            partition = Partitioner.partition_for_key(partition_count, message)
+            partition = Partitioner.partition_for_message(partition_count, message)
           end
 
           @buffer.write(

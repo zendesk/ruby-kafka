@@ -613,6 +613,35 @@ You typically don't want to share a Kafka client between threads, since the netw
 
 You should also avoid sharing a synchronous producer between threads, as the internal buffers are not thread safe. However, the _asynchronous_ producer should be safe to use in a multi-threaded environment.
 
+
+#### Testing
+
+It can be difficult to do full integration testing with a running Kafka cluster, so in order to make testing easier and more reliable a set of test helpers and classes are included with ruby-kafka.
+
+##### Testing Producer Code
+
+Typically, you want to test that a given piece of code produces the expected messages to a topic. By using `Kafka::FakeProducer`, you can record messages in-memory and verify that they are correct.
+
+```ruby
+describe "PagesController#show" do
+  it "tracks the page view in Kafka" do
+    # Make sure to inject the fake producer into your application somehow.
+    $producer = Kafka::FakeProducer.new
+
+    get :show, id: 42
+
+    # Get the recorded message.
+    message = $producer.messages_in("pageviews").first
+
+    # The `#value` method returns the message value.
+    expect(JSON.parse(message.value)).to eq({
+      "page_id" => 42,
+    })
+  end
+end
+```
+
+
 ### Logging
 
 It's a very good idea to configure the Kafka client with a logger. All important operations and errors are logged. When instantiating your client, simply pass in a valid logger:
