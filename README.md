@@ -626,7 +626,7 @@ By default, nothing is logged.
 
 ### Instrumentation
 
-Most operations are instrumented using [Active Support Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html). In order to subscribe to notifications, make sure to require the notifications library _before_ you require ruby-kafka, e.g.
+Most operations are instrumented using [Active Support Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html). In order to subscribe to notifications, make sure to require the notifications library:
 
 ```ruby
 require "active_support/notifications"
