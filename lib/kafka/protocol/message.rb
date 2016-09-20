@@ -80,7 +80,7 @@ module Kafka
         # attributes.
         codec_id = attributes & 0b111
 
-        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp/1000))
+        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp/1000.0))
       end
 
       private
