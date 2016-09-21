@@ -26,8 +26,8 @@ describe Kafka::OffsetManager do
 
       expected_offsets = {
         "greetings" => {
-          0 => 42,
-          1 => 13,
+          0 => 43,
+          1 => 14,
         }
       }
 
@@ -42,12 +42,12 @@ describe Kafka::OffsetManager do
       allow(group).to receive(:fetch_offsets).and_return(fetched_offsets)
     end
 
-    it "returns the last committed offset plus one" do
+    it "returns the last committed offset" do
       allow(fetched_offsets).to receive(:offset_for).with("greetings", 0) { 41 }
 
       offset = offset_manager.next_offset_for("greetings", 0)
 
-      expect(offset).to eq 42
+      expect(offset).to eq 41
     end
 
     it "returns the default offset if none have been committed" do
@@ -55,14 +55,6 @@ describe Kafka::OffsetManager do
       allow(fetched_offsets).to receive(:offset_for).with("greetings", 0) { -1 }
       allow(cluster).to receive(:resolve_offsets).with("greetings", [0], :latest) { { 0 => 42 } }
       offset_manager.set_default_offset("greetings", :latest)
-
-      offset = offset_manager.next_offset_for("greetings", 0)
-
-      expect(offset).to eq 42
-    end
-
-    it "returns the next offset if we've already processed messages in the partition" do
-      offset_manager.mark_as_processed("greetings", 0, 41)
 
       offset = offset_manager.next_offset_for("greetings", 0)
 
@@ -80,7 +72,7 @@ describe Kafka::OffsetManager do
 
       expected_offsets = {
         "x" => {
-          0 => 42,
+          0 => 43,
         }
       }
 

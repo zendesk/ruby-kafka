@@ -32,8 +32,10 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
   4. [Thread Safety](#thread-safety)
   5. [Logging](#logging)
   6. [Instrumentation](#instrumentation)
-  7. [Understanding Timeouts](#understanding-timeouts)
-  8. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+  7. [Monitoring](#monitoring)
+    1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
+  8. [Understanding Timeouts](#understanding-timeouts)
+  9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
 4. [Design](#design)
   1. [Producer Design](#producer-design)
   2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -141,9 +143,9 @@ kafka.deliver_message("Hello, World!", key: "hello", topic: "greetings")
 
 #### Efficiently Producing Messages
 
-While `#deliver_message` works fine for infrequent writes, there are a number of downside:
+While `#deliver_message` works fine for infrequent writes, there are a number of downsides:
 
-* Kafka is optimized for transmitting _batches_ of messages rather than individual messages, so there's a significant overhead and performance penalty in using the single-message API.
+* Kafka is optimized for transmitting messages in _batches_ rather than individually, so there's a significant overhead and performance penalty in using the single-message API.
 * The message delivery can fail in a number of different ways, but this simplistic API does not provide automatic retries.
 * The message is not buffered, so if there is an error, it is lost.
 
@@ -624,7 +626,7 @@ By default, nothing is logged.
 
 ### Instrumentation
 
-Most operations are instrumented using [Active Support Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html). In order to subscribe to notifications, make sure to require the notifications library _before_ you require ruby-kafka, e.g.
+Most operations are instrumented using [Active Support Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html). In order to subscribe to notifications, make sure to require the notifications library:
 
 ```ruby
 require "active_support/notifications"
@@ -662,6 +664,37 @@ end
   * `api` is the name of the API that was called, e.g. `produce` or `fetch`.
   * `request_size` is the number of bytes in the request.
   * `response_size` is the number of bytes in the response.
+
+
+### Monitoring
+
+It is highly recommended that you monitor your Kafka client applications in production. Typical problems you'll see are:
+
+* high network errors rates, which may impact performance and time-to-delivery;
+* producer buffer growth, which may indicate that producers are unable to deliver messages at the rate they're being produced;
+* consumer processing errors, indicating exceptions are being raised in the processing code;
+* frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
+
+You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+
+
+#### Reporting Metrics to Datadog
+
+The Datadog reporter is automatically enabled when the `kafka/datadog` library is required. You can optionally change the configuration.
+
+```ruby
+# This enables the reporter:
+require "kafka/datadog"
+
+# Default is "ruby_kafka".
+Kafka::Datadog.namespace = "custom-namespace"
+
+# Default is "127.0.0.1".
+Kafka::Datadog.host = "statsd.something.com"
+
+# Default is 8125.
+Kafka::Datadog.port = 1234
+```
 
 ### Understanding Timeouts
 
