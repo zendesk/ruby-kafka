@@ -23,6 +23,7 @@ module Kafka
       addr = Socket.getaddrinfo(host, nil)
       sockaddr = Socket.pack_sockaddr_in(port, addr[0][3])
 
+      @connect_timeout = connect_timeout
       @timeout = timeout
 
       @tcp_socket = Socket.new(Socket.const_get(addr[0][0]), Socket::SOCK_STREAM, 0)
@@ -35,10 +36,10 @@ module Kafka
         # indicating the connection is in progress.
         @tcp_socket.connect_nonblock(sockaddr)
       rescue IO::WaitWritable
-        # IO.select will block until the socket is writable or the timeout
+        # select will block until the socket is writable or the timeout
         # is exceeded, whichever comes first.
-        unless IO.select(nil, [@tcp_socket], nil, connect_timeout)
-          # IO.select returns nil when the socket is not ready before timeout 
+        unless select_with_timeout(@tcp_socket, :connect_write)
+          # select returns nil when the socket is not ready before timeout 
           # seconds have elapsed
           @tcp_socket.close
           raise Errno::ETIMEDOUT
@@ -64,11 +65,20 @@ module Kafka
         # Instead, you have to retry.
         @ssl_socket.connect_nonblock
       rescue Errno::EAGAIN, Errno::EWOULDBLOCK, IO::WaitReadable
-        IO.select([@ssl_socket])
-        retry
+        if select_with_timeout(@ssl_socket, :connect_read)
+          retry
+        else
+          @ssl_socket.close
+          close
+          raise Errno::ETIMEDOUT
+        end
       rescue IO::WaitWritable
-        IO.select(nil, [@ssl_socket])
-        retry
+        if select_with_timeout(@ssl_socket, :connect_write)
+          retry
+        else
+          close
+          raise Errno::ETIMEDOUT
+        end
       end
     end
 
@@ -88,15 +98,17 @@ module Kafka
           # our read buffer.
           buffer << @ssl_socket.read_nonblock(num_bytes - buffer.length)
         rescue IO::WaitReadable
-          unless IO.select([@ssl_socket], nil, nil, @timeout)
+          if select_with_timeout(@ssl_socket, :read)
+            retry
+          else
             raise Errno::ETIMEDOUT
           end
-          retry
         rescue IO::WaitWritable
-          unless IO.select(nil, [@ssl_socket], nil, @timeout)
+          if select_with_timeout(@ssl_socket, :write)
+            retry
+          else
             raise Errno::ETIMEDOUT
           end
-          retry
         end
       end
       buffer
@@ -121,7 +133,7 @@ module Kafka
             raise error
         rescue OpenSSL::SSL::SSLError, Errno::EAGAIN, Errno::EWOULDBLOCK, IO::WaitWritable => error
           if error.is_a?(OpenSSL::SSL::SSLError) && error.message == 'write would block'
-            if IO.select(nil, [@ssl_socket], nil, @timeout)
+            if select_with_timeout(@ssl_socket, :write)
               retry
             else
               raise Errno::ETIMEDOUT
@@ -153,6 +165,19 @@ module Kafka
 
     def set_encoding(encoding)
       @tcp_socket.set_encoding(encoding)
+    end
+
+    def select_with_timeout(socket, type)
+      case type
+      when :connect_read
+        IO.select([socket], nil, nil, @connect_timeout)
+      when :connect_write
+        IO.select(nil, [socket], nil, @connect_timeout)
+      when :read
+        IO.select([socket], nil, nil, @timeout)
+      when :write
+        IO.select(nil, [socket], nil, @timeout)
+      end
     end
   end
 end
