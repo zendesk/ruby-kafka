@@ -50,14 +50,22 @@ module Kafka
     end
 
     def commit_offsets
-      unless @processed_offsets.empty?
-        pretty_offsets = @processed_offsets.flat_map {|topic, partitions|
+      offsets_to_commit = {}
+      @processed_offsets.each { |topic, partitions|
+        partition_offsets = partitions.select { |p, o|
+          o > committed_offset_for(topic, p)
+        }
+        offsets_to_commit[topic] = partition_offsets unless partition_offsets.empty?
+      }
+
+      unless offsets_to_commit.empty?
+        pretty_offsets = offsets_to_commit.flat_map {|topic, partitions|
           partitions.map {|partition, offset| "#{topic}/#{partition}:#{offset}" }
         }.join(", ")
 
         @logger.info "Committing offsets: #{pretty_offsets}"
 
-        @group.commit_offsets(@processed_offsets)
+        @group.commit_offsets(offsets_to_commit)
 
         @last_commit = Time.now
 
