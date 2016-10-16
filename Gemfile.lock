@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.3.15.beta2)
+    ruby-kafka (0.3.15.beta3)
 
 GEM
   remote: https://rubygems.org/
@@ -79,5 +79,8 @@ DEPENDENCIES
   snappy
   timecop
 
+RUBY VERSION
+   ruby 2.2.3p173
+
 BUNDLED WITH
-   1.10.6
+   1.12.0

@@ -16,12 +16,16 @@ module Kafka
     # @return [Integer] the offset of the message in the partition.
     attr_reader :offset
 
-    def initialize(value:, key:, topic:, partition:, offset:)
+    # @return [Integer] the timestamp associated with the message.
+    attr_reader :timestamp
+
+    def initialize(value:, key:, topic:, partition:, offset:, timestamp:)
       @value = value
       @key = key
       @topic = topic
       @partition = partition
       @offset = offset
+      @timestamp = timestamp
     end
   end
 end

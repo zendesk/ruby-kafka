@@ -17,9 +17,10 @@ module Kafka
     #         Offset => int64
     #         MessageSize => int32
     #
-    #     Message => Crc MagicByte Attributes Key Value
+    #     Message => Crc MagicByte Timestamp Attributes Key Value
     #         Crc => int32
     #         MagicByte => int8
+    #         Timestamp => int64
     #         Attributes => int8
     #         Key => bytes
     #         Value => bytes
@@ -38,6 +39,10 @@ module Kafka
 
       def api_key
         0
+      end
+
+      def api_version
+        2
       end
 
       def response_class

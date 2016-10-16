@@ -6,17 +6,29 @@ module Kafka
 
     # ## API Specification
     #
-    #     Message => Crc MagicByte Attributes Key Value
-    #         Crc => int32
-    #         MagicByte => int8
-    #         Attributes => int8
-    #         Key => bytes
-    #         Value => bytes
+    #   v1
+    #   Message => Crc MagicByte Attributes Key Value
+    #     Crc => int32
+    #     MagicByte => int8
+    #     Attributes => int8
+    #     Key => bytes
+    #     Value => bytes
+    #
+    #   v2 (supported since 0.10.0)
+    #   Message => Crc MagicByte Attributes Timestamp Key Value
+    #     Crc => int32
+    #     MagicByte => int8
+    #     Attributes => int8
+    #     Timestamp => int64
+    #     Key => bytes
+    #     Value => bytes
     #
     class Message
-      MAGIC_BYTE = 0
+      V1_MAGIC_BYTE = 0
+      V2_MAGIC_BYTE = 1
+      MAGIC_BYTE = V2_MAGIC_BYTE
 
-      attr_reader :key, :value, :codec_id, :offset
+      attr_reader :key, :value, :timestamp, :codec_id, :offset
 
       attr_reader :bytesize, :create_time
 
@@ -25,6 +37,7 @@ module Kafka
         @value = value
         @codec_id = codec_id
         @offset = offset
+        @timestamp = (create_time.to_f*1000.0).to_i
         @create_time = create_time
 
         @bytesize = @key.to_s.bytesize + @value.to_s.bytesize
@@ -40,6 +53,7 @@ module Kafka
       def ==(other)
         @key == other.key &&
           @value == other.value &&
+          @timestamp == other.timestamp &&
           @codec_id == other.codec_id &&
           @offset == other.offset
       end
@@ -66,10 +80,19 @@ module Kafka
         crc = message_decoder.int32
         magic_byte = message_decoder.int8
 
-        unless magic_byte == MAGIC_BYTE
+        case magic_byte
+        when V1_MAGIC_BYTE
+          self.v1_decode(offset, message_decoder)
+        when V2_MAGIC_BYTE
+          self.v2_decode(offset, message_decoder)
+        else
           raise Kafka::Error, "Invalid magic byte: #{magic_byte}"
         end
+      end
 
+      private
+
+      def self.v1_decode(offset, message_decoder)
         attributes = message_decoder.int8
         key = message_decoder.bytes
         value = message_decoder.bytes
@@ -81,7 +104,18 @@ module Kafka
         new(key: key, value: value, codec_id: codec_id, offset: offset)
       end
 
-      private
+      def self.v2_decode(offset, message_decoder)
+        attributes = message_decoder.int8
+        timestamp = Time.at(message_decoder.int64/1000)
+        key = message_decoder.bytes
+        value = message_decoder.bytes
+
+        # The codec id is encoded in the three least significant bits of the
+        # attributes.
+        codec_id = attributes & 0b111
+
+        new(key: key, value: value, create_time: timestamp, codec_id: codec_id, offset: offset)
+      end
 
       def encode_with_crc
         buffer = StringIO.new
@@ -102,6 +136,7 @@ module Kafka
 
         encoder.write_int8(MAGIC_BYTE)
         encoder.write_int8(@codec_id)
+        encoder.write_int64(@timestamp)
         encoder.write_bytes(@key)
         encoder.write_bytes(@value)
 
