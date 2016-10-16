@@ -458,14 +458,13 @@ module Kafka
       if seed_brokers.is_a?(String)
         seed_brokers = seed_brokers.split(",")
       end
-      brokers = []
-      seed_brokers.each do |connection|
-        connection.prepend("kafka://") unless connection =~ /:\/\//
+
+      seed_brokers.map do |connection|
+        connection = "kafka://" + connection unless connection =~ /:\/\//
         uri = URI.parse(connection)
         uri.port ||= 9092 # Default Kafka port.
-        brokers << uri
+        uri
       end
-      brokers
     end
   end
 end
