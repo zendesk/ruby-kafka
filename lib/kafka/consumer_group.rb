@@ -42,6 +42,7 @@ module Kafka
     rescue ConnectionError
       @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
       @coordinator = nil
+      @cluster.mark_as_stale!
       retry
     end
 
@@ -86,6 +87,8 @@ module Kafka
       )
 
       Protocol.handle_error(response.error_code)
+
+      @logger.info "Heatbeat successful"
     rescue ConnectionError, UnknownMemberId, RebalanceInProgress, IllegalGeneration => e
       @logger.error "Error sending heartbeat: #{e}"
       raise HeartbeatError, e

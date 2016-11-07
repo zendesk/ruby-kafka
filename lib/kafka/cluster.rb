@@ -213,9 +213,16 @@ module Kafka
     end
 
     def connect_to_broker(broker_id)
+      tries ||= 2
       info = cluster_info.find_broker(broker_id)
 
       @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+    rescue Kafka::Error => e
+      refresh_metadata!
+
+      retry unless (retries -= 1).zero?
+
+      raise e
     end
   end
 end
