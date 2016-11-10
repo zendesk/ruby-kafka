@@ -320,6 +320,8 @@ module Kafka
       end
 
       unless @pending_message_queue.empty?
+        # Mark the cluster as stale in order to force a cluster metadata refresh.
+        @cluster.mark_as_stale!
         raise DeliveryFailed, "Failed to assign partitions to #{@pending_message_queue.size} messages"
       end
 
