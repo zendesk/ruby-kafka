@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.3.15.beta2)
+    ruby-kafka (0.3.15)
 
 GEM
   remote: https://rubygems.org/
@@ -20,7 +20,7 @@ GEM
     docker-api (1.25.0)
       excon (>= 0.38.0)
       json
-    dogstatsd-ruby (1.6.0)
+    dogstatsd-ruby (2.1.0)
     dotenv (2.1.0)
     excon (0.45.4)
     i18n (0.7.0)
@@ -67,7 +67,7 @@ DEPENDENCIES
   bundler (>= 1.9.5)
   colored
   docker-api
-  dogstatsd-ruby
+  dogstatsd-ruby (>= 2.0.0)
   dotenv
   pry
   rake (~> 10.0)
@@ -79,5 +79,8 @@ DEPENDENCIES
   snappy
   timecop
 
+RUBY VERSION
+   ruby 2.2.3p173
+
 BUNDLED WITH
-   1.10.6
+   1.13.6
