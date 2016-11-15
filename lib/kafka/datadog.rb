@@ -43,6 +43,10 @@ module Kafka
       statsd.namespace = namespace
     end
 
+    def self.tags=(tags)
+      statsd.tags = tags
+    end
+
     class StatsdSubscriber < ActiveSupport::Subscriber
       private
 
