@@ -437,7 +437,7 @@ module Kafka
       if client_cert && client_cert_key
         ssl_context.set_params(
           cert: OpenSSL::X509::Certificate.new(client_cert),
-          key: OpenSSL::PKey::RSA.new(client_cert_key)
+          key: OpenSSL::PKey.read(client_cert_key)
         )
       elsif client_cert && !client_cert_key
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert` but no `ssl_client_cert_key`. Please provide both."
