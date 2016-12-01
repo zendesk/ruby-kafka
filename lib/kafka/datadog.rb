@@ -1,5 +1,5 @@
 begin
-  require "statsd"
+  require "datadog/statsd"
 rescue LoadError
   $stderr.puts "In order to report Kafka client metrics to Datadog you need to install the `dogstatsd-ruby` gem."
   raise
@@ -28,7 +28,7 @@ module Kafka
     STATSD_NAMESPACE = "ruby_kafka"
 
     def self.statsd
-      @statsd ||= Statsd.new(Statsd::DEFAULT_HOST, Statsd::DEFAULT_HOST, namespace: STATSD_NAMESPACE)
+      @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_HOST, namespace: STATSD_NAMESPACE)
     end
 
     def self.host=(host)
@@ -41,6 +41,10 @@ module Kafka
 
     def self.namespace=(namespace)
       statsd.namespace = namespace
+    end
+
+    def self.tags=(tags)
+      statsd.tags = tags
     end
 
     class StatsdSubscriber < ActiveSupport::Subscriber
