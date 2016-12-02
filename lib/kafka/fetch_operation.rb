@@ -24,6 +24,7 @@ module Kafka
       @min_bytes = min_bytes
       @max_wait_time = max_wait_time
       @topics = {}
+      @pending = {}
     end
 
     def fetch_from_partition(topic, partition, offset: :latest, max_bytes: 1048576)
@@ -56,6 +57,14 @@ module Kafka
         end
       end
 
+      while true
+        messages = fetch_for_topics(topics_by_broker)
+        return messages unless messages.empty?
+        sleep(0.1)
+      end
+    end
+
+    def fetch_for_topics(topics_by_broker)
       topics_by_broker.flat_map {|broker, topics|
         resolve_offsets(broker, topics)
 
@@ -65,7 +74,14 @@ module Kafka
           topics: topics,
         }
 
-        response = broker.fetch_messages(**options)
+        if @pending[broker].nil?
+          @pending[broker] = broker.fetch_messages_async(**options)
+        elsif @pending[broker].ready?
+          response = @pending[broker].read_response
+          @pending[broker] = nil
+        end
+
+        next nil unless response
 
         response.topics.flat_map {|fetched_topic|
           fetched_topic.partitions.map {|fetched_partition|
@@ -101,7 +117,7 @@ module Kafka
             )
           }
         }
-      }
+      }.compact
     rescue Kafka::ConnectionError, Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
       @cluster.mark_as_stale!
 

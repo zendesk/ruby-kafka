@@ -324,7 +324,7 @@ module Kafka
 
       raise "No partitions assigned!" if assigned_partitions.empty?
 
-      operation = FetchOperation.new(
+      @operation ||= FetchOperation.new(
         cluster: @cluster,
         logger: @logger,
         min_bytes: min_bytes,
@@ -340,12 +340,12 @@ module Kafka
             @logger.warn "Partition #{topic}/#{partition} is currently paused, skipping"
           else
             @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-            operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
+            @operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
           end
         end
       end
 
-      operation.execute
+      @operation.execute
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
 

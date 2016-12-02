@@ -66,6 +66,10 @@ module Kafka
       retry
     end
 
+    def ready?
+      !!IO.select([@socket], nil, nil, 0)
+    end
+
     # Writes bytes to the socket, possible with a timeout.
     #
     # @param bytes [String] the data that should be written to the socket.

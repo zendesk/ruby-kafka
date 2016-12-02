@@ -72,9 +72,10 @@ module Kafka
     #
     # @param request [#encode, #response_class] the request that should be
     #   encoded and written.
+    # @param async if true, do not wait for the response
     #
     # @return [Object] the response.
-    def send_request(request)
+    def send_request(request, async: false)
       # Default notification payload.
       notification = {
         broker_host: @host,
@@ -91,7 +92,15 @@ module Kafka
         write_request(request, notification)
 
         response_class = request.response_class
-        wait_for_response(response_class, notification) unless response_class.nil?
+
+        if async
+          Kafka::Protocol::AsyncResponse.new(@socket) {
+            wait_for_response(response_class, notification)
+          }
+        else
+          wait_for_response(response_class, notification) unless response_class.nil?
+        end
+
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       close
