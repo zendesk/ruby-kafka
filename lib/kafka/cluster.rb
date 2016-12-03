@@ -46,6 +46,10 @@ module Kafka
         @target_topics.merge(new_topics)
 
         refresh_metadata!
+
+        cluster_info.topics.each do |topic|
+          Protocol.handle_error(topic.topic_error_code)
+        end
       end
     end
 
