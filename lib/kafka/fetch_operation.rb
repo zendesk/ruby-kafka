@@ -57,14 +57,23 @@ module Kafka
         end
       end
 
+      start_time = Time.now.to_f
+
       while true
-        messages = fetch_for_topics(topics_by_broker)
-        return messages unless messages.empty?
+        start_new_fetches = (Time.now.to_f - start_time) < @max_wait_time
+        messages = fetch_for_topics(topics_by_broker, start_new_fetches)
+
+        if messages.size > 0
+          return messages
+        elsif @pending.empty? && start_new_fetches
+          return []
+        end
+
         sleep(0.1)
       end
     end
 
-    def fetch_for_topics(topics_by_broker)
+    def fetch_for_topics(topics_by_broker, start_new_fetches)
       topics_by_broker.flat_map {|broker, topics|
         resolve_offsets(broker, topics)
 
@@ -74,7 +83,9 @@ module Kafka
           topics: topics,
         }
 
-        if @pending[broker].nil?
+        # we only send a new request if we're not over the max wait time for this loop.
+        # this lets us return back to the caller when there's nothing available.
+        if @pending[broker].nil? && start_new_fetches
           @pending[broker] = broker.fetch_messages_async(**options)
         elsif @pending[broker].ready?
           response = @pending[broker].read_response
