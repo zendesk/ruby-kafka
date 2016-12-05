@@ -4,6 +4,12 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.16.beta1
+
+- Fix SSL socket timeout (#283).
+- Update to the latest Datadog gem (#296).
+- Automatically detect private key type (#297).
+
 ## v0.3.15
 
 - Allow setting a timeout on a partition pause (#272).
