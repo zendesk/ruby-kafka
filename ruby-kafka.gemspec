@@ -13,8 +13,6 @@ Gem::Specification.new do |spec|
 
   spec.description   = <<-DESC.gsub(/^    /, "").strip
     A client library for the Kafka distributed commit log.
-
-    Currently, only the Producer API is implemented.
   DESC
 
   spec.homepage      = "https://github.com/zendesk/ruby-kafka"
