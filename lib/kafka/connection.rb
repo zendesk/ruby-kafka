@@ -11,7 +11,7 @@ module Kafka
   #
   # Usually you'll need a separate connection to each broker in a cluster, since most
   # requests must be directed specifically to the broker that is currently leader for
-  # the set of topic partitions you want to produce to or consumer from.
+  # the set of topic partitions you want to produce to or consume from.
   #
   # ## Instrumentation
   #
