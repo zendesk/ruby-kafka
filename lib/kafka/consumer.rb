@@ -164,7 +164,7 @@ module Kafka
     # @param min_bytes [Integer] the minimum number of bytes to read before
     #   returning messages from the server; if `max_wait_time` is reached, this
     #   is ignored.
-    # @param max_wait_time [Integer] the maximum duration of time to wait before
+    # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @raise [Kafka::ProcessingError] if there was an error processing a message.
@@ -227,7 +227,7 @@ module Kafka
     # @param min_bytes [Integer] the minimum number of bytes to read before
     #   returning messages from the server; if `max_wait_time` is reached, this
     #   is ignored.
-    # @param max_wait_time [Integer] the maximum duration of time to wait before
+    # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
