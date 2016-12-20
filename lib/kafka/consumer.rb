@@ -105,7 +105,8 @@ module Kafka
     #
     # @param topic [String]
     # @param partition [Integer]
-    # @param timeout [Integer] the number of seconds to pause the partition for.
+    # @param timeout [Integer] the number of seconds to pause the partition for,
+    #   or `nil` if the partition should not be automatically resumed.
     # @return [nil]
     def pause(topic, partition, timeout: nil)
       @paused_partitions[topic] ||= {}
