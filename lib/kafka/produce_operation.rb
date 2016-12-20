@@ -13,6 +13,7 @@ module Kafka
   #
   # * `:topic` — the topic that was written to.
   # * `:partition` — the partition that the message set was appended to.
+  # * `:offset` — the offset of the message in the partition.
   # * `:key` — the message key.
   # * `:value` — the message value.
   # * `:delay` — the time between the message was produced and when it was acknowledged.
@@ -126,12 +127,13 @@ module Kafka
             raise e
           end
 
-          messages.each do |message|
+          messages.each_with_index do |message, index|
             @instrumenter.instrument("ack_message.producer", {
               key: message.key,
               value: message.value,
               topic: topic,
               partition: partition,
+              offset: partition_info.offset + index,
               delay: ack_time - message.create_time,
             })
           end
