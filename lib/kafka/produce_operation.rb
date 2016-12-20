@@ -7,22 +7,23 @@ module Kafka
   #
   # ## Instrumentation
   #
-  # When executing the operation, an `ack_messages.producer.kafka` notification will be
-  # emitted for each message set that was successfully appended to a topic partition.
+  # When executing the operation, an `ack_message.producer.kafka` notification will be
+  # emitted for each message that was successfully appended to a topic partition.
   # The following keys will be found in the payload:
   #
   # * `:topic` — the topic that was written to.
   # * `:partition` — the partition that the message set was appended to.
-  # * `:offset` — the offset of the first message in the message set.
-  # * `:message_count` — the number of messages that were appended.
+  # * `:key` — the message key.
+  # * `:value` — the message value.
+  # * `:delay` — the time between the message was produced and when it was acknowledged.
   #
   # In addition to these notifications, a `send_messages.producer.kafka` notification will
   # be emitted after the operation completes, regardless of whether it succeeds. This
   # notification will have the following keys:
   #
-  # * `message_count` – the total number of messages that the operation tried to
+  # * `:message_count` – the total number of messages that the operation tried to
   #   send. Note that not all messages may get delivered.
-  # * `sent_message_count` – the number of messages that were successfully sent.
+  # * `:sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
     def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
