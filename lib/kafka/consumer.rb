@@ -319,11 +319,11 @@ module Kafka
     def fetch_batches(min_bytes:, max_wait_time:)
       join_group unless @group.member?
 
-      assigned_partitions = @group.assigned_partitions
+      subscribed_partitions = @group.subscribed_partitions
 
       @heartbeat.send_if_necessary
 
-      raise "No partitions assigned!" if assigned_partitions.empty?
+      raise "No partitions assigned!" if subscribed_partitions.empty?
 
       operation = FetchOperation.new(
         cluster: @cluster,
@@ -332,7 +332,7 @@ module Kafka
         max_wait_time: max_wait_time,
       )
 
-      assigned_partitions.each do |topic, partitions|
+      subscribed_partitions.each do |topic, partitions|
         partitions.each do |partition|
           offset = @offset_manager.next_offset_for(topic, partition)
           max_bytes = @max_bytes.fetch(topic)

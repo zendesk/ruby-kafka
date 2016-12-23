@@ -23,6 +23,10 @@ module Kafka
       @cluster.add_target_topics([topic])
     end
 
+    def subscribed_partitions
+      @assigned_partitions.select { |topic, _| @topics.include?(topic) }
+    end
+
     def member?
       !@generation_id.nil?
     end
