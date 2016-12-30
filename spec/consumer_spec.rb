@@ -39,7 +39,7 @@ describe Kafka::Consumer do
     allow(group).to receive(:subscribe)
     allow(group).to receive(:leave)
     allow(group).to receive(:member?) { true }
-    allow(group).to receive(:assigned_partitions) { assigned_partitions }
+    allow(group).to receive(:subscribed_partitions) { assigned_partitions }
 
     allow(heartbeat).to receive(:send_if_necessary)
 
