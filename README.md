@@ -1,5 +1,7 @@
 # ruby-kafka
 
+[![Join the chat at https://gitter.im/zendesk/ruby-kafka](https://badges.gitter.im/zendesk/ruby-kafka.svg)](https://gitter.im/zendesk/ruby-kafka?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
 Although parts of this library work with Kafka 0.8 – specifically, the Producer API – it's being tested and developed against Kafka 0.9. The Consumer API is Kafka 0.9+ only.
