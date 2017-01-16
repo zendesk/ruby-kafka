@@ -68,6 +68,8 @@ module Kafka
           )
         end
 
+        throttle_time = decoder.int32
+
         new(topics: topics)
       end
     end
