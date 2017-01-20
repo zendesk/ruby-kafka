@@ -1,3 +1,3 @@
 module Kafka
-  VERSION = "0.3.16.beta2"
+  VERSION = "0.3.16"
 end

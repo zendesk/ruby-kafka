@@ -4,7 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-## v0.3.16.beta1
+## v0.3.16
 
 - Fix SSL socket timeout (#283).
 - Update to the latest Datadog gem (#296).
