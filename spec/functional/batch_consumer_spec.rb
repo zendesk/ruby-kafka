@@ -4,6 +4,7 @@ describe "Batch Consumer API", functional: true do
     message_count = 1_000
     messages = (1...message_count).to_set
     message_queue = Queue.new
+    offset_retention_time = 30
 
     topic = create_random_topic(num_partitions: 15)
 
@@ -23,7 +24,7 @@ describe "Batch Consumer API", functional: true do
     threads = 2.times.map do |thread_id|
       t = Thread.new do
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: group_id)
+        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
         consumer.subscribe(topic)
 
         consumer.each_batch do |batch|

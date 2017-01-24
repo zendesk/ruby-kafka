@@ -74,7 +74,7 @@ describe "Consumer groups", fuzz: true do
         connect_timeout: 20,
       )
 
-      consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30)
+      consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30, offset_retention_time: 300)
       consumer.subscribe(topic)
 
       consumer.each_message do |message|

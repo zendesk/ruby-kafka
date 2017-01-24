@@ -5,7 +5,7 @@ module Kafka
   class ConsumerGroup
     attr_reader :assigned_partitions, :generation_id
 
-    def initialize(cluster:, logger:, group_id:, session_timeout:)
+    def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:)
       @cluster = cluster
       @logger = logger
       @group_id = group_id
@@ -16,6 +16,7 @@ module Kafka
       @topics = Set.new
       @assigned_partitions = {}
       @assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: @cluster)
+      @retention_time = retention_time
     end
 
     def subscribe(topic)
@@ -68,6 +69,7 @@ module Kafka
         member_id: @member_id,
         generation_id: @generation_id,
         offsets: offsets,
+        retention_time: @retention_time
       )
 
       response.topics.each do |topic, partitions|
