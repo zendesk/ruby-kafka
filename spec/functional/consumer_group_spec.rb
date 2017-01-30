@@ -1,6 +1,7 @@
 describe "Consumer API", functional: true do
   let(:num_partitions) { 15 }
   let!(:topic) { create_random_topic(num_partitions: 3) }
+  let(:offset_retention_time) { 30 }
 
   example "consuming messages from the beginning of a topic" do
     messages = (1..1000).to_a
@@ -33,7 +34,7 @@ describe "Consumer API", functional: true do
         received_messages = []
 
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: group_id)
+        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
         consumer.subscribe(topic)
 
         consumer.each_message do |message|
@@ -68,7 +69,7 @@ describe "Consumer API", functional: true do
       received_messages = 0
 
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
       consumer.subscribe(topic, start_from_beginning: false)
 
       consumer.each_message do |message|
@@ -123,7 +124,7 @@ describe "Consumer API", functional: true do
 
     group_id = "test#{rand(1000)}"
 
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
     consumer.subscribe(topic, start_from_beginning: true)
 
     consumer.each_message do |message|

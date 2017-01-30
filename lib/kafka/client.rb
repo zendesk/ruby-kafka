@@ -216,19 +216,25 @@ module Kafka
     #   not triggered by message processing.
     # @param heartbeat_interval [Integer] the interval between heartbeats; must be less
     #   than the session window.
+    # @param offset_retention_time [Integer] the time period that committed
+    #   offsets will be retained, in seconds. Defaults to the broker setting.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {
         group_id: group_id,
       })
 
+      # The Kafka protocol expects the retention time to be in ms.
+      retention_time = (offset_retention_time && offset_retention_time * 1_000) || -1
+
       group = ConsumerGroup.new(
         cluster: cluster,
         logger: @logger,
         group_id: group_id,
         session_timeout: session_timeout,
+        retention_time: retention_time
       )
 
       offset_manager = OffsetManager.new(
