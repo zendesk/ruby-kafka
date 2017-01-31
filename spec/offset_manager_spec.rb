@@ -1,3 +1,5 @@
+require 'timecop'
+
 describe Kafka::OffsetManager do
   let(:cluster) { double(:cluster) }
   let(:group) { double(:group) }
@@ -8,10 +10,13 @@ describe Kafka::OffsetManager do
       cluster: cluster,
       group: group,
       logger: logger,
-      commit_interval: 0,
+      commit_interval: commit_interval,
       commit_threshold: 0,
+      offset_retention_time: offset_retention_time
     )
   }
+  let(:offset_retention_time) { nil }
+  let(:commit_interval) { 0 }
 
   before do
     allow(group).to receive(:commit_offsets)
@@ -32,6 +37,125 @@ describe Kafka::OffsetManager do
       }
 
       expect(group).to have_received(:commit_offsets).with(expected_offsets)
+    end
+  end
+
+  describe "#commit_offsets_if_necessary" do
+    let(:fetched_offsets_response) do
+      Kafka::Protocol::OffsetFetchResponse.new(topics: {
+        "greetings" => {
+          0 => partition_offset_info(-1),
+          1 => partition_offset_info(24),
+          2 => partition_offset_info(4)
+        }
+      })
+    end
+
+    before do
+      allow(group).to receive(:fetch_offsets).and_return(fetched_offsets_response)
+    end
+
+    context "at the first commit" do
+      it "re-commits previously committed offsets" do
+        fetch_committed_offsets
+        offset_manager.mark_as_processed("greetings", 1, 25)
+
+        offset_manager.commit_offsets_if_necessary
+
+        expected_offsets = {
+          "greetings" => {
+            1 => 26,
+            2 => 4
+          }
+        }
+
+        expect(group).to have_received(:commit_offsets).with(expected_offsets)
+      end
+    end
+
+    context "commit intervals" do
+      let(:commit_interval) { 10 }
+      let(:offset_retention_time) { 300 }
+      let(:commits) { [] }
+
+      before do
+        allow(group).to receive(:commit_offsets) do |offsets|
+          commits << offsets
+        end
+        Timecop.freeze(Time.now)
+        # initial commit
+        fetch_committed_offsets
+        offset_manager.mark_as_processed("greetings", 0, 0)
+        offset_manager.commit_offsets_if_necessary
+        expect(commits.size).to eq(1)
+      end
+
+      after do
+        Timecop.return
+      end
+
+      context "before the commit timeout" do
+        before do
+          Timecop.travel(commit_interval - 1)
+        end
+
+        it "does not commit processed offsets to the group" do
+          expect do
+            offset_manager.mark_as_processed("greetings", 0, 1)
+            offset_manager.commit_offsets_if_necessary
+          end.not_to change(commits, :size)
+        end
+      end
+
+      context "after the commit timeout" do
+        before do
+          Timecop.travel(commit_interval + 1)
+        end
+
+        it "commits processed offsets without recommitting previously committed offsets" do
+          expect do
+            offset_manager.mark_as_processed("greetings", 0, 1)
+            offset_manager.commit_offsets_if_necessary
+          end.to change(commits, :size).by(1)
+
+          expected_offsets = {
+            "greetings" => { 0 => 2 }
+          }
+
+          expect(commits.last).to eq(expected_offsets)
+        end
+      end
+
+      context "after the recommit timeout" do
+        before do
+          Timecop.travel(offset_retention_time / 2 + 1)
+        end
+
+        it "commits processed offsets and recommits previously committed offsets" do
+          expect do
+            offset_manager.mark_as_processed("greetings", 0, 1)
+            offset_manager.commit_offsets_if_necessary
+          end.to change(commits, :size).by(1)
+
+          expected_offsets = {
+            "greetings" => {
+              0 => 2,
+              1 => 24,
+              2 => 4
+            }
+          }
+
+          expect(commits.last).to eq(expected_offsets)
+        end
+      end
+    end
+
+    def fetch_committed_offsets
+      offset_manager.next_offset_for("greetings", 1)
+    end
+
+    def partition_offset_info(offset)
+      Kafka::Protocol::OffsetFetchResponse::PartitionOffsetInfo.new(offset: offset, metadata: nil, error_code: 0)
     end
   end
 
