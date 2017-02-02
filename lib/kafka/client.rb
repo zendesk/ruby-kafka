@@ -243,6 +243,7 @@ module Kafka
         logger: @logger,
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,
+        offset_retention_time: offset_retention_time
       )
 
       heartbeat = Heartbeat.new(

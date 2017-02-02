@@ -4,11 +4,16 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Re-commit previously committed offsets periodically with an interval of half
+  the offset retention time, starting with the first commit (#318).
+- Expose offset retention time in the Consumer API (#316).
+
 ## v0.3.16
 
 - Fix SSL socket timeout (#283).
 - Update to the latest Datadog gem (#296).
 - Automatically detect private key type (#297).
+- Only fetch messages for subscribed topics (#309).
 
 ## v0.3.15
 

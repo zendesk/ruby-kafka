@@ -505,6 +505,10 @@ By default, offsets are committed every 10 seconds. You can increase the frequen
 
 In addition to the time based trigger it's possible to trigger checkpointing in response to _n_ messages having been processed, known as the _offset commit threshold_. This puts a bound on the number of messages that can be double-processed before the problem is detected. Setting this to 1 will cause an offset commit to take place every time a message has been processed. By default this trigger is disabled.
 
+Stale offsets are periodically purged by the broker. The broker setting `offsets.retention.minutes` controls the retention window for committed offsets, and defaults to 1 day. The length of the retention window, known as _offset retention time_, can be changed for the consumer.
+
+Previously committed offsets are re-committed, to reset the retention window, at the first commit and periodically at an interval of half the _offset retention time_.
+
 ```ruby
 consumer = kafka.consumer(
   group_id: "some-group",
@@ -514,6 +518,9 @@ consumer = kafka.consumer(
 
   # Commit offsets when 100 messages have been processed.
   offset_commit_threshold: 100,
+
+  # Increase the length of time that committed offsets are kept.
+  offset_retention_time: 7 * 60 * 60
 )
 ```
 

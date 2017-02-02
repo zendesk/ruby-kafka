@@ -1,6 +1,10 @@
 module Kafka
   class OffsetManager
-    def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:)
+
+    # The default broker setting for offsets.retention.minutes is 1440.
+    DEFAULT_RETENTION_TIME = 1440 * 60
+
+    def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:, offset_retention_time:)
       @cluster = cluster
       @group = group
       @logger = logger
@@ -13,6 +17,8 @@ module Kafka
       @committed_offsets = nil
       @resolved_offsets = {}
       @last_commit = Time.now
+      @last_recommit = nil
+      @recommit_interval = (offset_retention_time || DEFAULT_RETENTION_TIME) / 2
     end
 
     def set_default_offset(topic, default_offset)
@@ -49,17 +55,15 @@ module Kafka
       end
     end
 
-    def commit_offsets
-      unless @processed_offsets.empty?
-        pretty_offsets = @processed_offsets.flat_map {|topic, partitions|
-          partitions.map {|partition, offset| "#{topic}/#{partition}:#{offset}" }
-        }.join(", ")
+    def commit_offsets(recommit = false)
+      offsets = offsets_to_commit(recommit)
+      unless offsets.empty?
+        @logger.info "Committing offsets#{recommit ? ' with recommit' : ''}: #{prettify_offsets(offsets)}"
 
-        @logger.info "Committing offsets: #{pretty_offsets}"
-
-        @group.commit_offsets(@processed_offsets)
+        @group.commit_offsets(offsets)
 
         @last_commit = Time.now
+        @last_recommit = Time.now if recommit
 
         @uncommitted_offsets = 0
         @committed_offsets = nil
@@ -67,8 +71,9 @@ module Kafka
     end
 
     def commit_offsets_if_necessary
-      if commit_timeout_reached? || commit_threshold_reached?
-        commit_offsets
+      recommit = recommit_timeout_reached?
+      if recommit || commit_timeout_reached? || commit_threshold_reached?
+        commit_offsets(recommit)
       end
     end
 
@@ -107,13 +112,44 @@ module Kafka
       @cluster.resolve_offsets(topic, partitions, default_offset)
     end
 
+    def seconds_since(time)
+      Time.now - time
+    end
+
     def seconds_since_last_commit
-      Time.now - @last_commit
+      seconds_since(@last_commit)
+    end
+
+    def committed_offsets
+      @committed_offsets ||= @group.fetch_offsets
     end
 
     def committed_offset_for(topic, partition)
-      @committed_offsets ||= @group.fetch_offsets
-      @committed_offsets.offset_for(topic, partition)
+      committed_offsets.offset_for(topic, partition)
+    end
+
+    def offsets_to_commit(recommit = false)
+      if recommit
+        offsets_to_recommit.merge!(@processed_offsets) do |_topic, committed, processed|
+          committed.merge!(processed)
+        end
+      else
+        @processed_offsets
+      end
+    end
+
+    def offsets_to_recommit
+      committed_offsets.topics.each_with_object({}) do |(topic, partition_info), offsets|
+        topic_offsets = partition_info.keys.each_with_object({}) do |partition, partition_map|
+          offset = committed_offsets.offset_for(topic, partition)
+          partition_map[partition] = offset unless offset == -1
+        end
+        offsets[topic] = topic_offsets unless topic_offsets.empty?
+      end
+    end
+
+    def recommit_timeout_reached?
+      @last_recommit.nil? || seconds_since(@last_recommit) >= @recommit_interval
     end
 
     def commit_timeout_reached?
@@ -122,6 +158,12 @@ module Kafka
 
     def commit_threshold_reached?
       @commit_threshold != 0 && @uncommitted_offsets >= @commit_threshold
+    end
+
+    def prettify_offsets(offsets)
+      offsets.flat_map do |topic, partitions|
+        partitions.map { |partition, offset| "#{topic}/#{partition}:#{offset}" }
+      end.join(', ')
     end
   end
 end
