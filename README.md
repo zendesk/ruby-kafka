@@ -675,7 +675,7 @@ end
 
 It is highly recommended that you monitor your Kafka client applications in production. Typical problems you'll see are:
 
-* high network errors rates, which may impact performance and time-to-delivery;
+* high network error rates, which may impact performance and time-to-delivery;
 * producer buffer growth, which may indicate that producers are unable to deliver messages at the rate they're being produced;
 * consumer processing errors, indicating exceptions are being raised in the processing code;
 * frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
