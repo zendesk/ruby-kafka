@@ -454,12 +454,8 @@ module Kafka
 
       if ca_cert
         store = OpenSSL::X509::Store.new
-        if ca_cert.kind_of?(Array)
-          ca_cert.each do |cert|
-            store.add_cert(OpenSSL::X509::Certificate.new(cert))
-          end
-        else
-          store.add_cert(OpenSSL::X509::Certificate.new(ca_cert))
+        Array(ca_cert).each do |cert|
+          store.add_cert(OpenSSL::X509::Certificate.new(cert))
         end
         ssl_context.cert_store = store
       end
