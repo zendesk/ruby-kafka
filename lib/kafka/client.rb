@@ -31,8 +31,8 @@ module Kafka
     # @param socket_timeout [Integer, nil] the timeout setting for socket
     #   connections. See {BrokerPool#initialize}.
     #
-    # @param ssl_ca_cert [String, nil] a PEM encoded CA cert to use with an
-    #   SSL connection.
+    # @param ssl_ca_cert [String, Array<String>, nil] a PEM encoded CA cert, or an Array of
+    #   PEM encoded CA certs, to use with an SSL connection.
     #
     # @param ssl_client_cert [String, nil] a PEM encoded client cert to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert_key.
@@ -454,7 +454,9 @@ module Kafka
 
       if ca_cert
         store = OpenSSL::X509::Store.new
-        store.add_cert(OpenSSL::X509::Certificate.new(ca_cert))
+        Array(ca_cert).each do |cert|
+          store.add_cert(OpenSSL::X509::Certificate.new(cert))
+        end
         ssl_context.cert_store = store
       end
 
