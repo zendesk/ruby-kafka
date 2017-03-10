@@ -56,7 +56,7 @@ module Kafka
       return unless @buffer.key?(topic) && @buffer[topic].key?(partition)
 
       @size -= @buffer[topic][partition].count
-      @bytesize -= @buffer[topic][partition].map(&:bytesize).reduce(:+)
+      @bytesize -= @buffer[topic][partition].map(&:bytesize).reduce(0, :+)
 
       @buffer[topic].delete(partition)
       @buffer.delete(topic) if @buffer[topic].empty?
