@@ -71,12 +71,22 @@ describe "Producer API", functional: true do
   example "ssl exceptions are hidden on async producers" do
     producer = kafka.async_producer(delivery_threshold: 1)
 
-    expect(producer.instance_variable_get(:@worker)).to receive(:run).and_raise(OpenSSL::SSL::SSLError)
+    #expect(producer.instance_variable_get(:@worker)).to receive(:run).and_raise(OpenSSL::SSL::SSLError)
+
+    #expect(Kafka::SSLSocketWithTimeout.any_instance).to receive(:initialize).and_raise(OpenSSL::SSL::SSLError)
+    #expect(Kafka::SocketWithTimeout.any_instance).to receive(:initialize).and_raise(OpenSSL::SSL::SSLError)
+    #expect(Kafka::Connection.any_instance).to receive(:send_request).and_raise(OpenSSL::SSL::SSLError)
+    #expect(Kafka::Producer.any_instance).to receive(:deliver_messages_with_retries).and_raise(OpenSSL::SSL::SSLError)
+    #expect(producer).to receive(:deliver_messages).and_raise(OpenSSL::SSL::SSLError)
+    #expect(Kafka::Producer.any_instance).to receive(:deliver_messages).and_raise(OpenSSL::SSL::SSLError)
+    #expect(producer.instance_variable_get(:@worker)).to receive(:deliver_messages).and_raise(OpenSSL::SSL::SSLError)
+    expect(producer.instance_variable_get(:@worker).instance_variable_get(:@producer)).to receive(:deliver_messages).and_raise(OpenSSL::SSL::SSLError)
+    #expect(producer).to receive(:deliver_messages).and_raise(OpenSSL::SSL::SSLError)
 
     #expect {
       producer.produce("value", topic: topic, partition: 0) #}.to raise_error(OpenSSL::SSL::SSLError)
-=begin
     sleep 0.2
+=begin
 
     messages = kafka.fetch_messages(
       topic: topic,
