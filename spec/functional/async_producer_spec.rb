@@ -67,4 +67,46 @@ describe "Producer API", functional: true do
 
     producer.shutdown
   end
+
+  example "ssl exceptions are hidden on async producers" do
+    producer = kafka.async_producer(delivery_threshold: 1)
+
+    expect(producer.instance_variable_get(:@worker)).to receive(:run).and_raise(OpenSSL::SSL::SSLError)
+
+    #expect {
+      producer.produce("value", topic: topic, partition: 0) #}.to raise_error(OpenSSL::SSL::SSLError)
+=begin
+    sleep 0.2
+
+    messages = kafka.fetch_messages(
+      topic: topic,
+      partition: 0,
+      offset: 0,
+      max_wait_time: 0,
+    )
+
+    expect(messages.size).to eq 0
+
+    producer.shutdown
+=end
+  end
+
+  example "non existent topics throw " do
+    producer = kafka.async_producer(delivery_threshold: 1)
+
+    producer.produce("value", topic: "non_existent_topic", partition: 0)
+
+    sleep 0.2
+
+    messages = kafka.fetch_messages(
+      topic: topic,
+      partition: 0,
+      offset: 0,
+      max_wait_time: 0,
+    )
+
+    expect(messages.size).to eq 0
+
+    producer.shutdown
+  end
 end
