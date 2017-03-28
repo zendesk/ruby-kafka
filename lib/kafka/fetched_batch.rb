@@ -45,7 +45,7 @@ module Kafka
       if empty?
         0
       else
-        highwater_mark_offset - last_offset
+        (highwater_mark_offset - 1) - last_offset
       end
     end
   end
