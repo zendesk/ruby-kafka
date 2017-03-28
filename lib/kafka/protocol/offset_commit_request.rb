@@ -5,7 +5,7 @@ module Kafka
       DEFAULT_RETENTION_TIME = -1
 
       def api_key
-        8
+        ApiKey::OFFSET_COMMIT
       end
 
       def api_version

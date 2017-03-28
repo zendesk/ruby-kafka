@@ -10,7 +10,7 @@ module Kafka
       end
 
       def api_key
-        3
+        ApiKey::METADATA
       end
 
       def response_class

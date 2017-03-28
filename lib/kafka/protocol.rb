@@ -1,33 +1,36 @@
+require "kafka/protocol/api_key"
+
 module Kafka
   module Protocol
     # The replica id of non-brokers is always -1.
     REPLICA_ID = -1
 
     APIS = {
-      0 => :produce,
-      1 => :fetch,
-      2 => :list_offset,
-      3 => :topic_metadata,
-      8 => :offset_commit,
-      9 => :offset_fetch,
-      10 => :group_coordinator,
-      11 => :join_group,
-      12 => :heartbeat,
-      13 => :leave_group,
-      14 => :sync_group,
+      ApiKey::PRODUCE           => :produce,
+      ApiKey::FETCH             => :fetch,
+      ApiKey::OFFSETS           => :list_offset,
+      ApiKey::METADATA          => :topic_metadata,
+      ApiKey::OFFSET_COMMIT     => :offset_commit,
+      ApiKey::OFFSET_FETCH      => :offset_fetch,
+      ApiKey::GROUP_COORDINATOR => :group_coordinator,
+      ApiKey::JOIN_GROUP        => :join_group,
+      ApiKey::HEARTBEAT         => :heartbeat,
+      ApiKey::LEAVE_GROUP       => :leave_group,
+      ApiKey::SYNC_GROUP        => :sync_group,
+      ApiKey::SASL_HANDSHAKE    => :sasl_handshake
     }
 
     ERRORS = {
       -1 => UnknownError,
-      1 => OffsetOutOfRange,
-      2 => CorruptMessage,
-      3 => UnknownTopicOrPartition,
-      4 => InvalidMessageSize,
-      5 => LeaderNotAvailable,
-      6 => NotLeaderForPartition,
-      7 => RequestTimedOut,
-      8 => BrokerNotAvailable,
-      9 => ReplicaNotAvailable,
+       1 => OffsetOutOfRange,
+       2 => CorruptMessage,
+       3 => UnknownTopicOrPartition,
+       4 => InvalidMessageSize,
+       5 => LeaderNotAvailable,
+       6 => NotLeaderForPartition,
+       7 => RequestTimedOut,
+       8 => BrokerNotAvailable,
+       9 => ReplicaNotAvailable,
       10 => MessageSizeTooLarge,
       12 => OffsetMetadataTooLarge,
       15 => GroupCoordinatorNotAvailable,
@@ -41,6 +44,21 @@ module Kafka
       25 => UnknownMemberId,
       26 => InvalidSessionTimeout,
       27 => RebalanceInProgress,
+      28 => InvalidCommitOffsetSize,
+      29 => TopicAuthorizationCode,
+      30 => GroupAuthorizationCode,
+      31 => ClusterAuthorizationCode,
+      32 => InvalidTimestamp,
+      33 => UnsupportedSaslMechanism,
+      34 => InvalidSaslState,
+      35 => UnsupportedVersion,
+      36 => TopicAlreadyExists,
+      37 => InvalidPartitions,
+      38 => InvalidReplicationFactor,
+      39 => InvalidReplicaAssignment,
+      40 => InvalidConfig,
+      41 => NotController,
+      42 => InvalidRequest
     }
 
     def self.handle_error(error_code)
@@ -81,3 +99,5 @@ require "kafka/protocol/offset_fetch_request"
 require "kafka/protocol/offset_fetch_response"
 require "kafka/protocol/offset_commit_request"
 require "kafka/protocol/offset_commit_response"
+require "kafka/protocol/sasl_handshake_request"
+require "kafka/protocol/sasl_handshake_response"

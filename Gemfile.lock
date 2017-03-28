@@ -1,7 +1,8 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.3.15)
+    ruby-kafka (0.3.16)
+      gssapi (>= 1.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -23,6 +24,9 @@ GEM
     dogstatsd-ruby (2.1.0)
     dotenv (2.1.0)
     excon (0.54.0)
+    ffi (1.9.18)
+    gssapi (1.2.0)
+      ffi (>= 1.0.1)
     i18n (0.7.0)
     json (1.8.3)
     method_source (0.8.2)
@@ -83,4 +87,4 @@ RUBY VERSION
    ruby 2.2.3p173
 
 BUNDLED WITH
-   1.13.6
+   1.14.6

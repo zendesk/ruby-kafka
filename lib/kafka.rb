@@ -79,6 +79,7 @@ module Kafka
   class NotCoordinatorForGroup < ProtocolError
   end
 
+  # 17
   # For a request which attempts to access an invalid topic (e.g. one which has
   # an illegal name), or if an attempt is made to write to an internal topic
   # (such as the consumer offsets topic).
@@ -90,35 +91,103 @@ module Kafka
   class RecordListTooLarge < ProtocolError
   end
 
+  # 19
   # Returned from a produce request when the number of in-sync replicas is
   # lower than the configured minimum and requiredAcks is -1.
   class NotEnoughReplicas < ProtocolError
   end
 
+  # 20
   # Returned from a produce request when the message was written to the log,
   # but with fewer in-sync replicas than required.
   class NotEnoughReplicasAfterAppend < ProtocolError
   end
 
+  # 21
   # Returned from a produce request if the requested requiredAcks is invalid
   # (anything other than -1, 1, or 0).
   class InvalidRequiredAcks < ProtocolError
   end
 
+  # 9
   # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
   class ReplicaNotAvailable < ProtocolError
   end
 
+  #
   class UnknownMemberId < ProtocolError
   end
 
+  # 27
   class RebalanceInProgress < ProtocolError
   end
 
+  # 22
   class IllegalGeneration < ProtocolError
   end
 
+  # 26
   class InvalidSessionTimeout < ProtocolError
+  end
+
+  # 28
+  class InvalidCommitOffsetSize < ProtocolError
+  end
+
+  # 29
+  class TopicAuthorizationCode < ProtocolError
+  end
+
+  # 30
+  class GroupAuthorizationCode < ProtocolError
+  end
+
+  # 31
+  class ClusterAuthorizationCode < ProtocolError
+  end
+
+  # 32
+  class InvalidTimestamp < ProtocolError
+  end
+
+  # 33
+  class UnsupportedSaslMechanism < ProtocolError
+  end
+
+  # 34
+  class InvalidSaslState < ProtocolError
+  end
+
+  # 35
+  class UnsupportedVersion < ProtocolError
+  end
+
+  # 36
+  class TopicAlreadyExists < Error
+  end
+
+  # 37
+  class InvalidPartitions < Error
+  end
+
+  # 38
+  class InvalidReplicationFactor < Error
+  end
+
+  # 39
+  class InvalidReplicaAssignment < Error
+  end
+
+  # 40
+  class InvalidConfig < Error
+  end
+
+  # 41
+  class NotController < Error
+  end
+
+  # 42
+  class InvalidRequest < Error
   end
 
   # Raised when there's a network connection error.

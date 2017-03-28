@@ -16,7 +16,7 @@ module Kafka
       end
 
       def api_key
-        11
+        ApiKey::JOIN_GROUP
       end
 
       def response_class

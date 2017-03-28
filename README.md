@@ -34,6 +34,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
         1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+    10. [Authentication using SASL](#authentication-using-sasl)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -101,7 +102,7 @@ require "kafka"
 kafka = Kafka.new(
   # At least one of these nodes must be available:
   seed_brokers: ["kafka1:9092", "kafka2:9092"],
-  
+
   # Set an optional client id in order to identify the client to Kafka:
   client_id: "my-application",
 )
@@ -198,7 +199,7 @@ These policies can be used alone or in combination.
 producer = kafka.async_producer(
   # Trigger a delivery once 100 messages have been buffered.
   delivery_threshold: 100,
-  
+
   # Trigger a delivery every 30 seconds.
   delivery_interval: 30,
 )
@@ -435,13 +436,13 @@ In your controllers, simply call the producer directly:
 class OrdersController
   def create
     @order = Order.create!(params[:order])
-    
+
     event = {
       order_id: @order.id,
       amount: @order.amount,
       timestamp: Time.now,
     }
-    
+
     $kafka_producer.produce(event.to_json, topic: "order_events")
   end
 end
@@ -754,6 +755,19 @@ kafka = Kafka.new(
 ```
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
+
+### Authentication using SASL
+
+Kafka 0.9 has support of SASL/GSSAPI authentication - KRB5. To use SASL/GSSAPI, set principal and optionally keytab to the client initialization
+
+Currenly, ruby-kafka supports only GSSAPI method.
+
+```ruby
+kafka = Kafka.new(
+  principal: 'kafka/kafka.example.com@EXAMPLE.COM',
+  keytab: '/etc/keytabs/kafka.keytab',
+  # ...
+```
 
 ## Design
 
