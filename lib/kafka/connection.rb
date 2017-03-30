@@ -45,7 +45,7 @@ module Kafka
     #
     # @return [Connection] a new connection.
     def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil,
-                   ssl_context: nil, principal: nil, keytab: nil)
+                   ssl_context: nil, sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
       @instrumenter = instrumenter
@@ -53,8 +53,8 @@ module Kafka
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
       @ssl_context = ssl_context
-      @principal = principal
-      @keytab = keytab
+      @sasl_gssapi_principal = sasl_gssapi_principal
+      @sasl_gssapi_keytab = sasl_gssapi_keytab
     end
 
     def to_s
@@ -112,9 +112,9 @@ module Kafka
       if @ssl_context
         @socket = SSLSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout, ssl_context: @ssl_context)
       end
-      if @principal && !@principal.empty?
+      if @sasl_gssapi_principal && !@sasl_gssapi_principal.empty?
         @socket = SaslSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout,
-                                            client_id: @client_id, logger: @logger, principal: @principal, keytab: @keytab)
+                                            client_id: @client_id, logger: @logger, sasl_gssapi_principal: @principal, sasl_gssapi_keytab: @keytab)
       end
       @socket ||= SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
 

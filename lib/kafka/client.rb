@@ -40,13 +40,14 @@ module Kafka
     # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
-    # @param principal [String, nil] a KRB5 principal
+    # @param sasl_gssapi_principal [String, nil] a KRB5 principal
     #
-    # @param keytab [String, nil] a KRB5 keytab filepath
+    # @param sasl_gssapi_keytab [String, nil] a KRB5 keytab filepath
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
-                   ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil, principal: nil, keytab: nil)
+                   ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
+                   sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -60,8 +61,8 @@ module Kafka
         ssl_context: ssl_context,
         logger: @logger,
         instrumenter: @instrumenter,
-        principal: principal,
-        keytab: keytab
+        sasl_gssapi_principal: sasl_gssapi_principal,
+        sasl_gssapi_keytab: sasl_gssapi_keytab
       )
 
       @cluster = initialize_cluster

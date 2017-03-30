@@ -764,8 +764,8 @@ Currenly, ruby-kafka supports only GSSAPI method.
 
 ```ruby
 kafka = Kafka.new(
-  principal: 'kafka/kafka.example.com@EXAMPLE.COM',
-  keytab: '/etc/keytabs/kafka.keytab',
+  sasl_gssapi_principal: 'kafka/kafka.example.com@EXAMPLE.COM',
+  sasl_gssapi_keytab: '/etc/keytabs/kafka.keytab',
   # ...
 ```
 

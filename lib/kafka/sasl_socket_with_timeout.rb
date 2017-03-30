@@ -6,13 +6,13 @@ module Kafka
     GSSAPI_IDENT = "GSSAPI"
     GSSAPI_CONFIDENTIALITY = false
 
-    def initialize(host, port, connect_timeout: nil, timeout: nil, client_id:, logger:, principal:, keytab: nil)
+    def initialize(host, port, connect_timeout: nil, timeout: nil, client_id:, logger:, sasl_gssapi_principal:, sasl_gssapi_keytab: nil)
       @host = host
       @port = port
       @logger = logger
       @client_id = client_id
-      @principal = principal
-      @keytab = keytab
+      @principal = sasl_gssapi_principal
+      @keytab = sasl_gssapi_keytab
 
       initialize_gssapi_context
 
