@@ -286,6 +286,7 @@ module Kafka
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"
+          @cluster.mark_as_stale!
           sleep 1
         end
       end
