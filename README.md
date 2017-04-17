@@ -449,7 +449,7 @@ end
 
 ### Consuming Messages from Kafka
 
-**Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
+**Warning:** The Consumer API should be considered beta. While it is being used extensively in production, it has known limitations, particularly when dealing with high throughput topics.
 
 Consuming messages from a Kafka topic is simple:
 
