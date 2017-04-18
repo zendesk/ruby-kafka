@@ -57,6 +57,8 @@ module Kafka
   #     producer.shutdown
   #
   class AsyncProducer
+    # Allow at least one second between message delivery attempts.
+    MIN_DELIVERY_INTERVAL = 1
 
     # Initializes a new AsyncProducer.
     #
@@ -79,10 +81,19 @@ module Kafka
       @instrumenter = instrumenter
       @logger = logger
 
+      # If the delivery interval is non-zero but less than MIN_DELIVERY_INTERVAL,
+      # use it as the minimum interval allowed between delivery attempts.
+      if delivery_interval > 0 && delivery_interval < MIN_DELIVERY_INTERVAL
+        min_delivery_interval = delivery_interval
+      else
+        min_delivery_interval = MIN_DELIVERY_INTERVAL
+      end
+
       @worker = Worker.new(
         queue: @queue,
         producer: sync_producer,
         delivery_threshold: delivery_threshold,
+        min_delivery_interval: min_delivery_interval,
       )
 
       # The timer will no-op if the delivery interval is zero.
@@ -180,10 +191,11 @@ module Kafka
     end
 
     class Worker
-      def initialize(queue:, producer:, delivery_threshold:)
+      def initialize(queue:, producer:, delivery_threshold:, min_delivery_interval:)
         @queue = queue
         @producer = producer
         @delivery_threshold = delivery_threshold
+        @min_delivery_interval = min_delivery_interval
       end
 
       def run
@@ -220,7 +232,14 @@ module Kafka
       end
 
       def deliver_messages
+        # We don't want to deliver messages too frequently, since we could
+        # overwhelm the cluster.
+        return if last_delivery_at > Time.now - @min_delivery_interval
+
         @producer.deliver_messages
+
+        # Reset the min delivery interval timer.
+        @last_delivery_at = Time.now
       rescue DeliveryFailed, ConnectionError
         # Failed to deliver messages -- nothing to do but try again later.
       end
@@ -228,6 +247,10 @@ module Kafka
       def threshold_reached?
         @delivery_threshold > 0 &&
           @producer.buffer_size >= @delivery_threshold
+      end
+
+      def last_delivery_at
+        @last_delivery_at ||= Time.at(0)
       end
     end
   end
