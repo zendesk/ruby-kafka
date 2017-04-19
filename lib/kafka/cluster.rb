@@ -190,7 +190,7 @@ module Kafka
     # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
-      @seed_brokers.each do |node|
+      @seed_brokers.shuffle.each do |node|
         @logger.info "Fetching cluster metadata from #{node}"
 
         begin
