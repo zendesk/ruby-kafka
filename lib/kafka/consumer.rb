@@ -293,9 +293,22 @@ module Kafka
     ensure
       # In order to quickly have the consumer group re-balance itself, it's
       # important that members explicitly tell Kafka when they're leaving.
-      @offset_manager.commit_offsets rescue nil
+      make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
+    end
+
+    def make_final_offsets_commit!(attempts = 3)
+      @offset_manager.commit_offsets
+    rescue ConnectionError
+      # It's important to make sure final offsets commit is done
+      # As otherwise messages that have been processed after last auto-commit
+      # will be processed again and that may be huge amount of messages
+      return if attempts.zero?
+
+      @logger.error "Retrying to make final offsets commit (#{attempts} attempts left)"
+      sleep(0.1)
+      make_final_offsets_commit!(attempts - 1)
     end
 
     def join_group

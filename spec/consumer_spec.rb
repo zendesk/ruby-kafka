@@ -147,5 +147,14 @@ describe Kafka::Consumer do
         end
       end
     end
+
+    it 'retries final offsets commit at the end' do
+      allow(offset_manager).to receive(:commit_offsets).
+        exactly(4).times { raise(Kafka::ConnectionError) }
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+    end
   end
 end
