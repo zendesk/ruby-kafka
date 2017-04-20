@@ -164,4 +164,37 @@ describe Kafka::Consumer do
       consumer.commit_offsets
     end
   end
+
+  describe "#each_batch" do
+    let(:messages) {
+      [
+        Kafka::FetchedMessage.new(
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 0,
+          offset: 13,
+        )
+      ]
+    }
+
+    let(:fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 0,
+          highwater_mark_offset: 42,
+          messages: messages,
+        )
+      ]
+    }
+
+    it "does not commit offsets when auto_commit_offsets is off" do
+      consumer.each_batch(auto_commit_offsets: false) do |batch|
+        consumer.stop
+      end
+
+      expect(offset_manager).not_to receive(:commit_offsets_if_necessary)
+    end
+  end
 end

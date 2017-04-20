@@ -230,9 +230,11 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param auto_commit_offsets [Boolean] if true, it will commit offsets when necessary.
+    #   Otherwise it won't commit offsets.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
-    def each_batch(min_bytes: 1, max_wait_time: 5)
+    def each_batch(min_bytes: 1, max_wait_time: 5, auto_commit_offsets: true)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -263,7 +265,7 @@ module Kafka
             mark_message_as_processed(batch.messages.last)
           end
 
-          @offset_manager.commit_offsets_if_necessary
+          @offset_manager.commit_offsets_if_necessary if auto_commit_offsets
 
           @heartbeat.send_if_necessary
 
