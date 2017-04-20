@@ -157,4 +157,11 @@ describe Kafka::Consumer do
       end
     end
   end
+
+  describe "#commit_offsets" do
+    it "delegates to offset_manager" do
+      expect(offset_manager).to receive(:commit_offsets)
+      consumer.commit_offsets
+    end
+  end
 end
