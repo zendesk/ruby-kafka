@@ -164,4 +164,37 @@ describe Kafka::Consumer do
       consumer.commit_offsets
     end
   end
+
+  describe "#each_batch" do
+    let(:messages) {
+      [
+        Kafka::FetchedMessage.new(
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 0,
+          offset: 13,
+        )
+      ]
+    }
+
+    let(:fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 0,
+          highwater_mark_offset: 42,
+          messages: messages,
+        )
+      ]
+    }
+
+    it "does not mark as processed when automatically_mark_as_processed is false" do
+      expect(offset_manager).not_to receive(:mark_as_processed)
+
+      consumer.each_batch(automatically_mark_as_processed: false) do |message|
+        consumer.stop
+      end
+    end
+  end
 end
