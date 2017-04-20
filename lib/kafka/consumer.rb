@@ -200,7 +200,7 @@ module Kafka
             end
 
             mark_message_as_processed(message)
-            @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
+            @offset_manager.commit_offsets_if_necessary
 
             @heartbeat.send_if_necessary
 
@@ -210,7 +210,7 @@ module Kafka
 
         # We may not have received any messages, but it's still a good idea to
         # commit offsets if we've processed messages in the last set of batches.
-        @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
+        @offset_manager.commit_offsets_if_necessary
       end
     end
 
@@ -263,7 +263,7 @@ module Kafka
             mark_message_as_processed(batch.messages.last)
           end
 
-          @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
+          @offset_manager.commit_offsets_if_necessary
 
           @heartbeat.send_if_necessary
 

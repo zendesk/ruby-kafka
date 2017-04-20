@@ -30,7 +30,7 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
 
-    allow(offset_manager).to receive(:offset_commit_enabled).and_return(true)
+    allow(offset_manager).to receive(:commit_enabled).and_return(true)
     allow(offset_manager).to receive(:commit_offsets)
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
@@ -163,51 +163,6 @@ describe Kafka::Consumer do
     it "delegates to offset_manager" do
       expect(offset_manager).to receive(:commit_offsets)
       consumer.commit_offsets
-    end
-  end
-
-  describe "#each_batch" do
-    let(:messages) {
-      [
-        Kafka::FetchedMessage.new(
-          value: "hello",
-          key: nil,
-          topic: "greetings",
-          partition: 0,
-          offset: 13,
-        )
-      ]
-    }
-
-    let(:fetched_batches) {
-      [
-        Kafka::FetchedBatch.new(
-          topic: "greetings",
-          partition: 0,
-          highwater_mark_offset: 42,
-          messages: messages,
-        )
-      ]
-    }
-
-    context "offset_commit_enabled" do
-      it "does not commit when disabled" do
-        allow(offset_manager).to receive(:offset_commit_enabled).and_return(false)
-        expect(offset_manager).not_to receive(:commit_offsets_if_necessary)
-
-        consumer.each_batch do |batch|
-          consumer.stop
-        end
-      end
-
-      it "commits when enable" do
-        allow(offset_manager).to receive(:offset_commit_enabled).and_return(true)
-        expect(offset_manager).to receive(:commit_offsets_if_necessary)
-
-        consumer.each_batch do |batch|
-          consumer.stop
-        end
-      end
     end
   end
 end

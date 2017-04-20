@@ -246,7 +246,7 @@ module Kafka
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,
         offset_retention_time: offset_retention_time,
-        offset_commit_enabled: offset_commit_enabled
+        commit_enabled: offset_commit_enabled
       )
 
       heartbeat = Heartbeat.new(
