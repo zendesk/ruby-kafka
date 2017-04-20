@@ -30,6 +30,7 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
 
+    allow(offset_manager).to receive(:offset_commit_enabled).and_return(true)
     allow(offset_manager).to receive(:commit_offsets)
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
@@ -189,12 +190,24 @@ describe Kafka::Consumer do
       ]
     }
 
-    it "does not commit offsets when auto_commit_offsets is off" do
-      consumer.each_batch(auto_commit_offsets: false) do |batch|
-        consumer.stop
+    context "offset_commit_enabled" do
+      it "does not commit when disabled" do
+        allow(offset_manager).to receive(:offset_commit_enabled).and_return(false)
+        expect(offset_manager).not_to receive(:commit_offsets_if_necessary)
+
+        consumer.each_batch do |batch|
+          consumer.stop
+        end
       end
 
-      expect(offset_manager).not_to receive(:commit_offsets_if_necessary)
+      it "commits when enable" do
+        allow(offset_manager).to receive(:offset_commit_enabled).and_return(true)
+        expect(offset_manager).to receive(:commit_offsets_if_necessary)
+
+        consumer.each_batch do |batch|
+          consumer.stop
+        end
+      end
     end
   end
 end

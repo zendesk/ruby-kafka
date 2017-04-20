@@ -200,7 +200,7 @@ module Kafka
             end
 
             mark_message_as_processed(message)
-            @offset_manager.commit_offsets_if_necessary
+            @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
 
             @heartbeat.send_if_necessary
 
@@ -210,7 +210,7 @@ module Kafka
 
         # We may not have received any messages, but it's still a good idea to
         # commit offsets if we've processed messages in the last set of batches.
-        @offset_manager.commit_offsets_if_necessary
+        @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
       end
     end
 
@@ -230,11 +230,9 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
-    # @param auto_commit_offsets [Boolean] if true, it will commit offsets when necessary.
-    #   Otherwise it won't commit offsets.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
-    def each_batch(min_bytes: 1, max_wait_time: 5, auto_commit_offsets: true)
+    def each_batch(min_bytes: 1, max_wait_time: 5)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -265,7 +263,7 @@ module Kafka
             mark_message_as_processed(batch.messages.last)
           end
 
-          @offset_manager.commit_offsets_if_necessary if auto_commit_offsets
+          @offset_manager.commit_offsets_if_necessary if @offset_manager.offset_commit_enabled
 
           @heartbeat.send_if_necessary
 

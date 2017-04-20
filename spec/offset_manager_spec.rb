@@ -12,11 +12,14 @@ describe Kafka::OffsetManager do
       logger: logger,
       commit_interval: commit_interval,
       commit_threshold: 0,
-      offset_retention_time: offset_retention_time
+      offset_retention_time: offset_retention_time,
+      offset_commit_enabled: offset_commit_enabled
     )
   }
   let(:offset_retention_time) { nil }
   let(:commit_interval) { 0 }
+  let(:offset_commit_enabled) { true }
+
 
   before do
     allow(group).to receive(:commit_offsets)
