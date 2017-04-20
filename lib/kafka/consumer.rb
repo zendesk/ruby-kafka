@@ -272,6 +272,10 @@ module Kafka
       end
     end
 
+    def commit_offsets
+      @offset_manager.commit_offsets
+    end
+
     private
 
     def consumer_loop
