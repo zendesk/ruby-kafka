@@ -34,6 +34,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
         1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+    10. [Using JKS Certificates](#using-jks-certificates)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -754,6 +755,10 @@ kafka = Kafka.new(
 ```
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
+
+#### Using JKS Certificates
+
+Typically, Kafka certificates come in the JKS format, which isn't supported by ruby-kafka. There's [a wiki page](https://github.com/zendesk/ruby-kafka/wiki/Creating-X509-certificates-from-JKS-format) that describes how to generate valid X509 certificates from JKS certificates.
 
 ## Design
 
