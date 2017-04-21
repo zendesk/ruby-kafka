@@ -218,10 +218,8 @@ module Kafka
     #   than the session window.
     # @param offset_retention_time [Integer] the time period that committed
     #   offsets will be retained, in seconds. Defaults to the broker setting.
-    # @param offset_commit_enabled [Boolean] if true, it will commit offsets when necessary.
-    #   Otherwise it won't commit offsets. Defaults to true.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil, offset_commit_enabled: true)
+    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {
@@ -245,8 +243,7 @@ module Kafka
         logger: @logger,
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,
-        offset_retention_time: offset_retention_time,
-        commit_enabled: offset_commit_enabled
+        offset_retention_time: offset_retention_time
       )
 
       heartbeat = Heartbeat.new(
