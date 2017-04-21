@@ -272,6 +272,10 @@ module Kafka
       end
     end
 
+    def commit_offsets
+      @offset_manager.commit_offsets
+    end
+
     private
 
     def consumer_loop
@@ -293,7 +297,7 @@ module Kafka
     ensure
       # In order to quickly have the consumer group re-balance itself, it's
       # important that members explicitly tell Kafka when they're leaving.
-      make_final_offsets_commit!
+      make_final_offsets_commit! if @offset_manager.commit_enabled
       @group.leave rescue nil
       @running = false
     end

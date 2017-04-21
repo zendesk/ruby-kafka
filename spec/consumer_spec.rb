@@ -30,6 +30,7 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
 
+    allow(offset_manager).to receive(:commit_enabled).and_return(true)
     allow(offset_manager).to receive(:commit_offsets)
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
@@ -155,6 +156,13 @@ describe Kafka::Consumer do
       consumer.each_message do |message|
         consumer.stop
       end
+    end
+  end
+
+  describe "#commit_offsets" do
+    it "delegates to offset_manager" do
+      expect(offset_manager).to receive(:commit_offsets)
+      consumer.commit_offsets
     end
   end
 end

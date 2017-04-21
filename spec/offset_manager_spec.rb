@@ -12,11 +12,14 @@ describe Kafka::OffsetManager do
       logger: logger,
       commit_interval: commit_interval,
       commit_threshold: 0,
-      offset_retention_time: offset_retention_time
+      offset_retention_time: offset_retention_time,
+      commit_enabled: commit_enabled
     )
   }
   let(:offset_retention_time) { nil }
   let(:commit_interval) { 0 }
+  let(:commit_enabled) { true }
+
 
   before do
     allow(group).to receive(:commit_offsets)
@@ -147,6 +150,15 @@ describe Kafka::OffsetManager do
 
           expect(commits.last).to eq(expected_offsets)
         end
+      end
+    end
+
+    context "commit disabled" do
+      let(:commit_enabled) { false }
+
+      it "it does nothing" do
+        expect(offset_manager).not_to receive(:commit_offsets)
+        offset_manager.commit_offsets_if_necessary
       end
     end
 
