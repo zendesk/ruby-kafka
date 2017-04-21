@@ -34,7 +34,6 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
         1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-    10. [Using JKS Certificates](#using-jks-certificates)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
