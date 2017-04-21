@@ -4,6 +4,8 @@ module Kafka
     # The default broker setting for offsets.retention.minutes is 1440.
     DEFAULT_RETENTION_TIME = 1440 * 60
 
+    attr_reader :commit_enabled
+
     def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:, offset_retention_time:, commit_enabled:)
       @cluster = cluster
       @group = group
@@ -72,7 +74,7 @@ module Kafka
     end
 
     def commit_offsets_if_necessary
-      return unless @commit_enabled
+      return unless commit_enabled
       recommit = recommit_timeout_reached?
       if recommit || commit_timeout_reached? || commit_threshold_reached?
         commit_offsets(recommit)
