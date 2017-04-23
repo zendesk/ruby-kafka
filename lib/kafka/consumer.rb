@@ -172,7 +172,7 @@ module Kafka
     #   The original exception will be returned by calling `#cause` on the
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
-    def each_message(min_bytes: 1, max_wait_time: 5)
+    def each_message(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -199,7 +199,7 @@ module Kafka
               end
             end
 
-            mark_message_as_processed(message)
+            mark_message_as_processed(message) if automatically_mark_as_processed
             @offset_manager.commit_offsets_if_necessary
 
             @heartbeat.send_if_necessary
