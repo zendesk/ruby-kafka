@@ -167,6 +167,10 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param automatically_mark_as_processed [Boolean] whether to automatically
+    #   mark a message as successfully processed when the block returns
+    #   without an exception. Once marked successful, the offsets of processed
+    #   messages can be committed to Kafka.
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @raise [Kafka::ProcessingError] if there was an error processing a message.
     #   The original exception will be returned by calling `#cause` on the
@@ -230,8 +234,10 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
-    # @param automatically_mark_as_processed [Boolean] if true, it will mark as processed offset
-    #   when the block return. Otherwise it will not mark as processed. Defaults to true.
+    # @param automatically_mark_as_processed [Boolean] whether to automatically
+    #   mark a batch's messages as successfully processed when the block returns
+    #   without an exception. Once marked successful, the offsets of processed
+    #   messages can be committed to Kafka.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
     def each_batch(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
