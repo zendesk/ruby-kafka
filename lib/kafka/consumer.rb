@@ -230,9 +230,11 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param automatically_mark_as_processed [Boolean] if true, it will mark as processed offset
+    #   when the block return. Otherwise it will not mark as processed. Defaults to true.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
-    def each_batch(min_bytes: 1, max_wait_time: 5)
+    def each_batch(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -260,7 +262,7 @@ module Kafka
               end
             end
 
-            mark_message_as_processed(batch.messages.last)
+            mark_message_as_processed(batch.messages.last) if automatically_mark_as_processed
           end
 
           @offset_manager.commit_offsets_if_necessary
@@ -270,6 +272,14 @@ module Kafka
           return if !@running
         end
       end
+    end
+
+    def commit_offsets
+      @offset_manager.commit_offsets
+    end
+
+    def mark_message_as_processed(message)
+      @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
 
     private
@@ -371,10 +381,6 @@ module Kafka
       @logger.error "Connection error while fetching messages: #{e}"
 
       raise FetchError, e
-    end
-
-    def mark_message_as_processed(message)
-      @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
   end
 end
