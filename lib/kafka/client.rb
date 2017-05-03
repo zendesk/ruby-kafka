@@ -414,6 +414,32 @@ module Kafka
       @cluster.resolve_offset(topic, partition, :latest) - 1
     end
 
+
+    # Retrieve the offset of the last message in each partition of the specfied topics.
+    #
+    # @param topics [String, Array<String>] single topic name or array of topic names.
+    #   nil means all topics will be fetched.
+    #
+    # @return [Hash]
+    #
+    # @example
+    #   last_offsets_for ['topic-1', 'topic-2']  ->
+    #   {
+    #     'topic-1' => { 0 => 100, 1 => 100 },
+    #     'topic-2' => { 0 => 100, 1 => 100 },
+    #   }
+    def last_offsets_for(topics = nil)
+      topics   = [topics] if !topics.nil? && topics.is_a?(String)
+      topics ||= self.topics
+      @cluster.add_target_topics(topics)
+
+      topics.map do |topic|
+        partition_ids     = @cluster.partitions_for(topic).collect(&:partition_id)
+        partition_offsets = @cluster.resolve_offsets(topic, partition_ids, :latest)
+        [topic, partition_offsets.collect { |k, v| [k, v - 1] } .to_h]
+      end.to_h
+    end
+
     # Closes all connections to the Kafka brokers and frees up used resources.
     #
     # @return [nil]

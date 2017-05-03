@@ -157,6 +157,9 @@ module Kafka
       end
 
       offsets
+    rescue Kafka::ProtocolError
+      mark_as_stale!
+      raise
     end
 
     def resolve_offset(topic, partition, offset)
