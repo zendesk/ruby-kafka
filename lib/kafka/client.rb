@@ -414,6 +414,27 @@ module Kafka
       @cluster.resolve_offset(topic, partition, :latest) - 1
     end
 
+    # Retrieve end offests for the specified topics.
+    #
+    # @param topics [String, Array<String>] single topic name or array of topic names.
+    #   nil means all topics will be fetched.
+    #
+    # @return [Hash] {
+    #     topic_name [String] => {
+    #       partition_id [Integer] => end_offset [Integer], ...
+    #     }, ...
+    #   }
+    def last_offsets(topics = nil)
+      topics   = [topics] if !topics.nil? && topics.is_a?(String)
+      topics ||= self.topics
+      @cluster.add_target_topics(topics)
+
+      topics.map do |topic|
+        partition_ids = @cluster.partitions_for(topic).collect(&:partition_id)
+        [topic, @cluster.resolve_offsets(topic, partition_ids, :latest)]
+      end.to_h
+    end
+
     # Closes all connections to the Kafka brokers and frees up used resources.
     #
     # @return [nil]
