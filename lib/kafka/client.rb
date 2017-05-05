@@ -415,7 +415,7 @@ module Kafka
     end
 
 
-    # Retrieve the offset of the last message in each partition of the specfied topics.
+    # Retrieve the offset of the last message in each partition of the specified topics.
     #
     # @param topics [String, Array<String>] single topic name or array of topic names.
     #   nil means all topics will be fetched.
@@ -428,11 +428,8 @@ module Kafka
     #     'topic-1' => { 0 => 100, 1 => 100 },
     #     'topic-2' => { 0 => 100, 1 => 100 },
     #   }
-    def last_offsets_for(topics = nil)
-      topics   = [topics] if !topics.nil? && topics.is_a?(String)
-      topics ||= self.topics
+    def last_offsets_for(*topics)
       @cluster.add_target_topics(topics)
-
       topics.map do |topic|
         partition_ids     = @cluster.partitions_for(topic).collect(&:partition_id)
         partition_offsets = @cluster.resolve_offsets(topic, partition_ids, :latest)
