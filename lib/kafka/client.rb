@@ -423,7 +423,7 @@ module Kafka
     #   last_offsets_for('topic-1', 'topic-2')  ->
     #   {
     #     'topic-1' => { 0 => 100, 1 => 100 },
-    #     'topic-2' => { 0 => 100, 1 => 100 },
+    #     'topic-2' => { 0 => 100, 1 => 100 }
     #   }
     def last_offsets_for(*topics)
       @cluster.add_target_topics(topics)
