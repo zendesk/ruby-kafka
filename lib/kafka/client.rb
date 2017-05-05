@@ -417,8 +417,7 @@ module Kafka
 
     # Retrieve the offset of the last message in each partition of the specified topics.
     #
-    # @param topics [String, Array<String>] single topic name or array of topic names.
-    #   nil means all topics will be fetched.
+    # @param topics [Array<String>] topic names
     #
     # @return [Hash]
     #
