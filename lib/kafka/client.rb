@@ -420,7 +420,7 @@ module Kafka
     # @param topics [Array<String>] topic names
     # @return [Hash]
     # @example
-    #   last_offsets_for ['topic-1', 'topic-2']  ->
+    #   last_offsets_for('topic-1', 'topic-2')  ->
     #   {
     #     'topic-1' => { 0 => 100, 1 => 100 },
     #     'topic-2' => { 0 => 100, 1 => 100 },
