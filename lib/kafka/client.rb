@@ -418,7 +418,7 @@ module Kafka
     # Retrieve the offset of the last message in each partition of the specified topics.
     #
     # @param topics [Array<String>] topic names.
-    # @return [Hash]
+    # @return [Hash<String, Hash<Integer, Integer>>]
     # @example
     #   last_offsets_for('topic-1', 'topic-2') # =>
     #   # {
