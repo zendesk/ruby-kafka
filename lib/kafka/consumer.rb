@@ -288,6 +288,10 @@ module Kafka
       @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
 
+    def mark_message_as_buffered(message)
+      @offset_manager.mark_as_buffered(message.topic, message.partition, message.offset)
+    end
+
     private
 
     def consumer_loop
