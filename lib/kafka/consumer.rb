@@ -292,6 +292,10 @@ module Kafka
       @offset_manager.mark_as_buffered(message.topic, message.partition, message.offset)
     end
 
+    def subscribed_partitions
+      @group.subscribed_partitions
+    end
+
     private
 
     def consumer_loop

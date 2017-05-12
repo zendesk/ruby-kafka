@@ -165,6 +165,13 @@ describe Kafka::Consumer do
     end
   end
 
+  describe "#subscribed_partitions" do
+    it "delegates to group" do
+      expect(group).to receive(:subscribed_partitions)
+      consumer.subscribed_partitions
+    end
+  end
+
   describe "#each_batch" do
     let(:messages) {
       [
