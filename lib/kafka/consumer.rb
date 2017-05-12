@@ -353,7 +353,7 @@ module Kafka
 
       @heartbeat.send_if_necessary
 
-      raise "No partitions assigned!" if subscribed_partitions.empty?
+      raise NoPartitionsAssignedError if subscribed_partitions.empty?
 
       operation = FetchOperation.new(
         cluster: @cluster,
