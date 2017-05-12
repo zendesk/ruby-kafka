@@ -18,6 +18,7 @@ module Kafka
       @resolved_offsets = {}
       @last_commit = Time.now
       @last_recommit = nil
+      @buffered_offsets = {}
       @recommit_interval = (offset_retention_time || DEFAULT_RETENTION_TIME) / 2
     end
 
@@ -35,15 +36,20 @@ module Kafka
       @logger.debug "Marking #{topic}/#{partition}:#{offset} as committed"
     end
 
+    def mark_as_buffered(topic, partition, offset)
+      @buffered_offsets[topic] ||= {}
+
+      @buffered_offsets[topic][partition] = offset + 1
+      @logger.debug "Marking #{topic}/#{partition}:#{offset + 1} as buffered"
+    end
+
     def seek_to_default(topic, partition)
       @processed_offsets[topic] ||= {}
       @processed_offsets[topic][partition] = -1
     end
 
     def next_offset_for(topic, partition)
-      offset = @processed_offsets.fetch(topic, {}).fetch(partition) {
-        committed_offset_for(topic, partition)
-      }
+      offset = buffered_or_processed_offset_for(topic, partition)
 
       # A negative offset means that no offset has been committed, so we need to
       # resolve the default offset for the topic.
@@ -80,6 +86,7 @@ module Kafka
     def clear_offsets
       @processed_offsets.clear
       @resolved_offsets.clear
+      @buffered_offsets.clear
 
       # Clear the cached commits from the brokers.
       @committed_offsets = nil
@@ -96,9 +103,22 @@ module Kafka
       # Clear the cached commits from the brokers.
       @committed_offsets = nil
       @resolved_offsets.clear
+      @buffered_offsets.clear
     end
 
     private
+
+    def buffered_or_processed_offset_for(topic, partition)
+      offset = @buffered_offsets.fetch(topic, {})[partition]
+
+      if offset.nil?
+        @processed_offsets.fetch(topic, {}).fetch(partition) {
+          committed_offset_for(topic, partition)
+        }
+      else
+        offset
+      end
+    end
 
     def resolve_offset(topic, partition)
       @resolved_offsets[topic] ||= fetch_resolved_offsets(topic)
