@@ -38,7 +38,7 @@ module Kafka
     end
 
     def sasl_gssapi_auth?
-      !ssl_context && sasl_gssapi_principal && !sasl_gssapi_principal.empty?
+      !@ssl_context && @sasl_gssapi_principal && !@sasl_gssapi_principal.empty?
     end
   end
 end
