@@ -1,23 +1,21 @@
-require "kafka/protocol/api_key"
-
 module Kafka
   module Protocol
     # The replica id of non-brokers is always -1.
     REPLICA_ID = -1
 
     APIS = {
-      ApiKey::PRODUCE           => :produce,
-      ApiKey::FETCH             => :fetch,
-      ApiKey::OFFSETS           => :list_offset,
-      ApiKey::METADATA          => :topic_metadata,
-      ApiKey::OFFSET_COMMIT     => :offset_commit,
-      ApiKey::OFFSET_FETCH      => :offset_fetch,
-      ApiKey::GROUP_COORDINATOR => :group_coordinator,
-      ApiKey::JOIN_GROUP        => :join_group,
-      ApiKey::HEARTBEAT         => :heartbeat,
-      ApiKey::LEAVE_GROUP       => :leave_group,
-      ApiKey::SYNC_GROUP        => :sync_group,
-      ApiKey::SASL_HANDSHAKE    => :sasl_handshake
+      0 => :produce,
+      1 => :fetch,
+      2 => :list_offset,
+      3 => :topic_metadata,
+      8 => :offset_commit,
+      9 => :offset_fetch,
+      10 => :group_coordinator,
+      11 => :join_group,
+      12 => :heartbeat,
+      13 => :leave_group,
+      14 => :sync_group,
+      17 => :sasl_handshake
     }
 
     ERRORS = {

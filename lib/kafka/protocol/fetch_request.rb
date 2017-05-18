@@ -27,7 +27,7 @@ module Kafka
       end
 
       def api_key
-        ApiKey::FETCH
+        1
       end
 
       def response_class

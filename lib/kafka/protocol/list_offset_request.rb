@@ -20,7 +20,7 @@ module Kafka
       end
 
       def api_key
-        ApiKey::OFFSETS
+        2
       end
 
       def response_class

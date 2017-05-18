@@ -4,8 +4,6 @@ require "kafka/ssl_socket_with_timeout"
 require "kafka/protocol/request_message"
 require "kafka/protocol/encoder"
 require "kafka/protocol/decoder"
-require "kafka/connection_operation"
-require "kafka/sasl_socket_with_timeout"
 
 module Kafka
 
@@ -30,6 +28,10 @@ module Kafka
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
 
+    attr_reader :socket
+    attr_reader :encoder
+    attr_reader :decoder
+
     # Opens a connection to a Kafka broker.
     #
     # @param host [String] the hostname of the broker.
@@ -44,8 +46,7 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil,
-                   ssl_context: nil, sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil)
+    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
       @instrumenter = instrumenter
@@ -53,8 +54,6 @@ module Kafka
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
       @ssl_context = ssl_context
-      @sasl_gssapi_principal = sasl_gssapi_principal
-      @sasl_gssapi_keytab = sasl_gssapi_keytab
     end
 
     def to_s
@@ -93,10 +92,10 @@ module Kafka
 
         @correlation_id += 1
 
-        @operation.write_request(request, notification, @correlation_id)
+        write_request(request, notification)
 
         response_class = request.response_class
-        @operation.wait_for_response(response_class, notification, @correlation_id) unless response_class.nil?
+        wait_for_response(response_class, notification) unless response_class.nil?
       end
     rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
       close
@@ -111,17 +110,12 @@ module Kafka
 
       if @ssl_context
         @socket = SSLSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout, ssl_context: @ssl_context)
+      else
+        @socket = SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
       end
-      if @sasl_gssapi_principal && !@sasl_gssapi_principal.empty?
-        @socket = SaslSocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout,
-                                            client_id: @client_id, logger: @logger, sasl_gssapi_principal: @principal, sasl_gssapi_keytab: @keytab)
-      end
-      @socket ||= SocketWithTimeout.new(@host, @port, connect_timeout: @connect_timeout, timeout: @socket_timeout)
 
-      encoder = Kafka::Protocol::Encoder.new(@socket)
-      decoder = Kafka::Protocol::Decoder.new(@socket)
-
-      @operation = Kafka::ConnectionOperation.new(logger: @logger, client_id: @client_id, encoder: encoder, decoder: decoder)
+      @encoder = Kafka::Protocol::Encoder.new(@socket)
+      @decoder = Kafka::Protocol::Decoder.new(@socket)
 
       # Correlation id is initialized to zero and bumped for each request.
       @correlation_id = 0
@@ -131,6 +125,77 @@ module Kafka
     rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
+    end
+
+    # Writes a request over the connection.
+    #
+    # @param request [#encode] the request that should be encoded and written.
+    #
+    # @return [nil]
+    def write_request(request, notification)
+      @logger.debug "Sending request #{@correlation_id} to #{to_s}"
+
+      message = Kafka::Protocol::RequestMessage.new(
+        api_key: request.api_key,
+        api_version: request.respond_to?(:api_version) ? request.api_version : 0,
+        correlation_id: @correlation_id,
+        client_id: @client_id,
+        request: request,
+      )
+
+      data = Kafka::Protocol::Encoder.encode_with(message)
+      notification[:request_size] = data.bytesize
+
+      @encoder.write_bytes(data)
+
+      nil
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while writing request #{@correlation_id}"
+      raise
+    end
+
+    # Reads a response from the connection.
+    #
+    # @param response_class [#decode] an object that can decode the response from
+    #   a given Decoder.
+    #
+    # @return [nil]
+    def read_response(response_class, notification)
+      @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
+
+      data = @decoder.bytes
+      notification[:response_size] = data.bytesize
+
+      buffer = StringIO.new(data)
+      response_decoder = Kafka::Protocol::Decoder.new(buffer)
+
+      correlation_id = response_decoder.int32
+      response = response_class.decode(response_decoder)
+
+      @logger.debug "Received response #{correlation_id} from #{to_s}"
+
+      return correlation_id, response
+    rescue Errno::ETIMEDOUT
+      @logger.error "Timed out while waiting for response #{@correlation_id}"
+      raise
+    end
+
+    def wait_for_response(response_class, notification)
+      loop do
+        correlation_id, response = read_response(response_class, notification)
+
+        # There may have been a previous request that timed out before the client
+        # was able to read the response. In that case, the response will still be
+        # sitting in the socket waiting to be read. If the response we just read
+        # was to a previous request, we can safely skip it.
+        if correlation_id < @correlation_id
+          @logger.error "Received out-of-order response id #{correlation_id}, was expecting #{@correlation_id}"
+        elsif correlation_id > @correlation_id
+          raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
+        else
+          return response
+        end
+      end
     end
   end
 end

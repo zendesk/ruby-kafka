@@ -7,7 +7,7 @@ module Kafka
       end
 
       def api_key
-        ApiKey::OFFSET_FETCH
+        9
       end
 
       def api_version

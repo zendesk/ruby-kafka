@@ -7,7 +7,7 @@ module Kafka
       end
 
       def api_key
-        ApiKey::LEAVE_GROUP
+        13
       end
 
       def response_class

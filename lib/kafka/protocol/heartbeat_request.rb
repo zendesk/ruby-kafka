@@ -8,7 +8,7 @@ module Kafka
       end
 
       def api_key
-        ApiKey::HEARTBEAT
+        12
       end
 
       def response_class
