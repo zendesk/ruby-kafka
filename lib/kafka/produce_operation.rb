@@ -137,6 +137,9 @@ module Kafka
               delay: ack_time - message.create_time,
             })
           end
+        rescue Kafka::MessageSizeTooLarge
+          @logger.error "Message is too large when writing to #{topic}/#{partition}"
+          @buffer.clear_messages(topic: topic, partition: partition)
         rescue Kafka::CorruptMessage
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition
