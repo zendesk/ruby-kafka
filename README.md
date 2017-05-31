@@ -450,7 +450,7 @@ end
 
 ### Consuming Messages from Kafka
 
-**Warning:** The Consumer API is still alpha level and will likely change. The consumer code should not be considered stable, as it hasn't been exhaustively tested in production environments yet.
+**Warning:** The Consumer API should be considered beta. While it is being used extensively in production, it has known limitations, particularly when dealing with high throughput topics.
 
 Consuming messages from a Kafka topic is simple:
 
@@ -502,9 +502,11 @@ Each consumer process will be assigned one or more partitions from each topic th
 
 In order to be able to resume processing after a consumer crashes, each consumer will periodically _checkpoint_ its position within each partition it reads from. Since each partition has a monotonically increasing sequence of message offsets, this works by _committing_ the offset of the last message that was processed in a given partition. Kafka handles these commits and allows another consumer in a group to resume from the last commit when a member crashes or becomes unresponsive.
 
-By default, offsets are committed every 10 seconds. You can increase the frequency, known as the _offset commit interval_, to limit the duration of double-processing scenarios, at the cost of a lower throughput due to the added coordination. If you want to improve throughput, and double-processing is of less concern to you, then you can decrease the frequency.
+By default, offsets are committed every 10 seconds. You can increase the frequency, known as the _offset commit interval_, to limit the duration of double-processing scenarios, at the cost of a lower throughput due to the added coordination. If you want to improve throughput, and double-processing is of less concern to you, then you can decrease the frequency. Set the commit interval to zero in order to disable the timer-based commit trigger entirely.
 
-In addition to the time based trigger it's possible to trigger checkpointing in response to _n_ messages having been processed, known as the _offset commit threshold_. This puts a bound on the number of messages that can be double-processed before the problem is detected. Setting this to 1 will cause an offset commit to take place every time a message has been processed. By default this trigger is disabled.
+In addition to the time based trigger it's possible to trigger checkpointing in response to _n_ messages having been processed, known as the _offset commit threshold_. This puts a bound on the number of messages that can be double-processed before the problem is detected. Setting this to 1 will cause an offset commit to take place every time a message has been processed. By default this trigger is disabled (set to zero).
+
+It is possible to trigger an immediate offset commit by calling `Consumer#commit_offsets`. This blocks the caller until the Kafka cluster has acknowledged the commit.
 
 Stale offsets are periodically purged by the broker. The broker setting `offsets.retention.minutes` controls the retention window for committed offsets, and defaults to 1 day. The length of the retention window, known as _offset retention time_, can be changed for the consumer.
 
@@ -523,6 +525,46 @@ consumer = kafka.consumer(
   # Increase the length of time that committed offsets are kept.
   offset_retention_time: 7 * 60 * 60
 )
+```
+
+For some use cases it may be necessary to control when messages are marked as processed. Note that since only the consumer position within each partition can be saved, marking a message as processed implies that all messages in the partition with a lower offset should also be considered as having been processed.
+
+The method `Consumer#mark_message_as_processed` marks a message (and all those that precede it in a partition) as having been processed. This is an advanced API that you should only use if you know what you're doing.
+
+```ruby
+# Manually controlling checkpointing:
+
+# Typically you want to use this API in order to buffer messages until some
+# special "commit" message is received, e.g. in order to group together
+# transactions consisting of several items.
+buffer = []
+
+# Messages will not be marked as processed automatically. If you shut down the
+# consumer without calling `#mark_message_as_processed` first, the consumer will
+# not resume where you left off!
+consumer.each_message(automatically_mark_as_processed: false) do |message|
+  # Our messages are JSON with a `type` field and other stuff.
+  event = JSON.parse(message.value)
+
+  case event.fetch("type")
+  when "add_to_cart"
+    buffer << event
+  when "complete_purchase"
+    # We've received all the messages we need, time to save the transaction.
+    save_transaction(buffer)
+
+    # Now we can set the checkpoint by marking the last message as processed.
+    consumer.mark_message_as_processed(message)
+
+    # We can optionally trigger an immediate, blocking offset commit in order
+    # to minimize the risk of crashing before the automatic triggers have
+    # kicked in.
+    consumer.commit_offsets
+
+    # Make the buffer ready for the next transaction.
+    buffer.clear
+  end
+end
 ```
 
 
@@ -755,6 +797,10 @@ kafka = Kafka.new(
 ```
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
+
+#### Using JKS Certificates
+
+Typically, Kafka certificates come in the JKS format, which isn't supported by ruby-kafka. There's [a wiki page](https://github.com/zendesk/ruby-kafka/wiki/Creating-X509-certificates-from-JKS-format) that describes how to generate valid X509 certificates from JKS certificates.
 
 ### Authentication using SASL
 

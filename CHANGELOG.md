@@ -4,9 +4,12 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.3.17
+
 - Re-commit previously committed offsets periodically with an interval of half
   the offset retention time, starting with the first commit (#318).
 - Expose offset retention time in the Consumer API (#316).
+- Don't get blocked when there's temporarily no leader for a topic (#336).
 
 ## v0.3.16
 

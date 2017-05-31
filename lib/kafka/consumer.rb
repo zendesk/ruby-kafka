@@ -167,12 +167,16 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param automatically_mark_as_processed [Boolean] whether to automatically
+    #   mark a message as successfully processed when the block returns
+    #   without an exception. Once marked successful, the offsets of processed
+    #   messages can be committed to Kafka.
     # @yieldparam message [Kafka::FetchedMessage] a message fetched from Kafka.
     # @raise [Kafka::ProcessingError] if there was an error processing a message.
     #   The original exception will be returned by calling `#cause` on the
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
-    def each_message(min_bytes: 1, max_wait_time: 5)
+    def each_message(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -199,7 +203,7 @@ module Kafka
               end
             end
 
-            mark_message_as_processed(message)
+            mark_message_as_processed(message) if automatically_mark_as_processed
             @offset_manager.commit_offsets_if_necessary
 
             @heartbeat.send_if_necessary
@@ -230,9 +234,13 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param automatically_mark_as_processed [Boolean] whether to automatically
+    #   mark a batch's messages as successfully processed when the block returns
+    #   without an exception. Once marked successful, the offsets of processed
+    #   messages can be committed to Kafka.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
-    def each_batch(min_bytes: 1, max_wait_time: 5)
+    def each_batch(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
@@ -260,7 +268,7 @@ module Kafka
               end
             end
 
-            mark_message_as_processed(batch.messages.last)
+            mark_message_as_processed(batch.messages.last) if automatically_mark_as_processed
           end
 
           @offset_manager.commit_offsets_if_necessary
@@ -270,6 +278,14 @@ module Kafka
           return if !@running
         end
       end
+    end
+
+    def commit_offsets
+      @offset_manager.commit_offsets
+    end
+
+    def mark_message_as_processed(message)
+      @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
 
     private
@@ -286,15 +302,29 @@ module Kafka
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"
+          @cluster.mark_as_stale!
           sleep 1
         end
       end
     ensure
       # In order to quickly have the consumer group re-balance itself, it's
       # important that members explicitly tell Kafka when they're leaving.
-      @offset_manager.commit_offsets rescue nil
+      make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
+    end
+
+    def make_final_offsets_commit!(attempts = 3)
+      @offset_manager.commit_offsets
+    rescue ConnectionError
+      # It's important to make sure final offsets commit is done
+      # As otherwise messages that have been processed after last auto-commit
+      # will be processed again and that may be huge amount of messages
+      return if attempts.zero?
+
+      @logger.error "Retrying to make final offsets commit (#{attempts} attempts left)"
+      sleep(0.1)
+      make_final_offsets_commit!(attempts - 1)
     end
 
     def join_group
@@ -323,7 +353,7 @@ module Kafka
 
       @heartbeat.send_if_necessary
 
-      raise "No partitions assigned!" if subscribed_partitions.empty?
+      raise NoPartitionsAssignedError if subscribed_partitions.empty?
 
       operation = FetchOperation.new(
         cluster: @cluster,
@@ -357,10 +387,6 @@ module Kafka
       @logger.error "Connection error while fetching messages: #{e}"
 
       raise FetchError, e
-    end
-
-    def mark_message_as_processed(message)
-      @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
   end
 end

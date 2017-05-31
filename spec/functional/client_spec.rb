@@ -67,4 +67,18 @@ describe "Producer API", functional: true do
 
     expect(offset).to eq 1
   end
+
+  example "getting the last offsets for a topic" do
+    topic = create_random_topic(num_partitions: 2, num_replicas: 1)
+
+    kafka.deliver_message("hello", topic: topic, partition: 0)
+    kafka.deliver_message("world", topic: topic, partition: 0)
+    kafka.deliver_message("hello", topic: topic, partition: 1)
+    kafka.deliver_message("world", topic: topic, partition: 1)
+
+    offsets = kafka.last_offsets_for(topic)
+
+    expect(offsets[topic][0]).to eq 1
+    expect(offsets[topic][1]).to eq 1
+  end
 end
