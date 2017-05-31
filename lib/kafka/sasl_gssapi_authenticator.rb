@@ -30,7 +30,7 @@ module Kafka
       end
 
       # send gssapi token and receive token to verify
-      token_to_verify = send_sasl_token
+      token_to_verify = send_and_receive_sasl_token
 
       # verify incoming token
       unless @gssapi_ctx.init_context(token_to_verify)
@@ -48,21 +48,17 @@ module Kafka
     end
 
     def handshake_messages
-      msg = @decoder.read(@decoder.int32)
+      msg = @decoder.bytes
       raise Kafka::Error, "GSSAPI negotiation failed." unless msg
       # unwrap with integrity only
       msg_unwrapped = @gssapi_ctx.unwrap_message(msg, GSSAPI_CONFIDENTIALITY)
       msg_wrapped = @gssapi_ctx.wrap_message(msg_unwrapped + @principal, GSSAPI_CONFIDENTIALITY)
-      @encoder.write(msg_with_size(msg_wrapped))
+      @encoder.write_bytes(msg_wrapped)
     end
 
-    def msg_with_size(msg)
-      [msg.size].pack('l>') + msg
-    end
-
-    def send_sasl_token
-      @encoder.write(msg_with_size(@gssapi_token))
-      @decoder.read(@decoder.int32)
+    def send_and_receive_sasl_token
+      @encoder.write_bytes(@gssapi_token)
+      @decoder.bytes
     end
 
     def initialize_gssapi_context

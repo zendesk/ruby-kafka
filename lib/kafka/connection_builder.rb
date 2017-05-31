@@ -14,7 +14,7 @@ module Kafka
     end
 
     def build_connection(host, port)
-      @connection = Connection.new(
+      connection = Connection.new(
         host: host,
         port: port,
         client_id: @client_id,
@@ -24,17 +24,18 @@ module Kafka
         instrumenter: @instrumenter,
         ssl_context: @ssl_context
       )
-      return @connection.socket unless sasl_gssapi_auth?
-      sasl_gssapi_authenticate
+      return connection unless sasl_gssapi_auth?
+      sasl_gssapi_authenticate(connection)
+      connection
     end
 
     private
 
-    def sasl_gssapi_authenticate
-      auth = SaslGssapiAuthenticator.new(connection: @connection, logger: @logger,
+    def sasl_gssapi_authenticate(conn)
+      auth = SaslGssapiAuthenticator.new(connection: conn, logger: @logger,
                                          sasl_gssapi_principal: @sasl_gssapi_principal,
                                          sasl_gssapi_keytab: @sasl_gssapi_keytab)
-      @connection.socket if auth.authenticate!
+      auth.authenticate!
     end
 
     def sasl_gssapi_auth?
