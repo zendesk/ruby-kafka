@@ -42,9 +42,6 @@ module Kafka
 
       # read wrapped message and return it back with principal
       handshake_messages
-
-      # no error, return @socket
-      @socket
     end
 
     def handshake_messages

@@ -28,7 +28,6 @@ module Kafka
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
 
-    attr_reader :socket
     attr_reader :encoder
     attr_reader :decoder
 
