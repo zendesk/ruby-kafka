@@ -28,7 +28,7 @@ module Kafka
     STATSD_NAMESPACE = "ruby_kafka"
 
     def self.statsd
-      @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_HOST, namespace: STATSD_NAMESPACE)
+      @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_PORT, namespace: STATSD_NAMESPACE)
     end
 
     def self.host=(host)
