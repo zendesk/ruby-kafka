@@ -41,12 +41,12 @@ module Kafka
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
+    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil, ssl_client_cert_key_passphrase: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
-      ssl_context = build_ssl_context(ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
+      ssl_context = build_ssl_context(ssl_ca_cert, ssl_client_cert, ssl_client_cert_key, ssl_client_cert_key_passphrase)
 
       @connection_builder = ConnectionBuilder.new(
         client_id: client_id,
@@ -456,7 +456,7 @@ module Kafka
       )
     end
 
-    def build_ssl_context(ca_cert, client_cert, client_cert_key)
+    def build_ssl_context(ca_cert, client_cert, client_cert_key, client_cert_key_passphrase)
       return nil unless ca_cert || client_cert || client_cert_key
 
       ssl_context = OpenSSL::SSL::SSLContext.new
@@ -464,7 +464,8 @@ module Kafka
       if client_cert && client_cert_key
         ssl_context.set_params(
           cert: OpenSSL::X509::Certificate.new(client_cert),
-          key: OpenSSL::PKey.read(client_cert_key)
+          key: OpenSSL::PKey.read(client_cert_key, client_cert_key_passphrase)
+
         )
       elsif client_cert && !client_cert_key
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert` but no `ssl_client_cert_key`. Please provide both."
