@@ -27,6 +27,9 @@ module Kafka
       @cluster_info = nil
       @stale = true
 
+      # Refresh cluster metadata at most every 5 seconds.
+      @metadata_refresh_interval = 5
+
       # This is the set of topics we need metadata for. If empty, metadata for
       # all topics will be fetched.
       @target_topics = Set.new
@@ -68,7 +71,7 @@ module Kafka
     end
 
     def refresh_metadata_if_necessary!
-      refresh_metadata! if @stale
+      refresh_metadata! if @stale && time_to_refresh_metadata?
     end
 
     # Finds the broker acting as the leader of the given topic and partition.
@@ -213,6 +216,16 @@ module Kafka
       end
 
       raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
+
+      @cluster_info_refreshed_at = Time.now
+    end
+
+    def time_to_refresh_metadata?
+      cluster_info_refreshed_at > Time.now - @metadata_refresh_interval
+    end
+
+    def cluster_info_refreshed_at
+      @cluster_info_refreshed_at ||= Time.at(0)
     end
 
     def connect_to_broker(broker_id)
