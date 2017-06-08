@@ -40,6 +40,16 @@ module Kafka
       @connection.send_request(request)
     end
 
+    # Send a fetch-messages request to the broker without waiting for a response
+    #
+    # @param (see Kafka::Protocol::FetchRequest#initialize)
+    # @return [nil]
+    def fetch_messages_async(**options)
+      request = Protocol::FetchRequest.new(**options)
+
+      @connection.send_request(request, async: true)
+    end
+
     # Lists the offset of the specified topics and partitions.
     #
     # @param (see Kafka::Protocol::ListOffsetRequest#initialize)
