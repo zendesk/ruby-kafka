@@ -656,9 +656,9 @@ If you want to have at most one second of latency, set `max_wait_time: 1`.
 
 ### Thread Safety
 
-You typically don't want to share a Kafka client between threads, since the network communication is not synchronized. Furthermore, you should avoid using threads in a consumer unless you're very careful about waiting for all work to complete before returning from the `#each_message` or `#each_batch` block. This is because _checkpointing_ assumes that returning from the block means that the messages that have been yielded have been successfully processed.
+You typically don't want to share a Kafka client object between threads, since the network communication is not synchronized. Furthermore, you should avoid using threads in a consumer unless you're very careful about waiting for all work to complete before returning from the `#each_message` or `#each_batch` block. This is because _checkpointing_ assumes that returning from the block means that the messages that have been yielded have been successfully processed.
 
-You should also avoid sharing a synchronous producer between threads, as the internal buffers are not thread safe. However, the _asynchronous_ producer should be safe to use in a multi-threaded environment.
+You should also avoid sharing a synchronous producer between threads, as the internal buffers are not thread safe. However, the _asynchronous_ producer should be safe to use in a multi-threaded environment. This is because producers, when instantiated, get their own copy of any non-thread-safe data such as network sockets. Furthermore, the asynchronous producer has been designed in such a way to only a single background thread operates on this data while any foreground thread with a reference to the producer object can only send messages to that background thread over a safe queue. Therefore it is safe to share an async producer object between many threads.
 
 ### Logging
 
