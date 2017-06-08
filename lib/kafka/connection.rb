@@ -75,25 +75,27 @@ module Kafka
     #
     # @return [Object] the response.
     def send_request(request)
-      # Default notification payload.
-      notification = {
-        broker_host: @host,
-        api: Protocol.api_name(request.api_key),
-        request_size: 0,
-        response_size: 0,
-      }
+      with_retry do
+        # Default notification payload.
+        notification = {
+          broker_host: @host,
+          api: Protocol.api_name(request.api_key),
+          request_size: 0,
+          response_size: 0,
+        }
 
-      @instrumenter.instrument("request.connection", notification) do
-        open unless open?
+        @instrumenter.instrument("request.connection", notification) do
+          open unless open?
 
-        @correlation_id += 1
+          @correlation_id += 1
 
-        write_request(request, notification)
+          write_request(request, notification)
 
-        response_class = request.response_class
-        wait_for_response(response_class, notification) unless response_class.nil?
+          response_class = request.response_class
+          wait_for_response(response_class, notification) unless response_class.nil?
+        end
       end
-    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
+    rescue Errno::ETIMEDOUT => e
       close
 
       raise ConnectionError, "Connection error: #{e}"
@@ -190,6 +192,28 @@ module Kafka
           raise Kafka::Error, "Correlation id mismatch: expected #{@correlation_id} but got #{correlation_id}"
         else
           return response
+        end
+      end
+    end
+
+    def reopen
+      close
+      open
+    end
+
+    def with_retry
+      retried = false
+
+      begin
+        yield
+      rescue EOFError, Errno::ECONNRESET, Errno::EPIPE
+        if retried
+          raise
+        else
+          retried = true
+
+          reopen
+          retry
         end
       end
     end
