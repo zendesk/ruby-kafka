@@ -21,10 +21,11 @@ module Kafka
     private
 
     def proceed_sasl_gssapi_negotiation
+      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(GSSAPI_IDENT))
+
       @encoder = @connection.encoder
       @decoder = @connection.decoder
 
-      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(GSSAPI_IDENT))
       unless response.error_code == 0 && response.enabled_mechanisms.include?(GSSAPI_IDENT)
         raise Kafka::Error, "#{GSSAPI_IDENT} is not supported."
       end
@@ -61,7 +62,7 @@ module Kafka
     def initialize_gssapi_context
       @logger.debug "GSSAPI: Initializing context with #{@host}, principal #{@principal}"
 
-      @gssapi_ctx = GSSAPI::Simple.new(@host, @principal, @keytab)
+      @gssapi_ctx = GSSAPI::Simple.new(@connection.to_s, @principal, @keytab)
       @gssapi_token = @gssapi_ctx.init_context(nil)
     end
   end
