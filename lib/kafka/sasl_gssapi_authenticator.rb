@@ -60,7 +60,7 @@ module Kafka
     end
 
     def initialize_gssapi_context
-      @logger.debug "GSSAPI: Initializing context with #{@host}, principal #{@principal}"
+      @logger.debug "GSSAPI: Initializing context with #{@connection.to_s}, principal #{@principal}"
 
       @gssapi_ctx = GSSAPI::Simple.new(@connection.to_s, @principal, @keytab)
       @gssapi_token = @gssapi_ctx.init_context(nil)
