@@ -316,7 +316,7 @@ module Kafka
 
     def make_final_offsets_commit!(attempts = 3)
       @offset_manager.commit_offsets
-    rescue ConnectionError
+    rescue ConnectionError, Kafka::OffsetCommitError
       # It's important to make sure final offsets commit is done
       # As otherwise messages that have been processed after last auto-commit
       # will be processed again and that may be huge amount of messages
