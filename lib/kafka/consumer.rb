@@ -288,6 +288,10 @@ module Kafka
       @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
 
+    def send_heartbeat_if_necessary
+      @heartbeat.send_if_necessary
+    end
+
     private
 
     def consumer_loop
