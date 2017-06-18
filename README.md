@@ -449,8 +449,6 @@ end
 
 ### Consuming Messages from Kafka
 
-**Warning:** The Consumer API should be considered beta. While it is being used extensively in production, it has known limitations, particularly when dealing with high throughput topics.
-
 Consuming messages from a Kafka topic is simple:
 
 ```ruby
