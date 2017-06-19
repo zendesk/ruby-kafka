@@ -87,6 +87,10 @@ module Kafka
       @socket.closed?
     end
 
+    def to_io
+      @socket.to_io
+    end
+
     def set_encoding(encoding)
       @socket.set_encoding(encoding)
     end
