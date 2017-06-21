@@ -298,7 +298,7 @@ module Kafka
           yield
         rescue HeartbeatError, OffsetCommitError
           join_group
-        rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
+        rescue ConnectionError, FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"

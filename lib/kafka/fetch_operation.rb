@@ -73,19 +73,9 @@ module Kafka
       }
 
       until pending_responses.empty?
-        # Select a response that's ready, with a timeout of `@max_wait_time`.
-        ready_responses, _, _ = IO.select(pending_responses, nil, nil, @max_wait_time)
+        response = pick_response(pending_responses)
 
-        if ready_responses.nil?
-          @logger.debug "Still waiting for #{pending_responses.count} fetch responses..."
-          next # go back to waiting for a response to become ready.
-        end
-
-        # The response is no longer pending.
-        pending_responses.delete(ready_responses.first)
-
-        # Block on the async response -- it should be ready now.
-        response = ready_responses.first.call
+        next if response.nil?
 
         response.topics.each {|fetched_topic|
           fetched_topic.partitions.each {|fetched_partition|
@@ -129,6 +119,26 @@ module Kafka
     end
 
     private
+
+    def pick_response(pending_responses)
+      if pending_responses.count == 1
+        pending_responses.pop.call
+      else
+        # Select a response that's ready, with a timeout of `@max_wait_time`.
+        ready_responses, _, _ = IO.select(pending_responses, nil, nil, @max_wait_time)
+
+        if ready_responses.nil?
+          @logger.debug "Still waiting for #{pending_responses.count} fetch responses..."
+          return nil # go back to waiting for a response to become ready.
+        end
+
+        # The response is no longer pending.
+        pending_responses.delete(ready_responses.first)
+
+        # Block on the async response -- it should be ready now.
+        ready_responses.first.call
+      end
+    end
 
     def resolve_offsets(broker, topics)
       pending_topics = {}
