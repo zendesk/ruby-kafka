@@ -27,24 +27,28 @@ module Kafka
   module Datadog
     STATSD_NAMESPACE = "ruby_kafka"
 
-    def self.statsd
-      @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_PORT, namespace: STATSD_NAMESPACE)
-    end
+    class << self
+      def statsd
+        @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_PORT, namespace: STATSD_NAMESPACE)
+      end
 
-    def self.host=(host)
-      statsd.host = host
-    end
+      def host=(host)
+        statsd.host = host
+      end
 
-    def self.port=(port)
-      statsd.port = port
-    end
+      def port=(port)
+        statsd.port = port
+      end
 
-    def self.namespace=(namespace)
-      statsd.namespace = namespace
-    end
+      def namespace=(namespace)
+        statsd.namespace = namespace
+      end
 
-    def self.tags=(tags)
-      statsd.tags = tags
+      def tags=(tags)
+        statsd.tags = tags
+      end
+
+      attr_accessor :sample_rate
     end
 
     class StatsdSubscriber < ActiveSupport::Subscriber
@@ -58,8 +62,9 @@ module Kafka
 
       def emit(type, *args, tags: {})
         tags = tags.map {|k, v| "#{k}:#{v}" }.to_a
+        sample_rate = Kafka::Datadog.sample_rate || 1
 
-        Kafka::Datadog.statsd.send(type, *args, tags: tags)
+        Kafka::Datadog.statsd.send(type, *args, tags: tags, sample_rate: sample_rate)
       end
     end
 
