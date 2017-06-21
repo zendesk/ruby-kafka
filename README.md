@@ -33,8 +33,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     7. [Monitoring](#monitoring)
         1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
-    9. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
-    10. [Authentication using SASL](#authentication-using-sasl)
+    9. [Security](#security)
+        1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
+        2. [Authentication using SASL](#authentication-using-sasl)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -762,11 +763,13 @@ When sending many messages, it's likely that the client needs to send some messa
 
 Make sure your application can survive being blocked for so long.
 
-### Encryption and Authentication using SSL
+### Security
+
+#### Encryption and Authentication using SSL
 
 By default, communication between Kafka clients and brokers is unencrypted and unauthenticated. Kafka 0.9 added optional support for [encryption and client authentication and authorization](http://kafka.apache.org/documentation.html#security_ssl). There are two layers of security made possible by this:
 
-#### Encryption of Communication
+##### Encryption of Communication
 
 By enabling SSL encryption you can have some confidence that messages can be sent to Kafka over an untrusted network without being intercepted.
 
@@ -781,7 +784,7 @@ kafka = Kafka.new(
 
 Without passing the CA certificate to the client it would be impossible to protect against [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
-#### Client Authentication
+##### Client Authentication
 
 In order to authenticate the client to the cluster, you need to pass in a certificate and key created for the client and trusted by the brokers.
 
@@ -796,21 +799,22 @@ kafka = Kafka.new(
 
 Once client authentication is set up, it is possible to configure the Kafka cluster to [authorize client requests](http://kafka.apache.org/documentation.html#security_authz).
 
-#### Using JKS Certificates
+##### Using JKS Certificates
 
 Typically, Kafka certificates come in the JKS format, which isn't supported by ruby-kafka. There's [a wiki page](https://github.com/zendesk/ruby-kafka/wiki/Creating-X509-certificates-from-JKS-format) that describes how to generate valid X509 certificates from JKS certificates.
 
-### Authentication using SASL
+#### Authentication using SASL
 
-Kafka 0.9 has support of SASL/GSSAPI authentication - KRB5. To use SASL/GSSAPI, set principal and optionally keytab to the client initialization
+Kafka has support for using SASL to authenticate clients. Currently only the GSSAPI mechanism is supported by ruby-kafka.
 
-Currenly, ruby-kafka supports only GSSAPI method.
+In order to authenticate using SASL, set your principal and optionally your keytab when initializing the Kafka client:
 
 ```ruby
 kafka = Kafka.new(
   sasl_gssapi_principal: 'kafka/kafka.example.com@EXAMPLE.COM',
   sasl_gssapi_keytab: '/etc/keytabs/kafka.keytab',
   # ...
+)
 ```
 
 ## Design
