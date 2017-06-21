@@ -17,10 +17,15 @@ module Kafka
     # Use a custom "nil" value so that nil can be an actual value.
     MISSING = Object.new
 
-    def initialize(decoder, &block)
+    def initialize(decoder, io, &block)
       @decoder = decoder
+      @io = io
       @block = block
       @response = MISSING
+    end
+
+    def to_io
+      @io.to_io
     end
 
     # Block until a response is available.
@@ -140,7 +145,7 @@ module Kafka
       correlation_id = @correlation_id
 
       if response_class.nil?
-        async_response = AsyncResponse.new(Protocol::NullResponse) { nil }
+        async_response = AsyncResponse.new(Protocol::NullResponse, @socket) { nil }
 
         # Immediately deliver a nil value.
         async_response.deliver(nil)
@@ -149,7 +154,7 @@ module Kafka
 
         async_response
       else
-        async_response = AsyncResponse.new(response_class) {
+        async_response = AsyncResponse.new(response_class, @socket) {
           # A caller is trying to read the response, so we have to wait for it
           # before we can return.
           wait_for_response(correlation_id, notification)
