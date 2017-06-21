@@ -58,6 +58,9 @@ module Kafka
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
 
+    attr_reader :encoder
+    attr_reader :decoder
+
     # Opens a connection to a Kafka broker.
     #
     # @param host [String] the hostname of the broker.
