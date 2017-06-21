@@ -24,21 +24,28 @@ module Kafka
         instrumenter: @instrumenter,
         ssl_context: @ssl_context
       )
-      return connection unless sasl_gssapi_auth?
-      sasl_gssapi_authenticate(connection)
+
+      if authenticate_using_sasl_gssapi?
+        sasl_gssapi_authenticate(connection)
+      end
+
       connection
     end
 
     private
 
-    def sasl_gssapi_authenticate(conn)
-      auth = SaslGssapiAuthenticator.new(connection: conn, logger: @logger,
-                                         sasl_gssapi_principal: @sasl_gssapi_principal,
-                                         sasl_gssapi_keytab: @sasl_gssapi_keytab)
+    def sasl_gssapi_authenticate(connection)
+      auth = SaslGssapiAuthenticator.new(
+        connection: connection,
+        logger: @logger,
+        sasl_gssapi_principal: @sasl_gssapi_principal,
+        sasl_gssapi_keytab: @sasl_gssapi_keytab
+      )
+
       auth.authenticate!
     end
 
-    def sasl_gssapi_auth?
+    def authenticate_using_sasl_gssapi?
       !@ssl_context && @sasl_gssapi_principal && !@sasl_gssapi_principal.empty?
     end
   end
