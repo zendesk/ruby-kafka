@@ -40,22 +40,6 @@ module Kafka
       @connection.send_request(request)
     end
 
-    # Fetches messages asynchronously.
-    #
-    # The fetch request is sent to the broker, but the response is not read.
-    # This allows the broker to process the request, wait for new messages,
-    # and send a response without the client having to wait. In order to
-    # read the response, call `#call` on the returned object. This will
-    # block the caller until the response is available.
-    #
-    # @param (see Kafka::Protocol::FetchRequest#initialize)
-    # @return [Kafka::AsyncResponse]
-    def fetch_messages_async(**options)
-      request = Protocol::FetchRequest.new(**options)
-
-      @connection.send_async_request(request)
-    end
-
     # Lists the offset of the specified topics and partitions.
     #
     # @param (see Kafka::Protocol::ListOffsetRequest#initialize)

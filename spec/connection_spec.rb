@@ -87,7 +87,7 @@ describe Kafka::Connection do
       expect(response).to eq "hello!"
     end
 
-    it "skips responses to previous requests if there's no async response in the pipeline" do
+    it "skips responses to previous requests" do
       # By passing nil as the final argument we're telling Connection that we're
       # not expecting a response, so it won't read one. However, the fake broker
       # *is* writing a response, so we'll get that the next time we read a response,
@@ -152,45 +152,6 @@ describe Kafka::Connection do
       expect(event.payload[:api]).to eq :produce
       expect(event.payload[:request_size]).to eq 22
       expect(event.payload[:response_size]).to eq 12
-    end
-  end
-
-  describe "#send_async_request" do
-    let(:api_key) { 0 }
-    let(:response_decoder) { double(:response_decoder) }
-
-    before do
-      allow(response_decoder).to receive(:decode) {|decoder|
-        decoder.string
-      }
-    end
-
-    it "asynchronously sends the request" do
-      request1 = double(:request1, api_key: api_key, response_class: response_decoder)
-      request2 = double(:request2, api_key: api_key, response_class: response_decoder)
-
-      allow(request1).to receive(:encode) {|encoder| encoder.write_string("response1") }
-      allow(request2).to receive(:encode) {|encoder| encoder.write_string("response2") }
-
-      response1 = connection.send_async_request(request1)
-      response2 = connection.send_async_request(request2)
-
-      expect(response1.call).to eq "response1"
-      expect(response2.call).to eq "response2"
-    end
-
-    it "allows blocking on later requests before previous ones" do
-      request1 = double(:request1, api_key: api_key, response_class: response_decoder)
-      request2 = double(:request2, api_key: api_key, response_class: response_decoder)
-
-      allow(request1).to receive(:encode) {|encoder| encoder.write_string("response1") }
-      allow(request2).to receive(:encode) {|encoder| encoder.write_string("response2") }
-
-      response1 = connection.send_async_request(request1)
-      response2 = connection.send_async_request(request2)
-
-      expect(response2.call).to eq "response2"
-      expect(response1.call).to eq "response1"
     end
   end
 end
