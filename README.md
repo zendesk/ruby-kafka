@@ -637,12 +637,13 @@ In order to optimize for throughput, you want to make sure to fetch as many mess
 
 In order to optimize for low latency, you want to process a message as soon as possible, even if that means fetching a smaller batch of messages.
 
-There are two values that can be tuned in order to balance these two concerns: `min_bytes` and `max_wait_time`.
+There are three values that can be tuned in order to balance these two concerns: `min_bytes` and `max_wait_time`.
 
 * `min_bytes` is the minimum number of bytes to return from a single message fetch. By setting this to a high value you can increase the processing throughput. The default value is one byte.
-* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds.
+* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds. If you want to have at most one second of latency, set `max_wait_time` to 1.
+* `max_bytes_per_partition` is the maximum amount of data a broker will return for a single partition when fetching new messages. The default is 1MB, but increasing this number may lead to better throughtput since you'll need to fetch less frequently. Setting the number too high may result in instability, so be careful.
 
-Both settings can be passed to either `#each_message` or `#each_batch`, e.g.
+The first two settings can be passed to either `#each_message` or `#each_batch`, e.g.
 
 ```ruby
 # Waits for data for up to 30 seconds, preferring to fetch at least 5KB at a time.
@@ -651,7 +652,16 @@ consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 30) do |message|
 end
 ```
 
-If you want to have at most one second of latency, set `max_wait_time: 1`.
+The last setting is configured when subscribing to a topic, and can vary between topics:
+
+```ruby
+# Fetches up to 5MB per partition at a time for better throughput.
+consumer.subscribe("greetings", max_bytes_per_partition: 5 * 1024 * 1024)
+
+consumer.each_message do |message|
+  # ...
+end
+```
 
 
 ### Thread Safety
