@@ -637,11 +637,11 @@ In order to optimize for throughput, you want to make sure to fetch as many mess
 
 In order to optimize for low latency, you want to process a message as soon as possible, even if that means fetching a smaller batch of messages.
 
-There are three values that can be tuned in order to balance these two concerns: `min_bytes` and `max_wait_time`.
+There are three values that can be tuned in order to balance these two concerns.
 
 * `min_bytes` is the minimum number of bytes to return from a single message fetch. By setting this to a high value you can increase the processing throughput. The default value is one byte.
 * `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds. If you want to have at most one second of latency, set `max_wait_time` to 1.
-* `max_bytes_per_partition` is the maximum amount of data a broker will return for a single partition when fetching new messages. The default is 1MB, but increasing this number may lead to better throughtput since you'll need to fetch less frequently. Setting the number too high may result in instability, so be careful.
+* `max_bytes_per_partition` is the maximum amount of data a broker will return for a single partition when fetching new messages. The default is 1MB, but increasing this number may lead to better throughtput since you'll need to fetch less frequently. Setting it to a lower value is not recommended unless you have so many partitions that it's causing network and latency issues to transfer a fetch response from a broker to a client. Setting the number too high may result in instability, so be careful.
 
 The first two settings can be passed to either `#each_message` or `#each_batch`, e.g.
 
