@@ -184,6 +184,14 @@ describe Kafka::OffsetManager do
 
       expect(offset).to eq 42
     end
+
+    it "returns the buffered offsets if present" do
+      offset_manager.mark_as_buffered("greetings", 0, 41)
+
+      offset = offset_manager.next_offset_for("greetings", 0)
+
+      expect(offset).to eq 42
+    end
   end
 
   describe "#clear_offsets_excluding" do

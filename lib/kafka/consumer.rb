@@ -177,7 +177,7 @@ module Kafka
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
-      consumer_loop do
+      consumer_loop(clear_offsets_on_join: automatically_mark_as_processed) do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
         batches.each do |batch|
@@ -241,7 +241,7 @@ module Kafka
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
     def each_batch(min_bytes: 1, max_wait_time: 5, automatically_mark_as_processed: true)
-      consumer_loop do
+      consumer_loop(clear_offsets_on_join: automatically_mark_as_processed) do
         batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
 
         batches.each do |batch|
@@ -288,16 +288,24 @@ module Kafka
       @offset_manager.mark_as_processed(message.topic, message.partition, message.offset)
     end
 
+    def mark_message_as_buffered(message)
+      @offset_manager.mark_as_buffered(message.topic, message.partition, message.offset)
+    end
+
+    def subscribed_partitions
+      @group.subscribed_partitions
+    end
+
     private
 
-    def consumer_loop
+    def consumer_loop(clear_offsets_on_join: false)
       @running = true
 
       while @running
         begin
           yield
         rescue HeartbeatError, OffsetCommitError
-          join_group
+          join_group(clear_offsets_on_join: clear_offsets_on_join)
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
@@ -327,12 +335,12 @@ module Kafka
       make_final_offsets_commit!(attempts - 1)
     end
 
-    def join_group
+    def join_group(clear_offsets_on_join: false)
       old_generation_id = @group.generation_id
 
       @group.join
 
-      if old_generation_id && @group.generation_id != old_generation_id + 1
+      if (old_generation_id && @group.generation_id != old_generation_id + 1) || clear_offsets_on_join
         # We've been out of the group for at least an entire generation, no
         # sense in trying to hold on to offset data
         @offset_manager.clear_offsets
