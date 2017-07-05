@@ -258,13 +258,13 @@ module Kafka
               begin
                 yield batch
               rescue => e
-                offset_range = batch.empty? ? "N/A" : [batch.first_offset, batch.last_offset].join("..")
+                offset_range = (batch.first_offset .. batch.last_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
                 backtrace = e.backtrace.join("\n")
 
                 @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
 
-                raise
+                raise ProcessingError.new(batch.topic, batch.partition, offset_range)
               end
             end
 

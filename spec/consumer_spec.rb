@@ -196,6 +196,25 @@ describe Kafka::Consumer do
         consumer.stop
       end
     end
+
+    it "raises ProcessingError if the processing code fails" do
+      expect {
+        consumer.each_batch do |message|
+          raise "yolo"
+        end
+      }.to raise_exception(Kafka::ProcessingError) {|exception|
+        expect(exception.topic).to eq "greetings"
+        expect(exception.partition).to eq 0
+        expect(exception.offset).to eq 13..13
+
+        cause = exception.cause
+
+        expect(cause.class).to eq RuntimeError
+        expect(cause.message).to eq "yolo"
+      }
+
+      expect(log.string).to include "Exception raised when processing greetings/0 in offset range 13..13 -- RuntimeError: yolo"
+    end
   end
 
   describe "#send_heartbeat_if_necessary" do
