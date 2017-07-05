@@ -92,6 +92,14 @@ describe Kafka::Consumer do
       expect(log.string).to include "Exception raised when processing greetings/0 at offset 13 -- RuntimeError: yolo"
     end
 
+    it "stops if SignalException is encountered" do
+      allow(fetch_operation).to receive(:execute) { raise SignalException, "SIGTERM" }
+
+      consumer.each_message {}
+
+      expect(log.string).to include "Received signal SIGTERM, shutting down"
+    end
+
     it "seeks to the default offset when the checkpoint is invalid " do
       done = false
 
