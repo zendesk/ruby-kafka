@@ -12,7 +12,7 @@ describe "Reporting metrics to Datadog", functional: true do
 
     kafka.topics
 
-    agent.wait_for_metrics
+    agent.wait_for_metrics(count: 4)
 
     expect(agent.metrics).to include("ruby_kafka.api.calls")
     expect(agent.metrics).to include("ruby_kafka.api.latency")

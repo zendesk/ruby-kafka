@@ -18,8 +18,12 @@ class FakeDatadogAgent
     @thread.abort_on_exception = true
   end
 
-  def wait_for_metrics
-    sleep 0.1 until @metrics.count > 0
+  def wait_for_metrics(count: 1)
+    deadline = Time.now + 10
+
+    until @metrics.count >= count || Time.now > deadline
+      sleep 0.1
+    end
   end
 
   private
