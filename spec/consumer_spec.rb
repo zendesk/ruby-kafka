@@ -224,6 +224,39 @@ describe Kafka::Consumer do
     end
   end
 
+  describe "#poll" do
+    let(:messages) {
+      [
+        Kafka::FetchedMessage.new(
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 0,
+          offset: 42,
+        )
+      ]
+    }
+
+    let(:fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 0,
+          highwater_mark_offset: 42,
+          messages: messages,
+        )
+      ]
+    }
+
+    it "returns fetched batch" do
+      done = false
+
+      expect(fetch_operation).to receive(:fetch_from_partition).with("greetings", 0, offset: 42, max_bytes: anything)
+
+      consumer.poll()
+    end
+  end
+
   describe "#send_heartbeat_if_necessary" do
     it "sends heartbeat if necessary" do
       expect(heartbeat).to receive(:send_if_necessary)

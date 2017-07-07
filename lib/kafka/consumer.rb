@@ -354,6 +354,18 @@ module Kafka
       @offset_manager.seek_to(topic, partition, offset)
     end
 
+    # @param min_bytes [Integer] the minimum number of bytes to read before
+    #   returning messages from the server; if `max_wait_time` is reached, this
+    #   is ignored.
+    # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
+    #   returning messages from the server, in seconds.
+    # @return batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
+    def poll(min_bytes: 1, max_wait_time: 5)
+      batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+      send_heartbeat_if_necessary
+      batches
+    end
+
     def commit_offsets
       @offset_manager.commit_offsets
     end
