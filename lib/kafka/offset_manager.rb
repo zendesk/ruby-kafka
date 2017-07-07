@@ -36,8 +36,12 @@ module Kafka
     end
 
     def seek_to_default(topic, partition)
+      seek_to(-1)
+    end
+
+    def seek_to(topic, partition, offset)
       @processed_offsets[topic] ||= {}
-      @processed_offsets[topic][partition] = -1
+      @processed_offsets[topic][partition] = offset
     end
 
     def next_offset_for(topic, partition)
