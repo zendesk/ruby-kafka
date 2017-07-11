@@ -6,7 +6,7 @@ module Kafka
 
     class SaslHandshakeRequest
 
-      SUPPORTED_MECHANISMS = %w(GSSAPI)
+      SUPPORTED_MECHANISMS = %w(GSSAPI PLAIN)
 
       def initialize(mechanism)
         unless SUPPORTED_MECHANISMS.include?(mechanism)
