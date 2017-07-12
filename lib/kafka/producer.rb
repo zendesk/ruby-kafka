@@ -334,11 +334,19 @@ module Kafka
 
     def assign_partitions!
       failed_messages = []
+      topics_with_failures = Set.new
 
       @pending_message_queue.each do |message|
         partition = message.partition
 
         begin
+          # If a message for a topic fails to receive a partition all subsequent
+          # messages for the topic should be retried to preserve ordering
+          if topics_with_failures.include?(message.topic)
+            failed_messages << message
+            next
+          end
+
           if partition.nil?
             partition_count = @cluster.partitions_for(message.topic).count
             partition = Partitioner.partition_for_key(partition_count, message)
@@ -357,6 +365,7 @@ module Kafka
             exception: [e.class.to_s, e.message],
           })
 
+          topics_with_failures << message.topic
           failed_messages << message
         end
       end
