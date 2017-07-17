@@ -1,3 +1,5 @@
+require "timecop"
+
 describe Kafka::Connection do
   let(:logger) { LOGGER }
   let(:host) { "127.0.0.1" }
@@ -35,8 +37,10 @@ describe Kafka::Connection do
 
         begin
           handle_client(client)
+        rescue EOFError
+          # Client disconnected.
         rescue => e
-          puts e
+          puts "Server crashed with error: #{e}"
           break
         ensure
           client.close
@@ -132,6 +136,18 @@ describe Kafka::Connection do
       response = connection.send_request(request)
 
       expect(response).to eq "hello!"
+    end
+
+    it "re-opens the connection if it is idle for more than 5 minutes" do
+      Timecop.freeze do
+        connection.send_request(request)
+
+        Timecop.travel(60 * 6)
+
+        response = connection.send_request(request)
+
+        expect(response).to eq "hello!"
+      end
     end
 
     it "emits a notification" do
