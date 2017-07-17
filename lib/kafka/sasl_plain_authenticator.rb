@@ -23,15 +23,17 @@ module Kafka
       # SASL PLAIN
       msg = [@authzid.to_s,
              @username.to_s,
-             @password.to_s].join("\000").force_encoding("utf-8")
-      @encoder.write([msg.bytesize].pack("l>")+msg)
+             @password.to_s].join("\000").force_encoding('utf-8')
+      @encoder.write_bytes(msg)
       begin
         msg = @decoder.bytes
-        raise Kafka::Error, "SASL PLAIN authentication failed." unless msg
-      rescue Errno::ETIMEDOUT
-        raise Kafka::Error, "SASL PLAIN authentication failed." unless msg
+        raise Kafka::Error, 'SASL PLAIN authentication failed: unknown error' unless msg
+      rescue Errno::ETIMEDOUT => e
+        raise Kafka::Error, "SASL PLAIN authentication failed: #{e.message}"
+      rescue EOFError => e
+        raise Kafka::Error, "SASL PLAIN authentication failed: #{e.message}"
       end
-      @logger.debug "SASL PLAIN authentication successful."
+      @logger.debug 'SASL PLAIN authentication successful.'
     end
   end
 end
