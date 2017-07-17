@@ -31,7 +31,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     5. [Logging](#logging)
     6. [Instrumentation](#instrumentation)
     7. [Monitoring](#monitoring)
-        1. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
+        1. [Reporting Metrics to Statsd](#reporting-metrics-to-statsd)
+        2. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Security](#security)
         1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
@@ -732,7 +733,25 @@ It is highly recommended that you monitor your Kafka client applications in prod
 * consumer processing errors, indicating exceptions are being raised in the processing code;
 * frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
 
-You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Statsd](https://github.com/etsy/statsd) and [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+
+
+#### Reporting Metrics to Statsd
+
+The Statsd reporter is automatically enabled when the `kafka/statsd` library is required. You can optionally change the configuration.
+
+```ruby
+require "kafka/statds"
+
+# Default is "ruby_kafka".
+Kafka::Statsd.namespace = "custom-namespace"
+
+# Default is "127.0.0.1".
+Kafka::Statsd.host = "statsd.something.com"
+
+# Default is 8125.
+Kafka::Statsd.port = 1234
+```
 
 
 #### Reporting Metrics to Datadog
