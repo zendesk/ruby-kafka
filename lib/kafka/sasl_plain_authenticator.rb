@@ -28,9 +28,7 @@ module Kafka
       begin
         msg = @decoder.bytes
         raise Kafka::Error, 'SASL PLAIN authentication failed: unknown error' unless msg
-      rescue Errno::ETIMEDOUT => e
-        raise Kafka::Error, "SASL PLAIN authentication failed: #{e.message}"
-      rescue EOFError => e
+      rescue Errno::ETIMEDOUT, EOFError => e
         raise Kafka::Error, "SASL PLAIN authentication failed: #{e.message}"
       end
       @logger.debug 'SASL PLAIN authentication successful.'
