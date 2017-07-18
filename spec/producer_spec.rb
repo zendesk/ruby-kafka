@@ -100,6 +100,25 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 0
     end
 
+    it "handles multiple messages for a partition during retry" do
+      2.times do |i|
+        producer.produce("hello#{i}", topic: "greetings", key: "key")
+      end
+
+      # Raise an error when requesting partitions for the first message then
+      # return successfully for subsequent calls
+      partitions_for_call_count = 0
+      allow(cluster).to receive(:partitions_for) do
+        partitions_for_call_count += 1
+        raise(Kafka::UnknownTopicOrPartition.new) if partitions_for_call_count == 1
+        [0, 1]
+      end
+
+      producer.deliver_messages
+      expect(broker1.messages).to be_empty
+      expect(broker2.messages).to eq(%w(hello0 hello1))
+    end
+
     it "handles when there's a connection error when fetching topic metadata" do
       allow(cluster).to receive(:get_leader).and_raise(Kafka::ConnectionError)
 
