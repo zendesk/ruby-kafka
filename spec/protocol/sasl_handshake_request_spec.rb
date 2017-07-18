@@ -11,6 +11,9 @@ describe Kafka::Protocol::SaslHandshakeRequest do
       it "allows GSSAPI" do
         expect { Kafka::Protocol::SaslHandshakeRequest.new('GSSAPI') }.not_to raise_error
       end
+      it "allows PLAIN" do
+        expect { Kafka::Protocol::SaslHandshakeRequest.new('PLAIN') }.not_to raise_error
+      end
     end
     context "#unsupported" do
       it "reject unknown handshake" do

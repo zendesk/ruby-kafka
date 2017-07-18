@@ -1,3 +1,5 @@
+require 'fake_server'
+
 describe Kafka::Connection do
   let(:logger) { LOGGER }
   let(:host) { "127.0.0.1" }
@@ -17,55 +19,6 @@ describe Kafka::Connection do
   }
 
   let!(:broker) { FakeServer.start(server) }
-
-  class FakeServer
-    def self.start(server)
-      thread = Thread.new { new(server).start }
-      thread.abort_on_exception = true
-      thread
-    end
-
-    def initialize(server)
-      @server = server
-    end
-
-    def start
-      loop do
-        client = @server.accept
-
-        begin
-          handle_client(client)
-        rescue => e
-          puts e
-          break
-        ensure
-          client.close
-        end
-      end
-    end
-
-    def handle_client(client)
-      loop do
-        request_bytes = Kafka::Protocol::Decoder.new(client).bytes
-        request_decoder = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes))
-
-        api_key = request_decoder.int16
-        api_version = request_decoder.int16
-        correlation_id = request_decoder.int32
-        client_id = request_decoder.string
-
-        message = request_decoder.string
-
-        response = StringIO.new
-        response_encoder = Kafka::Protocol::Encoder.new(response)
-        response_encoder.write_int32(correlation_id)
-        response_encoder.write_string(message)
-
-        encoder = Kafka::Protocol::Encoder.new(client)
-        encoder.write_bytes(response.string)
-      end
-    end
-  end
 
   describe "#send_request" do
     let(:api_key) { 0 }

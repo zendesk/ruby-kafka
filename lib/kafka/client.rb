@@ -50,7 +50,8 @@ module Kafka
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
-                   sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil)
+                   sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
+                   sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -65,7 +66,10 @@ module Kafka
         logger: @logger,
         instrumenter: @instrumenter,
         sasl_gssapi_principal: sasl_gssapi_principal,
-        sasl_gssapi_keytab: sasl_gssapi_keytab
+        sasl_gssapi_keytab: sasl_gssapi_keytab,
+        sasl_plain_authzid: sasl_plain_authzid,
+        sasl_plain_username: sasl_plain_username,
+        sasl_plain_password: sasl_plain_password
       )
 
       @cluster = initialize_cluster
