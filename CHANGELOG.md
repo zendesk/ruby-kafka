@@ -4,6 +4,12 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.4.0
+
+- Support SASL authentication (#334 and #370)
+- Allow loading SSL certificates from files (#371)
+- Add Statsd metric reporting (#373)
+
 ## v0.3.17
 
 - Re-commit previously committed offsets periodically with an interval of half
