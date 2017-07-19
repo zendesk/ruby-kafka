@@ -493,6 +493,10 @@ consumer = kafka.consumer(group_id: "my-consumer")
 # repeatedly.
 consumer.subscribe("greetings")
 
+# Stop the consumer when the SIGTERM signal is sent to the process.
+# It's better to shut down gracefully than to kill the process.
+trap("TERM") { consumer.stop }
+
 # This will loop indefinitely, yielding each message in turn.
 consumer.each_message do |message|
   puts message.topic, message.partition
