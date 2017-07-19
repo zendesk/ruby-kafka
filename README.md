@@ -599,8 +599,8 @@ In order to shut down a running consumer process cleanly, call `#stop` on it. A 
 consumer = kafka.consumer(...)
 
 # The consumer can be stopped from the command line by executing
-# `kill -s QUIT <process-id>`.
-trap("QUIT") { consumer.stop }
+# `kill -s TERM <process-id>`.
+trap("TERM") { consumer.stop }
 
 consumer.each_message do |message|
   ...
