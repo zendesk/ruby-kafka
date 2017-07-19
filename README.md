@@ -901,15 +901,15 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 ## Roadmap
 
-The current stable release is v0.3. This release is running in production at Zendesk, but it's still not recommended that you use it when data loss is unacceptable. It will take a little while until all edge cases have been uncovered and handled.
+Version 0.4 will be the last minor release with support for the Kafka 0.9 protocol. It is recommended that you pin your dependency on ruby-kafka to `~> 0.4.0` in order to receive bugfixes and security updates. New features will only target version 0.5 and up, which will be incompatible with the Kafka 0.9 protocol.
 
 ### v0.4
 
-Beta release of the Consumer API, allowing balanced Consumer Groups coordinating access to partitions. Kafka 0.9 only.
+Current stable release with support for the Kafka 0.9 protocol.
 
-### v1.0
+### v0.5
 
-API freeze. All new changes will be backwards compatible.
+Next stable release, with support for the Kafka 0.10 protocol and eventually newer protocol versions.
 
 ## Why Create A New Library?
 
