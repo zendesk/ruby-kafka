@@ -16,7 +16,7 @@ module Kafka
       end
 
       def api_key
-        17
+        SASL_HANDSHAKE_API
       end
 
       def response_class

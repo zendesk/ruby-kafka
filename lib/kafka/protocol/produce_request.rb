@@ -37,7 +37,7 @@ module Kafka
       end
 
       def api_key
-        0
+        PRODUCE_API
       end
 
       def response_class

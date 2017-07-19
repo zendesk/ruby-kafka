@@ -9,7 +9,7 @@ module Kafka
       end
 
       def api_key
-        14
+        SYNC_GROUP_API
       end
 
       def response_class

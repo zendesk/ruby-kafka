@@ -27,7 +27,7 @@ module Kafka
       end
 
       def api_key
-        1
+        FETCH_API
       end
 
       def response_class
