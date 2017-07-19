@@ -452,7 +452,11 @@ end
 
 ### Consuming Messages from Kafka
 
-Consuming messages from a Kafka topic is simple:
+**Note:** if you're just looking to get started with a simple Kafka consumer, take a look at [Racecar](https://github.com/zendesk/racecar), a simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It's based on ruby-kafka, but comes with sensible defaults and conventions.
+
+Read on if you're interested in either rolling your own executable consumers or if you want to learn more about how consumers work in Kafka.
+
+Consuming messages from a Kafka topic with ruby-kafka is simple:
 
 ```ruby
 require "kafka"
