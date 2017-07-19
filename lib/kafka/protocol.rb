@@ -3,19 +3,32 @@ module Kafka
     # The replica id of non-brokers is always -1.
     REPLICA_ID = -1
 
+    PRODUCE_API = 0
+    FETCH_API = 1
+    LIST_OFFSET_API = 2
+    TOPIC_METADATA_API = 3
+    OFFSET_COMMIT_API = 8
+    OFFSET_FETCH_API = 9
+    GROUP_COORDINATOR_API = 10
+    JOIN_GROUP_API = 11
+    HEARTBEAT_API = 12
+    LEAVE_GROUP_API = 13
+    SYNC_GROUP_API = 14
+    SASL_HANDSHAKE_API = 17
+
     APIS = {
-      0 => :produce,
-      1 => :fetch,
-      2 => :list_offset,
-      3 => :topic_metadata,
-      8 => :offset_commit,
-      9 => :offset_fetch,
-      10 => :group_coordinator,
-      11 => :join_group,
-      12 => :heartbeat,
-      13 => :leave_group,
-      14 => :sync_group,
-      17 => :sasl_handshake
+      PRODUCE_API => :produce,
+      FETCH_API => :fetch,
+      LIST_OFFSET_API => :list_offset,
+      TOPIC_METADATA_API => :topic_metadata,
+      OFFSET_COMMIT_API => :offset_commit,
+      OFFSET_FETCH_API => :offset_fetch,
+      GROUP_COORDINATOR_API => :group_coordinator,
+      JOIN_GROUP_API => :join_group,
+      HEARTBEAT_API => :heartbeat,
+      LEAVE_GROUP_API => :leave_group,
+      SYNC_GROUP_API => :sync_group,
+      SASL_HANDSHAKE_API => :sasl_handshake,
     }
 
     ERRORS = {

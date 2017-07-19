@@ -6,7 +6,7 @@ module Kafka
       end
 
       def api_key
-        10
+        GROUP_COORDINATOR_API
       end
 
       def encode(encoder)
