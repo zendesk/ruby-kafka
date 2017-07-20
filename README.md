@@ -68,17 +68,20 @@ Or install it yourself as:
     <th>Kafka 0.8</th>
     <th>Kafka 0.9</th>
     <th>Kafka 0.10</th>
+    <th>Kafka 0.11</th>
   </tr>
   <tr>
     <th>Producer API</th>
     <td>Full support</td>
     <td>Full support</td>
     <td>Limited support</td>
+    <td>Limited support</td>
   </tr>
   <tr>
     <th>Consumer API</th>
     <td>Unsupported</td>
     <td>Full support</td>
+    <td>Limited support</td>
     <td>Limited support</td>
   </tr>
 </table>
