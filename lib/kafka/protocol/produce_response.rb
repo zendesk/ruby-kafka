@@ -45,7 +45,7 @@ module Kafka
               partition: decoder.int32,
               error_code: decoder.int16,
               offset: decoder.int64,
-              timestamp: decoder.int64,
+              timestamp: Time.at(decoder.int64/1000.0),
             )
           end
 
