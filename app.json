@@ -1,0 +1,10 @@
+{
+  "environments": {
+    "test": {
+      "scripts": {
+        "test-setup": "bundle install --path vendor/bundle --binstubs vendor/bundle/bin -j4",
+        "test": "bundle exec rspec"
+      }
+    }
+  }
+}
