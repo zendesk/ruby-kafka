@@ -1,4 +1,13 @@
 module Kafka
+
+  # The protocol layer of the library.
+  #
+  # The Kafka protocol (https://kafka.apache.org/protocol) defines a set of API
+  # requests, each with a well-known numeric API key, as well as a set of error
+  # codes with specific meanings.
+  #
+  # This module, and the classes contained in it, implement the client side of
+  # the protocol.
   module Protocol
     # The replica id of non-brokers is always -1.
     REPLICA_ID = -1
@@ -16,6 +25,7 @@ module Kafka
     SYNC_GROUP_API = 14
     SASL_HANDSHAKE_API = 17
 
+    # A mapping from numeric API keys to symbolic API names.
     APIS = {
       PRODUCE_API => :produce,
       FETCH_API => :fetch,
@@ -31,6 +41,7 @@ module Kafka
       SASL_HANDSHAKE_API => :sasl_handshake,
     }
 
+    # A mapping from numeric error codes to exception classes.
     ERRORS = {
       -1 => UnknownError,
        1 => OffsetOutOfRange,
@@ -72,6 +83,12 @@ module Kafka
       42 => InvalidRequest
     }
 
+    # Handles an error code by either doing nothing (if there was no error) or
+    # by raising an appropriate exception.
+    #
+    # @param error_code Integer
+    # @raise [ProtocolError]
+    # @return [nil]
     def self.handle_error(error_code)
       if error_code == 0
         # No errors, yay!
@@ -82,6 +99,10 @@ module Kafka
       end
     end
 
+    # Returns the symbolic name for an API key.
+    #
+    # @param api_key Integer
+    # @return [Symbol]
     def self.api_name(api_key)
       APIS.fetch(api_key, :unknown)
     end
