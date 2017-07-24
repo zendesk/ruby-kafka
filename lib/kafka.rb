@@ -114,7 +114,7 @@ module Kafka
   class ReplicaNotAvailable < ProtocolError
   end
 
-  #
+  # 25
   class UnknownMemberId < ProtocolError
   end
 
@@ -163,31 +163,31 @@ module Kafka
   end
 
   # 36
-  class TopicAlreadyExists < Error
+  class TopicAlreadyExists < ProtocolError
   end
 
   # 37
-  class InvalidPartitions < Error
+  class InvalidPartitions < ProtocolError
   end
 
   # 38
-  class InvalidReplicationFactor < Error
+  class InvalidReplicationFactor < ProtocolError
   end
 
   # 39
-  class InvalidReplicaAssignment < Error
+  class InvalidReplicaAssignment < ProtocolError
   end
 
   # 40
-  class InvalidConfig < Error
+  class InvalidConfig < ProtocolError
   end
 
   # 41
-  class NotController < Error
+  class NotController < ProtocolError
   end
 
   # 42
-  class InvalidRequest < Error
+  class InvalidRequest < ProtocolError
   end
 
   # Raised when there's a network connection error.
