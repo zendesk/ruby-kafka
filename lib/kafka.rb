@@ -194,6 +194,9 @@ module Kafka
   class ConnectionError < Error
   end
 
+  class NoSuchBroker < Error
+  end
+
   # Raised when a producer buffer has reached its maximum size.
   class BufferOverflow < Error
   end
