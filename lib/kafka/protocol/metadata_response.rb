@@ -123,7 +123,7 @@ module Kafka
       def find_broker(node_id)
         broker = @brokers.find {|broker| broker.node_id == node_id }
 
-        raise Kafka::Error, "No broker with id #{node_id}" if broker.nil?
+        raise Kafka::NoSuchBroker, "No broker with id #{node_id}" if broker.nil?
 
         broker
       end
