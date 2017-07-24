@@ -280,6 +280,10 @@ module Kafka
       end
     end
 
+    def seek(topic, partition, offset)
+      @offset_manager.seek_to(topic, partition, offset)
+    end
+
     def commit_offsets
       @offset_manager.commit_offsets
     end
