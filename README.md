@@ -754,7 +754,7 @@ You can quite easily build monitoring on top of the provided [instrumentation ho
 The Statsd reporter is automatically enabled when the `kafka/statsd` library is required. You can optionally change the configuration.
 
 ```ruby
-require "kafka/statds"
+require "kafka/statsd"
 
 # Default is "ruby_kafka".
 Kafka::Statsd.namespace = "custom-namespace"
