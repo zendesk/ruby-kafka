@@ -6,16 +6,15 @@ module Kafka
 
     # ## API Specification
     #
-    #     Message => Crc MagicByte Attributes Timestamp Key Value
+    #     Message => Crc MagicByte Attributes Key Value
     #         Crc => int32
     #         MagicByte => int8
     #         Attributes => int8
-    #         Timestamp => int64, in ms
     #         Key => bytes
     #         Value => bytes
     #
     class Message
-      MAGIC_BYTE = 1
+      MAGIC_BYTE = 0
 
       attr_reader :key, :value, :codec_id, :offset
 
@@ -72,7 +71,6 @@ module Kafka
         end
 
         attributes = message_decoder.int8
-        timestamp = message_decoder.int64
         key = message_decoder.bytes
         value = message_decoder.bytes
 
@@ -80,7 +78,7 @@ module Kafka
         # attributes.
         codec_id = attributes & 0b111
 
-        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp/1000.0))
+        new(key: key, value: value, codec_id: codec_id, offset: offset)
       end
 
       private
@@ -104,7 +102,6 @@ module Kafka
 
         encoder.write_int8(MAGIC_BYTE)
         encoder.write_int8(@codec_id)
-        encoder.write_int64((@create_time.to_f*1000).to_i)
         encoder.write_bytes(@key)
         encoder.write_bytes(@value)
 

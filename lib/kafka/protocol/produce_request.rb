@@ -40,10 +40,6 @@ module Kafka
         PRODUCE_API
       end
 
-      def api_version
-        2
-      end
-
       def response_class
         requires_acks? ? Protocol::ProduceResponse : nil
       end

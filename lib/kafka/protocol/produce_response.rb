@@ -11,21 +11,19 @@ module Kafka
       end
 
       class PartitionInfo
-        attr_reader :partition, :error_code, :offset, :timestamp
+        attr_reader :partition, :error_code, :offset
 
-        def initialize(partition:, error_code:, offset:, timestamp:)
+        def initialize(partition:, error_code:, offset:)
           @partition = partition
           @error_code = error_code
           @offset = offset
-          @timestamp = timestamp
         end
       end
 
-      attr_reader :topics, :throttle_time_ms
+      attr_reader :topics
 
-      def initialize(topics: [], throttle_time_ms: 0)
+      def initialize(topics: [])
         @topics = topics
-        @throttle_time_ms = throttle_time_ms
       end
 
       def each_partition
@@ -45,16 +43,13 @@ module Kafka
               partition: decoder.int32,
               error_code: decoder.int16,
               offset: decoder.int64,
-              timestamp: Time.at(decoder.int64/1000.0),
             )
           end
 
           TopicInfo.new(topic: topic, partitions: partitions)
         end
 
-        throttle_time_ms = decoder.int32
-
-        new(topics: topics, throttle_time_ms: throttle_time_ms)
+        new(topics: topics)
       end
     end
   end

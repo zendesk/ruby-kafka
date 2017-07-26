@@ -58,7 +58,6 @@ describe Kafka::Consumer do
           topic: "greetings",
           partition: 0,
           offset: 13,
-          create_time: Time.now,
         )
       ]
     }
@@ -183,7 +182,6 @@ describe Kafka::Consumer do
           topic: "greetings",
           partition: 0,
           offset: 13,
-          create_time: Time.now,
         )
       ]
     }
