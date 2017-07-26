@@ -10,7 +10,7 @@ require "active_support/subscriber"
 module Kafka
   # Reports operational metrics to a Statsd agent.
   #
-  #     require "kafka/statds"
+  #     require "kafka/statsd"
   #
   #     # Default is "ruby_kafka".
   #     Kafka::Statsd.namespace = "custom-namespace"
