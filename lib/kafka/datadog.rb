@@ -56,6 +56,10 @@ module Kafka
         end
       end
 
+      def batch(&block)
+        Kafka::Datadog.statsd.batch(&block)
+      end
+
       def emit(type, *args, tags: {})
         tags = tags.map {|k, v| "#{k}:#{v}" }.to_a
 
@@ -77,14 +81,16 @@ module Kafka
           broker: broker
         }
 
-        timing("api.latency", event.duration, tags: tags)
-        increment("api.calls", tags: tags)
+        batch do
+          timing("api.latency", event.duration, tags: tags)
+          increment("api.calls", tags: tags)
 
-        histogram("api.request_size", request_size, tags: tags)
-        histogram("api.response_size", response_size, tags: tags)
+          histogram("api.request_size", request_size, tags: tags)
+          histogram("api.response_size", response_size, tags: tags)
 
-        if event.payload.key?(:exception)
-          increment("api.errors", tags: tags)
+          if event.payload.key?(:exception)
+            increment("api.errors", tags: tags)
+          end
         end
       end
 
@@ -102,14 +108,16 @@ module Kafka
           partition: event.payload.fetch(:partition),
         }
 
-        if event.payload.key?(:exception)
-          increment("consumer.process_message.errors", tags: tags)
-        else
-          timing("consumer.process_message.latency", event.duration, tags: tags)
-          increment("consumer.messages", tags: tags)
-        end
+        batch do
+          if event.payload.key?(:exception)
+            increment("consumer.process_message.errors", tags: tags)
+          else
+            timing("consumer.process_message.latency", event.duration, tags: tags)
+            increment("consumer.messages", tags: tags)
+          end
 
-        gauge("consumer.lag", lag, tags: tags)
+          gauge("consumer.lag", lag, tags: tags)
+        end
       end
 
       def process_batch(event)
@@ -122,11 +130,13 @@ module Kafka
           partition: event.payload.fetch(:partition),
         }
 
-        if event.payload.key?(:exception)
-          increment("consumer.process_batch.errors", tags: tags)
-        else
-          timing("consumer.process_batch.latency", event.duration, tags: tags)
-          count("consumer.messages", messages, tags: tags)
+        batch do
+          if event.payload.key?(:exception)
+            increment("consumer.process_batch.errors", tags: tags)
+          else
+            timing("consumer.process_batch.latency", event.duration, tags: tags)
+            count("consumer.messages", messages, tags: tags)
+          end
         end
       end
 
@@ -146,16 +156,18 @@ module Kafka
           client: client,
         }
 
-        # This gets us the write rate.
-        increment("producer.produce.messages", tags: tags.merge(topic: topic))
+        batch do
+          # This gets us the write rate.
+          increment("producer.produce.messages", tags: tags.merge(topic: topic))
 
-        histogram("producer.produce.message_size", message_size, tags: tags.merge(topic: topic))
+          histogram("producer.produce.message_size", message_size, tags: tags.merge(topic: topic))
 
-        # This gets us the avg/max buffer size per producer.
-        histogram("producer.buffer.size", buffer_size, tags: tags)
+          # This gets us the avg/max buffer size per producer.
+          histogram("producer.buffer.size", buffer_size, tags: tags)
 
-        # This gets us the avg/max buffer fill ratio per producer.
-        histogram("producer.buffer.fill_ratio", buffer_fill_ratio, tags: tags)
+          # This gets us the avg/max buffer fill ratio per producer.
+          histogram("producer.buffer.fill_ratio", buffer_fill_ratio, tags: tags)
+        end
       end
 
       def buffer_overflow(event)
@@ -176,17 +188,19 @@ module Kafka
           client: client,
         }
 
-        if event.payload.key?(:exception)
-          increment("producer.deliver.errors", tags: tags)
+        batch do
+          if event.payload.key?(:exception)
+            increment("producer.deliver.errors", tags: tags)
+          end
+
+          timing("producer.deliver.latency", event.duration, tags: tags)
+
+          # Messages delivered to Kafka:
+          count("producer.deliver.messages", message_count, tags: tags)
+
+          # Number of attempts to deliver messages:
+          histogram("producer.deliver.attempts", attempts, tags: tags)
         end
-
-        timing("producer.deliver.latency", event.duration, tags: tags)
-
-        # Messages delivered to Kafka:
-        count("producer.deliver.messages", message_count, tags: tags)
-
-        # Number of attempts to deliver messages:
-        histogram("producer.deliver.attempts", attempts, tags: tags)
       end
 
       def ack_message(event)
@@ -195,11 +209,13 @@ module Kafka
           topic: event.payload.fetch(:topic),
         }
 
-        # Number of messages ACK'd for the topic.
-        increment("producer.ack.messages", tags: tags)
+        batch do
+          # Number of messages ACK'd for the topic.
+          increment("producer.ack.messages", tags: tags)
 
-        # Histogram of delay between a message being produced and it being ACK'd.
-        histogram("producer.ack.delay", event.payload.fetch(:delay), tags: tags)
+          # Histogram of delay between a message being produced and it being ACK'd.
+          histogram("producer.ack.delay", event.payload.fetch(:delay), tags: tags)
+        end
       end
 
       def topic_error(event)
