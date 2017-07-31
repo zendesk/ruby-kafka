@@ -6,8 +6,9 @@ module Kafka
   # A Fetcher instance runs in a separate thread and communicates over a
   # thread-safe queue.
   class Fetcher
-    def initialize(broker:, commands:, output:, logger:)
+    def initialize(broker:, assignments:, commands:, output:, logger:)
       @broker = broker
+      @assignments = assignments
       @commands = commands
       @output = output
       @logger = logger
@@ -16,7 +17,6 @@ module Kafka
       @max_wait_time = 30
 
       @running = true
-      @assignments = Hash.new
     end
 
     def run
@@ -90,10 +90,6 @@ module Kafka
       }
 
       @output << batches
-    end
-
-    def assign(assignments:)
-      @assignments = assignments
     end
 
     def shutdown(**)

@@ -1,6 +1,6 @@
 require "kafka/consumer_group"
 require "kafka/offset_manager"
-require "kafka/fetch_operation"
+require "kafka/fetch_controller"
 
 module Kafka
 
@@ -368,39 +368,22 @@ module Kafka
         # only keep commits for the partitions that we're still assigned.
         @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
       end
+
+      raise NoPartitionsAssignedError if @group.subscribed_partitions.empty?
+
+      @fetch_controller = FetchController.new(
+        cluster: @cluster,
+        group: @group,
+        logger: @logger,
+      )
     end
 
     def fetch_batches(min_bytes:, max_wait_time:)
       join_group unless @group.member?
 
-      subscribed_partitions = @group.subscribed_partitions
-
       @heartbeat.send_if_necessary
 
-      raise NoPartitionsAssignedError if subscribed_partitions.empty?
-
-      operation = FetchOperation.new(
-        cluster: @cluster,
-        logger: @logger,
-        min_bytes: min_bytes,
-        max_wait_time: max_wait_time,
-      )
-
-      subscribed_partitions.each do |topic, partitions|
-        partitions.each do |partition|
-          offset = @offset_manager.next_offset_for(topic, partition)
-          max_bytes = @max_bytes.fetch(topic)
-
-          if paused?(topic, partition)
-            @logger.warn "Partition #{topic}/#{partition} is currently paused, skipping"
-          else
-            @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-            operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
-          end
-        end
-      end
-
-      operation.execute
+      @fetch_controller.fetch_batches
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
 
