@@ -46,6 +46,7 @@ module Kafka
       retry
     rescue ConnectionError
       @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
+      sleep 1
       @coordinator = nil
       retry
     end
