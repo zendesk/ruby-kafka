@@ -196,6 +196,7 @@ module Kafka
       @seed_brokers.shuffle.each do |node|
         @logger.info "Fetching cluster metadata from #{node}"
 
+        broker_error = nil
         begin
           broker = @broker_pool.connect(node.hostname, node.port)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
@@ -206,13 +207,14 @@ module Kafka
 
           return cluster_info
         rescue Error => e
-          @logger.error "Failed to fetch metadata from #{node}: #{e}"
+          broker_error = "Failed to fetch metadata from #{node}: #{e}"
+          @logger.error broker_error
         ensure
           broker.disconnect unless broker.nil?
         end
       end
 
-      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
+      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}: #{broker_error}"
     end
 
     def connect_to_broker(broker_id)
