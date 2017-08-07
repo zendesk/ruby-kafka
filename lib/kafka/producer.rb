@@ -191,7 +191,6 @@ module Kafka
         partition && Integer(partition),
         partition_key && partition_key.to_s,
         create_time,
-        key.to_s.bytesize + value.to_s.bytesize
       )
 
       if buffer_size >= @max_buffer_size
