@@ -185,8 +185,8 @@ module Kafka
       create_time = Time.now
 
       message = PendingMessage.new(
-        value.to_s,
-        key.to_s,
+        value && value.to_s,
+        key && key.to_s,
         topic.to_s,
         partition && Integer(partition),
         partition_key && partition_key.to_s,

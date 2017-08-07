@@ -9,7 +9,7 @@ module Kafka
       @partition = partition
       @partition_key = partition_key
       @create_time = create_time
-      @bytesize = key.bytesize + value.bytesize
+      @bytesize = key.to_s.bytesize + value.to_s.bytesize
     end
   end
 end

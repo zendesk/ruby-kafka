@@ -84,12 +84,28 @@ describe Kafka::Producer do
       expect(broker1.messages.map(&:value)).to eq ["42"]
     end
 
+    it "doesn't convert the value to a string if it's nil" do
+      producer.produce(nil, topic: "greetings", partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:value)).to eq [nil]
+    end
+
     it "converts `key` to a string" do
       producer.produce("hello", topic: "greetings", key: 42, partition: 0)
 
       producer.deliver_messages
 
       expect(broker1.messages.map(&:key)).to eq ["42"]
+    end
+
+    it "doesn't convert `key` to a string if it's nil" do
+      producer.produce("hello", topic: "greetings", key: nil, partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:key)).to eq [nil]
     end
   end
 
