@@ -100,7 +100,6 @@ module Kafka
         partition,
         partition_key,
         create_time,
-        key.to_s.bytesize + value.to_s.bytesize
       )
 
       if partition.nil?

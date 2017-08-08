@@ -69,6 +69,44 @@ describe Kafka::Producer do
         producer.deliver_messages
       }.to raise_exception(Kafka::Error)
     end
+
+    it "requires `partition` to be an Integer" do
+      expect {
+        producer.produce("hello", topic: "greetings", partition: "x")
+      }.to raise_exception(ArgumentError)
+    end
+
+    it "converts the value to a string" do
+      producer.produce(42, topic: "greetings", partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:value)).to eq ["42"]
+    end
+
+    it "doesn't convert the value to a string if it's nil" do
+      producer.produce(nil, topic: "greetings", partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:value)).to eq [nil]
+    end
+
+    it "converts `key` to a string" do
+      producer.produce("hello", topic: "greetings", key: 42, partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:key)).to eq ["42"]
+    end
+
+    it "doesn't convert `key` to a string if it's nil" do
+      producer.produce("hello", topic: "greetings", key: nil, partition: 0)
+
+      producer.deliver_messages
+
+      expect(broker1.messages.map(&:key)).to eq [nil]
+    end
   end
 
   describe "#deliver_messages" do
@@ -78,8 +116,8 @@ describe Kafka::Producer do
 
       producer.deliver_messages
 
-      expect(broker1.messages).to eq ["hello1"]
-      expect(broker2.messages).to eq ["hello2"]
+      expect(broker1.messages.map(&:value)).to eq ["hello1"]
+      expect(broker2.messages.map(&:value)).to eq ["hello2"]
     end
 
     it "handles when a partition temporarily doesn't have a leader" do
@@ -116,7 +154,7 @@ describe Kafka::Producer do
 
       producer.deliver_messages
       expect(broker1.messages).to be_empty
-      expect(broker2.messages).to eq(%w(hello0 hello1))
+      expect(broker2.messages.map(&:value)).to eq(%w(hello0 hello1))
     end
 
     it "handles when there's a connection error when fetching topic metadata" do

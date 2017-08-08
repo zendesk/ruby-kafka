@@ -10,7 +10,7 @@ class FakeBroker
     @messages.each do |topic, messages_for_topic|
       messages_for_topic.each do |partition, messages_for_partition|
         messages_for_partition.each do |message|
-          messages << message.value
+          messages << message
         end
       end
     end

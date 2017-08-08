@@ -185,13 +185,12 @@ module Kafka
       create_time = Time.now
 
       message = PendingMessage.new(
-        value,
-        key,
-        topic,
-        partition,
-        partition_key,
+        value && value.to_s,
+        key && key.to_s,
+        topic.to_s,
+        partition && Integer(partition),
+        partition_key && partition_key.to_s,
         create_time,
-        key.to_s.bytesize + value.to_s.bytesize
       )
 
       if buffer_size >= @max_buffer_size
