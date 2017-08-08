@@ -87,6 +87,11 @@ module Kafka
       nil
     end
 
+    # Stop the consumer.
+    #
+    # The consumer will finish any in-progress work and shut down.
+    #
+    # @return [nil]
     def stop
       @running = false
     end
@@ -277,6 +282,17 @@ module Kafka
       end
     end
 
+    # Move the consumer's position in a topic partition to the specified offset.
+    #
+    # Note that this has to be done prior to calling {#each_message} or {#each_batch}
+    # and only has an effect if the consumer is assigned the partition. Typically,
+    # you will want to do this in every consumer group member in order to make sure
+    # that the member that's assigned the partition knows where to start.
+    #
+    # @param topic [String] 
+    # @param partition [Integer] 
+    # @param offset [Integer] 
+    # @return [nil]
     def seek(topic, partition, offset)
       @offset_manager.seek_to(topic, partition, offset)
     end
