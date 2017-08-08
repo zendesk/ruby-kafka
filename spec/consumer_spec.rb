@@ -225,6 +225,14 @@ describe Kafka::Consumer do
     end
   end
 
+  describe "#seek" do
+    it "looks for the given topic-partition-offset" do
+      expect(offset_manager).to receive(:seek_to).with("greetings", 0, 14)
+
+      consumer.seek("greetings", 0, 14)
+    end
+  end
+
   describe "#send_heartbeat_if_necessary" do
     it "sends heartbeat if necessary" do
       expect(heartbeat).to receive(:send_if_necessary)
