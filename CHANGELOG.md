@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Allow seeking the consumer position (#386).
+
 ## v0.4.0
 
 - Support SASL authentication (#334 and #370)
