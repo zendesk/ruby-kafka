@@ -36,7 +36,7 @@ module Kafka
     end
 
     def seek_to_default(topic, partition)
-      seek_to(-1)
+      seek_to(topic, partition, -1)
     end
 
     def seek_to(topic, partition, offset)

@@ -203,4 +203,34 @@ describe Kafka::OffsetManager do
       expect(group).to have_received(:commit_offsets).with(expected_offsets)
     end
   end
+
+  describe "#seek_to" do
+    it "seeks to given topic-partition/offset" do
+      topic = "greetings"
+      partition = 0
+      seek_offset = 14
+
+      offset_manager.seek_to(topic, partition, seek_offset)
+
+      offset = offset_manager.next_offset_for(topic, partition)
+
+      expect(offset).to eq seek_offset
+    end
+  end
+
+  describe "#seek_to_default" do
+    it "seeks default offset" do
+      topic = "greetings"
+      partition = 0
+
+      offset_manager.set_default_offset(topic, :latest)
+      allow(group).to receive(:assigned_partitions) { { topic => [0] } }
+      allow(cluster).to receive(:resolve_offsets).with(topic, [0], :latest) { { 0 => 42 } }
+
+      offset_manager.seek_to_default(topic, partition)
+
+      offset = offset_manager.next_offset_for(topic, partition)
+      expect(offset).to eq 42
+    end
+  end
 end
