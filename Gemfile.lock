@@ -1,8 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.5.0.beta1)
-      gssapi (>= 1.2.0)
+    ruby-kafka (0.4.0)
 
 GEM
   remote: https://rubygems.org/
@@ -74,6 +73,7 @@ DEPENDENCIES
   docker-api
   dogstatsd-ruby (>= 2.0.0)
   dotenv
+  gssapi (>= 1.2.0)
   pry
   rake (~> 10.0)
   rspec
