@@ -141,6 +141,7 @@ module Kafka
         buffer_size = event.payload.fetch(:buffer_size)
         max_buffer_size = event.payload.fetch(:max_buffer_size)
         buffer_fill_ratio = buffer_size.to_f / max_buffer_size.to_f
+        buffer_fill_percentage = buffer_fill_ratio * 100.0
 
         tags = {
           client: client,
@@ -156,6 +157,7 @@ module Kafka
 
         # This gets us the avg/max buffer fill ratio per producer.
         histogram("producer.buffer.fill_ratio", buffer_fill_ratio, tags: tags)
+        histogram("producer.buffer.fill_percentage", buffer_fill_percentage, tags: tags)
       end
 
       def buffer_overflow(event)

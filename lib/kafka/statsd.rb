@@ -122,6 +122,7 @@ module Kafka
         buffer_size = event.payload.fetch(:buffer_size)
         max_buffer_size = event.payload.fetch(:max_buffer_size)
         buffer_fill_ratio = buffer_size.to_f / max_buffer_size.to_f
+        buffer_fill_percentage = buffer_fill_ratio * 100.0
 
         # This gets us the write rate.
         increment("producer.#{client}.#{topic}.produce.messages")
@@ -133,6 +134,7 @@ module Kafka
 
         # This gets us the avg/max buffer fill ratio per producer.
         timing("producer.#{client}.buffer.fill_ratio", buffer_fill_ratio)
+        timing("producer.#{client}.buffer.fill_percentage", buffer_fill_percentage)
       end
 
       def buffer_overflow(event)
