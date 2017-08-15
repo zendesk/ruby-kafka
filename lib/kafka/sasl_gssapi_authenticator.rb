@@ -1,5 +1,3 @@
-require 'gssapi'
-
 module Kafka
   class SaslGssapiAuthenticator
     GSSAPI_IDENT = "GSSAPI"
@@ -11,6 +9,7 @@ module Kafka
       @principal = sasl_gssapi_principal
       @keytab = sasl_gssapi_keytab
 
+      load_gssapi
       initialize_gssapi_context
     end
 
@@ -57,6 +56,15 @@ module Kafka
     def send_and_receive_sasl_token
       @encoder.write_bytes(@gssapi_token)
       @decoder.bytes
+    end
+
+    def load_gssapi
+      begin
+        require "gssapi"
+      rescue LoadError
+        @logger.error "In order to use GSSAPI authentication you need to install the `gssapi` gem."
+        raise
+      end
     end
 
     def initialize_gssapi_context
