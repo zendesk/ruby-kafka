@@ -43,6 +43,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     3. [Consumer Design](#consumer-design)
 5. [Development](#development)
 6. [Roadmap](#roadmap)
+7. [Higher level libraries](#higher-level-libraries)
 
 ## Installation
 
@@ -457,9 +458,7 @@ end
 
 ### Consuming Messages from Kafka
 
-**Note:** if you're just looking to get started with a simple Kafka consumer, take a look at [Racecar](https://github.com/zendesk/racecar), a simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It's based on ruby-kafka, but comes with sensible defaults and conventions.
-
-Read on if you're interested in either rolling your own executable consumers or if you want to learn more about how consumers work in Kafka.
+**Note:** If you're just looking to get started with Kafka consumers, you might be interested in visiting the [Higher level libraries](#higher-level-libraries) section that lists ruby-kafka based frameworks. Read on, if you're interested in either rolling your own executable consumers or if you want to learn more about how consumers work in Kafka.
 
 Consuming messages from a Kafka topic with ruby-kafka is simple:
 
@@ -923,6 +922,16 @@ Current stable release with support for the Kafka 0.9 protocol.
 ### v0.5
 
 Next stable release, with support for the Kafka 0.10 protocol and eventually newer protocol versions.
+
+## Higher level libraries
+
+Currently, there are three actively developed frameworks based on ruby-kafka, that provide higher level API that can be used to work with Kafka messages:
+
+* [Racecar](https://github.com/zendesk/racecar) - A simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It comes with sensible defaults and conventions.
+
+* [Karafka](https://github.com/karafka/karafka) - Framework used to simplify Apache Kafka based Ruby and Rails applications development. Karafka provides higher abstraction layers, including Capistrano, Docker and Heroku support.
+
+* [Phobos](https://github.com/klarna/phobos) - Micro framework and library for applications dealing with Apache Kafka. It wraps common behaviors needed by consumers and producers in an easy and convenient API.
 
 ## Why Create A New Library?
 
