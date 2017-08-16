@@ -27,6 +27,7 @@ module Kafka
   class Connection
     SOCKET_TIMEOUT = 10
     CONNECT_TIMEOUT = 10
+    IDLE_TIMEOUT = 500
 
     attr_reader :encoder
     attr_reader :decoder
@@ -78,6 +79,11 @@ module Kafka
     #
     # @return [Object] the response.
     def send_request(request)
+      # The brokers kill connections if they've been idle for some time. In order
+      # to avoid using a killed connection, we reopen the connection at a more
+      # frequent interval.
+      reopen if connection_expired?
+
       # Default notification payload.
       notification = {
         broker_host: @host,
@@ -100,6 +106,9 @@ module Kafka
       close
 
       raise ConnectionError, "Connection error: #{e}"
+    ensure
+      # Record the time of last activity.
+      @activity_at = Time.now
     end
 
     private
@@ -124,6 +133,11 @@ module Kafka
     rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
+    end
+
+    def reopen
+      close
+      open
     end
 
     # Writes a request over the connection.
@@ -195,6 +209,10 @@ module Kafka
           return response
         end
       end
+    end
+
+    def connection_expired?
+      @activity_at && @activity_at < (Time.now - IDLE_TIMEOUT)
     end
   end
 end
