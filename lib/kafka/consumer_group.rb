@@ -41,6 +41,7 @@ module Kafka
       synchronize
     rescue NotCoordinatorForGroup
       @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
+      @cluster.mark_as_stale!
       sleep 1
       @coordinator = nil
       retry
@@ -98,6 +99,7 @@ module Kafka
       raise HeartbeatError, e
     rescue NotCoordinatorForGroup
       @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
+      @cluster.mark_as_stale!
       sleep 1
       @coordinator = nil
       retry
