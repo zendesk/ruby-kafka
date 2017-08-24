@@ -910,6 +910,8 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 **Note:** the specs require a working [Docker](https://www.docker.com/) instance, but should work out of the box if you have Docker installed. Please create an issue if that's not the case.
 
+If you would like to contribute to ruby-kafka, please [join our Slack team](https://ruby-kafka-slack.herokuapp.com/) and ask how best to do it.
+
 [![Circle CI](https://circleci.com/gh/zendesk/ruby-kafka.svg?style=shield)](https://circleci.com/gh/zendesk/ruby-kafka/tree/master)
 
 ## Support and Discussion
