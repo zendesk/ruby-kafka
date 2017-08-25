@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.4.1
+
 - Allow seeking the consumer position (#386).
 - Reopen idle connections after 5 minutes (#399).
 
