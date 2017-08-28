@@ -10,6 +10,10 @@ module Kafka
       @password = password
     end
 
+    def self.authenticate(*args)
+      new(*args).authenticate!
+    end
+
     def authenticate!
       response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(PLAIN_IDENT))
 

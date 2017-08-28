@@ -9,6 +9,7 @@ require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
 require "kafka/connection_builder"
+require "kafka/sasl"
 require "kafka/instrumenter"
 
 module Kafka
@@ -58,18 +59,24 @@ module Kafka
 
       ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
 
+      sasl = Sasl.new(
+        logger: @logger,
+        ssl_context: ssl_context,
+        gssapi_principal: sasl_gssapi_principal,
+        gssapi_keytab: sasl_gssapi_keytab,
+        plain_authzid: sasl_plain_authzid,
+        plain_username: sasl_plain_username,
+        plain_password: sasl_plain_password,
+      )
+
       @connection_builder = ConnectionBuilder.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
         ssl_context: ssl_context,
+        sasl: sasl,
         logger: @logger,
         instrumenter: @instrumenter,
-        sasl_gssapi_principal: sasl_gssapi_principal,
-        sasl_gssapi_keytab: sasl_gssapi_keytab,
-        sasl_plain_authzid: sasl_plain_authzid,
-        sasl_plain_username: sasl_plain_username,
-        sasl_plain_password: sasl_plain_password
       )
 
       @cluster = initialize_cluster
