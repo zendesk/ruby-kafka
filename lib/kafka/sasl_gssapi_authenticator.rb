@@ -13,6 +13,10 @@ module Kafka
       initialize_gssapi_context
     end
 
+    def self.authenticate(*args)
+      new(*args).authenticate!
+    end
+
     def authenticate!
       proceed_sasl_gssapi_negotiation
     end
