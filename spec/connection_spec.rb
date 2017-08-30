@@ -6,6 +6,9 @@ describe Kafka::Connection do
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
 
+  let(:authenticator) {
+    instance_double(Kafka::Authenticator, authenticate!: true)
+  }
   let(:connection) {
     Kafka::Connection.new(
       host: host,
@@ -15,6 +18,7 @@ describe Kafka::Connection do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
+      authenticator: authenticator
     )
   }
 
@@ -68,6 +72,16 @@ describe Kafka::Connection do
       expect {
         connection.send_request(request)
       }.to raise_error(Kafka::ConnectionError)
+    end
+
+    it "calls authenticate when a new connection is open" do
+      expect(authenticator).to receive(:authenticate).with(connection).once
+
+      response = connection.send_request(request)
+      connection.send_request(request)
+      connection.send_request(request)
+
+      expect(response).to eq "hello!"
     end
 
     it "re-opens the connection after a network error" do
