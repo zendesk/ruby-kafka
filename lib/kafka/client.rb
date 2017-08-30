@@ -10,6 +10,7 @@ require "kafka/fetched_message"
 require "kafka/fetch_operation"
 require "kafka/connection_builder"
 require "kafka/instrumenter"
+require "kafka/sasl_authenticator"
 
 module Kafka
   class Client
@@ -58,6 +59,15 @@ module Kafka
 
       ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
 
+      sasl_authenticator = SaslAuthenticator.new(
+        sasl_gssapi_principal: sasl_gssapi_principal,
+        sasl_gssapi_keytab: sasl_gssapi_keytab,
+        sasl_plain_authzid: sasl_plain_authzid,
+        sasl_plain_username: sasl_plain_username,
+        sasl_plain_password: sasl_plain_password,
+        logger: @logger
+      )
+
       @connection_builder = ConnectionBuilder.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
@@ -65,11 +75,7 @@ module Kafka
         ssl_context: ssl_context,
         logger: @logger,
         instrumenter: @instrumenter,
-        sasl_gssapi_principal: sasl_gssapi_principal,
-        sasl_gssapi_keytab: sasl_gssapi_keytab,
-        sasl_plain_authzid: sasl_plain_authzid,
-        sasl_plain_username: sasl_plain_username,
-        sasl_plain_password: sasl_plain_password
+        sasl_authenticator: sasl_authenticator
       )
 
       @cluster = initialize_cluster

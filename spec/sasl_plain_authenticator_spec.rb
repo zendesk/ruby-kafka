@@ -5,6 +5,9 @@ describe Kafka::SaslPlainAuthenticator do
   let(:host) { "127.0.0.1" }
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
+  let(:sasl_authenticator) {
+    instance_double(Kafka::SaslAuthenticator, authenticate!: true)
+  }
 
   let(:connection) {
     Kafka::Connection.new(
@@ -15,6 +18,7 @@ describe Kafka::SaslPlainAuthenticator do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
+      sasl_authenticator: sasl_authenticator
     )
   }
 
@@ -22,7 +26,7 @@ describe Kafka::SaslPlainAuthenticator do
 
   describe '#authenticate!' do
     context 'when correct username/password' do
-      let(:authenticator) {
+      let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
           connection: connection,
           logger: logger,
@@ -33,12 +37,12 @@ describe Kafka::SaslPlainAuthenticator do
       }
 
       it 'successfully authenticates' do
-        expect(authenticator.authenticate!).to be_truthy
+        expect(sasl_plain_authenticator.authenticate!).to be_truthy
       end
     end
 
     context 'when incorrect username/password' do
-      let(:authenticator) {
+      let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
           connection: connection,
           logger: logger,
@@ -49,7 +53,7 @@ describe Kafka::SaslPlainAuthenticator do
       }
 
       it 'raises Kafka::Error with EOFError' do
-        expect { authenticator.authenticate! }.to raise_error(Kafka::Error, 'SASL PLAIN authentication failed: EOFError')
+        expect { sasl_plain_authenticator.authenticate! }.to raise_error(Kafka::Error, 'SASL PLAIN authentication failed: EOFError')
       end
     end
   end
