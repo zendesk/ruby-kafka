@@ -193,9 +193,11 @@ module Kafka
     # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
+      errors = []
       @seed_brokers.shuffle.each do |node|
         @logger.info "Fetching cluster metadata from #{node}"
 
+        broker_error = nil
         begin
           broker = @broker_pool.connect(node.hostname, node.port)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
@@ -206,13 +208,17 @@ module Kafka
 
           return cluster_info
         rescue Error => e
-          @logger.error "Failed to fetch metadata from #{node}: #{e}"
+          broker_error = "Failed to fetch metadata from #{node}: #{e}"
+          @logger.error broker_error
+          errors << [node, e]
         ensure
           broker.disconnect unless broker.nil?
         end
       end
 
-      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}"
+      error_description = errors.map {|node, exception| "- #{node}: #{exception}" }.join("\n")
+
+      raise ConnectionError, "Could not connect to any of the seed brokers: #{@seed_brokers.join(', ')}: #{error_description}"
     end
 
     def connect_to_broker(broker_id)
