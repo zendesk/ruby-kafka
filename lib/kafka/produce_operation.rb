@@ -27,7 +27,7 @@ module Kafka
   # * `:sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
+    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:, error_handler: nil)
       @cluster = cluster
       @buffer = buffer
       @required_acks = required_acks
@@ -35,6 +35,7 @@ module Kafka
       @compressor = compressor
       @logger = logger
       @instrumenter = instrumenter
+      @error_handler = error_handler
     end
 
     def execute
@@ -123,7 +124,7 @@ module Kafka
               topic: topic,
               exception: [e.class.to_s, e.message],
             })
-
+            @error_handler.on_error(e, topic, partition, messages) if @error_handler
             raise e
           end
 
@@ -137,6 +138,8 @@ module Kafka
               delay: ack_time - message.create_time,
             })
           end
+        rescue Kafka::MessageSizeTooLarge
+          @logger.error "Message is too large when writing to #{topic}/#{partition}"
         rescue Kafka::CorruptMessage
           @logger.error "Corrupt message when writing to #{topic}/#{partition}"
         rescue Kafka::UnknownTopicOrPartition

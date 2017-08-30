@@ -89,6 +89,11 @@ module Kafka
       @timer = Timer.new(queue: @queue, interval: delivery_interval)
     end
 
+    def with_error_handler(error_handler)
+      @worker.producer.with_error_handler(error_handler)
+      self
+    end
+
     # Produces a message to the specified topic.
     #
     # @see Kafka::Producer#produce
@@ -180,6 +185,7 @@ module Kafka
     end
 
     class Worker
+      attr_reader :producer
       def initialize(queue:, producer:, delivery_threshold:)
         @queue = queue
         @producer = producer

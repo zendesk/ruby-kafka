@@ -81,6 +81,12 @@ module Kafka
       @cluster = initialize_cluster
     end
 
+    # Override error handler.
+    def with_error_handler(error_handler)
+      @error_handler = error_handler
+      self
+    end
+
     # Delivers a single message to the Kafka cluster.
     #
     # **Note:** Only use this API for low-throughput scenarios. If you want to deliver
@@ -137,6 +143,7 @@ module Kafka
         compressor: compressor,
         logger: @logger,
         instrumenter: @instrumenter,
+        error_handler: @error_handler
       )
 
       operation.execute

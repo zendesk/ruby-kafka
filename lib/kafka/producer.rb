@@ -150,6 +150,15 @@ module Kafka
 
       # Messages added by `#produce` but not yet assigned a partition.
       @pending_message_queue = PendingMessageQueue.new
+
+      # Object/class that implements handle_error(status_code)
+      @error_handler = nil
+    end
+
+    # Override error error_handler.
+    def with_error_handler(error_handler)
+      @error_handler = error_handler
+      self
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
@@ -287,6 +296,7 @@ module Kafka
         compressor: @compressor,
         logger: @logger,
         instrumenter: @instrumenter,
+        error_handler: @error_handler,
       )
 
       loop do
