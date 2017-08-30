@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.4.0)
+    ruby-kafka (0.4.1)
 
 GEM
   remote: https://rubygems.org/
@@ -89,4 +89,4 @@ RUBY VERSION
    ruby 2.2.3p173
 
 BUNDLED WITH
-   1.14.6
+   1.15.3
