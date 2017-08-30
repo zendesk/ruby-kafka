@@ -75,7 +75,7 @@ describe Kafka::Connection do
     end
 
     it "calls authenticate when a new connection is open" do
-      expect(authenticator).to receive(:authenticate).with(connection).once
+      expect(authenticator).to receive(:authenticate!).with(connection).once
 
       response = connection.send_request(request)
       connection.send_request(request)
