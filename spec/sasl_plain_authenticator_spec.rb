@@ -5,8 +5,8 @@ describe Kafka::SaslPlainAuthenticator do
   let(:host) { "127.0.0.1" }
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
-  let(:authenticator) {
-    instance_double(Kafka::Authenticator, authenticate!: true)
+  let(:sasl_authenticator) {
+    instance_double(Kafka::SaslAuthenticator, authenticate!: true)
   }
 
   let(:connection) {
@@ -18,7 +18,7 @@ describe Kafka::SaslPlainAuthenticator do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
-      authenticator: authenticator
+      sasl_authenticator: sasl_authenticator
     )
   }
 

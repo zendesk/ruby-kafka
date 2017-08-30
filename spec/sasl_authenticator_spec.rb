@@ -1,12 +1,12 @@
 require 'fake_server'
 
-describe Kafka::Authenticator do
+describe Kafka::SaslAuthenticator do
   let(:logger) { LOGGER }
 
   let(:connection) { double("Connection") }
 
-  let(:authenticator) {
-    Kafka::Authenticator.new(
+  let(:sasl_authenticator) {
+    Kafka::SaslAuthenticator.new(
       {logger: logger}.merge(auth_options)
     )
   }
@@ -24,7 +24,7 @@ describe Kafka::Authenticator do
       }
 
       it "doesn't call any authentication strategy" do
-        expect{ authenticator.authenticate!(connection) }.to_not raise_error
+        expect{ sasl_authenticator.authenticate!(connection) }.to_not raise_error
       end
     end
 
@@ -44,7 +44,7 @@ describe Kafka::Authenticator do
         expect(Kafka::SaslPlainAuthenticator).to receive(:new).and_return(auth)
         expect(auth).to receive(:authenticate!)
 
-        authenticator.authenticate!(connection)
+        sasl_authenticator.authenticate!(connection)
       end
     end
 
@@ -65,7 +65,7 @@ describe Kafka::Authenticator do
         expect(Kafka::SaslGssapiAuthenticator).to receive(:new).and_return(auth)
         expect(auth).to receive(:authenticate!)
 
-        authenticator.authenticate!(connection)
+        sasl_authenticator.authenticate!(connection)
       end
 
     end
