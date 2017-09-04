@@ -83,6 +83,8 @@ module Kafka
         queue: @queue,
         producer: sync_producer,
         delivery_threshold: delivery_threshold,
+        instrumenter: instrumenter,
+        logger: logger,
       )
 
       # The timer will no-op if the delivery interval is zero.
@@ -180,10 +182,12 @@ module Kafka
     end
 
     class Worker
-      def initialize(queue:, producer:, delivery_threshold:)
+      def initialize(queue:, producer:, delivery_threshold:, instrumenter:, logger:)
         @queue = queue
         @producer = producer
         @delivery_threshold = delivery_threshold
+        @instrumenter = instrumenter
+        @logger = logger
       end
 
       def run
@@ -197,8 +201,16 @@ module Kafka
           when :deliver_messages
             deliver_messages
           when :shutdown
-            # Deliver any pending messages first.
-            deliver_messages
+            begin
+              # Deliver any pending messages first.
+              @producer.deliver_messages
+            rescue Error => e
+              @logger.error("Failed to deliver messages during shutdown: #{e.message}")
+
+              @instrumenter.instrument("drop_messages.async_producer", {
+                message_count: @producer.buffer_size + @queue.size,
+              })
+            end
 
             # Stop the run loop.
             break

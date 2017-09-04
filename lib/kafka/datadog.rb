@@ -244,6 +244,16 @@ module Kafka
         increment("async_producer.produce.errors", tags: tags)
       end
 
+      def drop_messages(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+        }
+
+        message_count = event.payload.fetch(:message_count)
+
+        count("async_producer.dropped_messages", message_count, tags: tags)
+      end
+
       attach_to "async_producer.kafka"
     end
   end
