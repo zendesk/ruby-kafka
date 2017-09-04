@@ -1,8 +1,78 @@
 require 'fake_server'
 
+class FakeConnection
+  attr_reader :encoder, :decoder
+
+  def initialize(encoder, decoder)
+    @request_handler = proc {}
+    @encoder = encoder
+    @decoder = decoder
+  end
+
+  def send_request(request)
+    @request_handler.call(request)
+  end
+
+  def on_request(&block)
+    @request_handler = block
+  end
+end
+
+class FakeSasl
+  def initialize
+
+  end
+end
+
+describe Kafka::SaslAuthenticator do
+  let(:gssapi_principal) { "" }
+  let(:gssapi_keytab) { "" }
+  let(:plain_authzid) { "" }
+  let(:plain_username) { "" }
+  let(:plain_password) { "" }
+
+  let(:uplink) { StringIO.new }
+  let(:downlink) { StringIO.new }
+
+  let(:logger) { Logger.new(StringIO.new) }
+
+  let(:connection) {
+    FakeConnection.new(
+      Kafka::Protocol::Encoder.new(uplink),
+      Kafka::Protocol::Decoder.new(downlink),
+    )
+  }
+
+  let(:sasl) {
+    described_class.new(
+      logger: logger,
+      sasl_gssapi_principal: gssapi_principal,
+      sasl_gssapi_keytab: gssapi_keytab,
+      sasl_plain_authzid: plain_authzid,
+      sasl_plain_username: plain_username,
+      sasl_plain_password: plain_password,
+    )
+  }
+
+  context "using PLAIN authentication" do
+    it "authenticates a connection" do
+      connection.on_request do |request|
+        case request
+        when Kafka::Protocol::SaslHandshakeRequest
+          Kafka::Protocol::SaslHandshakeResponse.new(
+            error_code: 0,
+            enabled_mechanisms: ["PLAIN"],
+          )
+        end
+      end
+
+      sasl.authenticate!(connection)
+    end
+  end
+end
+
 describe Kafka::SaslAuthenticator do
   let(:logger) { LOGGER }
-
   let(:connection) { double("Connection") }
 
   let(:sasl_authenticator) {
@@ -67,7 +137,6 @@ describe Kafka::SaslAuthenticator do
 
         sasl_authenticator.authenticate!(connection)
       end
-
     end
   end
 end
