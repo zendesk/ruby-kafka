@@ -30,9 +30,9 @@ module Kafka
       @processed_offsets[topic] ||= {}
 
       # The committed offset should always be the offset of the next message that the
-      # application will read, thus adding one to the last message processed
+      # application will read, thus adding one to the last message processed.
       @processed_offsets[topic][partition] = offset + 1
-      @logger.debug "Marking #{topic}/#{partition}:#{offset} as committed"
+      @logger.debug "Marking #{topic}/#{partition}:#{offset} as processed"
     end
 
     def seek_to_default(topic, partition)
