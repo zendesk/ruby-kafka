@@ -254,7 +254,8 @@ module Kafka
         logger: @logger,
         group_id: group_id,
         session_timeout: session_timeout,
-        retention_time: retention_time
+        retention_time: retention_time,
+        instrumenter: instrumenter,
       )
 
       offset_manager = OffsetManager.new(
