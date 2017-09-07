@@ -249,7 +249,6 @@ module Kafka
       def drop_messages(event)
         tags = {
           client: event.payload.fetch(:client_id),
-          topic: event.payload.fetch(:topic),
         }
 
         message_count = event.payload.fetch(:message_count)
