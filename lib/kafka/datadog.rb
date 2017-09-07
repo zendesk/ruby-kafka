@@ -130,6 +130,45 @@ module Kafka
         end
       end
 
+      def join_group(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
+        }
+
+        timing("consumer.join_group", event.duration, tags: tags)
+
+        if event.payload.key?(:exception)
+          increment("consumer.join_group.errors", tags: tags)
+        end
+      end
+
+      def sync_group(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
+        }
+
+        timing("consumer.sync_group", event.duration, tags: tags)
+
+        if event.payload.key?(:exception)
+          increment("consumer.sync_group.errors", tags: tags)
+        end
+      end
+
+      def leave_group(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
+        }
+
+        timing("consumer.leave_group", event.duration, tags: tags)
+
+        if event.payload.key?(:exception)
+          increment("consumer.leave_group.errors", tags: tags)
+        end
+      end
+
       attach_to "consumer.kafka"
     end
 
