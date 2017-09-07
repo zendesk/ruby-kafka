@@ -145,6 +145,7 @@ module Kafka
 
         tags = {
           client: client,
+          topic: topic,
         }
 
         # This gets us the write rate.
@@ -226,6 +227,7 @@ module Kafka
 
         tags = {
           client: client,
+          topic: topic,
         }
 
         # This gets us the avg/max queue size per producer.
@@ -247,6 +249,7 @@ module Kafka
       def drop_messages(event)
         tags = {
           client: event.payload.fetch(:client_id),
+          topic: event.payload.fetch(:topic),
         }
 
         message_count = event.payload.fetch(:message_count)
