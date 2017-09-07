@@ -5,11 +5,12 @@ module Kafka
   class ConsumerGroup
     attr_reader :assigned_partitions, :generation_id
 
-    def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:)
+    def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
       @logger = logger
       @group_id = group_id
       @session_timeout = session_timeout
+      @instrumenter = instrumenter
       @member_id = ""
       @generation_id = nil
       @members = {}
@@ -53,7 +54,10 @@ module Kafka
 
     def leave
       @logger.info "Leaving group `#{@group_id}`"
-      coordinator.leave_group(group_id: @group_id, member_id: @member_id)
+
+      @instrumenter.instrument("leave_group.consumer", group_id: @group_id) do
+        coordinator.leave_group(group_id: @group_id, member_id: @member_id)
+      end
     rescue ConnectionError
     end
 
@@ -108,18 +112,20 @@ module Kafka
     def join_group
       @logger.info "Joining group `#{@group_id}`"
 
-      response = coordinator.join_group(
-        group_id: @group_id,
-        session_timeout: @session_timeout,
-        member_id: @member_id,
-      )
+      @instrumenter.instrument("join_group.consumer", group_id: @group_id) do
+        response = coordinator.join_group(
+          group_id: @group_id,
+          session_timeout: @session_timeout,
+          member_id: @member_id,
+        )
 
-      Protocol.handle_error(response.error_code)
+        Protocol.handle_error(response.error_code)
 
-      @generation_id = response.generation_id
-      @member_id = response.member_id
-      @leader_id = response.leader_id
-      @members = response.members
+        @generation_id = response.generation_id
+        @member_id = response.member_id
+        @leader_id = response.leader_id
+        @members = response.members
+      end
 
       @logger.info "Joined group `#{@group_id}` with member id `#{@member_id}`"
     rescue UnknownMemberId
@@ -147,20 +153,22 @@ module Kafka
         )
       end
 
-      response = coordinator.sync_group(
-        group_id: @group_id,
-        generation_id: @generation_id,
-        member_id: @member_id,
-        group_assignment: group_assignment,
-      )
+      @instrumenter.instrument("sync_group.consumer", group_id: @group_id) do
+        response = coordinator.sync_group(
+          group_id: @group_id,
+          generation_id: @generation_id,
+          member_id: @member_id,
+          group_assignment: group_assignment,
+        )
 
-      Protocol.handle_error(response.error_code)
+        Protocol.handle_error(response.error_code)
 
-      response.member_assignment.topics.each do |topic, assigned_partitions|
-        @logger.info "Partitions assigned for `#{topic}`: #{assigned_partitions.join(', ')}"
+        response.member_assignment.topics.each do |topic, assigned_partitions|
+          @logger.info "Partitions assigned for `#{topic}`: #{assigned_partitions.join(', ')}"
+        end
+
+        @assigned_partitions.replace(response.member_assignment.topics)
       end
-
-      @assigned_partitions.replace(response.member_assignment.topics)
     end
 
     def coordinator
