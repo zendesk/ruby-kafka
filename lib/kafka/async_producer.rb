@@ -78,6 +78,7 @@ module Kafka
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
       @logger = logger
+      @shutting_down = false
 
       @worker = Worker.new(
         queue: @queue,
@@ -131,6 +132,7 @@ module Kafka
     # @see Kafka::Producer#shutdown
     # @return [nil]
     def shutdown
+      @shutting_down = true
       @timer_thread && @timer_thread.exit
       @queue << [:shutdown, nil]
       @worker_thread && @worker_thread.join
@@ -141,11 +143,17 @@ module Kafka
     private
 
     def ensure_threads_running!
+      raise ShuttingDownError if @shutting_down
+
       @worker_thread = nil unless @worker_thread && @worker_thread.alive?
       @worker_thread ||= start_thread { @worker.run }
 
       @timer_thread = nil unless @timer_thread && @timer_thread.alive?
       @timer_thread ||= start_thread { @timer.run }
+    rescue ThreadError
+      main_status = Thread.main.status
+      raise ShuttingDownError if (@shutting_down = !main_status || main_status == "aborting")
+      raise
     end
 
     def start_thread(&block)

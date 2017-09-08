@@ -217,6 +217,9 @@ module Kafka
   class NoPartitionsAssignedError < Error
   end
 
+  class ShuttingDownError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize
