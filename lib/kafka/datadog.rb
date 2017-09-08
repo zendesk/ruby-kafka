@@ -184,6 +184,7 @@ module Kafka
 
         tags = {
           client: client,
+          topic: topic,
         }
 
         # This gets us the write rate.
@@ -265,6 +266,7 @@ module Kafka
 
         tags = {
           client: client,
+          topic: topic,
         }
 
         # This gets us the avg/max queue size per producer.
