@@ -74,8 +74,7 @@ module Kafka
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
 
-      @queue = Queue.new
-      @max_queue_size = max_queue_size
+      @queue = SizedQueue.new(max_queue_size)
       @instrumenter = instrumenter
       @logger = logger
 
@@ -100,15 +99,17 @@ module Kafka
     def produce(value, topic:, **options)
       ensure_threads_running!
 
-      buffer_overflow(topic) if @queue.size >= @max_queue_size
-
       args = [value, **options.merge(topic: topic)]
-      @queue << [:produce, args]
+      begin
+        @queue.push([:produce, args], true)
+      rescue ThreadError # queue is full
+        buffer_overflow(topic)
+      end
 
       @instrumenter.instrument("enqueue_message.async_producer", {
         topic: topic,
         queue_size: @queue.size,
-        max_queue_size: @max_queue_size,
+        max_queue_size: @queue.max,
       })
 
       nil
@@ -159,7 +160,7 @@ module Kafka
         topic: topic,
       })
 
-      @logger.error "Cannot produce message to #{topic}, max queue size (#{@max_queue_size}) reached"
+      @logger.error "Cannot produce message to #{topic}, max queue size (#{@queue.max}) reached"
 
       raise BufferOverflow
     end
