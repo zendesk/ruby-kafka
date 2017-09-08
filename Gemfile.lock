@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-kafka (0.4.1)
+    ruby-kafka (0.4.2)
 
 GEM
   remote: https://rubygems.org/
