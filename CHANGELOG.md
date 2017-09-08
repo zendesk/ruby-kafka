@@ -4,6 +4,12 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.4.2
+
+- Fix connection issue on SASL connections (#401).
+- Add more instrumentation of consumer groups (#407).
+- Improve error logging (#385)
+
 ## v0.4.1
 
 - Allow seeking the consumer position (#386).
