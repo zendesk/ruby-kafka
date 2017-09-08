@@ -59,4 +59,3 @@ class FakeBroker
     @partition_errors[topic][partition]
   end
 end
-

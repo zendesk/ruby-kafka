@@ -14,7 +14,7 @@ describe "Consumer API", functional: true do
         producer.produce(i.to_s, topic: topic, partition_key: i.to_s)
 
         if i % 100 == 0
-          producer.deliver_messages 
+          producer.deliver_messages
           sleep 1
         end
       end
@@ -95,7 +95,7 @@ describe "Consumer API", functional: true do
         producer.produce("hello", topic: topic, partition_key: i.to_s)
 
         if i % 100 == 0
-          producer.deliver_messages 
+          producer.deliver_messages
           sleep 1
         end
       end

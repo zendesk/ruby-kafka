@@ -4,7 +4,7 @@ require "kafka"
 
 logger = Logger.new(STDOUT)
 logger.level = Logger::INFO
-logger.formatter = -> (_, _, _, msg) { msg }
+logger.formatter = ->(_, _, _, msg) { msg }
 
 STDOUT.sync = true
 

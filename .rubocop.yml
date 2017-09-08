@@ -1,0 +1,44 @@
+AllCops:
+  DisplayCopNames: true
+  TargetRubyVersion: 2.1
+
+Lint:
+  Enabled: false
+Metrics:
+  Enabled: false
+Performance:
+  Enabled: false
+Style:
+  Enabled: false
+
+# Configured cops
+
+Layout/CaseIndentation:
+  EnforcedStyle: end
+Layout/FirstParameterIndentation:
+  EnforcedStyle: consistent
+Layout/IndentArray:
+  EnforcedStyle: consistent
+Layout/IndentHash:
+  EnforcedStyle: consistent
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+Lint/EndAlignment:
+  EnforcedStyleAlignWith: variable
+
+#
+# Disabled cops
+#
+
+Layout/AlignHash:
+  Enabled: false
+Layout/AlignParameters:
+  Enabled: false
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+Layout/SpaceInsideBlockBraces:
+  Enabled: false

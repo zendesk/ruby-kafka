@@ -260,7 +260,7 @@ module Kafka
               begin
                 yield batch
               rescue => e
-                offset_range = (batch.first_offset .. batch.last_offset)
+                offset_range = (batch.first_offset..batch.last_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
                 backtrace = e.backtrace.join("\n")
 
@@ -289,9 +289,9 @@ module Kafka
     # you will want to do this in every consumer group member in order to make sure
     # that the member that's assigned the partition knows where to start.
     #
-    # @param topic [String] 
-    # @param partition [Integer] 
-    # @param offset [Integer] 
+    # @param topic [String]
+    # @param partition [Integer]
+    # @param offset [Integer]
     # @return [nil]
     def seek(topic, partition, offset)
       @offset_manager.seek_to(topic, partition, offset)
