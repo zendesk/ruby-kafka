@@ -27,24 +27,53 @@ module Kafka
   module Datadog
     STATSD_NAMESPACE = "ruby_kafka"
 
-    def self.statsd
-      @statsd ||= ::Datadog::Statsd.new(::Datadog::Statsd::DEFAULT_HOST, ::Datadog::Statsd::DEFAULT_PORT, namespace: STATSD_NAMESPACE)
-    end
+    class << self
+      def statsd
+        @statsd ||= ::Datadog::Statsd.new(host, port, namespace: namespace, tags: tags)
+      end
 
-    def self.host=(host)
-      statsd.host = host
-    end
+      def host
+        @host ||= ::Datadog::Statsd::DEFAULT_HOST
+      end
 
-    def self.port=(port)
-      statsd.port = port
-    end
+      def host=(host)
+        @host = host
+        clear
+      end
 
-    def self.namespace=(namespace)
-      statsd.namespace = namespace
-    end
+      def port
+        @port ||= ::Datadog::Statsd::DEFAULT_PORT
+      end
 
-    def self.tags=(tags)
-      statsd.tags = tags
+      def port=(port)
+        @port = port
+        clear
+      end
+
+      def namespace
+        @namespace ||= STATSD_NAMESPACE
+      end
+
+      def namespace=(namespace)
+        @namespace = namespace
+        clear
+      end
+
+      def tags
+        @tags ||= []
+      end
+
+      def tags=(tags)
+        @tags = tags
+        clear
+      end
+
+      private
+
+      def clear
+        @statsd && @statsd.close
+        @statsd = nil
+      end
     end
 
     class StatsdSubscriber < ActiveSupport::Subscriber
