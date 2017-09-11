@@ -18,6 +18,10 @@ class FakeDatadogAgent
     @thread.abort_on_exception = true
   end
 
+  def stop
+    @thread.kill
+  end
+
   def wait_for_metrics(count: 1)
     deadline = Time.now + 10
 
