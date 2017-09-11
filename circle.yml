@@ -5,6 +5,8 @@ machine:
     - docker
   environment:
     LOG_LEVEL: DEBUG
+  ruby:
+    version: 2.4.1
 
 dependencies:
   pre:
