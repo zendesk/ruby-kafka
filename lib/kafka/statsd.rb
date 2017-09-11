@@ -29,7 +29,7 @@ module Kafka
     DEFAULT_PORT = 8125
 
     def self.statsd
-      @statsd ||= ::Statsd.new(DEFAULT_HOST, DEFAULT_PORT).tap{ |sd| sd.namespace = DEFAULT_NAMESPACE }
+      @statsd ||= ::Statsd.new(DEFAULT_HOST, DEFAULT_PORT).tap { |sd| sd.namespace = DEFAULT_NAMESPACE }
     end
 
     def self.host=(host)

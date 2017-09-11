@@ -31,15 +31,15 @@ module Kafka
 
       # first initiate the TCP socket
       begin
-        # Initiate the socket connection in the background. If it doesn't fail 
-        # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS) 
+        # Initiate the socket connection in the background. If it doesn't fail
+        # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS)
         # indicating the connection is in progress.
         @tcp_socket.connect_nonblock(sockaddr)
       rescue IO::WaitWritable
         # select will block until the socket is writable or the timeout
         # is exceeded, whichever comes first.
         unless select_with_timeout(@tcp_socket, :connect_write)
-          # select returns nil when the socket is not ready before timeout 
+          # select returns nil when the socket is not ready before timeout
           # seconds have elapsed
           @tcp_socket.close
           raise Errno::ETIMEDOUT
@@ -57,8 +57,8 @@ module Kafka
       @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, ssl_context)
 
       begin
-        # Initiate the socket connection in the background. If it doesn't fail 
-        # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS) 
+        # Initiate the socket connection in the background. If it doesn't fail
+        # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS)
         # indicating the connection is in progress.
         # Unlike waiting for a tcp socket to connect, you can't time out ssl socket
         # connections during the connect phase properly, because IO.select only partially works.
@@ -130,7 +130,7 @@ module Kafka
           # our write buffer.
           written += @ssl_socket.write_nonblock(bytes)
         rescue Errno::EFAULT => error
-            raise error
+          raise error
         rescue OpenSSL::SSL::SSLError, Errno::EAGAIN, Errno::EWOULDBLOCK, IO::WaitWritable => error
           if error.is_a?(OpenSSL::SSL::SSLError) && error.message == 'write would block'
             if select_with_timeout(@ssl_socket, :write)

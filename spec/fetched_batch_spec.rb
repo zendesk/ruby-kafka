@@ -1,5 +1,4 @@
 describe Kafka::FetchedBatch do
-
   describe "#offset_lag" do
     context "empty batch" do
       it "is 0" do
@@ -7,7 +6,8 @@ describe Kafka::FetchedBatch do
           topic: 'foo',
           partition: 0,
           highwater_mark_offset: 10,
-          messages: [])
+          messages: []
+        )
         expect(fetched_batch.offset_lag).to eq 0
       end
     end
@@ -19,7 +19,8 @@ describe Kafka::FetchedBatch do
           topic: 'foo',
           partition: 0,
           highwater_mark_offset: 10, # offset of *next* message
-          messages: [message])
+          messages: [message]
+        )
         expect(fetched_batch.offset_lag).to eq 0
       end
     end
@@ -31,7 +32,8 @@ describe Kafka::FetchedBatch do
           topic: 'foo',
           partition: 0,
           highwater_mark_offset: 12, # offset of *next* message
-          messages: [message])
+          messages: [message]
+        )
         expect(fetched_batch.offset_lag).to eq 2
       end
     end

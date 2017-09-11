@@ -6,14 +6,14 @@ end
 
 class TestCluster
   DOCKER_HOST = ENV.fetch("DOCKER_HOST") {
-    ip = if `ifconfig -a | grep '^[a-zA-Z]' | cut -d':' -f1`.split.include?('docker0')
-           # Use the IP address of the docker0 network interface
-           `/sbin/ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`.strip
-         else
-           # Use the IP address of the current machine. The loopback address won't resolve
-           # properly within the container.
-           `/sbin/ifconfig | grep -v '127.0.0.1' | awk '$1=="inet" {print $2}' | cut -f1 -d'/' | head -n 1`.strip
-         end
+    if `ifconfig -a | grep '^[a-zA-Z]' | cut -d':' -f1`.split.include?('docker0')
+      # Use the IP address of the docker0 network interface
+      ip = `/sbin/ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`.strip
+    else
+      # Use the IP address of the current machine. The loopback address won't resolve
+      # properly within the container.
+      ip = `/sbin/ifconfig | grep -v '127.0.0.1' | awk '$1=="inet" {print $2}' | cut -f1 -d'/' | head -n 1`.strip
+    end
     "kafka://#{ip}"
   }
 

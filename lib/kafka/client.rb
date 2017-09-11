@@ -435,7 +435,6 @@ module Kafka
       @cluster.resolve_offset(topic, partition, :latest) - 1
     end
 
-
     # Retrieve the offset of the last message in each partition of the specified topics.
     #
     # @param topics [Array<String>] topic names.

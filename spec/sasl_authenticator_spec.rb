@@ -7,13 +7,13 @@ describe Kafka::SaslAuthenticator do
 
   let(:sasl_authenticator) {
     Kafka::SaslAuthenticator.new(
-      {logger: logger}.merge(auth_options)
+      { logger: logger }.merge(auth_options)
     )
   }
 
   describe '#authenticate!' do
     context "when no authentication" do
-      let(:auth_options){
+      let(:auth_options) {
         {
           sasl_gssapi_principal: nil,
           sasl_gssapi_keytab: nil,
@@ -24,12 +24,12 @@ describe Kafka::SaslAuthenticator do
       }
 
       it "doesn't call any authentication strategy" do
-        expect{ sasl_authenticator.authenticate!(connection) }.to_not raise_error
+        expect { sasl_authenticator.authenticate!(connection) }.to_not raise_error
       end
     end
 
     context "when sasl palin authentication" do
-      let(:auth_options){
+      let(:auth_options) {
         {
           sasl_gssapi_principal: nil,
           sasl_gssapi_keytab: nil,
@@ -49,7 +49,7 @@ describe Kafka::SaslAuthenticator do
     end
 
     context "when sasl gssapi authentication" do
-      let(:auth_options){
+      let(:auth_options) {
         {
           sasl_gssapi_principal: "foo",
           sasl_gssapi_keytab: "bar",
@@ -67,7 +67,6 @@ describe Kafka::SaslAuthenticator do
 
         sasl_authenticator.authenticate!(connection)
       end
-
     end
   end
 end

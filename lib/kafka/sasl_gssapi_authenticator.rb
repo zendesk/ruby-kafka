@@ -38,7 +38,7 @@ module Kafka
       end
 
       # we can continue, so send OK
-      @encoder.write([0,2].pack('l>c'))
+      @encoder.write([0, 2].pack('l>c'))
 
       # read wrapped message and return it back with principal
       handshake_messages

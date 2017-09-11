@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'kafka/version'
@@ -40,5 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "statsd-ruby"
   spec.add_development_dependency "ruby-prof"
   spec.add_development_dependency "timecop"
+  spec.add_development_dependency "rubocop", "~> 0.49.1"
   spec.add_development_dependency "gssapi", '>=1.2.0'
 end
