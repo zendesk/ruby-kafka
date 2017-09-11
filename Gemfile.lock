@@ -20,7 +20,7 @@ GEM
     docker-api (1.32.1)
       excon (>= 0.38.0)
       json
-    dogstatsd-ruby (2.1.0)
+    dogstatsd-ruby (3.0.0)
     dotenv (2.1.0)
     excon (0.54.0)
     ffi (1.9.18)
@@ -71,7 +71,7 @@ DEPENDENCIES
   bundler (>= 1.9.5)
   colored
   docker-api
-  dogstatsd-ruby (>= 2.0.0)
+  dogstatsd-ruby (>= 3.0.0)
   dotenv
   gssapi (>= 1.2.0)
   pry
