@@ -155,7 +155,7 @@ class TestCluster
     puts out
   end
 
-  def kafka_command(command)
+  def kafka_command(command, attempt: 1)
     container = create(
       "Image" => KAFKA_IMAGE,
       "Links" => ["#{@zookeeper.id}:zookeeper"],
@@ -174,6 +174,10 @@ class TestCluster
       container.logs(stdout: true, stderr: true)
     ensure
       container.delete(force: true) rescue nil
+    end
+  rescue => _
+    if attempt < 3
+      kafka_command(command, attempt: attempt + 1)
     end
   end
 
