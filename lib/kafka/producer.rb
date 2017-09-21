@@ -257,6 +257,32 @@ module Kafka
       @pending_message_queue.bytesize + @buffer.bytesize
     end
 
+    # The messages waiting to get delivered.
+    #
+    # @return [Array<Kafka::PendingMessage>]
+    def buffer_messages
+      messages = []
+
+      @pending_message_queue.each do |message|
+        messages << message
+      end
+
+      @buffer.each do |topic, partition, messages_for_partition|
+        messages_for_partition.each do |message|
+          messages << PendingMessage.new(
+            message.value,
+            message.key,
+            topic,
+            partition,
+            nil,
+            message.create_time
+          )
+        end
+      end
+
+      messages
+    end
+
     # Deletes all buffered messages.
     #
     # @return [nil]

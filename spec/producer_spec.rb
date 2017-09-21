@@ -1,4 +1,5 @@
 require "fake_broker"
+require "timecop"
 
 describe Kafka::Producer do
   let(:logger) { LOGGER }
@@ -230,6 +231,16 @@ describe Kafka::Producer do
 
       expect(event.payload[:topic]).to eq "greetings"
       expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "Kafka::UnknownTopicOrPartition"]
+    end
+  end
+
+  describe "#buffer_messages" do
+    it "returns all pending messages" do
+      time = Time.now
+      Timecop.freeze(time) { producer.produce("hello1", topic: "greetings", partition: 0) }
+      expect(producer.buffer_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, time)]
+      producer.clear_buffer
+      expect(producer.buffer_messages).to eq []
     end
   end
 
