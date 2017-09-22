@@ -142,7 +142,7 @@ module Kafka
       operation.execute
 
       unless buffer.empty?
-        raise DeliveryFailed
+        raise DeliveryFailed.new(nil, [message])
       end
     end
 

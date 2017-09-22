@@ -111,6 +111,16 @@ describe Kafka::Producer do
   end
 
   describe "#deliver_messages" do
+    let(:now) { Time.now }
+
+    before(:each) do
+      Timecop.freeze(now)
+    end
+
+    after(:each) do
+      Timecop.return
+    end
+
     it "sends messages to the leader of the partition being written to" do
       producer.produce("hello1", key: "greeting1", topic: "greetings", partition: 0)
       producer.produce("hello2", key: "greeting2", topic: "greetings", partition: 1)
@@ -126,7 +136,9 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
+        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+      }
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -163,7 +175,9 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
+        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+      }
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -181,7 +195,9 @@ describe Kafka::Producer do
 
       producer.produce("hello1", topic: "greetings", partition: 0)
 
-      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
+        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+      }
 
       # The producer was not able to write the message, but it's still buffered.
       expect(producer.buffer_size).to eq 1
@@ -249,16 +265,6 @@ describe Kafka::Producer do
 
       expect(event.payload[:topic]).to eq "greetings"
       expect(event.payload[:exception]).to eq ["Kafka::UnknownTopicOrPartition", "Kafka::UnknownTopicOrPartition"]
-    end
-  end
-
-  describe "#buffer_messages" do
-    it "returns all pending messages" do
-      time = Time.now
-      Timecop.freeze(time) { producer.produce("hello1", topic: "greetings", partition: 0) }
-      expect(producer.buffer_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, time)]
-      producer.clear_buffer
-      expect(producer.buffer_messages).to eq []
     end
   end
 

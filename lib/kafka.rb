@@ -203,6 +203,13 @@ module Kafka
 
   # Raised if not all messages could be sent by a producer.
   class DeliveryFailed < Error
+    attr_reader :failed_messages
+
+    def initialize(message, failed_messages)
+      @failed_messages = failed_messages
+
+      super(message)
+    end
   end
 
   class HeartbeatError < Error
