@@ -11,5 +11,15 @@ module Kafka
       @create_time = create_time
       @bytesize = key.to_s.bytesize + value.to_s.bytesize
     end
+
+    def ==(other)
+      @value == other.value &&
+        @key == other.key &&
+        @topic == other.topic &&
+        @partition == other.partition &&
+        @partition_key == other.partition_key &&
+        @create_time == other.create_time &&
+        @bytesize == other.bytesize
+    end
   end
 end
