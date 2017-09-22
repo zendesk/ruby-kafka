@@ -176,6 +176,24 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 0
     end
 
+    it "handles when there's a connection error when refreshing cluster metadata" do
+      allow(cluster).to receive(:refresh_metadata_if_necessary!).and_raise(Kafka::ConnectionError)
+
+      producer.produce("hello1", topic: "greetings", partition: 0)
+
+      expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed)
+
+      # The producer was not able to write the message, but it's still buffered.
+      expect(producer.buffer_size).to eq 1
+
+      # Clear the error.
+      allow(cluster).to receive(:refresh_metadata_if_necessary!)
+
+      producer.deliver_messages
+
+      expect(producer.buffer_size).to eq 0
+    end
+
     it "clears the buffer after sending messages if no acknowledgements are required" do
       producer = initialize_producer(
         required_acks: 0, # <-- this is the important bit.

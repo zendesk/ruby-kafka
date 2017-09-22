@@ -320,7 +320,11 @@ module Kafka
 
         notification[:attempts] = attempt
 
-        @cluster.refresh_metadata_if_necessary!
+        begin
+          @cluster.refresh_metadata_if_necessary!
+        rescue ConnectionError => e
+          raise DeliveryFailed, e
+        end
 
         assign_partitions!
         operation.execute
