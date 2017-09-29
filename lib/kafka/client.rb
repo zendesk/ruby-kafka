@@ -40,10 +40,20 @@ module Kafka
     #   to use with an SSL connection.
     #
     # @param ssl_client_cert [String, nil] a PEM encoded client cert to use with an
-    #   SSL connection. Must be used in combination with ssl_client_cert_key.
+    #   SSL connection. Must be used in combination with ssl_client_cert_key or
+    #   ssl_client_cert_key_file_path.
+    #
+    # @param ssl_client_cert_file_path [String, nil] a path on the filesystem to a PEM encoded
+    #   client cert to use with an SSL connection. Must be used in combination with
+    #   ssl_client_cert_key_file_path or ssl_client_cert_key.
     #
     # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
-    #   SSL connection. Must be used in combination with ssl_client_cert.
+    #   SSL connection. Must be used in combination with ssl_client_cert
+    #   or ssl_client_cert_file_path.
+    #
+    # @param ssl_client_cert_key_file_path [String, nil] a PEM encoded client cert key to use
+    #   with an SSL connection. Must be used in combination with ssl_client_cert_file_path
+    #   or ssl_client_cert.
     #
     # @param sasl_gssapi_principal [String, nil] a KRB5 principal
     #
@@ -51,14 +61,22 @@ module Kafka
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
-                   ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
+                   ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert_file_path: nil,
+                   ssl_client_cert: nil, ssl_client_cert_key_file_path: nil, ssl_client_cert_key: nil,
                    sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
                    sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
-      ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
+      ssl_context = build_ssl_context(
+        ssl_ca_cert_file_path,
+        ssl_ca_cert,
+        ssl_client_cert_file_path,
+        ssl_client_cert,
+        ssl_client_cert_key_file_path,
+        ssl_client_cert_key
+      )
 
       sasl_authenticator = SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,
@@ -477,9 +495,18 @@ module Kafka
       )
     end
 
-    def build_ssl_context(ca_cert_file_path, ca_cert, client_cert, client_cert_key)
-      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key
+    def build_ssl_context(ca_cert_file_path, ca_cert, client_cert_file_path, client_cert, client_cert_key_file_path, client_cert_key)
+      return nil unless [
+        ca_cert_file_path,
+        client_cert_file_path,
+        client_cert_key_file_path,
+        ca_cert,
+        client_cert,
+        client_cert_key
+      ].compact.any?
 
+      client_cert     ||= File.read(client_cert_file_path)
+      client_cert_key ||= File.read(client_cert_key_file_path)
       ssl_context = OpenSSL::SSL::SSLContext.new
 
       if client_cert && client_cert_key
