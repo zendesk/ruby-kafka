@@ -157,9 +157,7 @@ module Kafka
     end
 
     def start_thread(&block)
-      thread = Thread.new(&block)
-      thread.abort_on_exception = true
-      thread
+      Thread.new(&block)
     end
 
     def buffer_overflow(topic)
