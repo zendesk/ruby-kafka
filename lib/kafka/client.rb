@@ -1,3 +1,4 @@
+# coding: utf-8
 require "openssl"
 require "uri"
 
@@ -212,7 +213,7 @@ module Kafka
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
-    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+    def async_producer(error_handler: nil, delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
       sync_producer = producer(**options)
 
       AsyncProducer.new(
@@ -222,6 +223,7 @@ module Kafka
         max_queue_size: max_queue_size,
         instrumenter: @instrumenter,
         logger: @logger,
+        error_handler: error_handler,
       )
     end
 
