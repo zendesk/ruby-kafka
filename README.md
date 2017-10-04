@@ -226,7 +226,7 @@ You may also provide a custom error handler to connect with any error handling s
 
 ```ruby
 # Our custom error handler. Any errors that happen in the background thread will end up here.
-error_handler = lambda do |error, _logger, payload|
+error_handler = lambda do |error, payload|
   MyErrorHandlingService.handle(error, payload)
 end
 
