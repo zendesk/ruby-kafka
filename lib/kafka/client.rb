@@ -212,7 +212,7 @@ module Kafka
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
-    def async_producer(error_handler: nil, delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+    def async_producer(delivery_interval: 0, delivery_threshold: 0, error_handler: nil, max_queue_size: 1000, **options)
       sync_producer = producer(**options)
 
       AsyncProducer.new(
