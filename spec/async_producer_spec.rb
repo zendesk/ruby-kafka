@@ -21,30 +21,34 @@ describe Kafka::AsyncProducer do
   let(:logger) { Logger.new(log) }
   let(:instrumenter) { FakeInstrumenter.new }
 
-  it "logs errors by default" do
-    expect(logger).to receive(:error).with(ArgumentError)
-    expect(logger).to receive(:error).with("I'm not sure what you're doing here.")
-    expect(logger).to receive(:error).with("line1\nline2\nline3")
+  context "default error handler" do
+    let(:async_producer) {
+      Kafka::AsyncProducer.new(
+        sync_producer: sync_producer,
+        instrumenter: instrumenter,
+        logger: logger,
+      )
+    }
 
-    error = ArgumentError.new("I'm not sure what you're doing here.")
-    error.set_backtrace(["line1", "line2", "line3"])
+    it "logs errors" do
+      expect(logger).to receive(:error).with(ArgumentError)
+      expect(logger).to receive(:error).with("I'm not sure what you're doing here.")
+      expect(logger).to receive(:error).with("line1\nline2\nline3")
 
-    described_class::DEFAULT_ERROR_HANDLER.call(error, logger, nil)
-  end
+      error = ArgumentError.new("I'm not sure what you're doing here.")
+      error.set_backtrace(["line1", "line2", "line3"])
 
-  it "uses the default error handler when no other error handler is provided" do
-    async_producer = Kafka::AsyncProducer.new(
-      sync_producer: sync_producer,
-      instrumenter: instrumenter,
-      logger: logger,
-    )
+      async_producer.instance_variable_get(:@error_handler).call(error, nil)
+    end
 
-    expect(async_producer.instance_variable_get(:@error_handler)).to eq(described_class::DEFAULT_ERROR_HANDLER)
+    it "uses the default error handler when no other error handler is provided" do
+      expect(async_producer.instance_variable_get(:@error_handler)).to be_a(Proc)
+    end
   end
 
   it "can use a custom error handler" do
     error_was_handled = false
-    error_handler = lambda { |_logger, _error, _payload| error_was_handled = true }
+    error_handler = lambda { |_error, _payload| error_was_handled = true }
 
     async_producer = Kafka::AsyncProducer.new(
       sync_producer: sync_producer,

@@ -57,11 +57,6 @@ module Kafka
   #     producer.shutdown
   #
   class AsyncProducer
-    DEFAULT_ERROR_HANDLER = lambda do |error, logger, _payload|
-      logger.error(error.class)
-      logger.error(error.message)
-      logger.error(error.backtrace.join("\n")) if error.backtrace.respond_to?(:join)
-    end
 
     # Initializes a new AsyncProducer.
     #
@@ -84,7 +79,11 @@ module Kafka
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
       @logger = logger
-      @error_handler = error_handler || DEFAULT_ERROR_HANDLER
+      @error_handler = error_handler || lambda do |error, _payload|
+        @logger.error(error.class)
+        @logger.error(error.message)
+        @logger.error(error.backtrace.join("\n")) if error.backtrace.respond_to?(:join)
+      end
 
       @worker = Worker.new(
         queue: @queue,
@@ -213,7 +212,7 @@ module Kafka
               @producer.deliver_messages
             rescue Error => e
               @logger.error("Failed to deliver messages during shutdown: #{e.message}")
-              @error_handler.call(e, @logger, payload)
+              @error_handler.call(e, payload)
 
               @instrumenter.instrument("drop_messages.async_producer", {
                 message_count: @producer.buffer_size + @queue.size,
@@ -227,7 +226,7 @@ module Kafka
           end
         end
       rescue => error
-        @error_handler.call(error, @logger, nil)
+        @error_handler.call(error, nil)
       ensure
         @producer.shutdown
       end
