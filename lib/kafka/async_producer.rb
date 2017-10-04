@@ -68,6 +68,7 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param error_handler [Proc] optional error handler to handle producer exceptions.
     #
     def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:,
                    logger:, error_handler: nil)

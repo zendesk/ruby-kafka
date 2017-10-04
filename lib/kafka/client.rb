@@ -209,6 +209,7 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param error_handler [Proc] optional error handler to handle producer exceptions.
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
