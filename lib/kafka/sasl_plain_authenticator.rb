@@ -26,7 +26,7 @@ module Kafka
              @password.to_s].join("\000").force_encoding('utf-8')
       @encoder.write_bytes(msg)
       begin
-        msg = @decoder.bytes
+        msg = @decoder.int32
         raise Kafka::Error, 'SASL PLAIN authentication failed: unknown error' unless msg
       rescue Errno::ETIMEDOUT, EOFError => e
         raise Kafka::Error, "SASL PLAIN authentication failed: #{e.message}"
