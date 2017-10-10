@@ -225,6 +225,15 @@ module Kafka
   class FetchError < Error
   end
 
+  class NoPartitionsAssignedError < Error
+  end
+
+  class SaslScramError < Error
+  end
+
+  class FailedScramAuthentication < SaslScramError
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize
