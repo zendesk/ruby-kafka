@@ -6,12 +6,7 @@ module Kafka
 
     class SaslHandshakeRequest
 
-      SUPPORTED_MECHANISMS = %w(GSSAPI PLAIN)
-
       def initialize(mechanism)
-        unless SUPPORTED_MECHANISMS.include?(mechanism)
-          raise Kafka::Error, "Unsupported SASL mechanism #{mechanism}. Supported are #{SUPPORTED_MECHANISMS.join(', ')}"
-        end
         @mechanism = mechanism
       end
 
