@@ -217,6 +217,8 @@ module Kafka
         # We may not have received any messages, but it's still a good idea to
         # commit offsets if we've processed messages in the last set of batches.
         @offset_manager.commit_offsets_if_necessary
+
+        @heartbeat.send_if_necessary
       end
     end
 
@@ -279,6 +281,8 @@ module Kafka
 
           return if !@running
         end
+
+        @heartbeat.send_if_necessary
       end
     end
 
