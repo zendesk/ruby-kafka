@@ -93,9 +93,20 @@ module Kafka
           Protocol.handle_error(response.error_code)
 
           coordinator_id = response.coordinator_id
-          coordinator = connect_to_broker(coordinator_id)
 
-          @logger.debug "Coordinator for group `#{group_id}` is #{coordinator}"
+          @logger.debug "Coordinator for group `#{group_id}` is #{coordinator_id}. Connecting..."
+
+          # It's possible that a new broker is introduced to the cluster and
+          # becomes the coordinator before we have a chance to refresh_metadata.
+          coordinator = begin
+            connect_to_broker(coordinator_id)
+          rescue Kafka::NoSuchBroker
+            @logger.debug "Broker #{coordinator_id} missing from broker cache, refreshing"
+            refresh_metadata!
+            connect_to_broker(coordinator_id)
+          end
+
+          @logger.debug "Connected to coordinator: #{coordinator} for group `#{group_id}`"
 
           return coordinator
         rescue GroupCoordinatorNotAvailable

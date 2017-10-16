@@ -59,6 +59,10 @@ module Kafka
       @sasl_authenticator = sasl_authenticator
     end
 
+    def address_match?(host, port)
+      @host == host && @port == port
+    end
+
     def to_s
       "#{@host}:#{@port}"
     end

@@ -10,6 +10,10 @@ module Kafka
       @logger = logger
     end
 
+    def address_match?(host, port)
+      @connection.address_match?(host, port)
+    end
+
     # @return [String]
     def to_s
       "#{@connection} (node_id=#{@node_id.inspect})"
