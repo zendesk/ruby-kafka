@@ -98,7 +98,7 @@ module Kafka
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
           )
 
-          handle_response(response) if response
+          handle_response(broker, response) if response
         rescue ConnectionError => e
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
@@ -108,7 +108,7 @@ module Kafka
       end
     end
 
-    def handle_response(response)
+    def handle_response(broker, response)
       response.each_partition do |topic_info, partition_info|
         topic = topic_info.topic
         partition = partition_info.partition
@@ -138,24 +138,24 @@ module Kafka
             })
           end
         rescue Kafka::CorruptMessage
-          @logger.error "Corrupt message when writing to #{topic}/#{partition}"
+          @logger.error "Corrupt message when writing to #{topic}/#{partition} on #{broker}"
         rescue Kafka::UnknownTopicOrPartition
-          @logger.error "Unknown topic or partition #{topic}/#{partition}"
+          @logger.error "Unknown topic or partition #{topic}/#{partition} on #{broker}"
           @cluster.mark_as_stale!
         rescue Kafka::LeaderNotAvailable
           @logger.error "Leader currently not available for #{topic}/#{partition}"
           @cluster.mark_as_stale!
         rescue Kafka::NotLeaderForPartition
-          @logger.error "Broker not currently leader for #{topic}/#{partition}"
+          @logger.error "Broker #{broker} not currently leader for #{topic}/#{partition}"
           @cluster.mark_as_stale!
         rescue Kafka::RequestTimedOut
-          @logger.error "Timed out while writing to #{topic}/#{partition}"
+          @logger.error "Timed out while writing to #{topic}/#{partition} on #{broker}"
         rescue Kafka::NotEnoughReplicas
           @logger.error "Not enough in-sync replicas for #{topic}/#{partition}"
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          @logger.debug "Successfully appended #{messages.count} messages to #{topic}/#{partition}"
+          @logger.debug "Successfully appended #{messages.count} messages to #{topic}/#{partition} on #{broker}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)
