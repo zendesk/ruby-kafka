@@ -729,6 +729,33 @@ end
   * `message_count` is the number of messages for which delivery was attempted.
   * `delivered_message_count` is the number of messages that were acknowledged by the brokers - if this number is smaller than `message_count` not all messages were successfully delivered.
 
+#### Consumer Notifications
+
+* `process_message.consumer.kafka` is sent whenever a message is processed by a consumer. It includes the following payload:
+  * `value` is the message value.
+  * `key` is the message key.
+  * `topic` is the topic that the message was consumed from.
+  * `partition` is the topic partition that the message was consumed from.
+  * `offset` is the message's offset within the topic partition. 
+  * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
+
+* `process_batch.consumer.kafka` is sent whenever a message batch is processed by a consumer. It includes the following payload:
+  * `message_count` is the number of messages in the batch.
+  * `topic` is the topic that the message batch was consumed from.
+  * `partition` is the topic partition that the message batch was consumed from.
+  * `highwater_mark_offset` is the message batch's highest offset within the topic partition. 
+  * `offset_lag` is the number of messages within the topic partition that have not yet been consumed. 
+
+* `join_group.consumer.kafka` is sent whenever a consumer joins a consumer group. It includes the following payload:
+  * `group_id` is the consumer group id.
+
+* `sync_group.consumer.kafka` is sent whenever a consumer is assigned topic partitions within a consumer group. It includes the following payload:
+  * `group_id` is the consumer group id.  
+  
+* `leave_group.consumer.kafka` is sent whenever a consumer leaves a consumer group. It includes the following payload:
+  * `group_id` is the consumer group id.
+ 
+  
 #### Connection Notifications
 
 * `request.connection.kafka` is sent whenever a network request is sent to a Kafka broker. It includes the following payload:
