@@ -20,7 +20,7 @@ module Kafka
     #
     # @param seed_brokers [Array<String>, String] the list of brokers used to initialize
     #   the client. Either an Array of connections, or a comma separated string of connections.
-    #   Connections can either be a string of "port:protocol" or a full URI with a scheme.
+    #   A connection can either be a string of "host:port" or a full URI with a scheme.
     #   If there's a scheme it's ignored and only host/port are used.
     #
     # @param client_id [String] the identifier for this application.
