@@ -36,6 +36,9 @@ module Kafka
     end
 
     def seek_to_default(topic, partition)
+      # Remove any cached offset, in case things have changed broker-side.
+      clear_resolved_offset(topic)
+
       seek_to(topic, partition, -1)
     end
 
@@ -103,6 +106,10 @@ module Kafka
     end
 
     private
+
+    def clear_resolved_offset(topic)
+      @resolved_offsets.delete(topic)
+    end
 
     def resolve_offset(topic, partition)
       @resolved_offsets[topic] ||= fetch_resolved_offsets(topic)
