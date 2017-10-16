@@ -965,6 +965,8 @@ Currently, there are three actively developed frameworks based on ruby-kafka, th
 
 * [Racecar](https://github.com/zendesk/racecar) - A simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It comes with sensible defaults and conventions.
 
+* [DeliveryBoy](https://github.com/zendesk/delivery_boy) – A library that integrates with Ruby on Rails, making it easy to publish Kafka messages from any Rails application.
+
 * [Karafka](https://github.com/karafka/karafka) - Framework used to simplify Apache Kafka based Ruby and Rails applications development. Karafka provides higher abstraction layers, including Capistrano, Docker and Heroku support.
 
 * [Phobos](https://github.com/klarna/phobos) - Micro framework and library for applications dealing with Apache Kafka. It wraps common behaviors needed by consumers and producers in an easy and convenient API.
