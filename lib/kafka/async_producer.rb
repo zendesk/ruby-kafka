@@ -68,8 +68,10 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param error_handler [Proc] optional error handler to handle producer exceptions.
     #
-    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:, logger:)
+    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, instrumenter:,
+                   logger:, error_handler: nil)
       raise ArgumentError unless max_queue_size > 0
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
@@ -78,6 +80,11 @@ module Kafka
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
       @logger = logger
+      @error_handler = error_handler || lambda do |error, _payload|
+        @logger.error(error.class)
+        @logger.error(error.message)
+        @logger.error(error.backtrace.join("\n")) if error.backtrace.respond_to?(:join)
+      end
 
       @worker = Worker.new(
         queue: @queue,
@@ -85,6 +92,7 @@ module Kafka
         delivery_threshold: delivery_threshold,
         instrumenter: instrumenter,
         logger: logger,
+        error_handler: @error_handler,
       )
 
       # The timer will no-op if the delivery interval is zero.
@@ -149,9 +157,7 @@ module Kafka
     end
 
     def start_thread(&block)
-      thread = Thread.new(&block)
-      thread.abort_on_exception = true
-      thread
+      Thread.new(&block)
     end
 
     def buffer_overflow(topic)
@@ -182,12 +188,13 @@ module Kafka
     end
 
     class Worker
-      def initialize(queue:, producer:, delivery_threshold:, instrumenter:, logger:)
+      def initialize(queue:, producer:, delivery_threshold:, instrumenter:, logger:, error_handler:)
         @queue = queue
         @producer = producer
         @delivery_threshold = delivery_threshold
         @instrumenter = instrumenter
         @logger = logger
+        @error_handler = error_handler
       end
 
       def run
@@ -206,6 +213,7 @@ module Kafka
               @producer.deliver_messages
             rescue Error => e
               @logger.error("Failed to deliver messages during shutdown: #{e.message}")
+              @error_handler.call(e, payload)
 
               @instrumenter.instrument("drop_messages.async_producer", {
                 message_count: @producer.buffer_size + @queue.size,
@@ -218,6 +226,8 @@ module Kafka
             raise "Unknown operation #{operation.inspect}"
           end
         end
+      rescue => error
+        @error_handler.call(error, nil)
       ensure
         @producer.shutdown
       end

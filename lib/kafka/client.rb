@@ -209,10 +209,11 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param error_handler [Proc] optional error handler to handle producer exceptions.
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
-    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+    def async_producer(delivery_interval: 0, delivery_threshold: 0, error_handler: nil, max_queue_size: 1000, **options)
       sync_producer = producer(**options)
 
       AsyncProducer.new(
@@ -222,6 +223,7 @@ module Kafka
         max_queue_size: max_queue_size,
         instrumenter: @instrumenter,
         logger: @logger,
+        error_handler: error_handler,
       )
     end
 

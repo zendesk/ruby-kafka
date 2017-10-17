@@ -222,6 +222,20 @@ When calling `#shutdown`, the producer will attempt to deliver the messages and 
 
 **Note:** if the calling thread produces messages faster than the producer can write them to Kafka, you'll eventually run into problems. The internal queue used for sending messages from the calling thread to the background worker has a size limit; once this limit is reached, a call to `#produce` will raise `Kafka::BufferOverflow`.
 
+You may also provide a custom error handler to connect with any error handling service you might use.
+
+```ruby
+# Our custom error handler. Any errors that happen in the background thread will end up here.
+error_handler = lambda do |error, payload|
+  MyErrorHandlingService.handle(error, payload)
+end
+
+# `#async_producer` will create a new asynchronous producer.
+producer = kafka.async_producer(error_handler: error_handler)
+
+# ...
+```
+
 #### Serialization
 
 This library is agnostic to which serialization format you prefer. Both the value and key of a message is treated as a binary string of data. This makes it easier to use whatever serialization format you want, since you don't have to do anything special to make it work with ruby-kafka. Here's an example of encoding data with JSON:
