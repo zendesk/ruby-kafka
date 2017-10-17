@@ -12,12 +12,9 @@ module Kafka
 
       if @brokers.key?(node_id)
         broker = @brokers.fetch(node_id)
-        if broker.address_match?(host, port)
-          return broker
-        else
-          broker.disconnect
-          @brokers[node_id] = nil
-        end
+        return broker if broker.address_match?(host, port)
+        broker.disconnect
+        @brokers[node_id] = nil
       end
 
       broker = Broker.new(
