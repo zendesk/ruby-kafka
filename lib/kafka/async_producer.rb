@@ -218,6 +218,12 @@ module Kafka
             raise "Unknown operation #{operation.inspect}"
           end
         end
+      rescue Kafka::Error => e
+        @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+        @logger.info "Restarting in 10 seconds..."
+
+        sleep 10
+        retry
       ensure
         @producer.shutdown
       end
