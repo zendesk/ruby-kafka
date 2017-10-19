@@ -655,14 +655,15 @@ In order to optimize for low latency, you want to process a message as soon as p
 There are three values that can be tuned in order to balance these two concerns.
 
 * `min_bytes` is the minimum number of bytes to return from a single message fetch. By setting this to a high value you can increase the processing throughput. The default value is one byte.
-* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds. If you want to have at most one second of latency, set `max_wait_time` to 1.
+* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is one second. If you want to have at most five seconds of latency, set `max_wait_time` to 5. You should make sure `max_wait_time` * num brokers + `heartbeat_interval` is less than `session_timeout`.
 * `max_bytes_per_partition` is the maximum amount of data a broker will return for a single partition when fetching new messages. The default is 1MB, but increasing this number may lead to better throughtput since you'll need to fetch less frequently. Setting it to a lower value is not recommended unless you have so many partitions that it's causing network and latency issues to transfer a fetch response from a broker to a client. Setting the number too high may result in instability, so be careful.
 
 The first two settings can be passed to either `#each_message` or `#each_batch`, e.g.
 
 ```ruby
-# Waits for data for up to 30 seconds, preferring to fetch at least 5KB at a time.
-consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 30) do |message|
+# Waits for data for up to 5 seconds on each broker, preferring to fetch at least 5KB at a time.
+# This can wait up to num brokers * 5 seconds.
+consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 5) do |message|
   # ...
 end
 ```
