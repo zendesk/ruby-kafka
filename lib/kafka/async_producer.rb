@@ -142,16 +142,10 @@ module Kafka
 
     def ensure_threads_running!
       @worker_thread = nil unless @worker_thread && @worker_thread.alive?
-      @worker_thread ||= start_thread { @worker.run }
+      @worker_thread ||= Thread.new { @worker.run }
 
       @timer_thread = nil unless @timer_thread && @timer_thread.alive?
-      @timer_thread ||= start_thread { @timer.run }
-    end
-
-    def start_thread(&block)
-      thread = Thread.new(&block)
-      thread.abort_on_exception = true
-      thread
+      @timer_thread ||= Thread.new { @timer.run }
     end
 
     def buffer_overflow(topic)
@@ -218,6 +212,15 @@ module Kafka
             raise "Unknown operation #{operation.inspect}"
           end
         end
+      rescue Kafka::Error => e
+        @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+        @logger.info "Restarting in 10 seconds..."
+
+        sleep 10
+        retry
+      rescue Exception => e
+        @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+        @logger.error "Async producer crashed!"
       ensure
         @producer.shutdown
       end
