@@ -185,6 +185,8 @@ module Kafka
       end
 
       def run
+        @logger.info "Starting async producer in the background..."
+
         loop do
           operation, payload = @queue.pop
 
