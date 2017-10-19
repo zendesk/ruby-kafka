@@ -31,8 +31,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     5. [Logging](#logging)
     6. [Instrumentation](#instrumentation)
     7. [Monitoring](#monitoring)
-        1. [Reporting Metrics to Statsd](#reporting-metrics-to-statsd)
-        2. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
+        1. [What to Monitor](#what-to-monitor)
+        2. [Reporting Metrics to Statsd](#reporting-metrics-to-statsd)
+        3. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Security](#security)
         1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
@@ -774,6 +775,28 @@ It is highly recommended that you monitor your Kafka client applications in prod
 * frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
 
 You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Statsd](https://github.com/etsy/statsd) and [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+
+
+#### What to Monitor
+
+We recommend monitoring the following:
+
+* Low-level Kafka API calls:
+    * The rate of API call errors to the total number of calls by both API and broker.
+    * The API call throughput by both API and broker.
+    * The API call latency by both API and broker.
+* Producer-level metrics:
+    * Delivery throughput by topic.
+    * The latency of deliveries.
+    * The producer buffer fill ratios.
+    * The async producer queue sizes.
+    * Message delivery delays.
+    * Failed delivery attempts.
+* Consumer-level metrics:
+    * Message processing throughput by topic.
+    * Processing latency by topic.
+    * Processing errors by topic.
+    * Group join/sync/leave by client host.
 
 
 #### Reporting Metrics to Statsd
