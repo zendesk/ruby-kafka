@@ -400,8 +400,10 @@ module Kafka
 
       operation.execute
     rescue NoPartitionsToFetchFrom
-      @logger.warn "There are no partitions to fetch from, sleeping for #{max_wait_time}s"
-      sleep max_wait_time
+      backoff = max_wait_time > 0 ? max_wait_time : 1
+
+      @logger.warn "There are no partitions to fetch from, sleeping for #{backoff}s"
+      sleep backoff
 
       retry
     rescue OffsetOutOfRange => e
