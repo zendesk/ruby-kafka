@@ -142,6 +142,7 @@ module Kafka
       end
 
       def process_batch(event)
+        lag = event.payload.fetch(:offset_lag)
         messages = event.payload.fetch(:message_count)
 
         tags = {
@@ -157,6 +158,8 @@ module Kafka
           timing("consumer.process_batch.latency", event.duration, tags: tags)
           count("consumer.messages", messages, tags: tags)
         end
+
+        gauge("consumer.lag", lag, tags: tags)
       end
 
       def join_group(event)
