@@ -401,6 +401,11 @@ module Kafka
       end
 
       operation.execute
+    rescue NoPartitionsToFetchFrom
+      @logger.warn "There are no partitions to fetch from, sleeping for #{max_wait_time}s"
+      sleep max_wait_time
+
+      retry
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
 
