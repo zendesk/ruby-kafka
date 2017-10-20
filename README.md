@@ -797,6 +797,7 @@ We recommend monitoring the following:
     * Message processing throughput by topic.
     * Processing latency by topic.
     * Processing errors by topic.
+    * Consumer lag (how many messages are yet to be processed) by topic/partition.
     * Group join/sync/leave by client host.
 
 
