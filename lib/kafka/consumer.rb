@@ -377,8 +377,6 @@ module Kafka
 
       @heartbeat.send_if_necessary
 
-      raise NoPartitionsAssignedError if subscribed_partitions.empty?
-
       operation = FetchOperation.new(
         cluster: @cluster,
         logger: @logger,
