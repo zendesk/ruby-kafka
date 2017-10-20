@@ -4,6 +4,14 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.4.3
+
+- Restart the async producer thread automatically after errors.
+- Include the offset lag in batch consumer metrics (Statsd).
+- Make the default `max_wait_time` more sane.
+- Fix issue with cached default offset lookups (#431).
+- Upgrade to Datadog client version 3.
+
 ## v0.4.2
 
 - Fix connection issue on SASL connections (#401).

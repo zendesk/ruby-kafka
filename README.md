@@ -31,8 +31,9 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     5. [Logging](#logging)
     6. [Instrumentation](#instrumentation)
     7. [Monitoring](#monitoring)
-        1. [Reporting Metrics to Statsd](#reporting-metrics-to-statsd)
-        2. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
+        1. [What to Monitor](#what-to-monitor)
+        2. [Reporting Metrics to Statsd](#reporting-metrics-to-statsd)
+        3. [Reporting Metrics to Datadog](#reporting-metrics-to-datadog)
     8. [Understanding Timeouts](#understanding-timeouts)
     9. [Security](#security)
         1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
@@ -654,14 +655,15 @@ In order to optimize for low latency, you want to process a message as soon as p
 There are three values that can be tuned in order to balance these two concerns.
 
 * `min_bytes` is the minimum number of bytes to return from a single message fetch. By setting this to a high value you can increase the processing throughput. The default value is one byte.
-* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is five seconds. If you want to have at most one second of latency, set `max_wait_time` to 1.
+* `max_wait_time` is the maximum number of seconds to wait before returning data from a single message fetch. By setting this high you also increase the processing throughput – and by setting it low you set a bound on latency. This configuration overrides `min_bytes`, so you'll _always_ get data back within the time specified. The default value is one second. If you want to have at most five seconds of latency, set `max_wait_time` to 5. You should make sure `max_wait_time` * num brokers + `heartbeat_interval` is less than `session_timeout`.
 * `max_bytes_per_partition` is the maximum amount of data a broker will return for a single partition when fetching new messages. The default is 1MB, but increasing this number may lead to better throughtput since you'll need to fetch less frequently. Setting it to a lower value is not recommended unless you have so many partitions that it's causing network and latency issues to transfer a fetch response from a broker to a client. Setting the number too high may result in instability, so be careful.
 
 The first two settings can be passed to either `#each_message` or `#each_batch`, e.g.
 
 ```ruby
-# Waits for data for up to 30 seconds, preferring to fetch at least 5KB at a time.
-consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 30) do |message|
+# Waits for data for up to 5 seconds on each broker, preferring to fetch at least 5KB at a time.
+# This can wait up to num brokers * 5 seconds.
+consumer.each_message(min_bytes: 1024 * 5, max_wait_time: 5) do |message|
   # ...
 end
 ```
@@ -774,6 +776,29 @@ It is highly recommended that you monitor your Kafka client applications in prod
 * frequent consumer rebalances, which may indicate unstable network conditions or consumer configurations.
 
 You can quite easily build monitoring on top of the provided [instrumentation hooks](#instrumentation). In order to further help with monitoring, a prebuilt [Statsd](https://github.com/etsy/statsd) and [Datadog](https://www.datadoghq.com/) reporter is included with ruby-kafka.
+
+
+#### What to Monitor
+
+We recommend monitoring the following:
+
+* Low-level Kafka API calls:
+    * The rate of API call errors to the total number of calls by both API and broker.
+    * The API call throughput by both API and broker.
+    * The API call latency by both API and broker.
+* Producer-level metrics:
+    * Delivery throughput by topic.
+    * The latency of deliveries.
+    * The producer buffer fill ratios.
+    * The async producer queue sizes.
+    * Message delivery delays.
+    * Failed delivery attempts.
+* Consumer-level metrics:
+    * Message processing throughput by topic.
+    * Processing latency by topic.
+    * Processing errors by topic.
+    * Consumer lag (how many messages are yet to be processed) by topic/partition.
+    * Group join/sync/leave by client host.
 
 
 #### Reporting Metrics to Statsd

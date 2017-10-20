@@ -1,4 +1,7 @@
 module Kafka
+
+  # Manages a consumer's position in partitions, figures out where to resume processing
+  # from, etc.
   class OffsetManager
 
     # The default broker setting for offsets.retention.minutes is 1440.
@@ -21,10 +24,28 @@ module Kafka
       @recommit_interval = (offset_retention_time || DEFAULT_RETENTION_TIME) / 2
     end
 
+    # Set the default offset for a topic.
+    #
+    # When the consumer is started for the first time, or in cases where it gets stuck and
+    # has to reset its position, it must start either with the earliest messages or with
+    # the latest, skipping to the very end of each partition.
+    #
+    # @param topic [String] the name of the topic.
+    # @param default_offset [Symbol] either `:earliest` or `:latest`.
+    # @return [nil]
     def set_default_offset(topic, default_offset)
       @default_offsets[topic] = default_offset
     end
 
+    # Mark a message as having been processed.
+    #
+    # When offsets are committed, the message's offset will be stored in Kafka so
+    # that we can resume from this point at a later time.
+    #
+    # @param topic [String] the name of the topic.
+    # @param partition [Integer] the partition number.
+    # @param offset [Integer] the offset of the message that should be marked as processed.
+    # @return [nil]
     def mark_as_processed(topic, partition, offset)
       @uncommitted_offsets += 1
       @processed_offsets[topic] ||= {}
@@ -35,6 +56,12 @@ module Kafka
       @logger.debug "Marking #{topic}/#{partition}:#{offset} as processed"
     end
 
+    # Move the consumer's position in the partition back to the configured default
+    # offset, either the first or latest in the partition.
+    #
+    # @param topic [String] the name of the topic.
+    # @param partition [Integer] the partition number.
+    # @return [nil]
     def seek_to_default(topic, partition)
       # Remove any cached offset, in case things have changed broker-side.
       clear_resolved_offset(topic)
@@ -42,11 +69,22 @@ module Kafka
       seek_to(topic, partition, -1)
     end
 
+    # Move the consumer's position in the partition to the specified offset.
+    #
+    # @param topic [String] the name of the topic.
+    # @param partition [Integer] the partition number.
+    # @param offset [Integer] the offset that the consumer position should be moved to.
+    # @return [nil]
     def seek_to(topic, partition, offset)
       @processed_offsets[topic] ||= {}
       @processed_offsets[topic][partition] = offset
     end
 
+    # Return the next offset that should be fetched for the specified partition.
+    #
+    # @param topic [String] the name of the topic.
+    # @param partition [Integer] the partition number.
+    # @return [Integer] the next offset that should be fetched.
     def next_offset_for(topic, partition)
       offset = @processed_offsets.fetch(topic, {}).fetch(partition) {
         committed_offset_for(topic, partition)
@@ -62,6 +100,16 @@ module Kafka
       end
     end
 
+    # Commit offsets of messages that have been marked as processed.
+    #
+    # If `recommit` is set to true, we will also commit the existing positions
+    # even if no messages have been processed on a partition. This is done
+    # in order to avoid the offset information expiring in cases where messages
+    # are very rare -- it's essentially a keep-alive.
+    #
+    # @param recommit [Boolean] whether to recommit offsets that have already been
+    #   committed.
+    # @return [nil]
     def commit_offsets(recommit = false)
       offsets = offsets_to_commit(recommit)
       unless offsets.empty?
@@ -77,6 +125,10 @@ module Kafka
       end
     end
 
+    # Commit offsets if necessary, according to the offset commit policy specified
+    # when initializing the class.
+    #
+    # @return [nil]
     def commit_offsets_if_necessary
       recommit = recommit_timeout_reached?
       if recommit || commit_timeout_reached? || commit_threshold_reached?
@@ -84,6 +136,9 @@ module Kafka
       end
     end
 
+    # Clear all stored offset information.
+    #
+    # @return [nil]
     def clear_offsets
       @processed_offsets.clear
       @resolved_offsets.clear
@@ -92,6 +147,12 @@ module Kafka
       @committed_offsets = nil
     end
 
+    # Clear stored offset information for all partitions except those specified
+    # in `excluded`.
+    #
+    #     offset_manager.clear_offsets_excluding("my-topic" => [1, 2, 3])
+    #
+    # @return [nil]
     def clear_offsets_excluding(excluded)
       # Clear all offsets that aren't in `excluded`.
       @processed_offsets.each do |topic, partitions|
