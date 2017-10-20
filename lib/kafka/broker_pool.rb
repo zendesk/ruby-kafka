@@ -9,7 +9,6 @@ module Kafka
     end
 
     def connect(host, port, node_id: nil)
-
       if @brokers.key?(node_id)
         broker = @brokers.fetch(node_id)
         return broker if broker.address_match?(host, port)
