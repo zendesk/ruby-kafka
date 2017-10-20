@@ -105,7 +105,7 @@ module Kafka
 
         response
       end
-    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
+    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::ESHUTDOWN, EOFError => e
       close
 
       raise ConnectionError, "Connection error: #{e}"
