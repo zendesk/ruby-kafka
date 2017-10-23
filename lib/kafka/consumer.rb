@@ -377,8 +377,6 @@ module Kafka
 
       @heartbeat.send_if_necessary
 
-      raise NoPartitionsAssignedError if subscribed_partitions.empty?
-
       operation = FetchOperation.new(
         cluster: @cluster,
         logger: @logger,
@@ -401,6 +399,13 @@ module Kafka
       end
 
       operation.execute
+    rescue NoPartitionsToFetchFrom
+      backoff = max_wait_time > 0 ? max_wait_time : 1
+
+      @logger.info "There are no partitions to fetch from, sleeping for #{backoff}s"
+      sleep backoff
+
+      retry
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
 

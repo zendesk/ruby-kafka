@@ -17,6 +17,10 @@ module Kafka
     end
   end
 
+  # A fetch operation was executed with no partitions specified.
+  class NoPartitionsToFetchFrom < Error
+  end
+
   # Subclasses of this exception class map to an error code described in the
   # Kafka protocol specification.
   #
@@ -219,9 +223,6 @@ module Kafka
   end
 
   class FetchError < Error
-  end
-
-  class NoPartitionsAssignedError < Error
   end
 
   # Initializes a new Kafka client.
