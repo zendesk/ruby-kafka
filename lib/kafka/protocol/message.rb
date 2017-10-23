@@ -80,7 +80,7 @@ module Kafka
         # attributes.
         codec_id = attributes & 0b111
 
-        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp/1000.0))
+        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp / 1000.0))
       end
 
       private
@@ -104,7 +104,7 @@ module Kafka
 
         encoder.write_int8(MAGIC_BYTE)
         encoder.write_int8(@codec_id)
-        encoder.write_int64((@create_time.to_f*1000).to_i)
+        encoder.write_int64((@create_time.to_f * 1000).to_i)
         encoder.write_bytes(@key)
         encoder.write_bytes(@value)
 
