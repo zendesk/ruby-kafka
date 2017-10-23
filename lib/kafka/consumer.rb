@@ -216,6 +216,8 @@ module Kafka
 
         # We may not have received any messages, but it's still a good idea to
         # commit offsets if we've processed messages in the last set of batches.
+        # This also ensures the offsets are retained if we haven't read any messages
+        # since the offset retention period has elapsed.
         @offset_manager.commit_offsets_if_necessary
       end
     end
@@ -279,6 +281,12 @@ module Kafka
 
           return if !@running
         end
+
+        # We may not have received any messages, but it's still a good idea to
+        # commit offsets if we've processed messages in the last set of batches.
+        # This also ensures the offsets are retained if we haven't read any messages
+        # since the offset retention period has elapsed.
+        @offset_manager.commit_offsets_if_necessary
       end
     end
 
