@@ -35,6 +35,7 @@ class FakeBroker
             partition: partition,
             error_code: error_code_for_partition(topic, partition),
             offset: message_set.messages.size,
+            timestamp: (Time.now.to_f*1000).to_i,
           )
         }
       )
