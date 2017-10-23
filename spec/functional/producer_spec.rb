@@ -90,4 +90,14 @@ describe "Producer API", functional: true do
       KAFKA_CLUSTER.start_kafka_broker(0)
     end
   end
+
+  example "sending a message that's too large for Kafka to handle" do
+    producer.produce("hello", topic: "test-messages", partition: 0)
+    producer.produce("x" * 1_000_000, topic: "test-messages", partition: 0)
+    producer.produce("goodbye", topic: "test-messages", partition: 0)
+
+    expect {
+      producer.deliver_messages
+    }.to raise_exception(Kafka::DeliveryFailed)
+  end
 end
