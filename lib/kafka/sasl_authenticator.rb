@@ -24,25 +24,23 @@ module Kafka
 
     def sasl_gssapi_authenticate(connection)
       auth = SaslGssapiAuthenticator.new(
-        connection: connection,
         logger: @logger,
         sasl_gssapi_principal: @sasl_gssapi_principal,
         sasl_gssapi_keytab: @sasl_gssapi_keytab
       )
 
-      auth.authenticate!
+      auth.authenticate!(connection)
     end
 
     def sasl_plain_authenticate(connection)
       auth = SaslPlainAuthenticator.new(
-        connection: connection,
         logger: @logger,
         authzid: @sasl_plain_authzid,
         username: @sasl_plain_username,
         password: @sasl_plain_password
       )
 
-      auth.authenticate!
+      auth.authenticate!(connection)
     end
 
     def authenticate_using_sasl_gssapi?

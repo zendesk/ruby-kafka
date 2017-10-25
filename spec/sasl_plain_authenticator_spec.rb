@@ -28,7 +28,6 @@ describe Kafka::SaslPlainAuthenticator do
     context 'when correct username/password' do
       let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
-          connection: connection,
           logger: logger,
           authzid: 'spec_authzid',
           username: 'spec_username',
@@ -37,14 +36,13 @@ describe Kafka::SaslPlainAuthenticator do
       }
 
       it 'successfully authenticates' do
-        expect(sasl_plain_authenticator.authenticate!).to be_truthy
+        expect(sasl_plain_authenticator.authenticate!(connection)).to be_truthy
       end
     end
 
     context 'when incorrect username/password' do
       let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
-          connection: connection,
           logger: logger,
           authzid: '',
           username: 'bad_username',
@@ -53,7 +51,7 @@ describe Kafka::SaslPlainAuthenticator do
       }
 
       it 'raises Kafka::Error with EOFError' do
-        expect { sasl_plain_authenticator.authenticate! }.to raise_error(Kafka::Error, 'SASL PLAIN authentication failed: EOFError')
+        expect { sasl_plain_authenticator.authenticate!(connection) }.to raise_error(Kafka::Error, 'SASL PLAIN authentication failed: EOFError')
       end
     end
   end
