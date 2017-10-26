@@ -24,6 +24,9 @@ module Kafka
 
       @timeout = timeout
 
+      # This pipe is used to cancel IO.select calls when sockets are closed.
+      @cancel_reader, @cancel_writer = IO.pipe
+
       @socket = Socket.new(Socket.const_get(addr[0][0]), Socket::SOCK_STREAM, 0)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
@@ -57,11 +60,20 @@ module Kafka
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     # @return [String] the data that was read from the socket.
     def read(num_bytes)
-      unless IO.select([@socket], nil, nil, @timeout)
-        raise Errno::ETIMEDOUT
-      end
+      rs, _, _ = IO.select([@socket, @cancel_reader], nil, nil, @timeout)
+
+      # The read timed out.
+      raise Errno::ETIMEDOUT if rs.nil?
+
+      # The socket has been closed.
+      raise Errno::ECONNABORTED if rs.include?(@cancel_reader)
 
       @socket.read(num_bytes)
+    rescue Errno::EBADF
+      # We'll get EBADF if `select` is called with a closed socket, or
+      # if it's closed in the middle of things.
+      raise Errno::ESHUTDOWN if @socket.closed?
+      raise
     rescue IO::EAGAINWaitReadable
       retry
     end
@@ -80,6 +92,7 @@ module Kafka
     end
 
     def close
+      @cancel_writer.puts
       @socket.close
     end
 

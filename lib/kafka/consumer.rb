@@ -94,6 +94,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @cluster.disconnect
     end
 
     # Pause processing of a specific topic partition.

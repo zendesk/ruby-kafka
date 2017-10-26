@@ -28,6 +28,7 @@ describe Kafka::Consumer do
     allow(Kafka::FetchOperation).to receive(:new) { fetch_operation }
 
     allow(cluster).to receive(:add_target_topics)
+    allow(cluster).to receive(:disconnect)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
 
     allow(offset_manager).to receive(:commit_offsets)
