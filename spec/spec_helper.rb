@@ -8,8 +8,6 @@ require "colored"
 
 Dotenv.load
 
-require "test_cluster"
-
 LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log")
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
@@ -60,15 +58,11 @@ module SpecHelpers
   end
 end
 
-KAFKA_CLUSTER = TestCluster.new
-
 module FunctionalSpecHelpers
   def self.included(base)
     base.class_eval do
       let(:logger) { LOGGER }
       let(:kafka) { Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger) }
-      let(:cluster) { KAFKA_CLUSTER }
-      let(:kafka_brokers) { cluster.kafka_hosts }
 
       after { kafka.close rescue nil }
     end
@@ -81,18 +75,6 @@ RSpec.configure do |config|
   config.include SpecHelpers
   config.include FunctionalSpecHelpers, functional: true
   config.include FunctionalSpecHelpers, fuzz: true
-
-  config.before(:suite) do
-    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
-      KAFKA_CLUSTER.start
-    end
-  end
-
-  config.after(:suite) do
-    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
-      KAFKA_CLUSTER.stop rescue nil
-    end
-  end
 end
 
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
