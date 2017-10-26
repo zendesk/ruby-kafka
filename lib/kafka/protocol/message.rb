@@ -88,7 +88,10 @@ module Kafka
         # attributes.
         codec_id = attributes & 0b111
 
-        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: Time.at(timestamp / 1000.0))
+        # The timestamp will be nil if the message was written in the Kafka 0.9 log format.
+        create_time = timestamp && Time.at(timestamp / 1000.0)
+
+        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: create_time)
       end
 
       private
