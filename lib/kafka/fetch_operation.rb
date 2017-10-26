@@ -46,6 +46,10 @@ module Kafka
 
       topics_by_broker = {}
 
+      if @topics.none? {|topic, partitions| partitions.any? }
+        raise NoPartitionsToFetchFrom
+      end
+
       @topics.each do |topic, partitions|
         partitions.each do |partition, options|
           broker = @cluster.get_leader(topic, partition)
@@ -90,6 +94,7 @@ module Kafka
                 topic: fetched_topic.name,
                 partition: fetched_partition.partition,
                 offset: message.offset,
+                create_time: message.create_time,
               )
             }
 

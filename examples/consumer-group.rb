@@ -20,6 +20,7 @@ consumer = kafka.consumer(group_id: "test")
 consumer.subscribe(topic)
 
 trap("TERM") { consumer.stop }
+trap("INT") { consumer.stop }
 
 consumer.each_message do |message|
   puts message.value

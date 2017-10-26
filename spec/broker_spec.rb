@@ -19,6 +19,19 @@ describe Kafka::Broker do
     end
   end
 
+  describe "#address_match?" do
+    it "delegates to @connection" do
+      host = "test_host"
+      port = 333
+      connection = instance_double(Kafka::Connection)
+      allow(connection).to receive(:address_match?).with(host, port) { true }
+
+      broker = Kafka::Broker.new(connection: connection, logger: logger)
+
+      expect(broker.address_match?(host, port)).to be_truthy
+    end
+  end
+
   describe "#metadata" do
     it "fetches cluster metadata" do
       response = Kafka::Protocol::MetadataResponse.new(brokers: [], topics: [])

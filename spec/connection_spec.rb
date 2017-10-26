@@ -24,6 +24,20 @@ describe Kafka::Connection do
 
   let!(:broker) { FakeServer.start(server) }
 
+  describe "#address_match?" do
+    it "is true when host and port match current host and port" do
+      expect(connection.address_match?(host, port)).to be_truthy
+    end
+
+    it "is false when host does not match current host" do
+      expect(connection.address_match?("#{host}1", port)).to be_falsey
+    end
+
+    it "is false when port does not match current port" do
+      expect(connection.address_match?(host, "#{port}1")).to be_falsey
+    end
+  end
+
   describe "#send_request" do
     let(:api_key) { 0 }
     let(:request) { double(:request, api_key: api_key) }
@@ -68,6 +82,8 @@ describe Kafka::Connection do
       expect(response).to eq "hello!"
 
       broker.kill
+      # join to avoid race where send_request fires before broker thread ends
+      broker.join
 
       expect {
         connection.send_request(request)
@@ -87,6 +103,8 @@ describe Kafka::Connection do
     it "re-opens the connection after a network error" do
       connection.send_request(request)
       broker.kill
+      # join to avoid race where send_request fires before broker thread ends
+      broker.join
 
       # Connection is torn down
       connection.send_request(request) rescue nil

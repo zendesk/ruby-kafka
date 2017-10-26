@@ -38,5 +38,25 @@ describe Kafka::SocketWithTimeout, ".open" do
 
       expect(finish - start).to be < allowed_time
     end
+
+    it "finishes immediately when #close is called" do
+      host = "localhost"
+      server = TCPServer.new(host, 0)
+      port = server.addr[1]
+
+      socket = Kafka::SocketWithTimeout.new(host, port, connect_timeout: 1, timeout: 5)
+
+      thread = Thread.new do
+        begin
+          socket.read(4)
+        rescue Errno::ETIMEDOUT
+          :timeout
+        end
+      end
+
+      socket.close
+
+      expect { thread.value }.to raise_error(IOError)
+    end
   end
 end

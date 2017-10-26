@@ -59,6 +59,10 @@ module Kafka
       @sasl_authenticator = sasl_authenticator
     end
 
+    def address_match?(host, port)
+      @host == host && @port == port
+    end
+
     def to_s
       "#{@host}:#{@port}"
     end
@@ -105,10 +109,10 @@ module Kafka
 
         response
       end
-    rescue Errno::EPIPE, Errno::ECONNRESET, Errno::ETIMEDOUT, EOFError => e
+    rescue SystemCallError, EOFError => e
       close
 
-      raise ConnectionError, "Connection error: #{e}"
+      raise ConnectionError, "Connection error #{e.class}: #{e}"
     end
 
     private

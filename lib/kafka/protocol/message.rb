@@ -6,15 +6,16 @@ module Kafka
 
     # ## API Specification
     #
-    #     Message => Crc MagicByte Attributes Key Value
+    #     Message => Crc MagicByte Attributes Timestamp Key Value
     #         Crc => int32
     #         MagicByte => int8
     #         Attributes => int8
+    #         Timestamp => int64, in ms
     #         Key => bytes
     #         Value => bytes
     #
     class Message
-      MAGIC_BYTE = 0
+      MAGIC_BYTE = 1
 
       attr_reader :key, :value, :codec_id, :offset
 
@@ -65,12 +66,21 @@ module Kafka
 
         crc = message_decoder.int32
         magic_byte = message_decoder.int8
+        attributes = message_decoder.int8
 
-        unless magic_byte == MAGIC_BYTE
+        # The magic byte indicates the message format version. There are situations
+        # where an old message format can be returned from a newer version of Kafka,
+        # because old messages are not necessarily rewritten on upgrades.
+        case magic_byte
+        when 0
+          # No timestamp in the pre-0.10 message format.
+          timestamp = nil
+        when 1
+          timestamp = message_decoder.int64
+        else
           raise Kafka::Error, "Invalid magic byte: #{magic_byte}"
         end
 
-        attributes = message_decoder.int8
         key = message_decoder.bytes
         value = message_decoder.bytes
 
@@ -78,7 +88,10 @@ module Kafka
         # attributes.
         codec_id = attributes & 0b111
 
-        new(key: key, value: value, codec_id: codec_id, offset: offset)
+        # The timestamp will be nil if the message was written in the Kafka 0.9 log format.
+        create_time = timestamp && Time.at(timestamp / 1000.0)
+
+        new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: create_time)
       end
 
       private
@@ -102,6 +115,7 @@ module Kafka
 
         encoder.write_int8(MAGIC_BYTE)
         encoder.write_int8(@codec_id)
+        encoder.write_int64((@create_time.to_f * 1000).to_i)
         encoder.write_bytes(@key)
         encoder.write_bytes(@value)
 

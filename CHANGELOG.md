@@ -4,6 +4,13 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.5.0
+
+- Drops support for Kafka 0.9 in favor of Kafka 0.10 (#381)!
+- Handle cases where there are no partitions to fetch from by sleeping a bit (#439).
+- Handle problems with the broker cache (#440).
+- Shut down more quickly (#438).
+
 ## v0.4.3
 
 - Restart the async producer thread automatically after errors.
