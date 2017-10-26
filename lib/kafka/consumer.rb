@@ -67,7 +67,7 @@ module Kafka
       # @note It won't be updated in case user marks message as processed, because for the case
       #   when user commits message other than last in a batch, this would make ruby-kafka refetch
       #   some already consumed messages
-      @current_offsets = {}
+      @current_offsets = Hash.new { |h, k| h[k] = {} }
     end
 
     # Subscribes the consumer to a topic.
@@ -211,7 +211,7 @@ module Kafka
 
               begin
                 yield message
-                @current_offsets[[message.topic, message.partition]] = message.offset
+                @current_offsets[message.topic][message.partition] = message.offset
               rescue => e
                 location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
                 backtrace = e.backtrace.join("\n")
@@ -279,7 +279,7 @@ module Kafka
 
               begin
                 yield batch
-                @current_offsets[[batch.topic, batch.partition]] = batch.last_offset
+                @current_offsets[batch.topic][batch.partition] = batch.last_offset
               rescue => e
                 offset_range = (batch.first_offset..batch.last_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
@@ -407,17 +407,15 @@ module Kafka
 
       subscribed_partitions.each do |topic, partitions|
         partitions.each do |partition|
-          scope = [topic, partition]
-
           if automatically_mark_as_processed
-            offset = @offset_manager.next_offset_for(*scope)
+            offset = @offset_manager.next_offset_for(topic, partition)
           else
             # When automatic marking is off, the first poll needs to be based on the last committed
             # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
-            if @current_offsets[scope]
-              offset = @current_offsets[scope] + 1
+            if @current_offsets[topic].key?(partition)
+              offset = @current_offsets[topic][partition] + 1
             else
-              offset = @offset_manager.next_offset_for(*scope)
+              offset = @offset_manager.next_offset_for(topic, partition)
             end
           end
 
