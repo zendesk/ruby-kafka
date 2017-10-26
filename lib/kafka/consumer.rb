@@ -57,6 +57,17 @@ module Kafka
 
       # The maximum number of bytes to fetch from a single partition, by topic.
       @max_bytes = {}
+
+      # Hash containing offsets for each topic and partition that has the
+      # automatically_mark_as_processed feature disabled. Offset manager is only active
+      # when everything is suppose to happen automatically. Otherwise we need to keep track of the
+      # offset manually in memory for all the time
+      # The key structure for this equals an array with topic and partition [topic, partition]
+      # The value is equal to the offset of the last message we've received
+      # @note It won't be updated in case user marks message as processed, because for the case
+      #   when user commits message other than last in a batch, this would make ruby-kafka refetch
+      #   some already consumed messages
+      @current_offsets = Hash.new { |h, k| h[k] = {} }
     end
 
     # Subscribes the consumer to a topic.
@@ -181,7 +192,11 @@ module Kafka
     # @return [nil]
     def each_message(min_bytes: 1, max_wait_time: 1, automatically_mark_as_processed: true)
       consumer_loop do
-        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+        batches = fetch_batches(
+          min_bytes: min_bytes,
+          max_wait_time: max_wait_time,
+          automatically_mark_as_processed: automatically_mark_as_processed
+        )
 
         batches.each do |batch|
           batch.messages.each do |message|
@@ -197,6 +212,7 @@ module Kafka
 
               begin
                 yield message
+                @current_offsets[message.topic][message.partition] = message.offset
               rescue => e
                 location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
                 backtrace = e.backtrace.join("\n")
@@ -247,7 +263,11 @@ module Kafka
     # @return [nil]
     def each_batch(min_bytes: 1, max_wait_time: 1, automatically_mark_as_processed: true)
       consumer_loop do
-        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+        batches = fetch_batches(
+          min_bytes: min_bytes,
+          max_wait_time: max_wait_time,
+          automatically_mark_as_processed: automatically_mark_as_processed
+        )
 
         batches.each do |batch|
           unless batch.empty?
@@ -262,6 +282,7 @@ module Kafka
 
               begin
                 yield batch
+                @current_offsets[batch.topic][batch.partition] = batch.last_offset
               rescue => e
                 offset_range = (batch.first_offset..batch.last_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
@@ -379,7 +400,7 @@ module Kafka
       end
     end
 
-    def fetch_batches(min_bytes:, max_wait_time:)
+    def fetch_batches(min_bytes:, max_wait_time:, automatically_mark_as_processed:)
       join_group unless @group.member?
 
       subscribed_partitions = @group.subscribed_partitions
@@ -395,7 +416,18 @@ module Kafka
 
       subscribed_partitions.each do |topic, partitions|
         partitions.each do |partition|
-          offset = @offset_manager.next_offset_for(topic, partition)
+          if automatically_mark_as_processed
+            offset = @offset_manager.next_offset_for(topic, partition)
+          else
+            # When automatic marking is off, the first poll needs to be based on the last committed
+            # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
+            if @current_offsets[topic].key?(partition)
+              offset = @current_offsets[topic][partition] + 1
+            else
+              offset = @offset_manager.next_offset_for(topic, partition)
+            end
+          end
+
           max_bytes = @max_bytes.fetch(topic)
 
           if paused?(topic, partition)
