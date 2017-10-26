@@ -407,12 +407,22 @@ module Kafka
       end
     end
 
+    def create_topic(name, **options)
+      @cluster.create_topic(name, **options)
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
     def topics
       @cluster.clear_target_topics
       @cluster.topics
+    end
+
+    def has_topic?(topic)
+      @cluster.clear_target_topics
+      @cluster.add_target_topics([topic])
+      @cluster.topics.include?(topic)
     end
 
     # Counts the number of partitions in a topic.

@@ -81,8 +81,12 @@ module Kafka
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
       attr_reader :topics
 
-      def initialize(brokers:, topics:)
+      # @return [Integer] The broker id of the controller broker.
+      attr_reader :controller_id
+
+      def initialize(brokers:, controller_id:, topics:)
         @brokers = brokers
+        @controller_id = controller_id
         @topics = topics
       end
 
@@ -149,6 +153,7 @@ module Kafka
           node_id = decoder.int32
           host = decoder.string
           port = decoder.int32
+          rack = decoder.string
 
           BrokerInfo.new(
             node_id: node_id,
@@ -157,9 +162,12 @@ module Kafka
           )
         end
 
+        controller_id = decoder.int32
+
         topics = decoder.array do
           topic_error_code = decoder.int16
           topic_name = decoder.string
+          is_internal = decoder.boolean
 
           partitions = decoder.array do
             PartitionMetadata.new(
@@ -178,7 +186,7 @@ module Kafka
           )
         end
 
-        new(brokers: brokers, topics: topics)
+        new(brokers: brokers, controller_id: controller_id, topics: topics)
       end
     end
   end

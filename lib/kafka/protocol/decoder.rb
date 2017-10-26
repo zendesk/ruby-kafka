@@ -20,6 +20,13 @@ module Kafka
         @io.eof?
       end
 
+      # Decodes an 8-bit boolean from the IO object.
+      #
+      # @return [Boolean]
+      def boolean
+        read(1) == 0x1
+      end
+
       # Decodes an 8-bit integer from the IO object.
       #
       # @return [Integer]

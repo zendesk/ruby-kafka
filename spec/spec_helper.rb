@@ -55,8 +55,8 @@ module SpecHelpers
     topic
   end
 
-  def create_topic(*args)
-    cluster.create_topic(*args)
+  def create_topic(name, num_partitions: 1, num_replicas: 1)
+    kafka.create_topic(name, num_partitions: num_partitions, replication_factor: num_replicas)
   end
 end
 
