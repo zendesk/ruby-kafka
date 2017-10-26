@@ -62,6 +62,7 @@ module FunctionalSpecHelpers
   def self.included(base)
     base.class_eval do
       let(:logger) { LOGGER }
+      let(:kafka_brokers) { ["localhost:9092", "localhost:9093", "localhost:9094"] }
       let(:kafka) { Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger) }
 
       after { kafka.close rescue nil }
