@@ -48,6 +48,7 @@ module Kafka
     rescue ConnectionError
       @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
       sleep 1
+      @cluster.mark_as_stale
       @coordinator = nil
       retry
     end
