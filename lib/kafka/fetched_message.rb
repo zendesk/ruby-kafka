@@ -19,7 +19,7 @@ module Kafka
     # @return [Time] the timestamp of the message.
     attr_reader :create_time
 
-    def initialize(value:, key:, topic:, partition:, offset:, create_time:)
+    def initialize(value: nil, key: nil, topic:, partition:, offset:, create_time: nil)
       @value = value
       @key = key
       @topic = topic
