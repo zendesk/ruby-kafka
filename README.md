@@ -91,7 +91,7 @@ Or install it yourself as:
 
 This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with the v0.5.x series. There's limited support for Kafka 0.8, and things should work with Kafka 0.11, although there may be performance issues due to changes in the protocol.
 
-- **Kafka 0.8:** Full support for the Producer API, but no support for consumer groups. Simple message fetching works.
+- **Kafka 0.8:** Full support for the Producer API in ruby-kafka v0.4.x, but no support for consumer groups. Simple message fetching works.
 - **Kafka 0.9:** Full support for the Producer and Consumer API in ruby-kafka v0.4.x.
 - **Kafka 0.10:** Full support for the Producer and Consumer API in ruby-kafka v0.5.x.
 - **Kafka 0.11:** Everything that works with Kafka 0.10 should still work, but so far no features specific to Kafka 0.11 have been added.
@@ -978,11 +978,11 @@ Version 0.4 will be the last minor release with support for the Kafka 0.9 protoc
 
 ### v0.4
 
-Current stable release with support for the Kafka 0.9 protocol.
+Last stable release with support for the Kafka 0.9 protocol. Bug and security fixes will be released in patch updates.
 
 ### v0.5
 
-Next stable release, with support for the Kafka 0.10 protocol and eventually newer protocol versions.
+Latest stable release, with native support for the Kafka 0.10 protocol and eventually newer protocol versions. Kafka 0.9 is no longer supported by this release series.
 
 ## Higher level libraries
 
