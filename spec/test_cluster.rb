@@ -197,6 +197,8 @@ class TestCluster
 
       wait_for_port(port, host: host)
     end
+
+    sleep 10
   end
 
   def wait_for_port(port, host: DOCKER_HOSTNAME)
