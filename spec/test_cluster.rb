@@ -124,7 +124,7 @@ class TestCluster
     broker = @kafka_brokers[number]
     puts "Killing broker #{number}"
     broker.kill
-    broker.remove
+    broker.remove rescue nil
   end
 
   def start_kafka_broker(number)
