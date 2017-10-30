@@ -56,8 +56,20 @@ module Kafka
         # For some weird reason we need to cut out the first 20 bytes.
         data = codec.decompress(value)
         message_set_decoder = Decoder.from_string(data)
+        message_set = MessageSet.decode(message_set_decoder)
 
-        MessageSet.decode(message_set_decoder)
+        # The contained messages need to have their offset corrected.
+        messages = message_set.messages.each_with_index.map do |message, i|
+          Message.new(
+            offset: offset + i,
+            value: message.value,
+            key: message.key,
+            create_time: message.create_time,
+            codec_id: message.codec_id
+          )
+        end
+
+        MessageSet.new(messages: messages)
       end
 
       def self.decode(decoder)

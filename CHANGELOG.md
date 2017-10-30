@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Fix bug when using compression (#458).
+
 ## v0.5.0
 
 - Drops support for Kafka 0.9 in favor of Kafka 0.10 (#381)!
