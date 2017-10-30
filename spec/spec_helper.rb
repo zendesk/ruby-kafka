@@ -70,7 +70,7 @@ module FunctionalSpecHelpers
       let(:cluster) { KAFKA_CLUSTER }
       let(:kafka_brokers) { cluster.kafka_hosts }
 
-      after { kafka.close }
+      after { kafka.close rescue nil }
     end
   end
 end
@@ -90,7 +90,7 @@ RSpec.configure do |config|
 
   config.after(:suite) do
     if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
-      KAFKA_CLUSTER.stop
+      KAFKA_CLUSTER.stop rescue nil
     end
   end
 end
