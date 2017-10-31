@@ -111,7 +111,7 @@ class TestCluster
   end
 
   def kafka_hosts
-    @kafka_brokers.map {|kafka|
+    @kafka_hosts ||= @kafka_brokers.map {|kafka|
       config = kafka.json.fetch("NetworkSettings").fetch("Ports")
       port = config.fetch("9092/tcp").first.fetch("HostPort")
       host = DOCKER_HOSTNAME
