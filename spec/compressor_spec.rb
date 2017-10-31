@@ -15,8 +15,14 @@ describe Kafka::Compressor do
       decoder = Kafka::Protocol::Decoder.from_string(data)
       decoded_message = Kafka::Protocol::Message.decode(decoder)
       decoded_message_set = decoded_message.decompress
+      messages = decoded_message_set.messages
 
-      expect(decoded_message_set.messages.map(&:value)).to eq ["hello1", "hello2"]
+      expect(messages.map(&:value)).to eq ["hello1", "hello2"]
+
+      # When decoding a compressed message, the offsets are calculated relative to that
+      # of the container message. The broker will set the offset in normal operation,
+      # but at the client-side we set it to -1.
+      expect(messages.map(&:offset)).to eq [-1, 0]
     end
 
     it "only compresses the messages if there are at least the configured threshold" do
