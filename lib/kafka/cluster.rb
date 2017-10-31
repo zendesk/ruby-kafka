@@ -1,5 +1,5 @@
-require "set"
 require "kafka/broker_pool"
+require "set"
 
 module Kafka
 
@@ -47,6 +47,21 @@ module Kafka
 
         refresh_metadata!
       end
+    end
+
+    def api_version(api_key)
+      api_versions.find {|version| version.api_key == api_key }
+    end
+
+    def api_versions
+      @api_versions ||=
+        begin
+          response = random_broker.api_versions
+
+          Protocol.handle_error(response.error_code)
+
+          response.api_versions
+        end
     end
 
     # Clears the list of target topics.
@@ -269,6 +284,11 @@ module Kafka
       error_description = errors.map {|node, exception| "- #{node}: #{exception}" }.join("\n")
 
       raise ConnectionError, "Could not connect to any of the seed brokers:\n#{error_description}"
+    end
+
+    def random_broker
+      node_id = cluster_info.brokers.sample.node_id
+      connect_to_broker(node_id)
     end
 
     def connect_to_broker(broker_id)
