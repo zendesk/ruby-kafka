@@ -96,8 +96,10 @@ module Kafka
     #   chosen at random.
     # @param partition_key [String] a value used to deterministically choose a
     #   partition to write to.
+    # @param retries [Integer] the number of times to retry the delivery before giving
+    #   up.
     # @return [nil]
-    def deliver_message(value, key: nil, topic:, partition: nil, partition_key: nil)
+    def deliver_message(value, key: nil, topic:, partition: nil, partition_key: nil, retries: 1)
       create_time = Time.now
 
       message = PendingMessage.new(
@@ -140,10 +142,24 @@ module Kafka
         instrumenter: @instrumenter,
       )
 
-      operation.execute
+      attempt = 1
 
-      unless buffer.empty?
-        raise DeliveryFailed.new(nil, [message])
+      begin
+        operation.execute
+
+        unless buffer.empty?
+          raise DeliveryFailed.new(nil, [message])
+        end
+      rescue Kafka::Error => e
+        @cluster.mark_as_stale!
+
+        if attempt >= (retries + 1)
+          raise
+        else
+          attempt += 1
+          @logger.warn "Error while delivery message, #{e.class}: #{e.message}; retrying..."
+          retry
+        end
       end
     end
 
