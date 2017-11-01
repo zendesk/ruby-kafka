@@ -157,7 +157,10 @@ module Kafka
           raise
         else
           attempt += 1
-          @logger.warn "Error while delivering message, #{e.class}: #{e.message}; retrying..."
+          @logger.warn "Error while delivering message, #{e.class}: #{e.message}; retrying after 1s..."
+
+          sleep 1
+
           retry
         end
       end
