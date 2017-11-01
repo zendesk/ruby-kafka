@@ -6,19 +6,19 @@ jobs:
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:0.10.0.0
+      - image: wurstmeister/kafka:0.10.2.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-      - image: wurstmeister/kafka:0.10.0.0
+      - image: wurstmeister/kafka:0.10.2.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-      - image: wurstmeister/kafka:0.10.0.0
+      - image: wurstmeister/kafka:0.10.2.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
