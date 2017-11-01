@@ -85,7 +85,7 @@ describe "Consumer API", functional: true do
 
     consumer_thread.abort_on_exception = true
 
-    sleep 30
+    sleep 1
 
     Thread.new do
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
