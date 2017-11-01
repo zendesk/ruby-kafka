@@ -29,5 +29,5 @@ jobs:
       - checkout
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec
-      - run: bundle exec rspec --tag functional spec/functional
+      - run: bundle exec rspec --profile --tag functional spec/functional
       - run: bundle exec rubocop
