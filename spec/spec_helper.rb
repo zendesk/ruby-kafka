@@ -5,13 +5,17 @@ require "dotenv"
 require "logger"
 require "rspec-benchmark"
 require "colored"
+require "securerandom"
 
 Dotenv.load
 
-require "test_cluster"
-
 LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log")
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
+
+KAFKA_BROKERS = ENV.fetch("KAFKA_BROKERS", "localhost:9092").split(",")
+
+# A unique id for the test run, used to namespace global resources.
+RUN_ID = SecureRandom.hex(8)
 
 class LogFormatter < Logger::Formatter
   def call(severity, time, progname, msg)
@@ -46,7 +50,7 @@ module SpecHelpers
     @@topic_number ||= 0
     @@topic_number += 1
 
-    "topic-#{@@topic_number}"
+    "#{RUN_ID}-topic-#{@@topic_number}"
   end
 
   def create_random_topic(*args)
@@ -60,15 +64,12 @@ module SpecHelpers
   end
 end
 
-KAFKA_CLUSTER = TestCluster.new
-
 module FunctionalSpecHelpers
   def self.included(base)
     base.class_eval do
       let(:logger) { LOGGER }
+      let(:kafka_brokers) { KAFKA_BROKERS }
       let(:kafka) { Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger) }
-      let(:cluster) { KAFKA_CLUSTER }
-      let(:kafka_brokers) { cluster.kafka_hosts }
 
       after { kafka.close rescue nil }
     end
@@ -81,18 +82,6 @@ RSpec.configure do |config|
   config.include SpecHelpers
   config.include FunctionalSpecHelpers, functional: true
   config.include FunctionalSpecHelpers, fuzz: true
-
-  config.before(:suite) do
-    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
-      KAFKA_CLUSTER.start
-    end
-  end
-
-  config.after(:suite) do
-    if config.inclusion_filter[:functional] || config.inclusion_filter[:fuzz]
-      KAFKA_CLUSTER.stop rescue nil
-    end
-  end
 end
 
 ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
