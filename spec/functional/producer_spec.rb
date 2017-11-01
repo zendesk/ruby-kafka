@@ -71,23 +71,4 @@ describe "Producer API", functional: true do
 
     expect(messages.last.value).to eq "hello"
   end
-
-  example "handle a broker going down after the initial discovery" do
-    topic = create_random_topic(num_partitions: 3, num_replicas: 2)
-
-    begin
-      producer = kafka.producer(max_retries: 30, retry_backoff: 2)
-
-      KAFKA_CLUSTER.kill_kafka_broker(0)
-
-      # Write to all partitions so that we'll be sure to hit the broker.
-      producer.produce("hello1", key: "x", topic: topic, partition: 0)
-      producer.produce("hello1", key: "x", topic: topic, partition: 1)
-      producer.produce("hello1", key: "x", topic: topic, partition: 2)
-
-      producer.deliver_messages
-    ensure
-      KAFKA_CLUSTER.start_kafka_broker(0)
-    end
-  end
 end
