@@ -105,11 +105,5 @@ module Kafka
 
       @connection.send_request(request)
     end
-
-    def sasl_handshake(**options)
-      request = Protocol::SaslHandshakeRequest(**options)
-
-      @connection.send_request(request)
-    end
   end
 end
