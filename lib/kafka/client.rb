@@ -157,7 +157,7 @@ module Kafka
           raise
         else
           attempt += 1
-          @logger.warn "Error while delivery message, #{e.class}: #{e.message}; retrying..."
+          @logger.warn "Error while delivering message, #{e.class}: #{e.message}; retrying..."
           retry
         end
       end
@@ -361,7 +361,7 @@ module Kafka
     #   expect messages to be larger than this.
     #
     # @return [Array<Kafka::FetchedMessage>] the messages returned from the broker.
-    def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576)
+    def fetch_messages(topic:, partition:, offset: :latest, max_wait_time: 5, min_bytes: 1, max_bytes: 1048576, retries: 1)
       operation = FetchOperation.new(
         cluster: @cluster,
         logger: @logger,
@@ -371,7 +371,21 @@ module Kafka
 
       operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
 
-      operation.execute.flat_map {|batch| batch.messages }
+      attempt = 1
+
+      begin
+        operation.execute.flat_map {|batch| batch.messages }
+      rescue Kafka::Error => e
+        @cluster.mark_as_stale!
+
+        if attempt >= (retries + 1)
+          raise
+        else
+          attempt += 1
+          @logger.warn "Error while fetching messages, #{e.class}: #{e.message}; retrying..."
+          retry
+        end
+      end
     end
 
     # Enumerate all messages in a topic.
