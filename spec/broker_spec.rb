@@ -34,7 +34,7 @@ describe Kafka::Broker do
 
   describe "#metadata" do
     it "fetches cluster metadata" do
-      response = Kafka::Protocol::MetadataResponse.new(brokers: [], topics: [])
+      response = Kafka::Protocol::MetadataResponse.new(brokers: [], controller_id: nil, topics: [])
       connection.mock_response(response)
 
       metadata = broker.fetch_metadata(topics: [])

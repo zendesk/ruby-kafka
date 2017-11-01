@@ -130,6 +130,41 @@ module Kafka
       raise
     end
 
+    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30)
+      options = {
+        topics: {
+          name => {
+            num_partitions: num_partitions,
+            replication_factor: replication_factor,
+          }
+        },
+        timeout: timeout,
+      }
+
+      broker = controller_broker
+
+      @logger.info "Creating topic `#{name}` using controller broker #{broker}"
+
+      response = broker.create_topics(**options)
+
+      response.errors.each do |topic, error_code|
+        Protocol.handle_error(error_code)
+      end
+
+      begin
+        partitions_for(name).each do |info|
+          Protocol.handle_error(info.partition_error_code)
+        end
+      rescue Kafka::LeaderNotAvailable
+        @logger.warn "Leader not yet available for `#{name}`, waiting 1s..."
+        sleep 1
+
+        retry
+      end
+
+      @logger.info "Topic `#{name}` was created"
+    end
+
     def resolve_offsets(topic, partitions, offset)
       add_target_topics([topic])
       refresh_metadata_if_necessary!
@@ -178,6 +213,7 @@ module Kafka
     end
 
     def topics
+      refresh_metadata_if_necessary!
       cluster_info.topics.map(&:topic_name)
     end
 
@@ -213,11 +249,15 @@ module Kafka
           broker = @broker_pool.connect(node.hostname, node.port)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
-          @stale = false
+          if cluster_info.brokers.empty?
+            @logger.error "No brokers in cluster"
+          else
+            @logger.info "Discovered cluster metadata; nodes: #{cluster_info.brokers.join(', ')}"
 
-          @logger.info "Discovered cluster metadata; nodes: #{cluster_info.brokers.join(', ')}"
+            @stale = false
 
-          return cluster_info
+            return cluster_info
+          end
         rescue Error => e
           @logger.error "Failed to fetch metadata from #{node}: #{e}"
           errors << [node, e]
@@ -235,6 +275,10 @@ module Kafka
       info = cluster_info.find_broker(broker_id)
 
       @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+    end
+
+    def controller_broker
+      connect_to_broker(cluster_info.controller_id)
     end
   end
 end

@@ -25,6 +25,7 @@ describe Kafka::Cluster do
             port: 9092,
           )
         ],
+        controller_id: 42,
         topics: [
           Kafka::Protocol::MetadataResponse::TopicMetadata.new(
             topic_name: "greetings",
@@ -55,6 +56,7 @@ describe Kafka::Cluster do
             port: 9092,
           )
         ],
+        controller_id: 42,
         topics: [
           Kafka::Protocol::MetadataResponse::TopicMetadata.new(
             topic_name: "greetings",

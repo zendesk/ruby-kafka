@@ -24,6 +24,7 @@ module Kafka
     LEAVE_GROUP_API = 13
     SYNC_GROUP_API = 14
     SASL_HANDSHAKE_API = 17
+    CREATE_TOPICS_API = 19
 
     # A mapping from numeric API keys to symbolic API names.
     APIS = {
@@ -39,6 +40,7 @@ module Kafka
       LEAVE_GROUP_API => :leave_group,
       SYNC_GROUP_API => :sync_group,
       SASL_HANDSHAKE_API => :sasl_handshake,
+      CREATE_TOPICS_API => :create_topics,
     }
 
     # A mapping from numeric error codes to exception classes.
@@ -133,3 +135,5 @@ require "kafka/protocol/offset_commit_request"
 require "kafka/protocol/offset_commit_response"
 require "kafka/protocol/sasl_handshake_request"
 require "kafka/protocol/sasl_handshake_response"
+require "kafka/protocol/create_topics_request"
+require "kafka/protocol/create_topics_response"

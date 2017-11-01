@@ -25,6 +25,14 @@ module Kafka
         nil
       end
 
+      # Writes an 8-bit boolean to the IO object.
+      #
+      # @param boolean [Boolean]
+      # @return [nil]
+      def write_boolean(boolean)
+        write(boolean ? 0x1 : 0x0)
+      end
+
       # Writes an 8-bit integer to the IO object.
       #
       # @param int [Integer]

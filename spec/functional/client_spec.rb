@@ -4,11 +4,11 @@ describe "Producer API", functional: true do
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
   example "listing all topics in the cluster" do
-    expect(kafka.topics).to include topic
+    expect(kafka.has_topic?(topic)).to eq true
 
-    topic2 = create_random_topic(num_partitions: 1)
+    topic2 = create_random_topic
 
-    expect(kafka.topics).to include(topic, topic2)
+    expect(kafka.has_topic?(topic2)).to eq true
   end
 
   example "fetching the partition count for a topic" do

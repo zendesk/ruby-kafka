@@ -105,5 +105,11 @@ module Kafka
 
       @connection.send_request(request)
     end
+
+    def create_topics(**options)
+      request = Protocol::CreateTopicsRequest.new(**options)
+
+      @connection.send_request(request)
+    end
   end
 end
