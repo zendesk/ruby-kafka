@@ -75,8 +75,8 @@ describe "Producer API", functional: true do
   example "getting the last offset for a topic partition" do
     topic = create_random_topic(num_partitions: 1, num_replicas: 1)
 
-    kafka.deliver_message("hello", topic: topic, partition: 0)
-    kafka.deliver_message("world", topic: topic, partition: 0)
+    kafka.deliver_message("hello", topic: topic, partition: 0, retries: 2)
+    kafka.deliver_message("world", topic: topic, partition: 0, retries: 2)
 
     offset = kafka.last_offset_for(topic, 0)
 
