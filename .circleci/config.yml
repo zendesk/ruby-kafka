@@ -5,6 +5,18 @@ jobs:
       - image: circleci/ruby:2.4.1-node
         environment:
           LOG_LEVEL: DEBUG
+
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec
+      - run: bundle exec rubocop
+
+  functional:
+    docker:
+      - image: circleci/ruby:2.4.1-node
+        environment:
+          LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
       - image: wurstmeister/kafka:0.10.2.1
         environment:
@@ -28,6 +40,4 @@ jobs:
     steps:
       - checkout
       - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec
       - run: bundle exec rspec --tag functional spec/functional
-      - run: bundle exec rubocop
