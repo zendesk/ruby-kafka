@@ -111,5 +111,11 @@ module Kafka
 
       @connection.send_request(request)
     end
+
+    def api_versions
+      request = Protocol::ApiVersionsRequest.new
+
+      @connection.send_request(request)
+    end
   end
 end
