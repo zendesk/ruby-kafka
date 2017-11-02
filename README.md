@@ -934,7 +934,7 @@ Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#se
 ```ruby
 kafka = Kafka.new(
   sasl_scram_username: 'username',
-  sasl_scram_password: 'password,
+  sasl_scram_password: 'password',
   sasl_scram_mechanism: Kafka::SCRAM_SHA256,
   # ...
 )
