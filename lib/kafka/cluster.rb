@@ -237,6 +237,18 @@ module Kafka
       @cluster_info ||= fetch_cluster_info
     end
 
+    def fetch_api_versions
+      node = @seed_brokers.sample
+      broker = @broker_pool.connect(node.hostname, node.port)
+      response = broker.api_versions
+
+      Protocol.handle_error(response.error_code)
+
+      @logger.info "API versions: #{response.api_versions}"
+
+      response.api_versions
+    end
+
     # Fetches the cluster metadata.
     #
     # This is used to update the partition leadership information, among other things.
@@ -246,13 +258,15 @@ module Kafka
     # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
+      @api_versions = fetch_api_versions
+
       errors = []
 
       @seed_brokers.shuffle.each do |node|
         @logger.info "Fetching cluster metadata from #{node}"
 
         begin
-          broker = @broker_pool.connect(node.hostname, node.port)
+          broker = @broker_pool.connect(node.hostname, node.port, api_versions: api_versions)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
           if cluster_info.brokers.empty?
@@ -275,20 +289,6 @@ module Kafka
       error_description = errors.map {|node, exception| "- #{node}: #{exception}" }.join("\n")
 
       raise ConnectionError, "Could not connect to any of the seed brokers:\n#{error_description}"
-
-      @api_versions ||=
-        begin
-          response = random_broker.api_versions
-
-          Protocol.handle_error(response.error_code)
-
-          # New connections need to be set up with the API version support.
-          @broker_pool.reset
-
-          @logger.info "API versions: #{response.api_versions}"
-
-          response.api_versions
-        end
     end
 
     def random_broker

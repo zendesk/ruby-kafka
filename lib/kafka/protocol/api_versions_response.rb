@@ -10,7 +10,7 @@ module Kafka
         end
 
         def versions
-          [min_version, max_version]
+          @versions ||= (min_version..max_version).to_a
         end
       end
 
@@ -23,9 +23,20 @@ module Kafka
           @api_versions.find(*args)
         end
 
+        def for_api(api_key)
+          @api_versions.find {|v| v.api_key == api_key }
+        end
+
         def supported_version(api_key, proposed_versions)
           compatible_versions = for_api(api_key).versions & proposed_versions
           compatible_versions.max
+        end
+
+        def to_s
+          @api_versions.map {|version|
+            name = Protocol.api_name(version.api_key)
+            "#{name} (min=#{version.min_version}, max=#{version.max_version})"
+          }.join("; ")
         end
       end
 
