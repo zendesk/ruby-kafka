@@ -8,6 +8,7 @@ module Kafka
   # to will be asked for the cluster metadata, which allows the cluster to map topic
   # partitions to the current leader for those partitions.
   class Cluster
+    attr_reader :api_versions
 
     # Initializes a Cluster with a set of seed brokers.
     #
@@ -26,6 +27,7 @@ module Kafka
       @broker_pool = broker_pool
       @cluster_info = nil
       @stale = true
+      @api_versions = nil
 
       # This is the set of topics we need metadata for. If empty, metadata for
       # all topics will be fetched.
@@ -51,17 +53,6 @@ module Kafka
 
     def api_version(api_key)
       api_versions.find {|version| version.api_key == api_key }
-    end
-
-    def api_versions
-      @api_versions ||=
-        begin
-          response = random_broker.api_versions
-
-          Protocol.handle_error(response.error_code)
-
-          response.api_versions
-        end
     end
 
     # Clears the list of target topics.
@@ -246,6 +237,18 @@ module Kafka
       @cluster_info ||= fetch_cluster_info
     end
 
+    def fetch_api_versions
+      node = @seed_brokers.sample
+      broker = @broker_pool.connect(node.hostname, node.port)
+      response = broker.api_versions
+
+      Protocol.handle_error(response.error_code)
+
+      @logger.info "API versions: #{response.api_versions}"
+
+      response.api_versions
+    end
+
     # Fetches the cluster metadata.
     #
     # This is used to update the partition leadership information, among other things.
@@ -255,13 +258,15 @@ module Kafka
     # @raise [ConnectionError] if none of the nodes in `seed_brokers` are available.
     # @return [Protocol::MetadataResponse] the cluster metadata.
     def fetch_cluster_info
+      @api_versions = fetch_api_versions
+
       errors = []
 
       @seed_brokers.shuffle.each do |node|
         @logger.info "Fetching cluster metadata from #{node}"
 
         begin
-          broker = @broker_pool.connect(node.hostname, node.port)
+          broker = @broker_pool.connect(node.hostname, node.port, api_versions: api_versions)
           cluster_info = broker.fetch_metadata(topics: @target_topics)
 
           if cluster_info.brokers.empty?
@@ -294,7 +299,7 @@ module Kafka
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
 
-      @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+      @broker_pool.connect(info.host, info.port, node_id: info.node_id, api_versions: api_versions)
     end
 
     def controller_broker

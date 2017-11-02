@@ -8,6 +8,36 @@ module Kafka
         def initialize(api_key:, min_version:, max_version:)
           @api_key, @min_version, @max_version = api_key, min_version, max_version
         end
+
+        def versions
+          @versions ||= (min_version..max_version).to_a
+        end
+      end
+
+      class SupportedVersions
+        def initialize(api_versions)
+          @api_versions = api_versions
+        end
+
+        def find(*args)
+          @api_versions.find(*args)
+        end
+
+        def for_api(api_key)
+          @api_versions.find {|v| v.api_key == api_key }
+        end
+
+        def supported_version(api_key, proposed_versions)
+          compatible_versions = for_api(api_key).versions & proposed_versions
+          compatible_versions.max
+        end
+
+        def to_s
+          @api_versions.map {|version|
+            name = Protocol.api_name(version.api_key)
+            "#{name} (min=#{version.min_version}, max=#{version.max_version})"
+          }.join("; ")
+        end
       end
 
       attr_reader :error_code, :api_versions
@@ -28,7 +58,7 @@ module Kafka
           )
         end
 
-        new(error_code: error_code, api_versions: api_versions)
+        new(error_code: error_code, api_versions: SupportedVersions.new(api_versions))
       end
     end
   end

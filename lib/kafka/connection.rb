@@ -48,10 +48,11 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, instrumenter:, sasl_authenticator:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
+    def initialize(host:, port:, client_id:, api_versions: nil, logger:, instrumenter:, sasl_authenticator:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
       @instrumenter = instrumenter
+      @api_versions = api_versions
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
@@ -86,6 +87,14 @@ module Kafka
     #
     # @return [Object] the response.
     def send_request(request)
+      api_version = 0
+
+      if request.respond_to?(:api_version)
+        api_version = request.api_version
+      elsif request.respond_to?(:api_versions)
+        api_version = @api_versions.supported_version(request.api_key, request.api_versions)
+      end
+
       # Default notification payload.
       notification = {
         broker_host: @host,
@@ -100,7 +109,7 @@ module Kafka
 
         @correlation_id += 1
 
-        write_request(request, notification)
+        write_request(request, api_version, notification)
 
         response_class = request.response_class
         response = wait_for_response(response_class, notification) unless response_class.nil?
@@ -156,12 +165,14 @@ module Kafka
     # @param request [#encode] the request that should be encoded and written.
     #
     # @return [nil]
-    def write_request(request, notification)
-      @logger.debug "Sending request #{@correlation_id} to #{to_s}"
+    def write_request(request, api_version, notification)
+      api_name = Protocol.api_name(request.api_key)
+
+      @logger.debug "Sending #{api_name} API request #{@correlation_id} to #{to_s}"
 
       message = Kafka::Protocol::RequestMessage.new(
         api_key: request.api_key,
-        api_version: request.respond_to?(:api_version) ? request.api_version : 0,
+        api_version: api_version,
         correlation_id: @correlation_id,
         client_id: @client_id,
         request: request,
