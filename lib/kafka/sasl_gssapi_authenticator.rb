@@ -3,7 +3,7 @@ module Kafka
     GSSAPI_IDENT = "GSSAPI"
     GSSAPI_CONFIDENTIALITY = false
 
-    def initialize(conncetion:, logger:, sasl_gssapi_principal:, sasl_gssapi_keytab:)
+    def initialize(connection:, logger:, sasl_gssapi_principal:, sasl_gssapi_keytab:)
       @connection = connection
       @logger = logger
       @principal = sasl_gssapi_principal
