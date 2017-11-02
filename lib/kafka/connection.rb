@@ -86,10 +86,12 @@ module Kafka
     #
     # @return [Object] the response.
     def send_request(request)
+      api_name = Protocol.api_name(request.api_key)
+
       # Default notification payload.
       notification = {
         broker_host: @host,
-        api: Protocol.api_name(request.api_key),
+        api: api_name,
         request_size: 0,
         response_size: 0,
       }
@@ -99,6 +101,8 @@ module Kafka
         reopen if idle?
 
         @correlation_id += 1
+
+        @logger.debug "Sending #{api_name} API request #{@correlation_id} to #{to_s}"
 
         write_request(request, notification)
 
@@ -157,8 +161,6 @@ module Kafka
     #
     # @return [nil]
     def write_request(request, notification)
-      @logger.debug "Sending request #{@correlation_id} to #{to_s}"
-
       message = Kafka::Protocol::RequestMessage.new(
         api_key: request.api_key,
         api_version: request.respond_to?(:api_version) ? request.api_version : 0,
