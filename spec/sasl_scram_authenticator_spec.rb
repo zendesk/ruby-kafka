@@ -26,7 +26,7 @@ describe Kafka::SaslScramAuthenticator do
   let!(:broker) { FakeServer.start(server) }
 
   describe '#authenticate!' do
-   context 'when correct username/password using SHA-256' do
+    context 'when correct username/password using SHA-256' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
           'spec_username',

@@ -40,7 +40,7 @@ module Kafka
         response = parse_response(@decoder.bytes)
         log_debug "[scram] Received server's final msg: #{response}"
         log_debug "[scram] Client calculated server signature: #{server_signature}"
-        
+
         raise FailedScramAuthentication, response['e'] if response['e']
         raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
       rescue FailedScramAuthentication
@@ -132,7 +132,8 @@ module Kafka
         salt,
         iterations,
         digest.size,
-        digest)
+        digest
+      )
     end
 
     def hmac(data, key)
@@ -140,7 +141,7 @@ module Kafka
     end
 
     def xor(first, second)
-      first.bytes.zip(second.bytes).map{ |(a,b)| (a ^ b).chr }.join('')
+      first.bytes.zip(second.bytes).map { |(a, b)| (a ^ b).chr }.join('')
     end
 
     def parse_response(data)

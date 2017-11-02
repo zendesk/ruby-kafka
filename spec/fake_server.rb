@@ -1,5 +1,5 @@
 class FakeServer
-  SUPPORTED_MECHANISMS = ['PLAIN','SCRAM-SHA-256', 'SCRAM-SHA-512']
+  SUPPORTED_MECHANISMS = ['PLAIN', 'SCRAM-SHA-256', 'SCRAM-SHA-512']
 
   def self.start(server)
     thread = Thread.new { new(server).start }
@@ -36,9 +36,9 @@ class FakeServer
       request_bytes = decoder.bytes
       request_data = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes));
       api_key = request_data.int16
-      api_version = request_data.int16
+      _api_version = request_data.int16
       correlation_id = request_data.int32
-      client_id = request_data.string
+      _client_id = request_data.string
 
       message = request_data.string
 
@@ -69,22 +69,22 @@ class FakeServer
         encoder.write_bytes('')
       end
     when 'SCRAM-SHA-256', 'SCRAM-SHA-512'
-      scram_sasl_authenticate(auth_mechanism[6..-1],encoder, decoder)
+      scram_sasl_authenticate(auth_mechanism[6..-1], encoder, decoder)
     else
       puts "UNKNOWN AUTH MECHANISM"
     end
   end
 
-  def scram_sasl_authenticate (algorithm, encoder, decoder)
+  def scram_sasl_authenticate(algorithm, encoder, decoder)
     zk_username = 'spec_username'
     zk_data = {
-      'SHA-512': {
+      'SHA-512' => {
         salt: 'ODVhbzNqcGdneDR5ZzIzbmJpcnpodmdxcg==',
         stored_key: 'kfUpWelvXn406F1rKx3gE9Nz6qBBI+7v1Dg2n8QSNy9ZA1vU1jxYKOMRVV9188TDxhQe6Te0D8R2t0r5YFILnA==',
         server_key: 'CDkccMty/z9z7KUciVixhIuPLV53QtMHT2SbJUbvNqdaqGvtkTwDgMCLjWKqMKkUvnInYziJh/YfRKYNoLEnaQ==',
         iterations: 4096
       },
-      'SHA-256': {
+      'SHA-256' => {
         salt: 'MWVkNGdvam9qNG4yYmt1dG82ZGxrY3ppM3c=',
         stored_key: 'W28WpOjPl87SPMfFZsuyA5Yor0Z/q4+VZJlZqzDfgsI=',
         server_key: '17y/jubvVV8cWGxhaMN/8eOFTvnaYQ9f/JJmNszmOFI=',
@@ -92,9 +92,8 @@ class FakeServer
       }
     }
     @scram_mechanism = algorithm
-    algorithm = algorithm.to_sym
     request_bytes = decoder.bytes
-    _, _, userdata, nouncedata =  request_bytes.split(',')
+    _, _, userdata, nouncedata = request_bytes.split(',')
     _, username = userdata.split('=')
     _, client_nounce = nouncedata.split('=')
 
@@ -114,7 +113,7 @@ class FakeServer
 
     request_bytes = decoder.bytes
     c, r, proofdata = request_bytes.split(",")
-    _, proof = proofdata.split("=",2)
+    _, proof = proofdata.split("=", 2)
 
     client_last_message_without_proof = "#{c},#{r}"
     auth_message = [client_first_message_bare, server_first_message, client_last_message_without_proof].join(',')
@@ -141,7 +140,7 @@ class FakeServer
   end
 
   def xor(first, second)
-    first.bytes.zip(second.bytes).map{ |(a,b)| (a ^ b).chr }.join('')
+    first.bytes.zip(second.bytes).map { |(a, b)| (a ^ b).chr }.join('')
   end
 
   def hi(str, salt, iterations)
@@ -150,7 +149,8 @@ class FakeServer
       salt,
       iterations,
       digest.size,
-      digest)
+      digest
+    )
   end
 
   def hmac(data, key)
@@ -160,5 +160,4 @@ class FakeServer
   def h(str)
     digest.digest(str)
   end
-
 end
