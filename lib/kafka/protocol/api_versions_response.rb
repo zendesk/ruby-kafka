@@ -8,6 +8,18 @@ module Kafka
         def initialize(api_key:, min_version:, max_version:)
           @api_key, @min_version, @max_version = api_key, min_version, max_version
         end
+
+        def api_name
+          Protocol.api_name(api_key)
+        end
+
+        def to_s
+          "#{api_name}=#{min_version}..#{max_version}"
+        end
+
+        def inspect
+          "#<Kafka api version #{to_s}>"
+        end
       end
 
       attr_reader :error_code, :api_versions
