@@ -5,16 +5,16 @@ module Kafka
   SCRAM_SHA256 = 'SHA-256'.freeze
   SCRAM_SHA512 = 'SHA-512'.freeze
   class SaslScramAuthenticator
-    def initialize(username, password, mechanism: SCRAM_SHA256, logger: nil)
+    def initialize(username, password, mechanism: SCRAM_SHA256, logger: nil, connection:)
       @username = username
       @password = password
       @mechanism = mechanism
       @logger = logger
+      @connection = connection
     end
 
-    def authenticate!(connection)
-      connection = connection
-      response = connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-' + @mechanism))
+    def authenticate!
+      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-' + @mechanism))
 
       unless response.error_code == 0 && response.enabled_mechanisms.include?('SCRAM-' + @mechanism)
         raise Kafka::SaslScramError, "SCRAM-#{@mechanism} is not supported."
@@ -22,8 +22,8 @@ module Kafka
 
       log_debug "authenticating #{@username} with scram, mechanism: #{@mechanism}"
 
-      @encoder = connection.encoder
-      @decoder = connection.decoder
+      @encoder = @connection.encoder
+      @decoder = @connection.decoder
 
       begin
         msg = first_message

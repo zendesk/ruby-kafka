@@ -6,7 +6,7 @@ describe Kafka::SaslScramAuthenticator do
   let(:host) { "127.0.0.1" }
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
-  let(:authenticator) {
+  let(:sasl_authenticator) {
     instance_double(Kafka::SaslAuthenticator, authenticate!: true)
   }
 
@@ -19,7 +19,7 @@ describe Kafka::SaslScramAuthenticator do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
-      authenticator: authenticator
+      sasl_authenticator: sasl_authenticator
     )
   }
 
@@ -32,12 +32,13 @@ describe Kafka::SaslScramAuthenticator do
           'spec_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256
+          mechanism: Kafka::SCRAM_SHA256,
+          connection: connection
         )
       }
 
       it 'successfully authenticates' do
-        expect(sasl_scram_authenticator.authenticate!(connection)).to be_truthy
+        expect(sasl_scram_authenticator.authenticate!).to be_truthy
       end
     end
     context 'when correct username/password using SHA-512' do
@@ -46,12 +47,13 @@ describe Kafka::SaslScramAuthenticator do
           'spec_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA512
+          mechanism: Kafka::SCRAM_SHA512,
+          connection: connection
         )
       }
 
       it 'successfully authenticates' do
-        expect(sasl_scram_authenticator.authenticate!(connection)).to be_truthy
+        expect(sasl_scram_authenticator.authenticate!).to be_truthy
       end
     end
     context 'when incorrect username' do
@@ -60,12 +62,13 @@ describe Kafka::SaslScramAuthenticator do
           'spec_wrong_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256
+          mechanism: Kafka::SCRAM_SHA256,
+          connection: connection
         )
       }
 
       it 'raise error' do
-        expect { sasl_scram_authenticator.authenticate!(connection) }.to raise_error(Kafka::FailedScramAuthentication)
+        expect { sasl_scram_authenticator.authenticate! }.to raise_error(Kafka::FailedScramAuthentication)
       end
     end
     context 'when incorrect password' do
@@ -74,12 +77,13 @@ describe Kafka::SaslScramAuthenticator do
           'spec_username',
           'spec_wrong_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256
+          mechanism: Kafka::SCRAM_SHA256,
+          connection: connection
         )
       }
 
       it 'raise error' do
-        expect { sasl_scram_authenticator.authenticate!(connection) }.to raise_error(Kafka::FailedScramAuthentication)
+        expect { sasl_scram_authenticator.authenticate! }.to raise_error(Kafka::FailedScramAuthentication)
       end
     end
   end

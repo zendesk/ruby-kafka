@@ -49,28 +49,36 @@ module Kafka
     #
     # @param sasl_gssapi_keytab [String, nil] a KRB5 keytab filepath
     #
-    # @param authenticator [Authenticator, nil] an authenticator (responds to authenticate!)
+    # @param sasl_scram_username [String, nil] SCRAM username
     #
-    # @param ssl_context [OpenSSL::SSL::SSLContext, nil] a SSL context to use for the connection
+    # @param sasl_scram_password [String, nil] SCRAM password
+    #
+    # @param sasl_scram_mechanism [String, nil] Scram mechanism (Kafka::SCRAM_SHA256, Kafka::SCRAM_SHA512)
+    #
+    # @param use_ssl [Booleanm false] Use SSL
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
                    sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
-                   authenticator: nil, ssl_context: nil)
+                   use_ssl: false, sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
-      ssl_context = ssl_context || build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
+      ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
+      ssl_context = OpenSSL::SSL::SSLContext.new if use_ssl and !ssl_context
 
-      authenticator ||= SaslAuthenticator.new(
+      sasl_authenticator ||= SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,
         sasl_gssapi_keytab: sasl_gssapi_keytab,
         sasl_plain_authzid: sasl_plain_authzid,
         sasl_plain_username: sasl_plain_username,
         sasl_plain_password: sasl_plain_password,
+        sasl_scram_username: sasl_scram_username,
+        sasl_scram_password: sasl_scram_password,
+        sasl_scram_mechanism: sasl_scram_mechanism,
         logger: @logger
       )
 
@@ -81,7 +89,7 @@ module Kafka
         ssl_context: ssl_context,
         logger: @logger,
         instrumenter: @instrumenter,
-        authenticator: authenticator
+        sasl_authenticator: sasl_authenticator
       )
 
       @cluster = initialize_cluster

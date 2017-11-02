@@ -2,19 +2,19 @@ module Kafka
   class SaslPlainAuthenticator
     PLAIN_IDENT = "PLAIN"
 
-    def initialize(logger:, authzid:, username:, password:)
+    def initialize(connection:, logger:, authzid:, username:, password:)
+      @connection = connection
       @logger = logger
       @authzid = authzid
       @username = username
       @password = password
     end
 
-    def authenticate!(connection)
-      @logger.debug 'Authenticating SASL PLAIN'
-      response = connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(PLAIN_IDENT))
+    def authenticate!
+      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(PLAIN_IDENT))
 
-      @encoder = connection.encoder
-      @decoder = connection.decoder
+      @encoder = @connection.encoder
+      @decoder = @connection.decoder
 
       unless response.error_code == 0 && response.enabled_mechanisms.include?(PLAIN_IDENT)
         raise Kafka::Error, "#{PLAIN_IDENT} is not supported."

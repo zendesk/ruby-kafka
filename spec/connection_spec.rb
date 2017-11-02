@@ -6,7 +6,7 @@ describe Kafka::Connection do
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
 
-  let(:authenticator) {
+  let(:sasl_authenticator) {
     instance_double(Kafka::SaslAuthenticator, authenticate!: true)
   }
   let(:connection) {
@@ -18,7 +18,7 @@ describe Kafka::Connection do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
-      authenticator: authenticator
+      sasl_authenticator: sasl_authenticator
     )
   }
 
@@ -91,7 +91,7 @@ describe Kafka::Connection do
     end
 
     it "calls authenticate when a new connection is open" do
-      expect(authenticator).to receive(:authenticate!).with(connection).once
+      expect(sasl_authenticator).to receive(:authenticate!).with(connection).once
 
       response = connection.send_request(request)
       connection.send_request(request)
