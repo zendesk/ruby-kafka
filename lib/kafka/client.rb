@@ -49,6 +49,10 @@ module Kafka
     #
     # @param sasl_gssapi_keytab [String, nil] a KRB5 keytab filepath
     #
+    # @param authenticator [Authenticator, nil] an authenticator (responds to authenticate!)
+    #
+    # @param ssl_context [OpenSSL::SSL::SSLContext, nil] a SSL context to use for the connection
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,

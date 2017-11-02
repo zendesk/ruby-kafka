@@ -901,8 +901,9 @@ Typically, Kafka certificates come in the JKS format, which isn't supported by r
 
 #### Authentication using SASL
 
-Kafka has support for using SASL to authenticate clients. Currently GSSAPI and PLAIN mechanisms are supported by ruby-kafka.
+Kafka has support for using SASL to authenticate clients. Currently GSSAPI, SCRAM and PLAIN mechanisms are supported by ruby-kafka.
 
+##### GSSAPI
 In order to authenticate using GSSAPI, set your principal and optionally your keytab when initializing the Kafka client:
 
 ```ruby
@@ -911,8 +912,21 @@ kafka = Kafka.new(
   sasl_gssapi_keytab: '/etc/keytabs/kafka.keytab',
   # ...
 )
+
+# or
+
+require 'kafka/sasl_gssapi_authenticator'
+kafka = Kafka.new(
+  authenticator: Kafka::SaslGssapiAuthenticator(
+    sasl_gssapi_principal: 'kafka/kafka.example.com@EXAMPLE.COM',
+    sasl_gssapi_keytab: '/etc/keytabs/kafka.keytab',
+    logger: someLogger # optional
+  ),
+  # ...
+)
 ```
 
+##### PLAIN
 In order to authenticate using PLAIN, you must set your username and password when initializing the Kafka client:
 
 ```ruby
@@ -922,9 +936,53 @@ kafka = Kafka.new(
   sasl_plain_password: 'password'
   # ...
 )
+
+# or
+
+require 'kafka/sasl_plain_authenticator'
+kafka = Kafka.new(
+  ssl_ca_cert: File.read('/etc/openssl/cert.pem'), # Optional but highly recommended
+  authenticator: Kafka::SaslPlainAuthenticator(
+    username: 'username',
+    password: 'password',
+    logger: someLogger, # optional
+    authzid: 'auth_identity' # optional. if nil, username will be used by kafka
+  ),
+  # ...
+)
 ```
 
 **NOTE**: It is __highly__ recommended that you use SSL for encryption when using SASL_PLAIN
+
+##### SCRAM
+
+Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram). 
+
+```ruby
+require 'kafka/sasl_scram_authenticator'
+kafka = Kafka.new(
+  authenticator: Kafka::SaslScramAuthenticator.new(
+    'username',
+    'password',
+    logger: someLogger, # optional
+    mechanism: Kafka::SCRAM_SHA256 # optional Supported values are Kafka::SCRAM_SHA256 (default) and Kafka::SCRAM_SHA512
+  ),
+  # ...
+)
+```
+
+To use SCRAM over SSL and the server cert is signed by a CA in your default cert store, add a SSL context to enable SSL:
+```ruby
+require 'openssl'
+require 'kafka/sasl_scram_authenticator'
+kafka = Kafka.new(
+  ssl_context: OpenSSL::SSL::SSLContext.new,
+  authenticator: Kafka::SaslScramAuthenticator.new(
+    # ...
+  ),
+  # ...
+)
+```
 
 ## Design
 
