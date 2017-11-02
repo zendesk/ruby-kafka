@@ -20,33 +20,32 @@ module Kafka
         raise Kafka::SaslScramError, "SCRAM-#{@mechanism} is not supported."
       end
 
-      log_debug "authenticating #{@username} with scram, mechanism: #{@mechanism}"
+      log_debug "Authenticating #{@username} with SASL SCRAM #{@mechanism}"
 
       @encoder = @connection.encoder
       @decoder = @connection.decoder
 
       begin
         msg = first_message
-        log_debug "[scram] Sending client's first message: #{msg}"
+        log_debug "Sending first client SASL SCRAM message: #{msg}"
         @encoder.write_bytes(msg)
 
         @server_first_message = @decoder.bytes
-        log_debug "[scram] Received server's first message: #{@server_first_message}"
+        log_debug "Received first server SASL SCRAM message: #{@server_first_message}"
 
         msg = final_message
-        log_debug "[scram] Sending client's final message: #{msg}"
+        log_debug "Sending final client SASL SCRAM message: #{msg}"
         @encoder.write_bytes(msg)
 
         response = parse_response(@decoder.bytes)
-        log_debug "[scram] Received server's final msg: #{response}"
-        log_debug "[scram] Client calculated server signature: #{server_signature}"
+        log_debug "Received last server SASL SCRAM message: #{response}"
 
         raise FailedScramAuthentication, response['e'] if response['e']
         raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
       rescue EOFError => e
         raise FailedScramAuthentication, e.message
       end
-      log_debug "[scram] Authenticated"
+      log_debug "SASL SCRAM authentication successful"
     end
 
     private
