@@ -225,9 +225,6 @@ module Kafka
   class FetchError < Error
   end
 
-  class NoPartitionsAssignedError < Error
-  end
-
   class SaslScramError < Error
   end
 
