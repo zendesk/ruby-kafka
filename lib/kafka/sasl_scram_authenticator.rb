@@ -13,8 +13,8 @@ module Kafka
     end
 
     def authenticate!(connection)
-      @connection = connection
-      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-' + @mechanism))
+      connection = connection
+      response = connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-' + @mechanism))
 
       unless response.error_code == 0 && response.enabled_mechanisms.include?('SCRAM-' + @mechanism)
         raise Kafka::SaslScramError, "SCRAM-#{@mechanism} is not supported."
@@ -22,31 +22,34 @@ module Kafka
 
       log_debug "authenticating #{@username} with scram, mechanism: #{@mechanism}"
 
-      @encoder = @connection.encoder
-      @decoder = @connection.decoder
+      @encoder = connection.encoder
+      @decoder = connection.decoder
 
-      msg = first_message
-      log_debug "[scram] Sending client's first message: #{msg}"
-      @encoder.write_bytes(msg)
+      begin
+        msg = first_message
+        log_debug "[scram] Sending client's first message: #{msg}"
+        @encoder.write_bytes(msg)
 
-      @server_first_message = @decoder.bytes
-      log_debug "[scram] Received server's first message: #{@server_first_message}"
+        @server_first_message = @decoder.bytes
+        log_debug "[scram] Received server's first message: #{@server_first_message}"
 
-      msg = final_message
-      log_debug "[scram] Sending client's final message: #{msg}"
-      @encoder.write_bytes(msg)
+        msg = final_message
+        log_debug "[scram] Sending client's final message: #{msg}"
+        @encoder.write_bytes(msg)
 
-      response = parse_response(@decoder.bytes)
-      log_debug "[scram] Received server's final msg: #{response}"
-      log_debug "[scram] Client calculated server signature: #{server_signature}"
-
-      raise FailedScramAuthentication, response['e'] if response['e']
-      raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
-    rescue FailedScramAuthentication
-      raise
-    rescue StandardError => e
-      @logger.error "authentication error #{e.inspect}\n\n#{e.backtrace.join("\n")}"
-      raise FailedScramAuthentication, 'Authentication failed: Unknown reason'
+        response = parse_response(@decoder.bytes)
+        log_debug "[scram] Received server's final msg: #{response}"
+        log_debug "[scram] Client calculated server signature: #{server_signature}"
+        
+        raise FailedScramAuthentication, response['e'] if response['e']
+        raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
+      rescue FailedScramAuthentication
+        raise
+      rescue => e
+        @logger.error "authentication error #{e.inspect}\n\n#{e.backtrace.join("\n")}"
+        raise FailedScramAuthentication, 'Authentication failed: Unknown reason'
+      end
+      @logger.debug "[scram] Authenticated"
     end
 
     private
@@ -88,7 +91,7 @@ module Kafka
     end
 
     def auth_message
-      [first_message_bare, @server_first_message, final_message_without_proof].join(',')
+      msg = [first_message_bare, @server_first_message, final_message_without_proof].join(',')
     end
 
     def salted_password
