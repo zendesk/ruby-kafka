@@ -13,8 +13,8 @@ module Kafka
         TOPIC_METADATA_API
       end
 
-      def api_version
-        1
+      def api_versions
+        [0, 1]
       end
 
       def response_class

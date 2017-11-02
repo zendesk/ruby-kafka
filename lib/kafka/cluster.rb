@@ -8,6 +8,7 @@ module Kafka
   # to will be asked for the cluster metadata, which allows the cluster to map topic
   # partitions to the current leader for those partitions.
   class Cluster
+    attr_reader :api_versions
 
     # Initializes a Cluster with a set of seed brokers.
     #
@@ -26,6 +27,7 @@ module Kafka
       @broker_pool = broker_pool
       @cluster_info = nil
       @stale = true
+      @api_versions = nil
 
       # This is the set of topics we need metadata for. If empty, metadata for
       # all topics will be fetched.
@@ -51,17 +53,6 @@ module Kafka
 
     def api_version(api_key)
       api_versions.find {|version| version.api_key == api_key }
-    end
-
-    def api_versions
-      @api_versions ||=
-        begin
-          response = random_broker.api_versions
-
-          Protocol.handle_error(response.error_code)
-
-          response.api_versions
-        end
     end
 
     # Clears the list of target topics.
@@ -284,6 +275,20 @@ module Kafka
       error_description = errors.map {|node, exception| "- #{node}: #{exception}" }.join("\n")
 
       raise ConnectionError, "Could not connect to any of the seed brokers:\n#{error_description}"
+
+      @api_versions ||=
+        begin
+          response = random_broker.api_versions
+
+          Protocol.handle_error(response.error_code)
+
+          # New connections need to be set up with the API version support.
+          @broker_pool.reset
+
+          @logger.info "API versions: #{response.api_versions}"
+
+          response.api_versions
+        end
     end
 
     def random_broker
@@ -294,7 +299,7 @@ module Kafka
     def connect_to_broker(broker_id)
       info = cluster_info.find_broker(broker_id)
 
-      @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+      @broker_pool.connect(info.host, info.port, node_id: info.node_id, api_versions: api_versions)
     end
 
     def controller_broker

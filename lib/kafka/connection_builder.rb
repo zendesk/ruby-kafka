@@ -10,13 +10,14 @@ module Kafka
       @sasl_authenticator = sasl_authenticator
     end
 
-    def build_connection(host, port)
+    def build_connection(host, port, api_versions: nil)
       connection = Connection.new(
         host: host,
         port: port,
         client_id: @client_id,
         connect_timeout: @connect_timeout,
         socket_timeout: @socket_timeout,
+        api_versions: api_versions,
         logger: @logger,
         instrumenter: @instrumenter,
         ssl_context: @ssl_context,

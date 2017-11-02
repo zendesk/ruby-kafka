@@ -8,7 +8,7 @@ module Kafka
       @brokers = {}
     end
 
-    def connect(host, port, node_id: nil)
+    def connect(host, port, node_id: nil, api_versions: nil)
       if @brokers.key?(node_id)
         broker = @brokers.fetch(node_id)
         return broker if broker.address_match?(host, port)
@@ -17,7 +17,7 @@ module Kafka
       end
 
       broker = Broker.new(
-        connection: @connection_builder.build_connection(host, port),
+        connection: @connection_builder.build_connection(host, port, api_versions: api_versions),
         node_id: node_id,
         logger: @logger,
       )
@@ -25,6 +25,11 @@ module Kafka
       @brokers[node_id] = broker unless node_id.nil?
 
       broker
+    end
+
+    def reset
+      close
+      @brokers.clear
     end
 
     def close
