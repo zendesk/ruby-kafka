@@ -19,10 +19,11 @@ module Kafka
       # @param max_wait_time [Integer]
       # @param min_bytes [Integer]
       # @param topics [Hash]
-      def initialize(max_wait_time:, min_bytes:, topics:)
+      def initialize(max_wait_time:, min_bytes:, max_bytes:, topics:)
         @replica_id = REPLICA_ID
         @max_wait_time = max_wait_time
         @min_bytes = min_bytes
+        @max_bytes = max_bytes
         @topics = topics
       end
 
@@ -31,7 +32,7 @@ module Kafka
       end
 
       def api_version
-        2
+        3
       end
 
       def response_class
@@ -42,6 +43,7 @@ module Kafka
         encoder.write_int32(@replica_id)
         encoder.write_int32(@max_wait_time)
         encoder.write_int32(@min_bytes)
+        encoder.write_int32(@max_bytes)
 
         encoder.write_array(@topics) do |topic, partitions|
           encoder.write_string(topic)

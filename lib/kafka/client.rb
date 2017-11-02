@@ -369,6 +369,7 @@ module Kafka
         cluster: @cluster,
         logger: @logger,
         min_bytes: min_bytes,
+        max_bytes: max_bytes,
         max_wait_time: max_wait_time,
       )
 
