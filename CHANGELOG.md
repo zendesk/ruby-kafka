@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Fix bug when using compression (#458).
+- Update the v3 of the Fetch API, allowing a per-request `max_bytes` setting (#468).
 
 ## v0.5.0
 
