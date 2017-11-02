@@ -18,10 +18,11 @@ module Kafka
   #     operation.execute
   #
   class FetchOperation
-    def initialize(cluster:, logger:, min_bytes: 1, max_wait_time: 5)
+    def initialize(cluster:, logger:, min_bytes: 1, max_bytes: 10485760, max_wait_time: 5)
       @cluster = cluster
       @logger = logger
       @min_bytes = min_bytes
+      @max_bytes = max_bytes
       @max_wait_time = max_wait_time
       @topics = {}
     end
@@ -66,6 +67,7 @@ module Kafka
         options = {
           max_wait_time: @max_wait_time * 1000, # Kafka expects ms, not secs
           min_bytes: @min_bytes,
+          max_bytes: @max_bytes,
           topics: topics,
         }
 
