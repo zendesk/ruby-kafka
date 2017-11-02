@@ -1002,7 +1002,7 @@ Currently, there are three actively developed frameworks based on ruby-kafka, th
 
 * [DeliveryBoy](https://github.com/zendesk/delivery_boy) – A library that integrates with Ruby on Rails, making it easy to publish Kafka messages from any Rails application.
 
-* [WaterDrop](https://github.com/zendesk/delivery_boy) – A library for Ruby and Ruby on Rails applications, to easy publish Kafka messages in both sync and async way.
+* [WaterDrop](https://github.com/karafka/waterdrop) – A library for Ruby and Ruby on Rails applications, to easy publish Kafka messages in both sync and async way.
 
 ## Why Create A New Library?
 
