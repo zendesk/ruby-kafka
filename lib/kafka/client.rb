@@ -498,8 +498,8 @@ module Kafka
       }.to_h
     end
 
-    def api_versions
-      @cluster.api_versions
+    def apis
+      @cluster.apis
     end
 
     # Closes all connections to the Kafka brokers and frees up used resources.

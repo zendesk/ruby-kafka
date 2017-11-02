@@ -2,7 +2,7 @@ module Kafka
   module Protocol
 
     class ApiVersionsResponse
-      class ApiVersion
+      class ApiInfo
         attr_reader :api_key, :min_version, :max_version
 
         def initialize(api_key:, min_version:, max_version:)
@@ -22,25 +22,25 @@ module Kafka
         end
       end
 
-      attr_reader :error_code, :api_versions
+      attr_reader :error_code, :apis
 
-      def initialize(error_code:, api_versions:)
+      def initialize(error_code:, apis:)
         @error_code = error_code
-        @api_versions = api_versions
+        @apis = apis
       end
 
       def self.decode(decoder)
         error_code = decoder.int16
 
-        api_versions = decoder.array do
-          ApiVersion.new(
+        apis = decoder.array do
+          ApiInfo.new(
             api_key: decoder.int16,
             min_version: decoder.int16,
             max_version: decoder.int16,
           )
         end
 
-        new(error_code: error_code, api_versions: api_versions)
+        new(error_code: error_code, apis: apis)
       end
     end
   end

@@ -49,18 +49,18 @@ module Kafka
       end
     end
 
-    def api_version(api_key)
-      api_versions.find {|version| version.api_key == api_key }
+    def api_info(api_key)
+      apis.find {|api| api.api_key == api_key }
     end
 
-    def api_versions
-      @api_versions ||=
+    def apis
+      @apis ||=
         begin
           response = random_broker.api_versions
 
           Protocol.handle_error(response.error_code)
 
-          response.api_versions
+          response.apis
         end
     end
 
