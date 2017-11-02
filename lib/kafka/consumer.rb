@@ -179,6 +179,8 @@ module Kafka
     # @param min_bytes [Integer] the minimum number of bytes to read before
     #   returning messages from each broker; if `max_wait_time` is reached, this
     #   is ignored.
+    # @param max_bytes [Integer] the maximum number of bytes to read before
+    #   returning messages from each broker.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from each broker, in seconds.
     # @param automatically_mark_as_processed [Boolean] whether to automatically
@@ -190,10 +192,11 @@ module Kafka
     #   The original exception will be returned by calling `#cause` on the
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
-    def each_message(min_bytes: 1, max_wait_time: 1, automatically_mark_as_processed: true)
+    def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(
           min_bytes: min_bytes,
+          max_bytes: max_bytes,
           max_wait_time: max_wait_time,
           automatically_mark_as_processed: automatically_mark_as_processed
         )
@@ -253,6 +256,8 @@ module Kafka
     # @param min_bytes [Integer] the minimum number of bytes to read before
     #   returning messages from each broker; if `max_wait_time` is reached, this
     #   is ignored.
+    # @param max_bytes [Integer] the maximum number of bytes to read before
+    #   returning messages from each broker.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from each broker, in seconds.
     # @param automatically_mark_as_processed [Boolean] whether to automatically
@@ -261,10 +266,11 @@ module Kafka
     #   messages can be committed to Kafka.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
-    def each_batch(min_bytes: 1, max_wait_time: 1, automatically_mark_as_processed: true)
+    def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
       consumer_loop do
         batches = fetch_batches(
           min_bytes: min_bytes,
+          max_bytes: max_bytes,
           max_wait_time: max_wait_time,
           automatically_mark_as_processed: automatically_mark_as_processed
         )
@@ -400,7 +406,7 @@ module Kafka
       end
     end
 
-    def fetch_batches(min_bytes:, max_wait_time:, automatically_mark_as_processed:)
+    def fetch_batches(min_bytes:, max_bytes:, max_wait_time:, automatically_mark_as_processed:)
       join_group unless @group.member?
 
       subscribed_partitions = @group.subscribed_partitions
@@ -411,6 +417,7 @@ module Kafka
         cluster: @cluster,
         logger: @logger,
         min_bytes: min_bytes,
+        max_bytes: max_bytes,
         max_wait_time: max_wait_time,
       )
 
