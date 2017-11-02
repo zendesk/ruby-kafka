@@ -46,6 +46,8 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 6. [Support and Discussion](#support-and-discussion)
 7. [Roadmap](#roadmap)
 8. [Higher level libraries](#higher-level-libraries)
+    1. [Frameworks](#frameworks)
+    2. [Messages publishing libraries](#messages-publishing-libraries)
 
 ## Installation
 
@@ -986,15 +988,21 @@ Latest stable release, with native support for the Kafka 0.10 protocol and event
 
 ## Higher level libraries
 
-Currently, there are three actively developed frameworks based on ruby-kafka, that provide higher level API that can be used to work with Kafka messages:
+Currently, there are three actively developed frameworks based on ruby-kafka, that provide higher level API that can be used to work with Kafka messages and two libraries for publishing messages.
+
+### Frameworks
 
 * [Racecar](https://github.com/zendesk/racecar) - A simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It comes with sensible defaults and conventions.
-
-* [DeliveryBoy](https://github.com/zendesk/delivery_boy) – A library that integrates with Ruby on Rails, making it easy to publish Kafka messages from any Rails application.
 
 * [Karafka](https://github.com/karafka/karafka) - Framework used to simplify Apache Kafka based Ruby and Rails applications development. Karafka provides higher abstraction layers, including Capistrano, Docker and Heroku support.
 
 * [Phobos](https://github.com/klarna/phobos) - Micro framework and library for applications dealing with Apache Kafka. It wraps common behaviors needed by consumers and producers in an easy and convenient API.
+
+### Messages publishing libraries
+
+* [DeliveryBoy](https://github.com/zendesk/delivery_boy) – A library that integrates with Ruby on Rails, making it easy to publish Kafka messages from any Rails application.
+
+* [WaterDrop](https://github.com/zendesk/delivery_boy) – A library for Ruby and Ruby on Rails applications, to easy publish Kafka messages in both sync and async way.
 
 ## Why Create A New Library?
 
