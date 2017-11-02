@@ -43,13 +43,10 @@ module Kafka
 
         raise FailedScramAuthentication, response['e'] if response['e']
         raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
-      rescue FailedScramAuthentication
-        raise
-      rescue => e
-        @logger.error "authentication error #{e.inspect}\n\n#{e.backtrace.join("\n")}"
-        raise FailedScramAuthentication, 'Authentication failed: Unknown reason'
+      rescue EOFError => e
+        raise FailedScramAuthentication, e.message
       end
-      @logger.debug "[scram] Authenticated"
+      log_debug "[scram] Authenticated"
     end
 
     private
