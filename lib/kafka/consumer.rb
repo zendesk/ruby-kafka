@@ -355,6 +355,9 @@ module Kafka
           yield
         rescue HeartbeatError, OffsetCommitError
           join_group
+        rescue RebalanceInProgress
+          @logger.warn "Group rebalance in progress, re-joining..."
+          join_group
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
@@ -385,6 +388,8 @@ module Kafka
       @logger.error "Retrying to make final offsets commit (#{attempts} attempts left)"
       sleep(0.1)
       make_final_offsets_commit!(attempts - 1)
+    rescue Kafka::Error => e
+      @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
     end
 
     def join_group
