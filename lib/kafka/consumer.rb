@@ -388,6 +388,8 @@ module Kafka
       @logger.error "Retrying to make final offsets commit (#{attempts} attempts left)"
       sleep(0.1)
       make_final_offsets_commit!(attempts - 1)
+    rescue Kafka::Error => e
+      @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
     end
 
     def join_group
