@@ -6,6 +6,7 @@ Changes and additions to the library will be listed here.
 
 - Fix bug when using compression (#458).
 - Update the v3 of the Fetch API, allowing a per-request `max_bytes` setting (#468).
+- Make `#deliver_message` more resilient using retries and backoff.
 
 ## v0.5.0
 
