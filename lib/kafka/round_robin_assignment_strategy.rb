@@ -23,7 +23,11 @@ module Kafka
       end
 
       topics.each do |topic|
-        partitions = @cluster.partitions_for(topic).map(&:partition_id)
+        begin
+          partitions = @cluster.partitions_for(topic).map(&:partition_id)
+        rescue UnknownTopicOrPartition
+          raise UnknownTopicOrPartition, "unknown topic #{topic}"
+        end
 
         partitions_per_member = partitions.group_by {|partition_id|
           partition_id % members.count
