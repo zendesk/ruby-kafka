@@ -14,7 +14,7 @@ module Kafka
     }.freeze
 
     VALID_MECHANISMS = %w{sha256 sha512}.freeze
-    
+
     def initialize(username, password, mechanism: 'sha256', logger: nil, connection:)
       unless VALID_MECHANISMS.include?(mechanism)
         raise Kafka::SaslScramError, "SCRAM mechanism #{mechanism} is not supported."
