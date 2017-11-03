@@ -88,7 +88,7 @@ describe Kafka::SaslAuthenticator do
           sasl_plain_password: nil,
           sasl_scram_username: "username",
           sasl_scram_password: "password",
-          sasl_scram_mechanism: Kafka::SCRAM_SHA256
+          sasl_scram_mechanism: "SHA-256"
         }
       }
       let(:auth) { instance_double(Kafka::SaslScramAuthenticator) }

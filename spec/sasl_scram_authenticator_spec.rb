@@ -26,13 +26,13 @@ describe Kafka::SaslScramAuthenticator do
   let!(:broker) { FakeServer.start(server) }
 
   describe '#authenticate!' do
-    context 'when correct username/password using SHA-256' do
+    context 'when correct username/password using sha256' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
           'spec_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256,
+          mechanism: 'sha256',
           connection: connection
         )
       }
@@ -41,13 +41,13 @@ describe Kafka::SaslScramAuthenticator do
         expect(sasl_scram_authenticator.authenticate!).to be_truthy
       end
     end
-    context 'when correct username/password using SHA-512' do
+    context 'when correct username/password using sha512' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
           'spec_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA512,
+          mechanism: 'sha512',
           connection: connection
         )
       }
@@ -62,7 +62,7 @@ describe Kafka::SaslScramAuthenticator do
           'spec_wrong_username',
           'spec_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256,
+          mechanism: 'sha256',
           connection: connection
         )
       }
@@ -77,7 +77,7 @@ describe Kafka::SaslScramAuthenticator do
           'spec_username',
           'spec_wrong_password',
           logger: logger,
-          mechanism: Kafka::SCRAM_SHA256,
+          mechanism: 'sha256',
           connection: connection
         )
       }

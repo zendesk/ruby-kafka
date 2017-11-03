@@ -130,9 +130,9 @@ class FakeServer
 
   def digest
     @digest ||= case @scram_mechanism
-                when Kafka::SCRAM_SHA256
+                when 'SHA-256'
                   OpenSSL::Digest::SHA256.new.freeze
-                when Kafka::SCRAM_SHA512
+                when 'SHA-512'
                   OpenSSL::Digest::SHA512.new.freeze
                 else
                   raise StandardError, "Unknown mechanism '#{@scram_mechanism}'"

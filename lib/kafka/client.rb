@@ -53,7 +53,7 @@ module Kafka
     #
     # @param sasl_scram_password [String, nil] SCRAM password
     #
-    # @param sasl_scram_mechanism [String, nil] Scram mechanism (Kafka::SCRAM_SHA256, Kafka::SCRAM_SHA512)
+    # @param sasl_scram_mechanism [String, nil] Scram mechanism ("sha256", "sha512")
     #
     # @param use_ssl [Booleanm false] Use SSL
     #

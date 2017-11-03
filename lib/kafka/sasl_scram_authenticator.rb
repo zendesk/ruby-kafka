@@ -2,13 +2,26 @@ require 'securerandom'
 require 'base64'
 
 module Kafka
-  SCRAM_SHA256 = 'SHA-256'.freeze
-  SCRAM_SHA512 = 'SHA-512'.freeze
+
   class SaslScramAuthenticator
-    def initialize(username, password, mechanism: SCRAM_SHA256, logger: nil, connection:)
+    MECHANISMS = {
+      sha256: {
+        mechanism: 'SHA-256'
+      },
+      sha512: {
+        mechanism: 'SHA-512'
+      }
+    }.freeze
+
+    VALID_MECHANISMS = %w{sha256 sha512}.freeze
+    
+    def initialize(username, password, mechanism: 'sha256', logger: nil, connection:)
+      unless VALID_MECHANISMS.include?(mechanism)
+        raise Kafka::SaslScramError, "SCRAM mechanism #{mechanism} is not supported."
+      end
       @username = username
       @password = password
-      @mechanism = mechanism
+      @mechanism = MECHANISMS[mechanism.to_sym][:mechanism]
       @logger = logger
       @connection = connection
     end
@@ -154,9 +167,9 @@ module Kafka
 
     def digest
       @digest ||= case @mechanism
-                  when SCRAM_SHA256
+                  when 'SHA-256'
                     OpenSSL::Digest::SHA256.new.freeze
-                  when SCRAM_SHA512
+                  when 'SHA-512'
                     OpenSSL::Digest::SHA512.new.freeze
                   else
                     raise StandardError, "Unknown mechanism '#{@mechanism}'"
