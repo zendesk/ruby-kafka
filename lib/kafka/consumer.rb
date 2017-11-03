@@ -355,6 +355,9 @@ module Kafka
           yield
         rescue HeartbeatError, OffsetCommitError
           join_group
+        rescue RebalanceInProgress
+          @logger.warn "Group rebalance in progress, re-joining..."
+          join_group
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
