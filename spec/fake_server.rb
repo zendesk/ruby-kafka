@@ -34,7 +34,7 @@ class FakeServer
 
     loop do
       request_bytes = decoder.bytes
-      request_data = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes));
+      request_data = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes))
       api_key = request_data.int16
       _api_version = request_data.int16
       correlation_id = request_data.int32

@@ -70,7 +70,7 @@ module Kafka
       ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
       ssl_context = OpenSSL::SSL::SSLContext.new if use_ssl and !ssl_context
 
-      sasl_authenticator ||= SaslAuthenticator.new(
+      sasl_authenticator = SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,
         sasl_gssapi_keytab: sasl_gssapi_keytab,
         sasl_plain_authzid: sasl_plain_authzid,
