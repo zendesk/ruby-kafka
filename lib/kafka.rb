@@ -21,6 +21,10 @@ module Kafka
   class NoPartitionsToFetchFrom < Error
   end
 
+  # A message in a partition is larger than the maximum we've asked for.
+  class MessageTooLargeToRead < Error
+  end
+
   # Subclasses of this exception class map to an error code described in the
   # Kafka protocol specification.
   #

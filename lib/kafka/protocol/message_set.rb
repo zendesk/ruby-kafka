@@ -37,7 +37,13 @@ module Kafka
               fetched_messages << message
             end
           rescue EOFError
-            # We tried to decode a partial message; just skip it.
+            if fetched_messages.empty?
+              # If the first message in the set is truncated, it's likely because the
+              # message is larger than the maximum size that we have asked for.
+              raise MessageTooLargeToRead
+            else
+              # We tried to decode a partial message at the end of the set; just skip it.
+            end
           end
         end
 
