@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.4.4
+
 - Include the offset lag in batch consumer metrics (Statsd).
 
 ## v0.4.3
