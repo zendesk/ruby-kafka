@@ -99,6 +99,8 @@ module Kafka
       #
       # @return [String]
       def read(number_of_bytes)
+        return "" if number_of_bytes == 0
+
         data = @io.read(number_of_bytes) or raise EOFError
 
         # If the `read` call returned less data than expected we should not
