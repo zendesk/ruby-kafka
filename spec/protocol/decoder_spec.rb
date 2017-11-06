@@ -14,24 +14,18 @@ describe Kafka::Protocol::Decoder do
       expect { decoder.read(5) }.to raise_exception(EOFError)
     end
 
-    context "when there is no more data in the stream" do
-      it "raises EOFError" do
-        data = ""
-        decoder = Kafka::Protocol::Decoder.from_string(data)
+    it "raises EOFError if there is not enough data left in the stream" do
+      data = ""
+      decoder = Kafka::Protocol::Decoder.from_string(data)
 
-        expect { decoder.read(5) }.to raise_exception(EOFError)
-      end
+      expect { decoder.read(5) }.to raise_exception(EOFError)
+    end
 
-      context "when trying to read 0 bytes" do
-        it "does not attempt to read data from IO object and returns empty string" do
-          io = double
-          allow(io).to receive(:read)
-          decoder = Kafka::Protocol::Decoder.new(io)
+    it "returns an empty string when trying to read zero bytes" do
+      io = StringIO.new("")
+      decoder = Kafka::Protocol::Decoder.new(io)
 
-          expect(decoder.read(0)).to eq ""
-          expect(io).to_not have_received(:read)
-        end
-      end
+      expect(decoder.read(0)).to eq ""
     end
   end
 end
