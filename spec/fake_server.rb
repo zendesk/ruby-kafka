@@ -36,9 +36,9 @@ class FakeServer
       request_bytes = decoder.bytes
       request_data = Kafka::Protocol::Decoder.new(StringIO.new(request_bytes))
       api_key = request_data.int16
-      _api_version = request_data.int16
+      api_version = request_data.int16
       correlation_id = request_data.int32
-      _client_id = request_data.string
+      client_id = request_data.string
 
       message = request_data.string
 
@@ -46,8 +46,7 @@ class FakeServer
       response_encoder = Kafka::Protocol::Encoder.new(response)
       response_encoder.write_int32(correlation_id)
 
-      case api_key
-      when 17 then
+      if api_key == 17
         response_encoder.write_int16(0)
         response_encoder.write_array(SUPPORTED_MECHANISMS) { |m| response_encoder.write_string(m) }
         encoder.write_bytes(response.string)
