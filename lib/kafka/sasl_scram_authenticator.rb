@@ -5,35 +5,30 @@ module Kafka
 
   class SaslScramAuthenticator
     MECHANISMS = {
-      sha256: {
-        mechanism: 'SHA-256'
-      },
-      sha512: {
-        mechanism: 'SHA-512'
-      }
+      "sha256" => "SCRAM-SHA-256",
+      "sha512" => "SCRAM-SHA-512",
     }.freeze
 
-    VALID_MECHANISMS = %w{sha256 sha512}.freeze
-
     def initialize(username:, password:, mechanism: 'sha256', logger:, connection:)
-      unless VALID_MECHANISMS.include?(mechanism)
+      unless MECHANISMS.key?(mechanism)
         raise Kafka::SaslScramError, "SCRAM mechanism #{mechanism} is not supported."
       end
+
       @username = username
       @password = password
-      @mechanism = MECHANISMS[mechanism.to_sym][:mechanism]
+      @mechanism = MECHANISMS.fetch(mechanism)
       @logger = logger
       @connection = connection
     end
 
     def authenticate!
-      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-' + @mechanism))
+      response = @connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(@mechanism))
 
-      unless response.error_code == 0 && response.enabled_mechanisms.include?('SCRAM-' + @mechanism)
-        raise Kafka::SaslScramError, "SCRAM-#{@mechanism} is not supported."
+      unless response.error_code == 0 && response.enabled_mechanisms.include?(@mechanism)
+        raise Kafka::SaslScramError, "#{@mechanism} is not supported."
       end
 
-      @logger.debug "Authenticating #{@username} with SASL SCRAM #{@mechanism}"
+      @logger.debug "Authenticating #{@username} with SASL #{@mechanism}"
 
       encoder = @connection.encoder
       decoder = @connection.decoder
@@ -54,10 +49,11 @@ module Kafka
         @logger.debug "Received last server SASL SCRAM message: #{response}"
 
         raise FailedScramAuthentication, response['e'] if response['e']
-        raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
+        raise FailedScramAuthentication, "Invalid server signature" if response['v'] != server_signature
       rescue EOFError => e
         raise FailedScramAuthentication, e.message
       end
+
       @logger.debug "SASL SCRAM authentication successful"
     end
 
@@ -96,7 +92,7 @@ module Kafka
     end
 
     def auth_message
-      msg = [first_message_bare, @server_first_message, final_message_without_proof].join(',')
+      [first_message_bare, @server_first_message, final_message_without_proof].join(',')
     end
 
     def salted_password
@@ -163,12 +159,12 @@ module Kafka
 
     def digest
       @digest ||= case @mechanism
-                  when 'SHA-256'
-                    OpenSSL::Digest::SHA256.new.freeze
-                  when 'SHA-512'
-                    OpenSSL::Digest::SHA512.new.freeze
+                  when 'SCRAM-SHA-256'
+                    OpenSSL::Digest::SHA256.new
+                  when 'SCRAM-SHA-512'
+                    OpenSSL::Digest::SHA512.new
                   else
-                    raise StandardError, "Unknown mechanism '#{@mechanism}'"
+                    raise ArgumentError, "Unknown SASL mechanism '#{@mechanism}'"
                   end
     end
 
