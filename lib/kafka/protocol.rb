@@ -24,6 +24,7 @@ module Kafka
     LEAVE_GROUP_API = 13
     SYNC_GROUP_API = 14
     SASL_HANDSHAKE_API = 17
+    API_VERSIONS_API = 18
     CREATE_TOPICS_API = 19
 
     # A mapping from numeric API keys to symbolic API names.
@@ -40,6 +41,7 @@ module Kafka
       LEAVE_GROUP_API => :leave_group,
       SYNC_GROUP_API => :sync_group,
       SASL_HANDSHAKE_API => :sasl_handshake,
+      API_VERSIONS_API => :api_versions,
       CREATE_TOPICS_API => :create_topics,
     }
 

@@ -3,7 +3,7 @@ module Kafka
 
     class ApiVersionsRequest
       def api_key
-        18
+        API_VERSIONS_API
       end
 
       def encode(encoder)
