@@ -40,19 +40,25 @@ class FakeServer
       correlation_id = request_data.int32
       client_id = request_data.string
 
-      message = request_data.string
-
       response = StringIO.new
       response_encoder = Kafka::Protocol::Encoder.new(response)
       response_encoder.write_int32(correlation_id)
 
-      if api_key == 17
+      case api_key
+      when Kafka::Protocol::SASL_HANDSHAKE_API
+        message = request_data.string
+
         response_encoder.write_int16(0)
         response_encoder.write_array(SUPPORTED_MECHANISMS) { |m| response_encoder.write_string(m) }
         encoder.write_bytes(response.string)
         auth(message, encoder, decoder)
-        break
+      when Kafka::Protocol::API_VERSIONS_API
+        response_encoder.write_int16(0)
+        response_encoder.write_array([]) { |m| response_encoder.write_string(m) }
+        encoder.write_bytes(response.string)
       else
+        # Just echo back a string for testing.
+        message = request_data.string
         response_encoder.write_string(message)
         encoder.write_bytes(response.string)
       end
@@ -121,10 +127,12 @@ class FakeServer
     client_signature = hmac(stored_key, auth_message)
     server_proof = Base64.strict_encode64(xor(client_key, client_signature))
 
-    return if server_proof != proof
-
-    server_signature = Base64.strict_encode64(hmac(server_key, auth_message))
-    encoder.write_bytes("v=#{server_signature}")
+    if server_proof != proof
+      encoder.write_bytes("e=failed")
+    else
+      server_signature = Base64.strict_encode64(hmac(server_key, auth_message))
+      encoder.write_bytes("v=#{server_signature}")
+    end
   end
 
   def digest

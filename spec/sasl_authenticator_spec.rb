@@ -3,7 +3,24 @@ require 'fake_server'
 describe Kafka::SaslAuthenticator do
   let(:logger) { LOGGER }
 
-  let(:connection) { double("Connection") }
+  let(:host) { "127.0.0.1" }
+  let(:server) { TCPServer.new(host, 0) }
+  let(:port) { server.addr[1] }
+
+  let(:connection) {
+    Kafka::Connection.new(
+      host: host,
+      port: port,
+      client_id: "test",
+      logger: logger,
+      instrumenter: Kafka::Instrumenter.new(client_id: "test"),
+      connect_timeout: 0.1,
+      socket_timeout: 0.1,
+      sasl_authenticator: sasl_authenticator
+    )
+  }
+
+  let!(:fake_server) { FakeServer.start(server) }
 
   let(:sasl_authenticator) {
     Kafka::SaslAuthenticator.new(
@@ -11,94 +28,77 @@ describe Kafka::SaslAuthenticator do
     )
   }
 
-  describe '#authenticate!' do
-    context "when no authentication" do
-      let(:auth_options) {
-        {
-          sasl_gssapi_principal: nil,
-          sasl_gssapi_keytab: nil,
-          sasl_plain_authzid: nil,
-          sasl_plain_username: nil,
-          sasl_plain_password: nil,
-          sasl_scram_username: nil,
-          sasl_scram_password: nil,
-          sasl_scram_mechanism: nil
-        }
-      }
+  let(:auth_options) {
+    {
+      sasl_gssapi_principal: nil,
+      sasl_gssapi_keytab: nil,
+      sasl_plain_authzid: nil,
+      sasl_plain_username: nil,
+      sasl_plain_password: nil,
+      sasl_scram_username: nil,
+      sasl_scram_password: nil,
+      sasl_scram_mechanism: nil
+    }
+  }
 
-      it "doesn't call any authentication strategy" do
-        expect { sasl_authenticator.authenticate!(connection) }.to_not raise_error
-      end
+  context "when SASL has not been configured" do
+    it "still works" do
+      request = Kafka::Protocol::ApiVersionsRequest.new
+      response = connection.send_request(request)
+
+      expect(response.error_code).to eq 0
+    end
+  end
+
+  context "when SASL PLAIN has been configured" do
+    before do
+      auth_options.update(
+        sasl_plain_authzid: "",
+        sasl_plain_username: "spec_username",
+        sasl_plain_password: "spec_password",
+      )
     end
 
-    context "when sasl palin authentication" do
-      let(:auth_options) {
-        {
-          sasl_gssapi_principal: nil,
-          sasl_gssapi_keytab: nil,
-          sasl_plain_authzid: "",
-          sasl_plain_username: "user",
-          sasl_plain_password: "pass",
-          sasl_scram_username: nil,
-          sasl_scram_password: nil,
-          sasl_scram_mechanism: nil
-        }
-      }
-      let(:auth) { instance_double(Kafka::SaslPlainAuthenticator) }
+    it "authenticates" do
+      request = Kafka::Protocol::ApiVersionsRequest.new
+      response = connection.send_request(request)
 
-      it "uses sasl plain authentication strategy" do
-        expect(Kafka::SaslPlainAuthenticator).to receive(:new).and_return(auth)
-        expect(auth).to receive(:authenticate!)
-
-        sasl_authenticator.authenticate!(connection)
-      end
+      expect(response.error_code).to eq 0
     end
 
-    context "when sasl gssapi authentication" do
-      let(:auth_options) {
-        {
-          sasl_gssapi_principal: "foo",
-          sasl_gssapi_keytab: "bar",
-          sasl_plain_authzid: "",
-          sasl_plain_username: nil,
-          sasl_plain_password: nil,
-          sasl_scram_username: nil,
-          sasl_scram_password: nil,
-          sasl_scram_mechanism: nil
-        }
-      }
+    it "raises Kafka::Error when the username or password is incorrect" do
+      auth_options[:sasl_plain_password] = "wrong"
 
-      let(:auth) { instance_double(Kafka::SaslGssapiAuthenticator) }
+      expect {
+        request = Kafka::Protocol::ApiVersionsRequest.new
+        connection.send_request(request)
+      }.to raise_error(Kafka::Error, /SASL PLAIN authentication failed/)
+    end
+  end
 
-      it "uses sasl gssapi authentication strategy" do
-        expect(Kafka::SaslGssapiAuthenticator).to receive(:new).and_return(auth)
-        expect(auth).to receive(:authenticate!)
-
-        sasl_authenticator.authenticate!(connection)
-      end
+  context "when SASL SCRAM has been configured" do
+    before do
+      auth_options.update(
+        sasl_scram_username: "spec_username",
+        sasl_scram_password: "spec_password",
+        sasl_scram_mechanism: "sha256"
+      )
     end
 
-    context "when sasl scram authentication" do
-      let(:auth_options) {
-        {
-          sasl_gssapi_principal: nil,
-          sasl_gssapi_keytab: nil,
-          sasl_plain_authzid: nil,
-          sasl_plain_username: nil,
-          sasl_plain_password: nil,
-          sasl_scram_username: "username",
-          sasl_scram_password: "password",
-          sasl_scram_mechanism: "SHA-256"
-        }
-      }
-      let(:auth) { instance_double(Kafka::SaslScramAuthenticator) }
+    it "authenticates" do
+      request = Kafka::Protocol::ApiVersionsRequest.new
+      response = connection.send_request(request)
 
-      it "uses sasl scram authentication strategy" do
-        expect(Kafka::SaslScramAuthenticator).to receive(:new).and_return(auth)
-        expect(auth).to receive(:authenticate!)
+      expect(response.error_code).to eq 0
+    end
 
-        sasl_authenticator.authenticate!(connection)
-      end
+    it "raises Kafka::Error when the username or password is incorrect" do
+      auth_options[:sasl_scram_password] = "wrong"
+
+      expect {
+        request = Kafka::Protocol::ApiVersionsRequest.new
+        connection.send_request(request)
+      }.to raise_error(Kafka::FailedScramAuthentication)
     end
   end
 end
