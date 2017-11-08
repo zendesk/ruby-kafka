@@ -32,8 +32,8 @@ module Kafka
 
     def sasl_scram_authenticate(connection)
       auth = SaslScramAuthenticator.new(
-        @sasl_scram_username,
-        @sasl_scram_password,
+        username: @sasl_scram_username,
+        password: @sasl_scram_password,
         logger: @logger,
         mechanism: @sasl_scram_mechanism,
         connection: connection

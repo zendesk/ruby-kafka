@@ -53,22 +53,19 @@ module Kafka
     #
     # @param sasl_scram_password [String, nil] SCRAM password
     #
-    # @param sasl_scram_mechanism [String, nil] Scram mechanism ("sha256", "sha512")
-    #
-    # @param use_ssl [Booleanm false] Use SSL
+    # @param sasl_scram_mechanism [String, nil] Scram mechanism, either "sha256" or "sha512"
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
                    sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
-                   use_ssl: false, sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil)
+                   sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
       ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
-      ssl_context = OpenSSL::SSL::SSLContext.new if use_ssl and !ssl_context
 
       sasl_authenticator = SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,

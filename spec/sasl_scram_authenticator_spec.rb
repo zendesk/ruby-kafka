@@ -29,8 +29,8 @@ describe Kafka::SaslScramAuthenticator do
     context 'when correct username/password using sha256' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
-          'spec_username',
-          'spec_password',
+          username: 'spec_username',
+          password: 'spec_password',
           logger: logger,
           mechanism: 'sha256',
           connection: connection
@@ -44,8 +44,8 @@ describe Kafka::SaslScramAuthenticator do
     context 'when correct username/password using sha512' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
-          'spec_username',
-          'spec_password',
+          username: 'spec_username',
+          password: 'spec_password',
           logger: logger,
           mechanism: 'sha512',
           connection: connection
@@ -59,8 +59,8 @@ describe Kafka::SaslScramAuthenticator do
     context 'when incorrect username' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
-          'spec_wrong_username',
-          'spec_password',
+          username: 'spec_wrong_username',
+          password: 'spec_password',
           logger: logger,
           mechanism: 'sha256',
           connection: connection
@@ -74,8 +74,8 @@ describe Kafka::SaslScramAuthenticator do
     context 'when incorrect password' do
       let(:sasl_scram_authenticator) {
         Kafka::SaslScramAuthenticator.new(
-          'spec_username',
-          'spec_wrong_password',
+          username: 'spec_username',
+          password: 'spec_wrong_password',
           logger: logger,
           mechanism: 'sha256',
           connection: connection
