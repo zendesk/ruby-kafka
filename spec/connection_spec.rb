@@ -24,20 +24,6 @@ describe Kafka::Connection do
 
   let!(:broker) { FakeServer.start(server) }
 
-  describe "#address_match?" do
-    it "is true when host and port match current host and port" do
-      expect(connection.address_match?(host, port)).to be_truthy
-    end
-
-    it "is false when host does not match current host" do
-      expect(connection.address_match?("#{host}1", port)).to be_falsey
-    end
-
-    it "is false when port does not match current port" do
-      expect(connection.address_match?(host, "#{port}1")).to be_falsey
-    end
-  end
-
   describe "#send_request" do
     let(:api_key) { 0 }
     let(:request) { double(:request, api_key: api_key) }
