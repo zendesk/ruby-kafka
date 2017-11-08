@@ -19,7 +19,10 @@ describe Kafka::SaslAuthenticator do
           sasl_gssapi_keytab: nil,
           sasl_plain_authzid: nil,
           sasl_plain_username: nil,
-          sasl_plain_password: nil
+          sasl_plain_password: nil,
+          sasl_scram_username: nil,
+          sasl_scram_password: nil,
+          sasl_scram_mechanism: nil
         }
       }
 
@@ -35,7 +38,10 @@ describe Kafka::SaslAuthenticator do
           sasl_gssapi_keytab: nil,
           sasl_plain_authzid: "",
           sasl_plain_username: "user",
-          sasl_plain_password: "pass"
+          sasl_plain_password: "pass",
+          sasl_scram_username: nil,
+          sasl_scram_password: nil,
+          sasl_scram_mechanism: nil
         }
       }
       let(:auth) { instance_double(Kafka::SaslPlainAuthenticator) }
@@ -55,7 +61,10 @@ describe Kafka::SaslAuthenticator do
           sasl_gssapi_keytab: "bar",
           sasl_plain_authzid: "",
           sasl_plain_username: nil,
-          sasl_plain_password: nil
+          sasl_plain_password: nil,
+          sasl_scram_username: nil,
+          sasl_scram_password: nil,
+          sasl_scram_mechanism: nil
         }
       }
 
@@ -63,6 +72,29 @@ describe Kafka::SaslAuthenticator do
 
       it "uses sasl gssapi authentication strategy" do
         expect(Kafka::SaslGssapiAuthenticator).to receive(:new).and_return(auth)
+        expect(auth).to receive(:authenticate!)
+
+        sasl_authenticator.authenticate!(connection)
+      end
+    end
+
+    context "when sasl scram authentication" do
+      let(:auth_options) {
+        {
+          sasl_gssapi_principal: nil,
+          sasl_gssapi_keytab: nil,
+          sasl_plain_authzid: nil,
+          sasl_plain_username: nil,
+          sasl_plain_password: nil,
+          sasl_scram_username: "username",
+          sasl_scram_password: "password",
+          sasl_scram_mechanism: "SHA-256"
+        }
+      }
+      let(:auth) { instance_double(Kafka::SaslScramAuthenticator) }
+
+      it "uses sasl scram authentication strategy" do
+        expect(Kafka::SaslScramAuthenticator).to receive(:new).and_return(auth)
         expect(auth).to receive(:authenticate!)
 
         sasl_authenticator.authenticate!(connection)

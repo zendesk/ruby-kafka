@@ -901,8 +901,9 @@ Typically, Kafka certificates come in the JKS format, which isn't supported by r
 
 #### Authentication using SASL
 
-Kafka has support for using SASL to authenticate clients. Currently GSSAPI and PLAIN mechanisms are supported by ruby-kafka.
+Kafka has support for using SASL to authenticate clients. Currently GSSAPI, SCRAM and PLAIN mechanisms are supported by ruby-kafka.
 
+##### GSSAPI
 In order to authenticate using GSSAPI, set your principal and optionally your keytab when initializing the Kafka client:
 
 ```ruby
@@ -913,6 +914,7 @@ kafka = Kafka.new(
 )
 ```
 
+##### PLAIN
 In order to authenticate using PLAIN, you must set your username and password when initializing the Kafka client:
 
 ```ruby
@@ -925,6 +927,18 @@ kafka = Kafka.new(
 ```
 
 **NOTE**: It is __highly__ recommended that you use SSL for encryption when using SASL_PLAIN
+
+##### SCRAM
+Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram). 
+
+```ruby
+kafka = Kafka.new(
+  sasl_scram_username: 'username',
+  sasl_scram_password: 'password',
+  sasl_scram_mechanism: 'sha256',
+  # ...
+)
+```
 
 ## Design
 

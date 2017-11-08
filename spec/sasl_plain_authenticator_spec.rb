@@ -28,11 +28,11 @@ describe Kafka::SaslPlainAuthenticator do
     context 'when correct username/password' do
       let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
-          connection: connection,
           logger: logger,
           authzid: 'spec_authzid',
           username: 'spec_username',
-          password: 'spec_password'
+          password: 'spec_password',
+          connection: connection
         )
       }
 
@@ -44,11 +44,11 @@ describe Kafka::SaslPlainAuthenticator do
     context 'when incorrect username/password' do
       let(:sasl_plain_authenticator) {
         Kafka::SaslPlainAuthenticator.new(
-          connection: connection,
           logger: logger,
           authzid: '',
           username: 'bad_username',
-          password: 'bad_password'
+          password: 'bad_password',
+          connection: connection
         )
       }
 
