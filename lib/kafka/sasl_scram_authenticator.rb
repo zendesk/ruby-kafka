@@ -15,7 +15,7 @@ module Kafka
 
     VALID_MECHANISMS = %w{sha256 sha512}.freeze
 
-    def initialize(username, password, mechanism: 'sha256', logger: nil, connection:)
+    def initialize(username:, password:, mechanism: 'sha256', logger:, connection:)
       unless VALID_MECHANISMS.include?(mechanism)
         raise Kafka::SaslScramError, "SCRAM mechanism #{mechanism} is not supported."
       end
@@ -33,39 +33,35 @@ module Kafka
         raise Kafka::SaslScramError, "SCRAM-#{@mechanism} is not supported."
       end
 
-      log_debug "Authenticating #{@username} with SASL SCRAM #{@mechanism}"
+      @logger.debug "Authenticating #{@username} with SASL SCRAM #{@mechanism}"
 
-      @encoder = @connection.encoder
-      @decoder = @connection.decoder
+      encoder = @connection.encoder
+      decoder = @connection.decoder
 
       begin
         msg = first_message
-        log_debug "Sending first client SASL SCRAM message: #{msg}"
-        @encoder.write_bytes(msg)
+        @logger.debug "Sending first client SASL SCRAM message: #{msg}"
+        encoder.write_bytes(msg)
 
-        @server_first_message = @decoder.bytes
-        log_debug "Received first server SASL SCRAM message: #{@server_first_message}"
+        @server_first_message = decoder.bytes
+        @logger.debug "Received first server SASL SCRAM message: #{@server_first_message}"
 
         msg = final_message
-        log_debug "Sending final client SASL SCRAM message: #{msg}"
-        @encoder.write_bytes(msg)
+        @logger.debug "Sending final client SASL SCRAM message: #{msg}"
+        encoder.write_bytes(msg)
 
-        response = parse_response(@decoder.bytes)
-        log_debug "Received last server SASL SCRAM message: #{response}"
+        response = parse_response(decoder.bytes)
+        @logger.debug "Received last server SASL SCRAM message: #{response}"
 
         raise FailedScramAuthentication, response['e'] if response['e']
         raise FailedScramAuthentication, 'Invalid server signature' if response['v'] != server_signature
       rescue EOFError => e
         raise FailedScramAuthentication, e.message
       end
-      log_debug "SASL SCRAM authentication successful"
+      @logger.debug "SASL SCRAM authentication successful"
     end
 
     private
-
-    def log_debug(str)
-      @logger.debug str if @logger
-    end
 
     def first_message
       "n,,#{first_message_bare}"
