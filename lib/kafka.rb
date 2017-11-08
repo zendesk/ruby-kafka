@@ -25,6 +25,10 @@ module Kafka
   class MessageTooLargeToRead < Error
   end
 
+  # A connection has been unused for too long, we assume the server has killed it.
+  class IdleConnection < Error
+  end
+
   # Subclasses of this exception class map to an error code described in the
   # Kafka protocol specification.
   #

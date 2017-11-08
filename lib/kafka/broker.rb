@@ -6,6 +6,7 @@ module Kafka
   class Broker
     def initialize(connection_builder:, host:, port:, node_id: nil, logger:)
       @connection_builder = connection_builder
+      @connection = nil
       @host = host
       @port = port
       @node_id = node_id
@@ -33,7 +34,7 @@ module Kafka
     def fetch_metadata(**options)
       request = Protocol::TopicMetadataRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     # Fetches messages from a specified topic and partition.
@@ -43,7 +44,7 @@ module Kafka
     def fetch_messages(**options)
       request = Protocol::FetchRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     # Lists the offset of the specified topics and partitions.
@@ -53,7 +54,7 @@ module Kafka
     def list_offsets(**options)
       request = Protocol::ListOffsetRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     # Produces a set of messages to the broker.
@@ -63,61 +64,75 @@ module Kafka
     def produce(**options)
       request = Protocol::ProduceRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def fetch_offsets(**options)
       request = Protocol::OffsetFetchRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def commit_offsets(**options)
       request = Protocol::OffsetCommitRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def join_group(**options)
       request = Protocol::JoinGroupRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def sync_group(**options)
       request = Protocol::SyncGroupRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def leave_group(**options)
       request = Protocol::LeaveGroupRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def find_group_coordinator(**options)
       request = Protocol::GroupCoordinatorRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def heartbeat(**options)
       request = Protocol::HeartbeatRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def create_topics(**options)
       request = Protocol::CreateTopicsRequest.new(**options)
 
-      connection.send_request(request)
+      send_request(request)
     end
 
     def api_versions
       request = Protocol::ApiVersionsRequest.new
 
+      send_request(request)
+    end
+
+    private
+
+    def send_request(request)
       connection.send_request(request)
+    rescue IdleConnection
+      @logger.warn "Connection has been unused for too long, re-connecting..."
+      @connection = nil
+      retry
+    rescue ConnectionError
+      @connection = nil
+
+      raise
     end
 
     def connection

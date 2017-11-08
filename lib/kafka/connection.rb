@@ -71,8 +71,6 @@ module Kafka
       @logger.debug "Closing socket to #{to_s}"
 
       @socket.close if @socket
-
-      @socket = nil
     end
 
     # Sends a request over the connection.
@@ -94,7 +92,8 @@ module Kafka
 
       @instrumenter.instrument("request.connection", notification) do
         open unless open?
-        reopen if idle?
+
+        raise IdleConnection if idle?
 
         @correlation_id += 1
 
@@ -140,11 +139,6 @@ module Kafka
     rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
-    end
-
-    def reopen
-      close
-      open
     end
 
     def idle?
