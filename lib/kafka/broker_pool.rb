@@ -17,7 +17,9 @@ module Kafka
       end
 
       broker = Broker.new(
-        connection: @connection_builder.build_connection(host, port),
+        connection_builder: @connection_builder,
+        host: host,
+        port: port,
         node_id: node_id,
         logger: @logger,
       )

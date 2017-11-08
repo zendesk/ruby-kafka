@@ -16,7 +16,6 @@ describe Kafka::SaslAuthenticator do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
-      sasl_authenticator: sasl_authenticator
     )
   }
 
@@ -43,10 +42,7 @@ describe Kafka::SaslAuthenticator do
 
   context "when SASL has not been configured" do
     it "still works" do
-      request = Kafka::Protocol::ApiVersionsRequest.new
-      response = connection.send_request(request)
-
-      expect(response.error_code).to eq 0
+      sasl_authenticator.authenticate!(connection)
     end
   end
 
@@ -60,18 +56,14 @@ describe Kafka::SaslAuthenticator do
     end
 
     it "authenticates" do
-      request = Kafka::Protocol::ApiVersionsRequest.new
-      response = connection.send_request(request)
-
-      expect(response.error_code).to eq 0
+      sasl_authenticator.authenticate!(connection)
     end
 
     it "raises Kafka::Error when the username or password is incorrect" do
       auth_options[:sasl_plain_password] = "wrong"
 
       expect {
-        request = Kafka::Protocol::ApiVersionsRequest.new
-        connection.send_request(request)
+        sasl_authenticator.authenticate!(connection)
       }.to raise_error(Kafka::Error, /SASL PLAIN authentication failed/)
     end
   end
@@ -86,18 +78,14 @@ describe Kafka::SaslAuthenticator do
     end
 
     it "authenticates" do
-      request = Kafka::Protocol::ApiVersionsRequest.new
-      response = connection.send_request(request)
-
-      expect(response.error_code).to eq 0
+      sasl_authenticator.authenticate!(connection)
     end
 
     it "raises Kafka::Error when the username or password is incorrect" do
       auth_options[:sasl_scram_password] = "wrong"
 
       expect {
-        request = Kafka::Protocol::ApiVersionsRequest.new
-        connection.send_request(request)
+        sasl_authenticator.authenticate!(connection)
       }.to raise_error(Kafka::FailedScramAuthentication)
     end
   end

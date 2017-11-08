@@ -3,7 +3,21 @@ require "kafka/protocol/message"
 describe Kafka::Broker do
   let(:logger) { LOGGER }
   let(:connection) { FakeConnection.new }
-  let(:broker) { Kafka::Broker.new(connection: connection, logger: logger) }
+  let(:connection_builder) { double(:connection_builder) }
+
+  before do
+    allow(connection_builder).to receive(:build_connection) { connection }
+  end
+
+  let(:broker) {
+    Kafka::Broker.new(
+      connection_builder: connection_builder,
+      host: "x.com",
+      port: 9092,
+      node_id: 1,
+      logger: logger,
+    )
+  }
 
   class FakeConnection
     def initialize
@@ -23,10 +37,14 @@ describe Kafka::Broker do
     it "delegates to @connection" do
       host = "test_host"
       port = 333
-      connection = instance_double(Kafka::Connection)
-      allow(connection).to receive(:address_match?).with(host, port) { true }
 
-      broker = Kafka::Broker.new(connection: connection, logger: logger)
+      broker = Kafka::Broker.new(
+        connection_builder: connection_builder,
+        host: host,
+        port: port,
+        node_id: 1,
+        logger: logger,
+      )
 
       expect(broker.address_match?(host, port)).to be_truthy
     end

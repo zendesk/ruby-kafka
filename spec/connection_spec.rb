@@ -6,9 +6,6 @@ describe Kafka::Connection do
   let(:server) { TCPServer.new(host, 0) }
   let(:port) { server.addr[1] }
 
-  let(:sasl_authenticator) {
-    instance_double(Kafka::SaslAuthenticator, authenticate!: true)
-  }
   let(:connection) {
     Kafka::Connection.new(
       host: host,
@@ -18,25 +15,10 @@ describe Kafka::Connection do
       instrumenter: Kafka::Instrumenter.new(client_id: "test"),
       connect_timeout: 0.1,
       socket_timeout: 0.1,
-      sasl_authenticator: sasl_authenticator
     )
   }
 
   let!(:broker) { FakeServer.start(server) }
-
-  describe "#address_match?" do
-    it "is true when host and port match current host and port" do
-      expect(connection.address_match?(host, port)).to be_truthy
-    end
-
-    it "is false when host does not match current host" do
-      expect(connection.address_match?("#{host}1", port)).to be_falsey
-    end
-
-    it "is false when port does not match current port" do
-      expect(connection.address_match?(host, "#{port}1")).to be_falsey
-    end
-  end
 
   describe "#send_request" do
     let(:api_key) { 0 }
@@ -88,16 +70,6 @@ describe Kafka::Connection do
       expect {
         connection.send_request(request)
       }.to raise_error(Kafka::ConnectionError)
-    end
-
-    it "calls authenticate when a new connection is open" do
-      expect(sasl_authenticator).to receive(:authenticate!).with(connection).once
-
-      response = connection.send_request(request)
-      connection.send_request(request)
-      connection.send_request(request)
-
-      expect(response).to eq "hello!"
     end
 
     it "re-opens the connection after a network error" do
