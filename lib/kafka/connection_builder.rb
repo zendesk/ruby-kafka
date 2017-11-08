@@ -20,8 +20,9 @@ module Kafka
         logger: @logger,
         instrumenter: @instrumenter,
         ssl_context: @ssl_context,
-        sasl_authenticator: @sasl_authenticator
       )
+
+      @sasl_authenticator.authenticate!(connection)
 
       connection
     end

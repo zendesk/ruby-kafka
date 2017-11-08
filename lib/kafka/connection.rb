@@ -48,7 +48,7 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, instrumenter:, sasl_authenticator:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
+    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
       @instrumenter = instrumenter
@@ -56,7 +56,6 @@ module Kafka
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
       @ssl_context = ssl_context
-      @sasl_authenticator = sasl_authenticator
     end
 
     def to_s
@@ -132,7 +131,6 @@ module Kafka
       @correlation_id = 0
 
       @last_request = nil
-      @sasl_authenticator.authenticate!(self)
     rescue Errno::ETIMEDOUT => e
       @logger.error "Timed out while trying to connect to #{self}: #{e}"
       raise ConnectionError, e

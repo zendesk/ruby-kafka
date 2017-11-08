@@ -127,9 +127,11 @@ module Kafka
       connection.send_request(request)
     rescue IdleConnection
       @logger.warn "Connection has been unused for too long, re-connecting..."
+      @connection.close rescue nil
       @connection = nil
       retry
     rescue ConnectionError
+      @connection.close rescue nil
       @connection = nil
 
       raise
