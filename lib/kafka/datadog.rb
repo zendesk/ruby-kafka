@@ -122,7 +122,9 @@ module Kafka
 
     class ConsumerSubscriber < StatsdSubscriber
       def process_message(event)
-        lag = event.payload.fetch(:offset_lag)
+        offset_lag = event.payload.fetch(:offset_lag)
+        create_time = event.payload.fetch(:create_time)
+        time_lag = create_time && ((Time.now - create_time) * 1000).to_i
 
         tags = {
           client: event.payload.fetch(:client_id),
@@ -138,7 +140,12 @@ module Kafka
           increment("consumer.messages", tags: tags)
         end
 
-        gauge("consumer.lag", lag, tags: tags)
+        gauge("consumer.lag", offset_lag, tags: tags)
+
+        # Not all messages have timestamps.
+        if time_lag
+          gauge("consumer.time_lag", time_lag, tags: tags)
+        end
       end
 
       def process_batch(event)
