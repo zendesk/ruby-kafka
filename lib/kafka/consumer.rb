@@ -209,6 +209,7 @@ module Kafka
                 partition: message.partition,
                 offset: message.offset,
                 offset_lag: batch.highwater_mark_offset - message.offset - 1,
+                create_time: message.create_time,
                 key: message.key,
                 value: message.value,
               )

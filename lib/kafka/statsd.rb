@@ -80,11 +80,14 @@ module Kafka
 
     class ConsumerSubscriber < StatsdSubscriber
       def process_message(event)
-        lag = event.payload.fetch(:offset_lag)
+        offset_lag = event.payload.fetch(:offset_lag)
+        create_time = event.payload.fetch(:create_time)
         client = event.payload.fetch(:client_id)
         group_id = event.payload.fetch(:group_id)
         topic = event.payload.fetch(:topic)
         partition = event.payload.fetch(:partition)
+
+        time_lag = create_time && ((Time.now - create_time) * 1000).to_i
 
         if event.payload.key?(:exception)
           increment("consumer.#{client}.#{group_id}.#{topic}.#{partition}.process_message.errors")
@@ -93,7 +96,12 @@ module Kafka
           increment("consumer.#{client}.#{group_id}.#{topic}.#{partition}.messages")
         end
 
-        gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.lag", lag)
+        gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.lag", offset_lag)
+
+        # Not all messages have timestamps.
+        if time_lag
+          gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.time_lag", time_lag)
+        end
       end
 
       def process_batch(event)
