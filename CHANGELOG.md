@@ -11,6 +11,7 @@ Requires Kafka 0.10.1+ due to usage of a few new APIs.
 - Make `#deliver_message` more resilient using retries and backoff.
 - Add support for SASL SCRAM authentication (#465).
 - Refactor and simplify SASL code.
+- Fix issue when a consumer resets a partition to its default offset.
 
 ## v0.5.0
 
