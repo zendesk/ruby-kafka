@@ -12,6 +12,7 @@ Requires Kafka 0.10.1+ due to usage of a few new APIs.
 - Add support for SASL SCRAM authentication (#465).
 - Refactor and simplify SASL code.
 - Fix issue when a consumer resets a partition to its default offset.
+- Allow specifying a create time for messages (#481).
 
 ## v0.5.0
 
