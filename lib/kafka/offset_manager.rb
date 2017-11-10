@@ -66,7 +66,9 @@ module Kafka
       # Remove any cached offset, in case things have changed broker-side.
       clear_resolved_offset(topic)
 
-      seek_to(topic, partition, -1)
+      offset = resolve_offset(topic, partition)
+
+      seek_to(topic, partition, offset)
     end
 
     # Move the consumer's position in the partition to the specified offset.
