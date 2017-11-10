@@ -89,6 +89,11 @@ module Kafka
           timestamp = nil
         when 1
           timestamp = message_decoder.int64
+
+          # If the timestamp is set to zero, it's because the message has been upgraded
+          # from the Kafka 0.9 disk format to the Kafka 0.10 format. The former didn't
+          # have a timestamp attribute, so we'll just set the timestamp to nil.
+          timestamp = nil if timestamp.zero?
         else
           raise Kafka::Error, "Invalid magic byte: #{magic_byte}"
         end
