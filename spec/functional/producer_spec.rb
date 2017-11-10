@@ -7,6 +7,17 @@ describe "Producer API", functional: true do
 
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
+  example "setting a create_time value" do
+    timestamp = Time.now
+
+    producer.produce("hello", topic: topic, partition: 0, create_time: timestamp)
+    producer.deliver_messages
+
+    message = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest).last
+
+    expect(message.create_time.to_i).to eq timestamp.to_i
+  end
+
   example "writing messages using the buffered producer" do
     value1 = rand(10_000).to_s
     value2 = rand(10_000).to_s
