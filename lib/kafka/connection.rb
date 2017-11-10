@@ -89,10 +89,10 @@ module Kafka
         response_size: 0,
       }
 
+      raise IdleConnection if idle?
+
       @instrumenter.instrument("request.connection", notification) do
         open unless open?
-
-        raise IdleConnection if idle?
 
         @correlation_id += 1
 
