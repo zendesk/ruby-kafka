@@ -178,12 +178,11 @@ module Kafka
     # @param topic [String] the topic that the message should be written to.
     # @param partition [Integer] the partition that the message should be written to.
     # @param partition_key [String] the key that should be used to assign a partition.
+    # @param create_time [Time] the timestamp that should be set on the message.
     #
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
-    def produce(value, key: nil, topic:, partition: nil, partition_key: nil)
-      create_time = Time.now
-
+    def produce(value, key: nil, topic:, partition: nil, partition_key: nil, create_time: Time.now)
       message = PendingMessage.new(
         value && value.to_s,
         key && key.to_s,
