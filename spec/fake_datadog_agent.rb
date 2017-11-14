@@ -5,12 +5,13 @@ class FakeDatadogAgent
 
   def initialize
     @host = "127.0.0.1"
-    @port = 9999
     @socket = UDPSocket.new
     @thread = nil
     @metrics = []
 
-    @socket.bind(@host, @port)
+    @socket.bind(@host, 0)
+
+    @port = @socket.local_address.ip_port
   end
 
   def start
