@@ -79,16 +79,16 @@ module Kafka
     class StatsdSubscriber < ActiveSupport::Subscriber
       private
 
-      %w[increment histogram count timing gauge].each do |type|
+      %w[increment histogram count timing gauge event].each do |type|
         define_method(type) do |*args|
           emit(type, *args)
         end
       end
 
-      def emit(type, *args, tags: {})
+      def emit(type, *args, tags: {}, **kwargs)
         tags = tags.map {|k, v| "#{k}:#{v}" }.to_a
 
-        Kafka::Datadog.statsd.send(type, *args, tags: tags)
+        Kafka::Datadog.statsd.send(type, *args, tags: tags, **kwargs)
       end
     end
 
@@ -170,15 +170,26 @@ module Kafka
       end
 
       def join_group(event)
+        client = event.payload.fetch(:client_id)
+        group_id = event.payload.fetch(:group_id)
+
         tags = {
-          client: event.payload.fetch(:client_id),
-          group_id: event.payload.fetch(:group_id),
+          client: client,
+          group_id: group_id,
         }
 
         timing("consumer.join_group", event.duration, tags: tags)
 
         if event.payload.key?(:exception)
           increment("consumer.join_group.errors", tags: tags)
+
+          event("Failed to join Kafka consumer group #{group_id}", <<~DESC, alert_type: "warning", tags: tags)
+            A ruby-kafka consumer process with client id #{client} failed to join the group #{group_id}.
+          DESC
+        else
+          event("Joined Kafka consumer group #{group_id}", <<~DESC, alert_type: "success", tags: tags)
+            A ruby-kafka consumer process with client id #{client} successfully joined the group #{group_id}.
+          DESC
         end
       end
 
