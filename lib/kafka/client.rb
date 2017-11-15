@@ -451,8 +451,18 @@ module Kafka
       end
     end
 
-    def create_topic(name, **options)
-      @cluster.create_topic(name, **options)
+    # Creates a topic in the cluster.
+    #
+    # @param name [String] the name of the topic.
+    # @param num_partitions [Integer] the number of partitions that should be created
+    #   in the topic.
+    # @param replication_factor [Integer] the replication factor of the topic.
+    # @param timeout [Integer] a duration of time to wait for the topic to be
+    #   completely created.
+    # @raise [Kafka::TopicAlreadyExists] if the topic already exists.
+    # @return [nil]
+    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30)
+      @cluster.create_topic(name, num_partitions: num_partitions, replication_factor: replication_factor, timeout: timeout)
     end
 
     # Lists all topics in the cluster.
