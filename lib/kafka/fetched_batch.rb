@@ -35,7 +35,7 @@ module Kafka
 
     def last_offset
       if empty?
-        highwater_mark_offset - 1
+        highwater_mark_offset
       else
         messages.last.offset
       end
@@ -45,7 +45,7 @@ module Kafka
       if empty?
         0
       else
-        (highwater_mark_offset - 1) - last_offset
+        highwater_mark_offset - last_offset
       end
     end
   end

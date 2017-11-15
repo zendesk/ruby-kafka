@@ -18,7 +18,7 @@ describe Kafka::FetchedBatch do
         fetched_batch = described_class.new(
           topic: 'foo',
           partition: 0,
-          highwater_mark_offset: 10, # offset of *next* message
+          highwater_mark_offset: 9,
           messages: [message]
         )
         expect(fetched_batch.offset_lag).to eq 0
@@ -31,7 +31,7 @@ describe Kafka::FetchedBatch do
         fetched_batch = described_class.new(
           topic: 'foo',
           partition: 0,
-          highwater_mark_offset: 12, # offset of *next* message
+          highwater_mark_offset: 11,
           messages: [message]
         )
         expect(fetched_batch.offset_lag).to eq 2
