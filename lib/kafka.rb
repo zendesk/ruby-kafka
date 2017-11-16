@@ -147,15 +147,15 @@ module Kafka
   end
 
   # 29
-  class TopicAuthorizationCode < ProtocolError
+  class TopicAuthorizationFailed < ProtocolError
   end
 
   # 30
-  class GroupAuthorizationCode < ProtocolError
+  class GroupAuthorizationFailed < ProtocolError
   end
 
   # 31
-  class ClusterAuthorizationCode < ProtocolError
+  class ClusterAuthorizationFailed < ProtocolError
   end
 
   # 32
