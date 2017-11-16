@@ -183,11 +183,11 @@ module Kafka
         if event.payload.key?(:exception)
           increment("consumer.join_group.errors", tags: tags)
 
-          event("Failed to join Kafka consumer group #{group_id}", <<~DESC, alert_type: "warning", tags: tags)
+          event("Failed to join Kafka consumer group #{group_id}", <<-DESC.strip, alert_type: "warning", tags: tags)
             A ruby-kafka consumer process with client id #{client} failed to join the group #{group_id}.
           DESC
         else
-          event("Joined Kafka consumer group #{group_id}", <<~DESC, alert_type: "success", tags: tags)
+          event("Joined Kafka consumer group #{group_id}", <<-DESC.strip, alert_type: "success", tags: tags)
             A ruby-kafka consumer process with client id #{client} successfully joined the group #{group_id}.
           DESC
         end
