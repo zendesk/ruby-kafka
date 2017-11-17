@@ -365,6 +365,9 @@ module Kafka
           @logger.error "Leader not available; waiting 1s before retrying"
           @cluster.mark_as_stale!
           sleep 1
+        rescue ConnectionError => e
+          @logger.error "Connection error #{e.class}: #{e.message}"
+          @cluster.mark_as_stale!
         rescue SignalException => e
           @logger.warn "Received signal #{e.message}, shutting down"
           @running = false
