@@ -105,7 +105,6 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
-      @cluster.disconnect
     end
 
     # Pause processing of a specific topic partition.
@@ -231,7 +230,10 @@ module Kafka
 
             @heartbeat.send_if_necessary
 
-            return if !@running
+            if !@running
+              @cluster.disconnect
+              return
+            end
           end
         end
 
@@ -308,7 +310,10 @@ module Kafka
 
           @heartbeat.send_if_necessary
 
-          return if !@running
+          if !@running
+            @cluster.disconnect
+            return
+          end
         end
 
         # We may not have received any messages, but it's still a good idea to
