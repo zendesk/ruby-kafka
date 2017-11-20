@@ -107,7 +107,7 @@ module Kafka
 
         response
       end
-    rescue SystemCallError, EOFError => e
+    rescue SystemCallError, EOFError, IOError => e
       close
 
       raise ConnectionError, "Connection error #{e.class}: #{e}"
