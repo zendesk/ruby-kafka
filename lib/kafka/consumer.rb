@@ -364,6 +364,17 @@ module Kafka
       batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
       send_heartbeat_if_necessary
       batches
+    rescue HeartbeatError, OffsetCommitError
+      join_group
+      retry
+    rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
+      @cluster.mark_as_stale!
+      retry
+    rescue LeaderNotAvailable => e
+      @logger.error "Leader not available; waiting 1s before retrying"
+      @cluster.mark_as_stale!
+      sleep 1
+      retry
     end
 
     def commit_offsets
