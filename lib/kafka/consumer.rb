@@ -170,7 +170,7 @@ module Kafka
     # subscribes to.
     #
     # Each message is yielded to the provided block. If the block returns
-    # without raising an exception, the message will be considered successfully
+    # without raising an exeption, the message will be considered successfully
     # processed. At regular intervals the offset of the most recent successfully
     # processed message in each partition will be committed to the Kafka
     # offset store. If the consumer crashes or leaves the group, the group member
@@ -359,22 +359,15 @@ module Kafka
     #   is ignored.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
+    # @param max_retries [Integer] the maximum numbers of retries to fetch messages
+    #   before raising an error
     # @return batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
-    def poll(min_bytes: 1, max_wait_time: 5)
-      batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
-      send_heartbeat_if_necessary
-      batches
-    rescue HeartbeatError, OffsetCommitError
-      join_group
-      retry
-    rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
-      @cluster.mark_as_stale!
-      retry
-    rescue LeaderNotAvailable => e
-      @logger.error "Leader not available; waiting 1s before retrying"
-      @cluster.mark_as_stale!
-      sleep 1
-      retry
+    def poll(min_bytes: 1, max_wait_time: 5, max_retries: 20)
+      retry_or_raise(retries: max_retries) do
+        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+        send_heartbeat_if_necessary
+        batches
+      end
     end
 
     def commit_offsets
@@ -547,6 +540,35 @@ module Kafka
 
     def pause_for(topic, partition)
       @pauses[topic][partition]
+    end
+
+    RETRYABLE_POLL_EXCEPTIONS=[
+      HeartbeatError,
+      OffsetCommitError,
+      FetchError,
+      NotLeaderForPartition,
+      UnknownTopicOrPartition,
+      LeaderNotAvailable,
+    ]
+
+    def retry_or_raise(retries:)
+      try = 0
+      begin
+        @logger.debug "Attempt ##{try} of #{retries}"
+        yield
+      rescue *RETRYABLE_POLL_EXCEPTIONS => ex
+        if [HeartbeatError, OffsetCommitError].include?(ex.class)
+          join_group
+        elsif [FetchError, NotLeaderForPartition, UnknownTopicOrPartition].include?(ex.class)
+          @cluster.mark_as_stale!
+        elsif LeaderNotAvailable == ex.class
+          @logger.error "Leader not available; waiting 1s before retrying"
+          @cluster.mark_as_stale!
+          sleep 1
+        end
+        try += 1
+        try <= retries ? retry : raise
+      end
     end
   end
 end
