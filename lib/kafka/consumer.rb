@@ -357,14 +357,21 @@ module Kafka
     # @param min_bytes [Integer] the minimum number of bytes to read before
     #   returning messages from the server; if `max_wait_time` is reached, this
     #   is ignored.
+    # @param max_bytes [Integer] the maximum number of bytes to read before
+    #   returning messages from each broker.
     # @param max_wait_time [Integer, Float] the maximum duration of time to wait before
     #   returning messages from the server, in seconds.
     # @param max_retries [Integer] the maximum numbers of retries to fetch messages
     #   before raising an error
     # @return batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
-    def poll(min_bytes: 1, max_wait_time: 5, max_retries: 20)
+    def poll(min_bytes: 1, max_bytes: 10485760, max_wait_time: 5, max_retries: 20)
       retry_or_raise(retries: max_retries) do
-        batches = fetch_batches(min_bytes: min_bytes, max_wait_time: max_wait_time)
+        batches = fetch_batches(
+          min_bytes: min_bytes,
+          max_bytes: max_bytes,
+          max_wait_time: max_wait_time,
+          automatically_mark_as_processed: false
+        )
         send_heartbeat_if_necessary
         batches
       end
