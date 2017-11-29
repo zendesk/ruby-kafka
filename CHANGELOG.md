@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Instrument the start of message/batch processing (#496).
+
 ## v0.5.1
 
 Requires Kafka 0.10.1+ due to usage of a few new APIs.
