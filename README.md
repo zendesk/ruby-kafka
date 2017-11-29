@@ -743,12 +743,16 @@ end
   * `offset` is the message's offset within the topic partition. 
   * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
 
+* `start_process_message.consumer.kafka` is sent before `process_message.consumer.kafka`, and contains the same payload. It is delivered _before_ the message is processed, rather than _after_.
+
 * `process_batch.consumer.kafka` is sent whenever a message batch is processed by a consumer. It includes the following payload:
   * `message_count` is the number of messages in the batch.
   * `topic` is the topic that the message batch was consumed from.
   * `partition` is the topic partition that the message batch was consumed from.
   * `highwater_mark_offset` is the message batch's highest offset within the topic partition. 
-  * `offset_lag` is the number of messages within the topic partition that have not yet been consumed. 
+  * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
+
+* `start_process_batch.consumer.kafka` is sent before `process_batch.consumer.kafka`, and contains the same payload. It is delivered _before_ the batch is processed, rather than _after_.
 
 * `join_group.consumer.kafka` is sent whenever a consumer joins a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
