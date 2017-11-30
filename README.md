@@ -719,6 +719,8 @@ ActiveSupport::Notifications.subscribe(/.*\.kafka$/) do |*args|
 end
 ```
 
+All notification events have the `client_id` key in the payload, referring to the Kafka client id.
+
 #### Producer Notifications
 
 * `produce_message.producer.kafka` is sent whenever a message is produced to a buffer. It includes the following payload:
@@ -734,6 +736,8 @@ end
   * `delivered_message_count` is the number of messages that were acknowledged by the brokers - if this number is smaller than `message_count` not all messages were successfully delivered.
 
 #### Consumer Notifications
+
+All notifications have `group_id` in the payload, referring to the Kafka consumer group id.
 
 * `process_message.consumer.kafka` is sent whenever a message is processed by a consumer. It includes the following payload:
   * `value` is the message value.
