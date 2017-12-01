@@ -11,7 +11,7 @@ module Kafka
         @member_id = member_id || ""
         @protocol_type = PROTOCOL_TYPE
         @group_protocols = {
-          "standard" => ConsumerGroupProtocol.new(topics: ["test-messages"]),
+          "standard" => ConsumerGroupProtocol.new(topics: topics),
         }
       end
 

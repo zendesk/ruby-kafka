@@ -12,17 +12,23 @@ module Kafka
     # Assign the topic partitions to the group members.
     #
     # @param members [Array<String>] member ids
-    # @param topics [Array<String>] topics
     # @return [Hash<String, Protocol::MemberAssignment>] a hash mapping member
     #   ids to assignments.
-    def assign(members:, topics:)
+    def assign(members:)
       group_assignment = {}
 
-      members.each do |member_id|
+      members.each_key do |member_id|
         group_assignment[member_id] = Protocol::MemberAssignment.new
       end
+      topic_mapping = members.reduce({}) do |map, member|
+        member.last.topics.each do |topic|
+          map[topic] ||= []
+          map[topic] << member
+        end
+        map
+      end
 
-      topics.each do |topic|
+      topic_mapping.each do |topic, member_array|
         begin
           partitions = @cluster.partitions_for(topic).map(&:partition_id)
         rescue UnknownTopicOrPartition
@@ -30,12 +36,12 @@ module Kafka
         end
 
         partitions_per_member = partitions.group_by {|partition_id|
-          partition_id % members.count
+          partition_id % member_array.count
         }.values
 
-        members.zip(partitions_per_member).each do |member_id, member_partitions|
+        member_array.zip(partitions_per_member).each do |member_id, member_partitions|
           unless member_partitions.nil?
-            group_assignment[member_id].assign(topic, member_partitions)
+            group_assignment[member_id.first].assign(topic, member_partitions)
           end
         end
       end

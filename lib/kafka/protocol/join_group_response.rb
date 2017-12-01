@@ -23,7 +23,7 @@ module Kafka
           group_protocol: decoder.string,
           leader_id: decoder.string,
           member_id: decoder.string,
-          members: Hash[decoder.array { [decoder.string, decoder.bytes] }],
+          members: Hash[decoder.array { [decoder.string, ConsumerGroupProtocol.decode(Decoder.new(StringIO.new(decoder.bytes)))] }],
         )
       end
     end

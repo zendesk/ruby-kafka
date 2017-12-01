@@ -147,4 +147,40 @@ describe "Consumer API", functional: true do
 
     expect(processed_messages).to eq(num_messages * 2)
   end
+
+  example "using different topics in a consumer group" do
+    topic = create_random_topic(num_partitions: 2)
+    other_topic = create_random_topic(num_partitions: 2)
+    num_messages = 10
+    processed_messages = 0
+
+    producer = kafka.producer
+    (1..num_messages).each {|i| producer.produce("foo", topic: topic) }
+    (1..num_messages).each {|i| producer.produce("bar", topic: other_topic) }
+    producer.deliver_messages
+
+    group_id = "test#{rand(1000)}"
+    threads = [topic, other_topic].map do |topic_to_use|
+      t = Thread.new do
+        kafka2 = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+        consumer = kafka2.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+        total = []
+        consumer.subscribe(topic_to_use, start_from_beginning: true)
+        begin
+          Timeout::timeout(10) do
+            consumer.each_message do |message|
+              total << message.value
+            end
+          end
+        rescue => e
+          consumer.stop
+        end
+        total
+      end
+      t
+    end
+    threads.each { |t| t.join }
+    expect(threads.first.value).to eq(10.times.map { "foo" })
+    expect(threads.last.value).to eq(10.times.map { "bar" })
+  end
 end

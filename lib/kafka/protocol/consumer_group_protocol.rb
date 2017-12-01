@@ -1,6 +1,9 @@
 module Kafka
   module Protocol
     class ConsumerGroupProtocol
+
+      attr_accessor :version, :topics, :user_data
+
       def initialize(version: 0, topics:, user_data: nil)
         @version = version
         @topics = topics
@@ -11,6 +14,10 @@ module Kafka
         encoder.write_int16(@version)
         encoder.write_array(@topics) {|topic| encoder.write_string(topic) }
         encoder.write_bytes(@user_data)
+      end
+
+      def self.decode(decoder)
+        ConsumerGroupProtocol.new(version: decoder.int16, topics: decoder.array { decoder.string }, user_data: decoder.bytes)
       end
     end
   end
