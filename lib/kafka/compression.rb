@@ -1,5 +1,6 @@
 require "kafka/snappy_codec"
 require "kafka/gzip_codec"
+require "kafka/lz4_codec"
 
 module Kafka
   module Compression
@@ -8,7 +9,7 @@ module Kafka
       when nil then nil
       when :snappy then SnappyCodec.new
       when :gzip then GzipCodec.new
-      when :lz4  then nil
+      when :lz4  then LZ4Codec.new
       else raise "Unknown compression codec #{name}"
       end
     end
