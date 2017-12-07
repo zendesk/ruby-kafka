@@ -32,6 +32,10 @@ module Kafka
         @statsd ||= ::Datadog::Statsd.new(host, port, namespace: namespace, tags: tags)
       end
 
+      def statsd=(statsd)
+        @statsd = statsd
+      end
+
       def host
         @host ||= ::Datadog::Statsd::DEFAULT_HOST
       end
