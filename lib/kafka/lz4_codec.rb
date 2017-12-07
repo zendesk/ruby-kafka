@@ -15,7 +15,8 @@ module Kafka
     end
 
     def decompress(data)
-      LZ4::uncompress(data)
+      buffer = StringIO.new(data)
+      LZ4::uncompress(buffer)
     end
   end
 end
