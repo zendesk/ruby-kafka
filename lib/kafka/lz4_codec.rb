@@ -1,9 +1,9 @@
 module Kafka
   class LZ4Codec
     def initialize
-      require "lz4-ruby"
+      require "extlz4"
     rescue LoadError
-      raise LoadError, "using lz4 compression requires adding a dependency on the `lz4-ruby` gem to your Gemfile."
+      raise LoadError, "using lz4 compression requires adding a dependency on the `extlz4` gem to your Gemfile."
     end
 
     def codec_id
@@ -11,12 +11,11 @@ module Kafka
     end
 
     def compress(data)
-      LZ4::compress(data)
+      LZ4.encode(data)
     end
 
     def decompress(data)
-      buffer = StringIO.new(data)
-      LZ4::uncompress(buffer)
+      LZ4.decode(data)
     end
   end
 end
