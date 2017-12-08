@@ -1,5 +1,3 @@
-require "kafka/version"
-
 module Kafka
   class Error < StandardError
   end

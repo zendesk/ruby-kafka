@@ -9,10 +9,11 @@ WORKDIR /usr/src/app
 COPY ruby-kafka.gemspec /usr/src/app/
 COPY Gemfile /usr/src/app/
 COPY Gemfile.lock /usr/src/app/
+COPY VERSION /usr/src/app/
+
+RUN bundle install
 
 ADD lib/ /usr/src/app/lib
 ADD spec/ /usr/src/app/spec
-
-RUN bundle install
 
 CMD ["echo hello"]
