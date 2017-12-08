@@ -10,6 +10,7 @@ COPY ruby-kafka.gemspec /usr/src/app/
 COPY Gemfile /usr/src/app/
 COPY Gemfile.lock /usr/src/app/
 COPY VERSION /usr/src/app/
+COPY .rspec /usr/src/app/
 
 RUN bundle install
 
