@@ -27,6 +27,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
         4. [Shutting Down a Consumer](#shutting-down-a-consumer)
         5. [Consuming Messages in Batches](#consuming-messages-in-batches)
         6. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
+        7. [Group Protocols](#group-protocols)
     4. [Thread Safety](#thread-safety)
     5. [Logging](#logging)
     6. [Instrumentation](#instrumentation)
@@ -681,6 +682,81 @@ consumer.each_message do |message|
 end
 ```
 
+#### Group Protocols
+
+When joining a group, each member of the group is assigned topic partitions within a consumer group. This assignment, unlike the assumption of many people, is handled by the client side. This makes the clients have more power upon how the workload is distributed within a consumer group, as well as reduces the complexity of Kafka system so that it could concentrate on its duty of delivering as many messages as possible.
+To achieve the client-side assignment, each member of the group must have a set of *group protocols* they support and optional metadata for each protocol. At the beginning of group joining operation, the consumer sends a JoinGroup request to the group coordinator. The supported group protocols are attached. If all of the protocols of the consumer are not supported by any other member of the group, the consumer is rejected. Otherwise, the group coordinator accepts the request and ask other members to re-join the group.
+When there are enough members, the group coordinator chooses a group protocol supported by all members and selects a random member to become the leader of the group. This special member is responsible for assigning topic partitions to each member of the group based on the list of members and their metadata from the JoinGroup response. The leader submits the group assignment to group coordinator and spreads out to all members of the group via SyncGroup request. This group-assignment mechanism occurs many times in future when a member joins a group, leaves a group or after a time period, etc.
+
+By default, ruby-kafka supports the simplest assignment strategy: *round-robin assignment*, which means that each member receives the same amount of unique partitions. This group protocol is built in and works seamlessly in the background without your awareness.
+If you may want to implement your own group assignment, ruby-kafka provides an interface for you to do so. Let's take an example, each member is assigned based on its number of CPU cores. The more CPU the consumer has, the more partitions it is assigned.
+
+```ruby
+require "kafka"
+
+kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+
+class CPUBasedAssignmentStrategy
+  def assign(members:, topics:)
+    group_assignment = {}
+    members.keys.each do |member_id|
+      group_assignment[member_id] = Kafka::Protocol::MemberAssignment.new
+    end
+    total_cpu = members.values.inject(0) do |total, metadata|
+      total + metadata.to_i
+    end
+    topics.each do |topic, partitions|
+      index = 0
+      members.each_with_index do |member_id, metadata|
+        partition_count = ((metadata.to_f * partitions.count) / total_cpu).round
+        member_partitions = partitions[index..(index + partition_count)]
+        group_assignment[member_id].assign(topic, member_partitions)
+
+        index += partition_count
+      end
+    end
+    group_assignment
+  end
+end
+
+consumer = kafka.consumer(
+  group_id: "my-consumer",
+  group_protocols: [
+    {
+      name: 'cpu_based',
+      assignment_strategy: CPUBasedAssignmentStrategy,
+      metadata: '5'
+    }
+  ]
+)
+
+
+consumer.subscribe("Views")
+consumer.subscribe("Orders")
+consumer.each_message do |message|
+  # Do something here
+end
+```
+
+The interface includes some fields:
+- `name` (required): should be simple and unique since it is used as the agreement between members.
+- `metadata` (optional): this field reflects the metadata of current member and is sent to the leader to be used in the assignment strategy.
+- `assignment_strategy` (required)
+
+ `assignment_strategy` is a class that has one public interface `assign`. This method receives two keyword arguments, `members` and `topics`.
+- `members` is a hash in which key is member id and value is corresponding metadata. For example: `{"member_1" => "3", "member_2" => "4"}`
+- `topics` is a hash in which key is topic name and value is a list of partitions. For example: `{"Views" => [4, 1, 2, 3], "Orders" => [1, 2, 4, 3]}`
+The return value of this method must be a hash, which key is the member id and the value is an instance of `Kafka::Protocol::MemberAssignment`.
+
+You may specify many group protocols at once. The group coordinator will choose the group protocol supported by all members. In case there are many eligible protocols, the group protocol may pick a random one.
+
+When working with your own group protocols, it is likely that you'll migrate from a protocol to another one. You must be careful when doing such operation to prevent down-time of the whole consumer group. It is recommended to follow these steps:
+- Implement new group protocol and keep *both* old and new protocols in the consumer declaration.
+- Rollout new codes to all consumers. The restarted consumer may use old or new protocol. We could not predict that.
+- Remove old protocol in the consumer declaration.
+- Rollout new codes again to all consumers. This time, it is sure that all consumers use new protocol. Cheers!
+
+For more information, please read this excellent document about [client-side assignment](https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Client-side+Assignment+Proposal).
 
 ### Thread Safety
 
@@ -744,7 +820,7 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `key` is the message key.
   * `topic` is the topic that the message was consumed from.
   * `partition` is the topic partition that the message was consumed from.
-  * `offset` is the message's offset within the topic partition. 
+  * `offset` is the message's offset within the topic partition.
   * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
 
 * `start_process_message.consumer.kafka` is sent before `process_message.consumer.kafka`, and contains the same payload. It is delivered _before_ the message is processed, rather than _after_.
@@ -753,7 +829,7 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `message_count` is the number of messages in the batch.
   * `topic` is the topic that the message batch was consumed from.
   * `partition` is the topic partition that the message batch was consumed from.
-  * `highwater_mark_offset` is the message batch's highest offset within the topic partition. 
+  * `highwater_mark_offset` is the message batch's highest offset within the topic partition.
   * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
 
 * `start_process_batch.consumer.kafka` is sent before `process_batch.consumer.kafka`, and contains the same payload. It is delivered _before_ the batch is processed, rather than _after_.
@@ -762,12 +838,12 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `group_id` is the consumer group id.
 
 * `sync_group.consumer.kafka` is sent whenever a consumer is assigned topic partitions within a consumer group. It includes the following payload:
-  * `group_id` is the consumer group id.  
-  
+  * `group_id` is the consumer group id.
+
 * `leave_group.consumer.kafka` is sent whenever a consumer leaves a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
- 
-  
+
+
 #### Connection Notifications
 
 * `request.connection.kafka` is sent whenever a network request is sent to a Kafka broker. It includes the following payload:
@@ -937,7 +1013,7 @@ kafka = Kafka.new(
 **NOTE**: It is __highly__ recommended that you use SSL for encryption when using SASL_PLAIN
 
 ##### SCRAM
-Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram). 
+Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram).
 
 ```ruby
 kafka = Kafka.new(
