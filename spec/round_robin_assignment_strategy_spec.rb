@@ -1,20 +1,19 @@
 describe Kafka::RoundRobinAssignmentStrategy do
   it "assigns all partitions" do
-    cluster = double(:cluster)
-    strategy = described_class.new(cluster: cluster)
+    strategy = described_class.new
 
-    members = (0...10).map {|i| "member#{i}" }
-    topics = ["greetings"]
-    partitions = (0...30).map {|i| double(:"partition#{i}", partition_id: i) }
-
-    allow(cluster).to receive(:partitions_for) { partitions }
+    members = (0...10).each_with_object({}) do |i, hash|
+      hash["member#{i}"] = "metadata#{i}"
+    end
+    partition_ids = (0...30).to_a
+    topics = { "greetings" => partition_ids }
 
     assignments = strategy.assign(members: members, topics: topics)
 
-    partitions.each do |partition|
+    partition_ids.each do |partition_id|
       member = assignments.values.find {|assignment|
         assignment.topics.find {|topic, partitions|
-          partitions.include?(partition.partition_id)
+          partitions.include?(partition_id)
         }
       }
 
