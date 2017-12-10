@@ -13,6 +13,7 @@ module Kafka
       @instrumenter = instrumenter
       @member_id = ""
       @generation_id = nil
+      @group_protocol = ""
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
@@ -125,10 +126,12 @@ module Kafka
         @generation_id = response.generation_id
         @member_id = response.member_id
         @leader_id = response.leader_id
+        @group_protocol = response.group_protocol
         @members = response.members
       end
 
       @logger.info "Joined group `#{@group_id}` with member id `#{@member_id}`"
+      @logger.info "Selected group protocol: `#{@group_protocol}`"
     rescue UnknownMemberId
       @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
