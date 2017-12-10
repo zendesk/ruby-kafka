@@ -31,6 +31,15 @@ module Kafka
       @group_protocols << @fallback_protocol if @group_protocols.empty?
     end
 
+    # Assign the topic partitions to the group members based on selected group
+    # protocol
+    #
+    # @param group_protocol [String] selected group protocol
+    # @param members [Hash<String, String>] a hash mapping member ids to member
+    # metadata
+    # @param topics [Array<String>] topics
+    # @return [Hash<String, Protocol::MemberAssignment>] a hash mapping member
+    #   ids to assignments.
     def assign(group_protocol:, members:, topics:)
       topic_partitions = {}
       topics.each do |topic|
