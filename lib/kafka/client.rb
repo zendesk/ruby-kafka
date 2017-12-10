@@ -257,6 +257,11 @@ module Kafka
     # Creates a new Kafka consumer.
     #
     # @param group_id [String] the id of the group that the consumer should join.
+    # @param group_protocols [Array<protocol>>] list of the group protocols
+    #   [protocol]
+    #     + name: name of the group protocol
+    #     + metadata: the metadata of running consumer in String format
+    #     + assignment_strategy: strategy class
     # @param session_timeout [Integer] the number of seconds after which, if a client
     #   hasn't contacted the Kafka cluster, it will be kicked out of the group.
     # @param offset_commit_interval [Integer] the interval between offset commits,
@@ -269,7 +274,7 @@ module Kafka
     # @param offset_retention_time [Integer] the time period that committed
     #   offsets will be retained, in seconds. Defaults to the broker setting.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
+    def consumer(group_id:, group_protocols:[], session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {
@@ -283,6 +288,7 @@ module Kafka
         cluster: cluster,
         logger: @logger,
         group_id: group_id,
+        group_protocols: group_protocols,
         session_timeout: session_timeout,
         retention_time: retention_time,
         instrumenter: instrumenter,
