@@ -67,6 +67,7 @@ module Kafka
       20 => NotEnoughReplicasAfterAppend,
       21 => InvalidRequiredAcks,
       22 => IllegalGeneration,
+      23 => InconsistentGroupProtocolError,
       25 => UnknownMemberId,
       26 => InvalidSessionTimeout,
       27 => RebalanceInProgress,
