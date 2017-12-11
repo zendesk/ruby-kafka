@@ -1,11 +1,11 @@
 require "set"
-require "kafka/round_robin_assignment_strategy"
+require "kafka/group_protocol_manager"
 
 module Kafka
   class ConsumerGroup
     attr_reader :assigned_partitions, :generation_id
 
-    def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
+    def initialize(cluster:, logger:, group_id:, group_protocols: [], session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
       @logger = logger
       @group_id = group_id
@@ -13,10 +13,14 @@ module Kafka
       @instrumenter = instrumenter
       @member_id = ""
       @generation_id = nil
+      @group_protocol = ""
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
-      @assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: @cluster)
+      @group_protocol_manager = GroupProtocolManager.new(
+        cluster: @cluster,
+        group_protocols: group_protocols
+      )
       @retention_time = retention_time
     end
 
@@ -113,9 +117,14 @@ module Kafka
     def join_group
       @logger.info "Joining group `#{@group_id}`"
 
-      @instrumenter.instrument("join_group.consumer", group_id: @group_id) do
+      @instrumenter.instrument(
+        "join_group.consumer",
+        group_id: @group_id,
+        group_protocols: @group_protocol_manager.group_protocols
+      ) do
         response = coordinator.join_group(
           group_id: @group_id,
+          group_protocols: @group_protocol_manager.group_protocols,
           session_timeout: @session_timeout,
           member_id: @member_id,
         )
@@ -125,10 +134,15 @@ module Kafka
         @generation_id = response.generation_id
         @member_id = response.member_id
         @leader_id = response.leader_id
+        @group_protocol = response.group_protocol
         @members = response.members
       end
 
       @logger.info "Joined group `#{@group_id}` with member id `#{@member_id}`"
+      @logger.info "Selected group protocol: `#{@group_protocol}`"
+    rescue InconsistentGroupProtocolError
+      @logger.error "Group `#{@group_id}` doesn't support any of your group protocol. If you are changing the group protocol, please keep old protocol to ensure backward-compatibility until all members are all updated."
+      raise
     rescue UnknownMemberId
       @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
@@ -148,9 +162,10 @@ module Kafka
       if group_leader?
         @logger.info "Chosen as leader of group `#{@group_id}`"
 
-        group_assignment = @assignment_strategy.assign(
-          members: @members.keys,
-          topics: @topics,
+        group_assignment = @group_protocol_manager.assign(
+          group_protocol: @group_protocol,
+          members: @members,
+          topics: @topics
         )
       end
 

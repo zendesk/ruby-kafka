@@ -138,6 +138,10 @@ module Kafka
   class IllegalGeneration < ProtocolError
   end
 
+  # 23
+  class InconsistentGroupProtocolError < ProtocolError
+  end
+
   # 26
   class InvalidSessionTimeout < ProtocolError
   end
