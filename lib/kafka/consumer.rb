@@ -202,6 +202,15 @@ module Kafka
         )
 
         batches.each do |batch|
+          unless batch.empty?
+            @instrumenter.instrument("fetch_batch.consumer", {
+              topic: batch.topic,
+              partition: batch.partition,
+              offset_lag: batch.offset_lag,
+              highwater_mark_offset: batch.highwater_mark_offset,
+              message_count: batch.messages.count,
+            })
+          end
           batch.messages.each do |message|
             notification = {
               topic: message.topic,

@@ -75,6 +75,18 @@ describe Kafka::Consumer do
       ]
     }
 
+    it "instruments" do
+      expect(instrumenter).to receive(:instrument).once.with('fetch_batch.consumer', anything)
+      expect(instrumenter).to receive(:instrument).once.with('start_process_message.consumer', anything)
+      expect(instrumenter).to receive(:instrument).once.with('process_message.consumer', anything)
+
+      allow(instrumenter).to receive(:instrument).and_call_original
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+    end
+
     it "raises ProcessingError if the processing code fails" do
       expect {
         consumer.each_message do |message|
