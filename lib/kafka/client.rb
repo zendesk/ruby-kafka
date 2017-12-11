@@ -274,7 +274,7 @@ module Kafka
     # @param offset_retention_time [Integer] the time period that committed
     #   offsets will be retained, in seconds. Defaults to the broker setting.
     # @return [Consumer]
-    def consumer(group_id:, group_protocols:[], session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
+    def consumer(group_id:, group_protocols: [], session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {
