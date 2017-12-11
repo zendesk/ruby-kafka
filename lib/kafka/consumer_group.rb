@@ -117,7 +117,11 @@ module Kafka
     def join_group
       @logger.info "Joining group `#{@group_id}`"
 
-      @instrumenter.instrument("join_group.consumer", group_id: @group_id) do
+      @instrumenter.instrument(
+        "join_group.consumer",
+        group_id: @group_id,
+        group_protocols: @group_protocol_manager.group_protocols
+      ) do
         response = coordinator.join_group(
           group_id: @group_id,
           group_protocols: @group_protocol_manager.group_protocols,

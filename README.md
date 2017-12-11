@@ -838,13 +838,13 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
 
 * `join_group.consumer.kafka` is sent whenever a consumer joins a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
+  * `group_protocols` is the list of supported group protocols.
 
 * `sync_group.consumer.kafka` is sent whenever a consumer is assigned topic partitions within a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
 
 * `leave_group.consumer.kafka` is sent whenever a consumer leaves a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
-
 
 #### Connection Notifications
 
