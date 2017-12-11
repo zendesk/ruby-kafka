@@ -685,7 +685,9 @@ end
 #### Group Protocols
 
 When joining a group, each member of the group is assigned topic partitions within a consumer group. This assignment, unlike the assumption of many people, is handled by the client side. This makes the clients have more power upon how the workload is distributed within a consumer group, as well as reduces the complexity of Kafka system so that it could concentrate on its duty of delivering as many messages as possible.
+
 To achieve the client-side assignment, each member of the group must have a set of *group protocols* they support and optional metadata for each protocol. At the beginning of group joining operation, the consumer sends a JoinGroup request to the group coordinator. The supported group protocols are attached. If all of the protocols of the consumer are not supported by any other member of the group, the consumer is rejected. Otherwise, the group coordinator accepts the request and ask other members to re-join the group.
+
 When there are enough members, the group coordinator chooses a group protocol supported by all members and selects a random member to become the leader of the group. This special member is responsible for assigning topic partitions to each member of the group based on the list of members and their metadata from the JoinGroup response. The leader submits the group assignment to group coordinator and spreads out to all members of the group via SyncGroup request. This group-assignment mechanism occurs many times in future when a member joins a group, leaves a group or after a time period, etc.
 
 By default, ruby-kafka supports the simplest assignment strategy: *round-robin assignment*, which means that each member receives the same amount of unique partitions. This group protocol is built in and works seamlessly in the background without your awareness.
