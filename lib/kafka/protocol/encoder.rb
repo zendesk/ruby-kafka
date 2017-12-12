@@ -93,14 +93,23 @@ module Kafka
 
       # Writes a byte string to the IO object.
       #
-      # @param bytes [String]
+      # @param bytes [String,Array]
       # @return [nil]
       def write_bytes(bytes)
         if bytes.nil?
           write_int32(-1)
         else
-          write_int32(bytes.bytesize)
-          write(bytes)
+          if bytes.respond_to?(:bytesize)
+            write_int32(bytes.bytesize)
+          else
+            write_int32(bytes.size)
+          end
+
+          if bytes.respond_to?(:pack)
+            write(bytes.pack('c*'))
+          else
+            write(bytes)
+          end
         end
       end
 
