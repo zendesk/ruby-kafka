@@ -5,8 +5,8 @@ describe Kafka::Compressor do
     it "encodes and decodes compressed messages" do
       compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1, instrumenter: instrumenter)
 
-      message1 = Kafka::Protocol::Message.new(value: "hello1")
-      message2 = Kafka::Protocol::Message.new(value: "hello2")
+      message1 = Kafka::Protocol::Message.new(value: "hello1", offset: -1)
+      message2 = Kafka::Protocol::Message.new(value: "hello2", offset: 0)
 
       message_set = Kafka::Protocol::MessageSet.new(messages: [message1, message2])
       compressed_message_set = compressor.compress(message_set)
