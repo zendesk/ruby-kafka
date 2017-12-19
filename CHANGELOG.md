@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Instrument the start of message/batch processing (#496).
+- Mark `Client#fetch_messages` as stable.
 
 ## v0.5.1
 

@@ -352,8 +352,6 @@ module Kafka
     #
     # See a working example in `examples/simple-consumer.rb`.
     #
-    # @note This API is still alpha level. Don't try to use it in production.
-    #
     # @param topic [String] the topic that messages should be fetched from.
     #
     # @param partition [Integer] the partition that messages should be fetched from.
