@@ -22,7 +22,7 @@ describe Kafka::Compressor do
       # When decoding a compressed message, the offsets are calculated relative to that
       # of the container message. The broker will set the offset in normal operation,
       # but at the client-side we set it to -1.
-      expect(messages.map(&:offset)).to eq [-1, 0]
+      expect(messages.map(&:offset)).to eq [-2, -1]
     end
 
     it "only compresses the messages if there are at least the configured threshold" do
