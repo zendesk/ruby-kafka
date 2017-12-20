@@ -113,7 +113,7 @@ module Kafka
   end
 end
 
-require "kafka/protocol/topic_metadata_request"
+require "kafka/protocol/metadata_request"
 require "kafka/protocol/metadata_response"
 require "kafka/protocol/produce_request"
 require "kafka/protocol/produce_response"

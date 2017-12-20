@@ -1,7 +1,7 @@
 module Kafka
   module Protocol
 
-    # A response to a {TopicMetadataRequest}.
+    # A response to a {MetadataRequest}.
     #
     # The response contains information on the brokers, topics, and partitions in
     # the cluster.
