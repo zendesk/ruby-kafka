@@ -32,10 +32,12 @@ module Kafka
       return message_set if @codec.nil? || message_set.size < @threshold
 
       compressed_data = compress_data(message_set)
+      offset = message_set.messages.map(&:offset).max
 
       wrapper_message = Protocol::Message.new(
         value: compressed_data,
         codec_id: @codec.codec_id,
+        offset: offset
       )
 
       Protocol::MessageSet.new(messages: [wrapper_message])
