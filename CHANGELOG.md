@@ -9,6 +9,7 @@ Changes and additions to the library will be listed here.
 - Fix the list topics API (#508).
 - Add support for LZ4 compression (#499).
 - Refactor compression codec lookup (#509).
+- Fix compressed message set offset bug (#506).
 
 ## v0.5.1
 
