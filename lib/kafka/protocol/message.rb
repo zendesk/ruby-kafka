@@ -111,7 +111,6 @@ module Kafka
       # All other cases, compressed inner messages should have relative offset, with below attributes:
       #   - The container message should have the 'real' offset
       #   - The container message's offset should be the 'real' offset of the last message in the compressed batch
-      #   - The first inner message should always have offset = 0
       def correct_offsets(message_set)
         max_relative_offset = message_set.messages.last.offset
 
