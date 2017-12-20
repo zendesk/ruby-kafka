@@ -58,18 +58,7 @@ module Kafka
         message_set_decoder = Decoder.from_string(data)
         message_set = MessageSet.decode(message_set_decoder)
 
-        # The contained messages need to have their offset corrected.
-        messages = message_set.messages.each_with_index.map do |message, i|
-          Message.new(
-            offset: offset + i,
-            value: message.value,
-            key: message.key,
-            create_time: message.create_time,
-            codec_id: message.codec_id
-          )
-        end
-
-        MessageSet.new(messages: messages)
+        correct_offsets(message_set)
       end
 
       def self.decode(decoder)
@@ -112,6 +101,36 @@ module Kafka
       end
 
       private
+
+      # Offsets may be relative with regards to wrapped message offset, but there are special cases.
+      #
+      # Cases when client will receive corrected offsets:
+      #   - When fetch request is version 0, kafka will correct relative offset on broker side before replying fetch response
+      #   - When messages is stored in 0.9 format on disk (broker configured to do so).
+      #
+      # All other cases, compressed inner messages should have relative offset, with below attributes:
+      #   - The container message should have the 'real' offset
+      #   - The container message's offset should be the 'real' offset of the last message in the compressed batch
+      def correct_offsets(message_set)
+        max_relative_offset = message_set.messages.last.offset
+
+        # The offsets are already correct, do nothing.
+        return message_set if max_relative_offset == offset
+
+        # The contained messages have relative offsets, and needs to be corrected.
+        base_offset = offset - max_relative_offset
+        messages = message_set.messages.map do |message|
+          Message.new(
+            offset: message.offset + base_offset,
+            value: message.value,
+            key: message.key,
+            create_time: message.create_time,
+            codec_id: message.codec_id
+          )
+        end
+
+        MessageSet.new(messages: messages)
+      end
 
       def encode_with_crc
         buffer = StringIO.new
