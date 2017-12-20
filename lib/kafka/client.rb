@@ -467,8 +467,7 @@ module Kafka
     #
     # @return [Array<String>] the list of topic names.
     def topics
-      @cluster.clear_target_topics
-      @cluster.topics
+      @cluster.list_topics
     end
 
     def has_topic?(topic)

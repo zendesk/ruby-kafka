@@ -74,8 +74,13 @@ module Kafka
       # @param array [Array]
       # @return [nil]
       def write_array(array, &block)
-        write_int32(array.size)
-        array.each(&block)
+        if array.nil?
+          # An array can be null, which is different from it being empty.
+          write_int32(-1)
+        else
+          write_int32(array.size)
+          array.each(&block)
+        end
       end
 
       # Writes a string to the IO object.
