@@ -27,6 +27,7 @@ module Kafka
     end
 
     # @param message_set [Protocol::MessageSet]
+    # @param offset [Integer] used to simulate broker behaviour in tests
     # @return [Protocol::MessageSet]
     def compress(message_set, offset: -1)
       return message_set if @codec.nil? || message_set.size < @threshold
