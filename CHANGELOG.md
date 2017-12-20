@@ -7,6 +7,7 @@ Changes and additions to the library will be listed here.
 - Instrument the start of message/batch processing (#496).
 - Mark `Client#fetch_messages` as stable.
 - Fix the list topics API (#508).
+- Add support for LZ4 compression (#499).
 
 ## v0.5.1
 
