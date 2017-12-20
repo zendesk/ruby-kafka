@@ -4,12 +4,16 @@ require "kafka/lz4_codec"
 
 module Kafka
   module Compression
+    def self.codecs
+      [:snappy, :gzip, :lz4]
+    end
+
     def self.find_codec(name)
       case name
       when nil then nil
       when :snappy then SnappyCodec.new
       when :gzip then GzipCodec.new
-      when :lz4  then LZ4Codec.new
+      when :lz4 then LZ4Codec.new
       else raise "Unknown compression codec #{name}"
       end
     end
