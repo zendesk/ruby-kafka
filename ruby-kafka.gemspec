@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-benchmark"
   spec.add_development_dependency "activesupport"
   spec.add_development_dependency "snappy"
+  spec.add_development_dependency "extlz4"
   spec.add_development_dependency "colored"
   spec.add_development_dependency "rspec_junit_formatter", "0.2.2"
   spec.add_development_dependency "dogstatsd-ruby", ">= 3.0.0"
