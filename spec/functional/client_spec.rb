@@ -4,11 +4,13 @@ describe "Producer API", functional: true do
   let!(:topic) { create_random_topic(num_partitions: 3) }
 
   example "listing all topics in the cluster" do
+    # Use a clean Kafka instance to avoid hitting caches.
+    kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, logger: LOGGER)
+
+    topics = kafka.topics
+
+    expect(topics).to include topic
     expect(kafka.has_topic?(topic)).to eq true
-
-    topic2 = create_random_topic
-
-    expect(kafka.has_topic?(topic2)).to eq true
   end
 
   example "fetching the partition count for a topic" do
