@@ -2,30 +2,38 @@ require "kafka/datadog"
 require "fake_datadog_agent"
 
 describe Kafka::Datadog do
-  let(:agent) { FakeDatadogAgent.new }
-
-  before do
-    agent.start
-  end
-
-  after do
-    agent.stop
-  end
-
   it "emits metrics to the Datadog agent" do
-    Kafka::Datadog.host = agent.host
-    Kafka::Datadog.port = agent.port
+    begin
+      agent = FakeDatadogAgent.new
+      agent.start
 
-    client = Kafka::Datadog.statsd
+      Kafka::Datadog.host = agent.host
+      Kafka::Datadog.port = agent.port
 
-    client.increment("greetings")
+      client = Kafka::Datadog.statsd
 
-    agent.wait_for_metrics
+      client.increment("greetings")
 
-    expect(agent.metrics.count).to eq 1
+      agent.wait_for_metrics
 
-    metric = agent.metrics.first
+      expect(agent.metrics.count).to eq 1
 
-    expect(metric).to eq "ruby_kafka.greetings"
+      metric = agent.metrics.first
+
+      expect(metric).to eq "ruby_kafka.greetings"
+    ensure
+      agent.stop
+    end
+  end
+
+  it "allows setting statsd" do
+    begin
+      client = Kafka::Datadog.statsd
+
+      Kafka::Datadog.statsd = "OtherClient"
+      expect(Kafka::Datadog.statsd).to eq "OtherClient"
+    ensure
+      Kafka::Datadog.statsd = client
+    end
   end
 end
