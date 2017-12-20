@@ -58,7 +58,7 @@ module Kafka
         message_set_decoder = Decoder.from_string(data)
         message_set = MessageSet.decode(message_set_decoder)
 
-        correct_offsets(message_set)
+        correct_offsets(message_set.messages)
       end
 
       def self.decode(decoder)
@@ -111,15 +111,16 @@ module Kafka
       # All other cases, compressed inner messages should have relative offset, with below attributes:
       #   - The container message should have the 'real' offset
       #   - The container message's offset should be the 'real' offset of the last message in the compressed batch
-      def correct_offsets(message_set)
-        max_relative_offset = message_set.messages.last.offset
+      def correct_offsets(messages)
+        max_relative_offset = messages.last.offset
 
         # The offsets are already correct, do nothing.
-        return message_set if max_relative_offset == offset
+        return messages if max_relative_offset == offset
 
         # The contained messages have relative offsets, and needs to be corrected.
         base_offset = offset - max_relative_offset
-        messages = message_set.messages.map do |message|
+
+        messages.map do |message|
           Message.new(
             offset: message.offset + base_offset,
             value: message.value,
@@ -128,8 +129,6 @@ module Kafka
             codec_id: message.codec_id
           )
         end
-
-        MessageSet.new(messages: messages)
       end
 
       def encode_with_crc
