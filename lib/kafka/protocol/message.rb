@@ -58,12 +58,14 @@ module Kafka
         message_set_decoder = Decoder.from_string(data)
         message_set = MessageSet.decode(message_set_decoder)
 
-        base_offset = offset - message_set.size + 1
+        max_relative_offset = message_set.messages.last.offset
+        return message_set if max_relative_offset == offset
 
         # The contained messages need to have their offset corrected.
+        base_offset = offset - max_relative_offset
         messages = message_set.messages.each_with_index.map do |message, i|
           Message.new(
-            offset: base_offset + i,
+            offset: message.offset + base_offset,
             value: message.value,
             key: message.key,
             create_time: message.create_time,

@@ -28,11 +28,10 @@ module Kafka
 
     # @param message_set [Protocol::MessageSet]
     # @return [Protocol::MessageSet]
-    def compress(message_set)
+    def compress(message_set, offset: -1)
       return message_set if @codec.nil? || message_set.size < @threshold
 
       compressed_data = compress_data(message_set)
-      offset = message_set.messages.map(&:offset).max
 
       wrapper_message = Protocol::Message.new(
         value: compressed_data,
