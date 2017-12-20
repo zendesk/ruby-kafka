@@ -7,6 +7,12 @@ describe Kafka::Compression do
 
         expect(codec.decompress(codec.compress(data))).to eq data
       end
+
+      it "has a consistent codec id" do
+        codec = Kafka::Compression.find_codec(codec_name)
+
+        expect(Kafka::Compression.find_codec_by_id(codec.codec_id)).to eq codec
+      end
     end
   end
 end
