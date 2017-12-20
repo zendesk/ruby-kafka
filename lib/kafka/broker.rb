@@ -29,10 +29,10 @@ module Kafka
 
     # Fetches cluster metadata from the broker.
     #
-    # @param (see Kafka::Protocol::TopicMetadataRequest#initialize)
+    # @param (see Kafka::Protocol::MetadataRequest#initialize)
     # @return [Kafka::Protocol::MetadataResponse]
     def fetch_metadata(**options)
-      request = Protocol::TopicMetadataRequest.new(**options)
+      request = Protocol::MetadataRequest.new(**options)
 
       send_request(request)
     end

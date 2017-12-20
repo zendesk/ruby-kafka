@@ -1,6 +1,6 @@
 module Kafka
   module Protocol
-    class TopicMetadataRequest
+    class MetadataRequest
 
       # A request for cluster metadata.
       #
