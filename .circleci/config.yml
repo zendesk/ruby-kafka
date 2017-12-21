@@ -1,6 +1,16 @@
 version: 2
 jobs:
-  build:
+  unit:
+    docker:
+      - image: circleci/ruby:2.4.1-node
+        environment:
+          LOG_LEVEL: DEBUG
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec
+      - run: bundle exec rubocop
+  functional:
     docker:
       - image: circleci/ruby:2.4.1-node
         environment:
@@ -24,10 +34,13 @@ jobs:
           KAFKA_ADVERTISED_PORT: 9094
           KAFKA_PORT: 9094
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-
     steps:
       - checkout
       - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec
       - run: bundle exec rspec --profile --tag functional spec/functional
-      - run: bundle exec rubocop
+workflows:
+  version: 2
+  test:
+    jobs:
+      - unit
+      - functional
