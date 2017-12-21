@@ -31,8 +31,7 @@ module Kafka
             message = Message.decode(decoder)
 
             if message.compressed?
-              wrapped_message_set = message.decompress
-              fetched_messages.concat(wrapped_message_set.messages)
+              fetched_messages.concat(message.decompress)
             else
               fetched_messages << message
             end
