@@ -21,9 +21,13 @@ module Kafka
     end
 
     def self.find_codec(name)
-      CODECS.fetch(name) do
+      codec = CODECS.fetch(name) do
         raise "Unknown compression codec #{name}"
       end
+
+      codec.load
+
+      codec
     end
 
     def self.find_codec_by_id(codec_id)
