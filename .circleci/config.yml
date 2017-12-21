@@ -1,6 +1,17 @@
 version: 2
 jobs:
-  build:
+  unit:
+    docker:
+      - image: circleci/ruby:2.4.1-node
+        environment:
+          LOG_LEVEL: DEBUG
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec
+      - run: bundle exec rubocop
+
+  kafka-0.10:
     docker:
       - image: circleci/ruby:2.4.1-node
         environment:
@@ -24,10 +35,74 @@ jobs:
           KAFKA_ADVERTISED_PORT: 9094
           KAFKA_PORT: 9094
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-
     steps:
       - checkout
       - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec
       - run: bundle exec rspec --profile --tag functional spec/functional
-      - run: bundle exec rubocop
+
+  kafka-0.11:
+    docker:
+      - image: circleci/ruby:2.4.1-node
+        environment:
+          LOG_LEVEL: DEBUG
+      - image: wurstmeister/zookeeper
+      - image: wurstmeister/kafka:0.11.0.1
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9092
+          KAFKA_PORT: 9092
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+      - image: wurstmeister/kafka:0.11.0.1
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9093
+          KAFKA_PORT: 9093
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+      - image: wurstmeister/kafka:0.11.0.1
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9094
+          KAFKA_PORT: 9094
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec --profile --tag functional spec/functional
+
+  kafka-1.0:
+    docker:
+      - image: circleci/ruby:2.4.1-node
+        environment:
+          LOG_LEVEL: DEBUG
+      - image: wurstmeister/zookeeper
+      - image: wurstmeister/kafka:1.0.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9092
+          KAFKA_PORT: 9092
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+      - image: wurstmeister/kafka:1.0.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9093
+          KAFKA_PORT: 9093
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+      - image: wurstmeister/kafka:1.0.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9094
+          KAFKA_PORT: 9094
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec --profile --tag functional spec/functional
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - unit
+      - kafka-0.10
+      - kafka-0.11
+      - kafka-1.0
