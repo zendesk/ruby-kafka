@@ -49,7 +49,7 @@ module Kafka
         @codec_id != 0
       end
 
-      # @return [Kafka::Protocol::MessageSet]
+      # @return [Array<Kafka::Protocol::Message>]
       def decompress
         codec = Compression.find_codec_by_id(@codec_id)
 
