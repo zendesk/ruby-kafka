@@ -1,11 +1,11 @@
 module Kafka
   class GzipCodec
-    def initialize
-      require "zlib"
-    end
-
     def codec_id
       1
+    end
+
+    def load
+      require "zlib"
     end
 
     def compress(data)
