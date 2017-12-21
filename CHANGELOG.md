@@ -10,6 +10,7 @@ Changes and additions to the library will be listed here.
 - Add support for LZ4 compression (#499).
 - Refactor compression codec lookup (#509).
 - Fix compressed message set offset bug (#506).
+- Test against multiple versions of Kafka.
 
 ## v0.5.1
 
