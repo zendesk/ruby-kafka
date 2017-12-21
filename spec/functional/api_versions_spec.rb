@@ -3,6 +3,6 @@ describe "API Versions API", functional: true do
     produce_api = kafka.apis.find {|v| v.api_key == 0 }
 
     expect(produce_api.min_version).to eq 0
-    expect(produce_api.max_version).to eq 2
+    expect(produce_api.max_version).to be >= 2
   end
 end
