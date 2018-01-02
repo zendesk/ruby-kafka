@@ -1,3 +1,5 @@
+require "kafka/prefixed_logger"
+
 module Kafka
   class ConnectionBuilder
     def initialize(client_id:, logger:, instrumenter:, connect_timeout:, socket_timeout:, ssl_context:, sasl_authenticator:)
@@ -17,7 +19,7 @@ module Kafka
         client_id: @client_id,
         connect_timeout: @connect_timeout,
         socket_timeout: @socket_timeout,
-        logger: @logger,
+        logger: PrefixedLogger.new("#{host}:#{port}", @logger),
         instrumenter: @instrumenter,
         ssl_context: @ssl_context,
       )
