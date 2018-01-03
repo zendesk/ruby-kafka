@@ -56,6 +56,9 @@ module Kafka
     def leave
       @logger.info "Leaving group `#{@group_id}`"
 
+      # Having a generation id indicates that we're a member of the group.
+      @generation_id = nil
+
       @instrumenter.instrument("leave_group.consumer", group_id: @group_id) do
         coordinator.leave_group(group_id: @group_id, member_id: @member_id)
       end
