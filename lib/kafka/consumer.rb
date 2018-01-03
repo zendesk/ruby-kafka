@@ -433,6 +433,9 @@ module Kafka
     end
 
     def fetch_batches(min_bytes:, max_bytes:, max_wait_time:, automatically_mark_as_processed:)
+      # Return early if the consumer has been stopped.
+      return [] if !@running
+
       join_group unless @group.member?
 
       subscribed_partitions = @group.subscribed_partitions
