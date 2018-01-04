@@ -11,6 +11,7 @@ Changes and additions to the library will be listed here.
 - Refactor compression codec lookup (#509).
 - Fix compressed message set offset bug (#506).
 - Test against multiple versions of Kafka.
+- Fix double-processing of messages after a consumer exception (#518).
 
 ## v0.5.1
 
