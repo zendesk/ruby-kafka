@@ -122,6 +122,7 @@ module Kafka
 
     class ConsumerSubscriber < StatsdSubscriber
       def process_message(event)
+        offset = event.payload.fetch(:offset)
         offset_lag = event.payload.fetch(:offset_lag)
         create_time = event.payload.fetch(:create_time)
         time_lag = create_time && ((Time.now - create_time) * 1000).to_i
@@ -140,6 +141,7 @@ module Kafka
           increment("consumer.messages", tags: tags)
         end
 
+        gauge("consumer.offset", offset, tags: tags)
         gauge("consumer.lag", offset_lag, tags: tags)
 
         # Not all messages have timestamps.
@@ -149,6 +151,7 @@ module Kafka
       end
 
       def process_batch(event)
+        offset = event.payload.fetch(:last_offset)
         lag = event.payload.fetch(:offset_lag)
         messages = event.payload.fetch(:message_count)
 
@@ -166,6 +169,7 @@ module Kafka
           count("consumer.messages", messages, tags: tags)
         end
 
+        gauge("consumer.offset", offset, tags: tags)
         gauge("consumer.lag", lag, tags: tags)
       end
 
