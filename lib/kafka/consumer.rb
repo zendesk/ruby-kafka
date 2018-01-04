@@ -294,6 +294,7 @@ module Kafka
             notification = {
               topic: batch.topic,
               partition: batch.partition,
+              last_offset: batch.last_offset,
               offset_lag: batch.offset_lag,
               highwater_mark_offset: batch.highwater_mark_offset,
               message_count: batch.messages.count,
