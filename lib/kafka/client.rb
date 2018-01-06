@@ -60,12 +60,12 @@ module Kafka
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
                    sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
-                   sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil)
+                   sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil, use_ssl_ca_default_store: false)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
-      ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key)
+      ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key, use_ssl_ca_default_store)
 
       sasl_authenticator = SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,
@@ -542,8 +542,8 @@ module Kafka
       )
     end
 
-    def build_ssl_context(ca_cert_file_path, ca_cert, client_cert, client_cert_key)
-      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key
+    def build_ssl_context(ca_cert_file_path, ca_cert, client_cert, client_cert_key, use_ssl_ca_default_store)
+      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || use_ssl_ca_default_store
 
       ssl_context = OpenSSL::SSL::SSLContext.new
 
@@ -558,13 +558,16 @@ module Kafka
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert_key`, but no `ssl_client_cert`. Please provide both."
       end
 
-      if ca_cert || ca_cert_file_path
+      if ca_cert || ca_cert_file_path || use_ssl_ca_default_store
         store = OpenSSL::X509::Store.new
         Array(ca_cert).each do |cert|
           store.add_cert(OpenSSL::X509::Certificate.new(cert))
         end
         if ca_cert_file_path
           store.add_file(ca_cert_file_path)
+        end
+        if use_ssl_ca_default_store
+          store.set_default_paths
         end
         ssl_context.cert_store = store
       end
