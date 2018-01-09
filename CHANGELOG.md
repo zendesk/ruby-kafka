@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.5.2
+
 - Instrument the start of message/batch processing (#496).
 - Mark `Client#fetch_messages` as stable.
 - Fix the list topics API (#508).
@@ -12,6 +14,7 @@ Changes and additions to the library will be listed here.
 - Fix compressed message set offset bug (#506).
 - Test against multiple versions of Kafka.
 - Fix double-processing of messages after a consumer exception (#518).
+- Track consumer offsets in Datadog.
 
 ## v0.5.1
 
