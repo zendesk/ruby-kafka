@@ -53,14 +53,14 @@ describe Kafka::Consumer do
   describe "#each_message" do
     let(:messages) {
       [
-        Kafka::FetchedMessage.new(
+        double(:message, {
           value: "hello",
           key: nil,
           topic: "greetings",
           partition: 0,
           offset: 13,
           create_time: Time.now,
-        )
+        })
       ]
     }
 
@@ -190,14 +190,14 @@ describe Kafka::Consumer do
   describe "#each_batch" do
     let(:messages) {
       [
-        Kafka::FetchedMessage.new(
+        double(:message, {
           value: "hello",
           key: nil,
           topic: "greetings",
           partition: 0,
           offset: 13,
           create_time: Time.now,
-        )
+        })
       ]
     }
 

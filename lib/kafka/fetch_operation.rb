@@ -91,12 +91,9 @@ module Kafka
 
             messages = fetched_partition.messages.map {|message|
               FetchedMessage.new(
-                value: message.value,
-                key: message.key,
+                message: message,
                 topic: fetched_topic.name,
                 partition: fetched_partition.partition,
-                offset: message.offset,
-                create_time: message.create_time,
               )
             }
 
