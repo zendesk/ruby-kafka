@@ -895,7 +895,7 @@ can use:
 
 ```ruby
 kafka = Kafka.new(
-  use_ssl_ca_default_store: true
+  ssl_ca_certs_from_system: true
   # ...
 )
 ```
