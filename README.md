@@ -888,6 +888,21 @@ kafka = Kafka.new(
 
 Without passing the CA certificate to the client it would be impossible to protect against [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
+##### Using your system's CA cert store
+
+If you want to use the CA certs from your system's default certificate store, you
+can use:
+
+```ruby
+kafka = Kafka.new(
+  ssl_ca_certs_from_system: true
+  # ...
+)
+```
+
+This configures the store to look up CA certificates from the system default certificate store on an as needed basis. The location of the store can usually be determined by: 
+`OpenSSL::X509::DEFAULT_CERT_FILE`
+
 ##### Client Authentication
 
 In order to authenticate the client to the cluster, you need to pass in a certificate and key created for the client and trusted by the brokers.
