@@ -14,7 +14,7 @@ require "kafka"
 # with e.g. `$stderr` if you want to see what's happening under the hood.
 logger = Logger.new(StringIO.new)
 
-brokers = ENV.fetch("KAFKA_BROKERS")
+brokers = ENV.fetch("KAFKA_BROKERS").split(",")
 
 # Make sure to create this topic in your Kafka cluster or configure the
 # cluster to auto-create topics.
