@@ -195,11 +195,11 @@ module Kafka
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
-      join_group(
-        min_bytes: min_bytes,
-        max_bytes: max_bytes,
-        max_wait_time: max_wait_time,
-      )
+      @min_bytes = min_bytes
+      @max_bytes = max_bytes
+      @max_wait_time = max_wait_time
+
+      join_group
 
       consumer_loop do
         batches = fetch_batches(
@@ -277,14 +277,11 @@ module Kafka
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
     def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
-      join_group
+      @min_bytes = min_bytes
+      @max_bytes = max_bytes
+      @max_wait_time = max_wait_time
 
-      @fetcher.start(
-        partitions: @group.subscribed_partitions,
-        min_bytes: min_bytes,
-        max_bytes: max_bytes,
-        max_wait_time: max_wait_time,
-      )
+      join_group
 
       consumer_loop do
         batches = fetch_batches(
@@ -418,7 +415,7 @@ module Kafka
       @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
     end
 
-    def join_group(min_bytes:, max_bytes:, max_wait_time:)
+    def join_group
       # Stop the fetcher if it's already running, as it'll need to be reconfigured.
       @fetcher.stop
 
@@ -455,9 +452,9 @@ module Kafka
       end
 
       @fetcher.start(
-        min_bytes: min_bytes,
-        max_bytes: max_bytes,
-        max_wait_time: max_wait_time,
+        min_bytes: @min_bytes,
+        max_bytes: @max_bytes,
+        max_wait_time: @max_wait_time,
       )
     end
 
