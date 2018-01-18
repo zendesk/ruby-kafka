@@ -202,9 +202,7 @@ module Kafka
       join_group
 
       consumer_loop do
-        batches = fetch_batches(
-          automatically_mark_as_processed: automatically_mark_as_processed
-        )
+        batches = fetch_batches
 
         batches.each do |batch|
           batch.messages.each do |message|
@@ -284,9 +282,7 @@ module Kafka
       join_group
 
       consumer_loop do
-        batches = fetch_batches(
-          automatically_mark_as_processed: automatically_mark_as_processed
-        )
+        batches = fetch_batches
 
         batches.each do |batch|
           unless batch.empty?
@@ -458,7 +454,7 @@ module Kafka
       )
     end
 
-    def fetch_batches(automatically_mark_as_processed:)
+    def fetch_batches
       # Return early if the consumer has been stopped.
       return [] if !@running
 
@@ -471,7 +467,14 @@ module Kafka
         sleep 2
         []
       else
-        [@fetcher.queue.deq]
+        tag, message = @fetcher.queue.deq
+
+        case tag
+        when :batch
+          [message]
+        when :exception
+          raise message
+        end
       end
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
