@@ -195,10 +195,7 @@ module Kafka
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
-      join_group
-
-      @fetcher.start(
-        partitions: @group.subscribed_partitions,
+      join_group(
         min_bytes: min_bytes,
         max_bytes: max_bytes,
         max_wait_time: max_wait_time,
@@ -421,7 +418,7 @@ module Kafka
       @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
     end
 
-    def join_group
+    def join_group(min_bytes:, max_bytes:, max_wait_time:)
       # Stop the fetcher if it's already running, as it'll need to be reconfigured.
       @fetcher.stop
 
@@ -441,6 +438,27 @@ module Kafka
         # only keep commits for the partitions that we're still assigned.
         @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
       end
+
+      @group.assigned_partitions.each do |topic, partitions|
+        partitions.each do |partition|
+          # When automatic marking is off, the first poll needs to be based on the last committed
+          # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
+          if @current_offsets[topic].key?(partition)
+            offset = @current_offsets[topic][partition] + 1
+          else
+            offset = @offset_manager.next_offset_for(topic, partition)
+          end
+
+          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
+          @fetcher.seek(topic, partition, offset)
+        end
+      end
+
+      @fetcher.start(
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
     end
 
     def fetch_batches(automatically_mark_as_processed:)

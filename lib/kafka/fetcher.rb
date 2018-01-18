@@ -10,12 +10,15 @@ module Kafka
       @instrumenter = instrumenter
 
       @queue = Queue.new
-      @current_offsets = Hash.new { |h, k| h[k] = {} }
+      @next_offsets = Hash.new { |h, k| h[k] = {} }
       @thread = nil
     end
 
-    def start(partitions:, min_bytes:, max_bytes:, max_wait_time:)
-      @partitions = partitions
+    def seek(topic, partition, offset)
+      @next_offsets[topic][partition] = offset
+    end
+
+    def start(min_bytes:, max_bytes:, max_wait_time:)
       @min_bytes = min_bytes
       @max_bytes = max_bytes
       @max_wait_time = max_wait_time
@@ -54,7 +57,7 @@ module Kafka
         @logger.info "=== Enqueueing batch"
         @queue << batch
 
-        @current_offsets[batch.topic][batch.partition] = batch.last_offset
+        @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1
       end
     end
 
@@ -69,17 +72,8 @@ module Kafka
         max_wait_time: @max_wait_time,
       )
 
-      @partitions.each do |topic, partitions|
-        partitions.each do |partition|
-          # When automatic marking is off, the first poll needs to be based on the last committed
-          # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
-          if @current_offsets[topic].key?(partition)
-            offset = @current_offsets[topic][partition] + 1
-          else
-            offset = 0
-          end
-
-          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
+      @next_offsets.each do |topic, partitions|
+        partitions.each do |partition, offset|
           operation.fetch_from_partition(topic, partition, offset: offset)
         end
       end
