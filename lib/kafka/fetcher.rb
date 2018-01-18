@@ -2,6 +2,8 @@ require "kafka/fetch_operation"
 
 module Kafka
   class Fetcher
+    MAX_QUEUE_SIZE = 100
+
     attr_reader :queue
 
     def initialize(cluster:, logger:, instrumenter:)
@@ -28,7 +30,14 @@ module Kafka
       @running = true
 
       @thread = Thread.new do
-        step while @running
+        while @running
+          if @queue.size < MAX_QUEUE_SIZE
+            step
+          else
+            @logger.warn "Reached max fetcher queue size (#{MAX_QUEUE_SIZE}), sleeping 1s"
+            sleep 1
+          end
+        end
       end
 
       @thread.abort_on_exception = true
