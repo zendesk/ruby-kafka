@@ -302,12 +302,19 @@ module Kafka
         interval: heartbeat_interval,
       )
 
+      fetcher = Fetcher.new(
+        cluster: initialize_cluster,
+        logger: @logger,
+        instrumenter: instrumenter,
+      )
+
       Consumer.new(
         cluster: cluster,
         logger: @logger,
         instrumenter: instrumenter,
         group: group,
         offset_manager: offset_manager,
+        fetcher: fetcher,
         session_timeout: session_timeout,
         heartbeat: heartbeat,
       )

@@ -1,6 +1,6 @@
 require "kafka/consumer_group"
 require "kafka/offset_manager"
-require "kafka/fetch_operation"
+require "kafka/fetcher"
 
 module Kafka
 
@@ -40,13 +40,14 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
       @group = group
       @offset_manager = offset_manager
       @session_timeout = session_timeout
+      @fetcher = fetcher
       @heartbeat = heartbeat
 
       # A list of partitions that have been paused, per topic.
@@ -105,6 +106,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @fetcher.stop if @fetcher
       @cluster.disconnect
     end
 
@@ -193,24 +195,21 @@ module Kafka
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
+      join_group
+
+      @fetcher.start(
+        partitions: @group.subscribed_partitions,
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
+
       consumer_loop do
         batches = fetch_batches(
-          min_bytes: min_bytes,
-          max_bytes: max_bytes,
-          max_wait_time: max_wait_time,
           automatically_mark_as_processed: automatically_mark_as_processed
         )
 
         batches.each do |batch|
-          unless batch.empty?
-            @instrumenter.instrument("fetch_batch.consumer", {
-              topic: batch.topic,
-              partition: batch.partition,
-              offset_lag: batch.offset_lag,
-              highwater_mark_offset: batch.highwater_mark_offset,
-              message_count: batch.messages.count,
-            })
-          end
           batch.messages.each do |message|
             notification = {
               topic: message.topic,
@@ -281,11 +280,17 @@ module Kafka
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
     def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
+      join_group
+
+      @fetcher.start(
+        partitions: @group.subscribed_partitions,
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
+
       consumer_loop do
         batches = fetch_batches(
-          min_bytes: min_bytes,
-          max_bytes: max_bytes,
-          max_wait_time: max_wait_time,
           automatically_mark_as_processed: automatically_mark_as_processed
         )
 
@@ -417,6 +422,9 @@ module Kafka
     end
 
     def join_group
+      # Stop the fetcher if it's already running, as it'll need to be reconfigured.
+      @fetcher.stop
+
       old_generation_id = @group.generation_id
 
       @group.join
@@ -435,57 +443,21 @@ module Kafka
       end
     end
 
-    def fetch_batches(min_bytes:, max_bytes:, max_wait_time:, automatically_mark_as_processed:)
+    def fetch_batches(automatically_mark_as_processed:)
       # Return early if the consumer has been stopped.
       return [] if !@running
 
       join_group unless @group.member?
 
-      subscribed_partitions = @group.subscribed_partitions
-
       @heartbeat.send_if_necessary
 
-      operation = FetchOperation.new(
-        cluster: @cluster,
-        logger: @logger,
-        min_bytes: min_bytes,
-        max_bytes: max_bytes,
-        max_wait_time: max_wait_time,
-      )
-
-      subscribed_partitions.each do |topic, partitions|
-        partitions.each do |partition|
-          if automatically_mark_as_processed
-            offset = @offset_manager.next_offset_for(topic, partition)
-          else
-            # When automatic marking is off, the first poll needs to be based on the last committed
-            # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
-            if @current_offsets[topic].key?(partition)
-              offset = @current_offsets[topic][partition] + 1
-            else
-              offset = @offset_manager.next_offset_for(topic, partition)
-            end
-          end
-
-          max_bytes = @max_bytes.fetch(topic)
-
-          if paused?(topic, partition)
-            @logger.warn "Partition #{topic}/#{partition} is currently paused, skipping"
-          else
-            @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-            operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
-          end
-        end
+      if @fetcher.queue.empty?
+        @logger.debug "No batches to process"
+        sleep 2
+        []
+      else
+        [@fetcher.queue.deq]
       end
-
-      operation.execute
-    rescue NoPartitionsToFetchFrom
-      backoff = max_wait_time > 0 ? max_wait_time : 1
-
-      @logger.info "There are no partitions to fetch from, sleeping for #{backoff}s"
-      sleep backoff
-
-      retry
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
 
