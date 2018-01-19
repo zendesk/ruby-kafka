@@ -14,47 +14,76 @@ module Kafka
       @queue = Queue.new
       @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
-      @thread = nil
+
+      @min_bytes = 1
+      @max_bytes = 10485760
+      @max_wait_time = 1
+
+      @thread = Thread.new do
+        loop while true
+      end
+
+      @thread.abort_on_exception = true
     end
 
     def seek(topic, partition, offset)
       @commands << [:seek, [topic, partition, offset]]
     end
 
-    def start(min_bytes:, max_bytes:, max_wait_time:)
-      @min_bytes = min_bytes
-      @max_bytes = max_bytes
-      @max_wait_time = max_wait_time
+    def configure(min_bytes:, max_bytes:, max_wait_time:)
+      @commands << [:configure, [min_bytes, max_bytes, max_wait_time]]
+    end
 
+    def start
+      @commands << [:start, []]
+    end
+
+    def handle_start
       raise "already started" if @running
 
       @running = true
-
-      @thread = Thread.new do
-        while @running
-          if !@commands.empty?
-            cmd, args = @commands.deq
-            send("handle_#{cmd}", *args)
-          elsif @queue.size < MAX_QUEUE_SIZE
-            step
-          else
-            @logger.warn "Reached max fetcher queue size (#{MAX_QUEUE_SIZE}), sleeping 1s"
-            sleep 1
-          end
-        end
-      end
-
-      @thread.abort_on_exception = true
     end
 
     def stop
-      @running = false
+      @commands << [:stop, []]
     end
 
     private
 
+    def loop
+      if !@commands.empty?
+        cmd, args = @commands.deq
+
+        @logger.debug "Handling fetcher command: #{cmd}"
+
+        send("handle_#{cmd}", *args)
+      elsif !@running
+        sleep 0.1
+      elsif @queue.size < MAX_QUEUE_SIZE
+        step
+      else
+        @logger.warn "Reached max fetcher queue size (#{MAX_QUEUE_SIZE}), sleeping 1s"
+        sleep 1
+      end
+    end
+
+    def handle_configure(min_bytes, max_bytes, max_wait_time)
+      @min_bytes = min_bytes
+      @max_bytes = max_bytes
+      @max_wait_time = max_wait_time
+    end
+
+    def handle_stop(*)
+      @running = false
+
+      # After stopping, we need to reconfigure the topics and partitions to fetch
+      # from. Otherwise we'd keep fetching from a bunch of partitions we may no
+      # longer be assigned.
+      @next_offsets.clear
+    end
+
     def handle_seek(topic, partition, offset)
-      @logger.info "=== RESUME ==="
+      @logger.info "Seeking #{topic}/#{partition} to offset #{offset}"
       @next_offsets[topic][partition] = offset
     end
 
@@ -76,12 +105,15 @@ module Kafka
       end
 
       @queue << [:batches, batches]
+    rescue Kafka::NoPartitionsToFetchFrom
+      @logger.warn "No partitions to fetch from, sleeping for 1s"
+      sleep 1
     rescue Kafka::Error => e
       @queue << [:exception, e]
     end
 
     def fetch_batches
-      @logger.info "=== FETCHING BATCHES ==="
+      @logger.debug "Fetching batches"
 
       operation = FetchOperation.new(
         cluster: @cluster,
@@ -104,7 +136,7 @@ module Kafka
       @logger.info "There are no partitions to fetch from, sleeping for #{backoff}s"
       sleep backoff
 
-      retry
+      []
     end
   end
 end

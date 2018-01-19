@@ -24,8 +24,6 @@ trap("INT") { consumer.stop }
 
 begin
   consumer.each_message do |message|
-    raise "balls"
-    puts message.value
   end
 rescue Kafka::ProcessingError => e
   warn "Got #{e.cause}"

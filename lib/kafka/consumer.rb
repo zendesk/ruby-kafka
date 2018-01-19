@@ -106,7 +106,6 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
-      @fetcher.stop if @fetcher
       @cluster.disconnect
     end
 
@@ -189,11 +188,11 @@ module Kafka
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
-      @min_bytes = min_bytes
-      @max_bytes = max_bytes
-      @max_wait_time = max_wait_time
-
-      join_group
+      @fetcher.configure(
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
 
       consumer_loop do
         batches = fetch_batches
@@ -269,11 +268,11 @@ module Kafka
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     # @return [nil]
     def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
-      @min_bytes = min_bytes
-      @max_bytes = max_bytes
-      @max_wait_time = max_wait_time
-
-      join_group
+      @fetcher.configure(
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
 
       consumer_loop do
         batches = fetch_batches
@@ -358,6 +357,8 @@ module Kafka
     def consumer_loop
       @running = true
 
+      @fetcher.start
+
       while @running
         begin
           @instrumenter.instrument("loop.consumer") do
@@ -388,7 +389,7 @@ module Kafka
       make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
-      @fetcher.stop rescue nil
+      @fetcher.stop
     end
 
     def make_final_offsets_commit!(attempts = 3)
@@ -407,9 +408,6 @@ module Kafka
     end
 
     def join_group
-      # Stop the fetcher if it's already running, as it'll need to be reconfigured.
-      @fetcher.stop
-
       old_generation_id = @group.generation_id
 
       @group.join
@@ -436,12 +434,6 @@ module Kafka
           end
         end
       end
-
-      @fetcher.start(
-        min_bytes: @min_bytes,
-        max_bytes: @max_bytes,
-        max_wait_time: @max_wait_time,
-      )
     end
 
     def seek_to_next(topic, partition)
@@ -453,7 +445,6 @@ module Kafka
         offset = @offset_manager.next_offset_for(topic, partition)
       end
 
-      @logger.debug "Fetching from #{topic}/#{partition} starting at offset #{offset}"
       @fetcher.seek(topic, partition, offset)
     end
 
