@@ -138,6 +138,8 @@ module Kafka
     def resume(topic, partition)
       paused_partitions = @paused_partitions.fetch(topic, {})
       paused_partitions.delete(partition)
+
+      seek_to_next(topic, partition)
     end
 
     # Whether the topic partition is currently paused.
@@ -155,15 +157,7 @@ module Kafka
         # absolute point in time.
         timeout = partitions.fetch(partition)
 
-        if timeout.nil?
-          true
-        elsif Time.now < timeout
-          true
-        else
-          @logger.info "Automatically resuming partition #{topic}/#{partition}, pause timeout expired"
-          resume(topic, partition)
-          false
-        end
+        timeout.nil? || Time.now < timeout
       end
     end
 
@@ -394,6 +388,7 @@ module Kafka
       make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
+      @fetcher.stop rescue nil
     end
 
     def make_final_offsets_commit!(attempts = 3)
@@ -434,16 +429,11 @@ module Kafka
 
       @group.assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
-          # When automatic marking is off, the first poll needs to be based on the last committed
-          # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
-          if @current_offsets[topic].key?(partition)
-            offset = @current_offsets[topic][partition] + 1
+          if paused?(topic, partition)
+            @logger.warn "Not fetching from #{topic}/#{partition} due to pause"
           else
-            offset = @offset_manager.next_offset_for(topic, partition)
+            seek_to_next(topic, partition)
           end
-
-          @logger.debug "Fetching batch from #{topic}/#{partition} starting at offset #{offset}"
-          @fetcher.seek(topic, partition, offset)
         end
       end
 
@@ -454,6 +444,30 @@ module Kafka
       )
     end
 
+    def seek_to_next(topic, partition)
+      # When automatic marking is off, the first poll needs to be based on the last committed
+      # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
+      if @current_offsets[topic].key?(partition)
+        offset = @current_offsets[topic][partition] + 1
+      else
+        offset = @offset_manager.next_offset_for(topic, partition)
+      end
+
+      @logger.debug "Fetching from #{topic}/#{partition} starting at offset #{offset}"
+      @fetcher.seek(topic, partition, offset)
+    end
+
+    def resume_paused_partitions!
+      @paused_partitions.each do |topic, partitions|
+        partitions.keys.each do |partition|
+          unless paused?(topic, partition)
+            @logger.info "Automatically resuming partition #{topic}/#{partition}, pause timeout expired"
+            resume(topic, partition)
+          end
+        end
+      end
+    end
+
     def fetch_batches
       # Return early if the consumer has been stopped.
       return [] if !@running
@@ -461,6 +475,8 @@ module Kafka
       join_group unless @group.member?
 
       @heartbeat.send_if_necessary
+
+      resume_paused_partitions!
 
       if @fetcher.queue.empty?
         @logger.debug "No batches to process"

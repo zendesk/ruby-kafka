@@ -12,12 +12,13 @@ module Kafka
       @instrumenter = instrumenter
 
       @queue = Queue.new
+      @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
       @thread = nil
     end
 
     def seek(topic, partition, offset)
-      @next_offsets[topic][partition] = offset
+      @commands << [:seek, [topic, partition, offset]]
     end
 
     def start(min_bytes:, max_bytes:, max_wait_time:)
@@ -31,7 +32,10 @@ module Kafka
 
       @thread = Thread.new do
         while @running
-          if @queue.size < MAX_QUEUE_SIZE
+          if !@commands.empty?
+            cmd, args = @commands.deq
+            send("handle_#{cmd}", *args)
+          elsif @queue.size < MAX_QUEUE_SIZE
             step
           else
             @logger.warn "Reached max fetcher queue size (#{MAX_QUEUE_SIZE}), sleeping 1s"
@@ -48,6 +52,11 @@ module Kafka
     end
 
     private
+
+    def handle_seek(topic, partition, offset)
+      @logger.info "=== RESUME ==="
+      @next_offsets[topic][partition] = offset
+    end
 
     def step
       batches = fetch_batches
