@@ -48,6 +48,10 @@ module Kafka
       @commands << [:stop, []]
     end
 
+    def reset
+      @commands << [:reset, []]
+    end
+
     private
 
     def loop
@@ -73,13 +77,17 @@ module Kafka
       @max_wait_time = max_wait_time
     end
 
+    def handle_reset
+      @next_offsets.clear
+    end
+
     def handle_stop(*)
       @running = false
 
       # After stopping, we need to reconfigure the topics and partitions to fetch
       # from. Otherwise we'd keep fetching from a bunch of partitions we may no
       # longer be assigned.
-      @next_offsets.clear
+      handle_reset
     end
 
     def handle_seek(topic, partition, offset)
