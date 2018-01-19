@@ -470,8 +470,8 @@ module Kafka
         tag, message = @fetcher.queue.deq
 
         case tag
-        when :batch
-          [message]
+        when :batches
+          message
         when :exception
           raise message
         end

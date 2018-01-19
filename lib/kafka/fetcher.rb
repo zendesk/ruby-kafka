@@ -63,11 +63,10 @@ module Kafka
           })
         end
 
-        @logger.info "=== Enqueueing batch"
-        @queue << [:batch, batch]
-
         @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1
       end
+
+      @queue << [:batches, batches]
     rescue Kafka::Error => e
       @queue << [:exception, e]
     end
