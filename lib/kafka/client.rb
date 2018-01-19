@@ -467,7 +467,7 @@ module Kafka
     #
     # @param name [String] the name of the topic.
     # @param timeout [Integer] a duration of time to wait for the topic to be
-    #   completely created.
+    #   completely marked deleted.
     # @return [nil]
     def delete_topic(name, timeout: 30)
       @cluster.delete_topic(name, timeout: timeout)
