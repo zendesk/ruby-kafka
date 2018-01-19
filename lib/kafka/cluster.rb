@@ -180,6 +180,25 @@ module Kafka
       @logger.info "Topic `#{name}` was created"
     end
 
+    def delete_topic(name, timeout:)
+      options = {
+        topics: [name],
+        timeout: timeout,
+      }
+
+      broker = controller_broker
+
+      @logger.info "Deleting topic `#{name}` using controller broker #{broker}"
+
+      response = broker.delete_topics(**options)
+
+      response.errors.each do |topic, error_code|
+        Protocol.handle_error(error_code)
+      end
+
+      @logger.info "Topic `#{name}` was deleted"
+    end
+
     def resolve_offsets(topic, partitions, offset)
       add_target_topics([topic])
       refresh_metadata_if_necessary!

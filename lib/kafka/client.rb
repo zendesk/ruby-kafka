@@ -463,6 +463,16 @@ module Kafka
       @cluster.create_topic(name, num_partitions: num_partitions, replication_factor: replication_factor, timeout: timeout)
     end
 
+    # Delete a topic in the cluster.
+    #
+    # @param name [String] the name of the topic.
+    # @param timeout [Integer] a duration of time to wait for the topic to be
+    #   completely created.
+    # @return [nil]
+    def delete_topic(name, timeout: 30)
+      @cluster.delete_topic(name, timeout: timeout)
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
