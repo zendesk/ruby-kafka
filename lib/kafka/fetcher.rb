@@ -52,6 +52,14 @@ module Kafka
       @commands << [:reset, []]
     end
 
+    def data?
+      !@queue.empty?
+    end
+
+    def poll
+      @queue.deq
+    end
+
     private
 
     def loop

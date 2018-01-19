@@ -471,12 +471,12 @@ module Kafka
 
       resume_paused_partitions!
 
-      if @fetcher.queue.empty?
+      if !@fetcher.data?
         @logger.debug "No batches to process"
         sleep 2
         []
       else
-        tag, message = @fetcher.queue.deq
+        tag, message = @fetcher.poll
 
         case tag
         when :batches
