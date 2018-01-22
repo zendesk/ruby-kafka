@@ -11,11 +11,10 @@ describe "Consumer groups", fuzz: true do
     logger.level = Logger::INFO
 
     kafka = Kafka.new(seed_brokers: kafka_brokers, logger: logger)
-    producer = kafka.producer(max_buffer_size: 5000)
+    producer = kafka.producer(max_buffer_size: num_messages)
 
     messages.each do |i|
       producer.produce(i.to_s, topic: topic, partition: i % num_partitions)
-      producer.deliver_messages if i % 3000 == 0
     end
 
     producer.deliver_messages
