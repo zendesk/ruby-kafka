@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Add support for the topic deletion API (#528).
+
 ## v0.5.2
 
 - Instrument the start of message/batch processing (#496).
