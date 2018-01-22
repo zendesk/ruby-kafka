@@ -384,12 +384,13 @@ module Kafka
         end
       end
     ensure
+      @fetcher.stop
+
       # In order to quickly have the consumer group re-balance itself, it's
       # important that members explicitly tell Kafka when they're leaving.
       make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
-      @fetcher.stop
     end
 
     def make_final_offsets_commit!(attempts = 3)
