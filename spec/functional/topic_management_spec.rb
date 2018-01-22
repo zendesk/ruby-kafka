@@ -19,4 +19,24 @@ describe "Topic management API", functional: true do
     kafka.delete_topic(topic)
     expect(kafka.has_topic?(topic)).to eql(false)
   end
+
+  example "create partitions" do
+    topic = generate_topic_name
+
+    kafka.create_topic(topic, num_partitions: 3)
+    expect(kafka.partitions_for(topic)).to eq 3
+
+    kafka.create_partitions_for(topic, num_partitions: 10)
+    expect(kafka.partitions_for(topic)).to eq 10
+  end
+
+  example "validate partition creation" do
+    topic = generate_topic_name
+
+    kafka.create_topic(topic, num_partitions: 3)
+    expect(kafka.partitions_for(topic)).to eq 3
+
+    kafka.create_partitions_for(topic, num_partitions: 10, validate_only: true)
+    expect(kafka.partitions_for(topic)).to eq 3
+  end
 end
