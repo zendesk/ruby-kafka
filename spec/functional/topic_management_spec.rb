@@ -32,4 +32,14 @@ describe "Topic management API", functional: true do
     kafka.create_partitions_for(topic, num_partitions: 10)
     expect(kafka.partitions_for(topic)).to eq 10
   end
+
+  example "describe a topic" do
+    unless kafka.supports_api?(Kafka::Protocol::DESCRIBE_CONFIGS_API)
+      skip("This Kafka version not support ")
+    end
+    configs = kafka.describe_topic(topic, %w(retention.ms retention.bytes non_exists))
+    expect(configs.keys).to eql(%w(retention.ms retention.bytes))
+    expect(configs['retention.ms']).to be_a(String)
+    expect(configs['retention.bytes']).to be_a(String)
+  end
 end
