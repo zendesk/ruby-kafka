@@ -3,13 +3,11 @@ describe "Consumer groups", fuzz: true do
   let(:num_messages) { 10_000 }
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }
-  let(:topic) { "fuzz-consumer-group" }
+  let(:topic) { create_random_topic(num_partitions: num_partitions) }
   let(:messages) { Set.new((1..num_messages).to_a) }
 
   before do
     logger.level = Logger::INFO
-
-    KAFKA_CLUSTER.create_topic(topic, num_partitions: num_partitions, num_replicas: 1)
 
     kafka = Kafka.new(seed_brokers: kafka_brokers, logger: logger)
     producer = kafka.producer(max_buffer_size: 5000)
