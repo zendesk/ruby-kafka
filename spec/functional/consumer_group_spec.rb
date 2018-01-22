@@ -1,9 +1,59 @@
 describe "Consumer API", functional: true do
-  let(:num_partitions) { 15 }
   let!(:topic) { create_random_topic(num_partitions: 3) }
   let(:offset_retention_time) { 30 }
 
   example "consuming messages from the beginning of a topic" do
+    topic = create_random_topic(num_partitions: 1)
+    messages = (1..1000).to_a
+
+    begin
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+      producer = kafka.producer
+
+      messages.each do |i|
+        producer.produce(i.to_s, topic: topic, partition: 0)
+      end
+
+      producer.deliver_messages
+    end
+
+    group_id = "test#{rand(1000)}"
+
+    mutex = Mutex.new
+    received_messages = []
+
+    consumers = 2.times.map do
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer.subscribe(topic)
+      consumer
+    end
+
+    threads = consumers.map do |consumer|
+      t = Thread.new do
+        consumer.each_message do |message|
+          mutex.synchronize do
+            received_messages << message
+
+            if received_messages.count == messages.count
+              consumers.each(&:stop)
+            end
+          end
+        end
+      end
+
+      t.abort_on_exception = true
+
+      t
+    end
+
+    threads.each(&:join)
+
+    expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
+  end
+
+  example "consuming messages a topic that's being written to" do
+    num_partitions = 15
     messages = (1..1000).to_a
 
     Thread.new do
