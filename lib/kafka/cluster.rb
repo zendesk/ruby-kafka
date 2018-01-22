@@ -200,10 +200,7 @@ module Kafka
     end
 
     def create_partitions_for(name, num_partitions:, timeout:, validate_only:)
-      partitions = partitions_for(name)
-      all_brokers = cluster_info.brokers.map(&:node_id)
-      assignments = (1..num_partitions - partitions.count).map { all_brokers }
-
+      assignments = nil
       options = {
         topics: [[name, num_partitions, assignments]],
         timeout: timeout,
