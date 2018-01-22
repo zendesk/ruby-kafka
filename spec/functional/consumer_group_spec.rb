@@ -114,61 +114,6 @@ describe "Consumer API", functional: true do
     expect(received_messages).to match_array messages
   end
 
-  example "consuming messages from the end of a topic" do
-    sent_messages = 1_000
-
-    num_partitions = 1
-    topic = create_random_topic(num_partitions: num_partitions)
-    group_id = "test#{rand(1000)}"
-
-    consumer_thread = Thread.new do
-      received_messages = 0
-
-      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
-      consumer.subscribe(topic, start_from_beginning: false)
-
-      consumer.each_message do |message|
-        if message.value.nil?
-          consumer.stop
-        else
-          received_messages += 1
-        end
-      end
-
-      received_messages
-    end
-
-    consumer_thread.abort_on_exception = true
-
-    sleep 1
-
-    Thread.new do
-      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
-      producer = kafka.producer
-
-      1.upto(sent_messages) do |i|
-        producer.produce("hello", topic: topic, partition_key: i.to_s)
-
-        if i % 100 == 0
-          producer.deliver_messages
-          sleep 1
-        end
-      end
-
-      (0...num_partitions).each do |i|
-        # Send a tombstone to each partition.
-        producer.produce(nil, topic: topic, partition: i)
-      end
-
-      producer.deliver_messages
-    end
-
-    received_messages = consumer_thread.value
-
-    expect(received_messages).to eq sent_messages
-  end
-
   example "stopping and restarting a consumer group" do
     topic = create_random_topic(num_partitions: 1)
     num_messages = 10
