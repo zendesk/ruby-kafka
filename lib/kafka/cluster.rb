@@ -199,6 +199,31 @@ module Kafka
       @logger.info "Topic `#{name}` was deleted"
     end
 
+    def create_partitions_for(name, num_partitions:, timeout:, validate_only:)
+      partitions = partitions_for(name)
+      all_brokers = cluster_info.brokers.map(&:node_id)
+      assignments = (1..num_partitions - partitions.count).map { all_brokers }
+
+      options = {
+        topics: [[name, num_partitions, assignments]],
+        timeout: timeout,
+        validate_only: validate_only
+      }
+
+      broker = controller_broker
+
+      @logger.info "Creating #{num_partitions} partition(s) for topic `#{name}` using controller broker #{broker}"
+
+      response = broker.create_partitions(**options)
+
+      response.errors.each do |topic, error_code, error_message|
+        Protocol.handle_error(error_code, error_message)
+      end
+      mark_as_stale!
+
+      @logger.info "Topic `#{name}` was updated"
+    end
+
     def resolve_offsets(topic, partitions, offset)
       add_target_topics([topic])
       refresh_metadata_if_necessary!
