@@ -473,6 +473,18 @@ module Kafka
       @cluster.delete_topic(name, timeout: timeout)
     end
 
+    # Create partitions for a topic.
+    #
+    # @param name [String] the name of the topic.
+    # @param num_partitions [Integer] the number of desired partitions for
+    # the topic
+    # @param timeout [Integer] a duration of time to wait for the new
+    # partitions to be added.
+    # @return [nil]
+    def create_partitions_for(name, num_partitions: 1, timeout: 30, validate_only: false)
+      @cluster.create_partitions_for(name, num_partitions: num_partitions, timeout: timeout, validate_only: validate_only)
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
