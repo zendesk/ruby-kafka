@@ -473,6 +473,15 @@ module Kafka
       @cluster.delete_topic(name, timeout: timeout)
     end
 
+    # Describe configs of a topic.
+    #
+    # @param name [String] the name of the topic.
+    # @param configs [Array<String>] array of desired config names.
+    # @return [Hash<string, string>]
+    def describe_topic(name, configs = [])
+      @cluster.describe_topic(name, configs)
+    end
+
     # Create partitions for a topic.
     #
     # @param name [String] the name of the topic.
