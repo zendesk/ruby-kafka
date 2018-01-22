@@ -27,6 +27,7 @@ module Kafka
     API_VERSIONS_API = 18
     CREATE_TOPICS_API = 19
     DELETE_TOPICS_API = 20
+    CREATE_PARTITIONS_API = 37
 
     # A mapping from numeric API keys to symbolic API names.
     APIS = {
@@ -45,6 +46,7 @@ module Kafka
       API_VERSIONS_API => :api_versions,
       CREATE_TOPICS_API => :create_topics,
       DELETE_TOPICS_API => :delete_topics,
+      CREATE_PARTITIONS_API => :create_partitions
     }
 
     # A mapping from numeric error codes to exception classes.
@@ -95,13 +97,13 @@ module Kafka
     # @param error_code Integer
     # @raise [ProtocolError]
     # @return [nil]
-    def self.handle_error(error_code)
+    def self.handle_error(error_code, error_message = nil)
       if error_code == 0
         # No errors, yay!
       elsif error = ERRORS[error_code]
-        raise error
+        raise error, error_message
       else
-        raise UnknownError, "Unknown error with code #{error_code}"
+        raise UnknownError, "Unknown error with code #{error_code} #{error_message}"
       end
     end
 
@@ -145,3 +147,5 @@ require "kafka/protocol/create_topics_request"
 require "kafka/protocol/create_topics_response"
 require "kafka/protocol/delete_topics_request"
 require "kafka/protocol/delete_topics_response"
+require "kafka/protocol/create_partitions_request"
+require "kafka/protocol/create_partitions_response"
