@@ -180,6 +180,25 @@ module Kafka
       @logger.info "Topic `#{name}` was created"
     end
 
+    def delete_topic(name, timeout:)
+      options = {
+        topics: [name],
+        timeout: timeout,
+      }
+
+      broker = controller_broker
+
+      @logger.info "Deleting topic `#{name}` using controller broker #{broker}"
+
+      response = broker.delete_topics(**options)
+
+      response.errors.each do |topic, error_code|
+        Protocol.handle_error(error_code)
+      end
+
+      @logger.info "Topic `#{name}` was deleted"
+    end
+
     def resolve_offsets(topic, partitions, offset)
       add_target_topics([topic])
       refresh_metadata_if_necessary!
@@ -229,13 +248,17 @@ module Kafka
 
     def topics
       refresh_metadata_if_necessary!
-      cluster_info.topics.map(&:topic_name)
+      cluster_info.topics.select do |topic|
+        topic.topic_error_code == 0
+      end.map(&:topic_name)
     end
 
     # Lists all topics in the cluster.
     def list_topics
       response = random_broker.fetch_metadata(topics: nil)
-      response.topics.map(&:topic_name)
+      response.topics.select do |topic|
+        topic.topic_error_code == 0
+      end.map(&:topic_name)
     end
 
     def disconnect

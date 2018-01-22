@@ -115,6 +115,12 @@ module Kafka
       send_request(request)
     end
 
+    def delete_topics(**options)
+      request = Protocol::DeleteTopicsRequest.new(**options)
+
+      send_request(request)
+    end
+
     def api_versions
       request = Protocol::ApiVersionsRequest.new
 

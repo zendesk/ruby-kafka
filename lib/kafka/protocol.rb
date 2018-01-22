@@ -26,6 +26,7 @@ module Kafka
     SASL_HANDSHAKE_API = 17
     API_VERSIONS_API = 18
     CREATE_TOPICS_API = 19
+    DELETE_TOPICS_API = 20
 
     # A mapping from numeric API keys to symbolic API names.
     APIS = {
@@ -43,6 +44,7 @@ module Kafka
       SASL_HANDSHAKE_API => :sasl_handshake,
       API_VERSIONS_API => :api_versions,
       CREATE_TOPICS_API => :create_topics,
+      DELETE_TOPICS_API => :delete_topics,
     }
 
     # A mapping from numeric error codes to exception classes.
@@ -141,3 +143,5 @@ require "kafka/protocol/sasl_handshake_request"
 require "kafka/protocol/sasl_handshake_response"
 require "kafka/protocol/create_topics_request"
 require "kafka/protocol/create_topics_response"
+require "kafka/protocol/delete_topics_request"
+require "kafka/protocol/delete_topics_response"
