@@ -248,13 +248,17 @@ module Kafka
 
     def topics
       refresh_metadata_if_necessary!
-      cluster_info.topics.map(&:topic_name)
+      cluster_info.topics.select do |topic|
+        topic.topic_error_code == 0
+      end.map(&:topic_name)
     end
 
     # Lists all topics in the cluster.
     def list_topics
       response = random_broker.fetch_metadata(topics: nil)
-      response.topics.map(&:topic_name)
+      response.topics.select do |topic|
+        topic.topic_error_code == 0
+      end.map(&:topic_name)
     end
 
     def disconnect
