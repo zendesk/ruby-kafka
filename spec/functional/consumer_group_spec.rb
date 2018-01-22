@@ -1,5 +1,4 @@
 describe "Consumer API", functional: true do
-  let!(:topic) { create_random_topic(num_partitions: 3) }
   let(:offset_retention_time) { 30 }
 
   example "consuming messages from the beginning of a topic" do
@@ -52,20 +51,27 @@ describe "Consumer API", functional: true do
     expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
   end
 
-  example "consuming messages a topic that's being written to" do
-    num_partitions = 15
-    messages = (1..1000).to_a
+  example "consuming messages from a topic that's being written to" do
+    num_partitions = 3
+    topic = create_random_topic(num_partitions: num_partitions)
+    messages = (1..100).to_a
+
+    mutex = Mutex.new
+    var = ConditionVariable.new
 
     Thread.new do
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
-        producer.produce(i.to_s, topic: topic, partition_key: i.to_s)
+        producer.produce(i.to_s, topic: topic, partition: i % 3)
 
         if i % 100 == 0
           producer.deliver_messages
-          sleep 1
+
+          mutex.synchronize do
+            var.wait(mutex)
+          end
         end
       end
 
@@ -78,11 +84,10 @@ describe "Consumer API", functional: true do
     end
 
     group_id = "test#{rand(1000)}"
+    received_messages = []
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
-        received_messages = []
-
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
         consumer.subscribe(topic)
@@ -91,11 +96,12 @@ describe "Consumer API", functional: true do
           if message.value.nil?
             consumer.stop
           else
-            received_messages << Integer(message.value)
+            mutex.synchronize do
+              received_messages << Integer(message.value)
+              var.signal
+            end
           end
         end
-
-        received_messages
       end
 
       t.abort_on_exception = true
@@ -103,9 +109,9 @@ describe "Consumer API", functional: true do
       t
     end
 
-    received_messages = threads.map(&:value).flatten
+    threads.each(&:join)
 
-    expect(received_messages.sort).to match_array messages
+    expect(received_messages).to match_array messages
   end
 
   example "consuming messages from the end of a topic" do
