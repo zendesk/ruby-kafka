@@ -3,6 +3,7 @@ describe "Consumer groups", fuzz: true do
   let(:num_messages) { 10_000 }
   let(:num_partitions) { 30 }
   let(:num_consumers) { 10 }
+  let(:group_id) { "fuzz-#{rand(1000)}" }
   let(:topic) { create_random_topic(num_partitions: num_partitions) }
   let(:messages) { Set.new((1..num_messages).to_a) }
 
@@ -22,7 +23,7 @@ describe "Consumer groups", fuzz: true do
 
   example "consuming messages in a group with unreliable members" do
     result_queue = Queue.new
-    consumer_threads = num_consumers.times.map { start_consumer(result_queue) }
+    consumer_threads = num_consumers.times.map { start_consumer(group_id, result_queue) }
 
     nemesis = Thread.new do
       loop do
@@ -63,7 +64,7 @@ describe "Consumer groups", fuzz: true do
     puts "#{duplicate_messages.size} duplicate messages!"
   end
 
-  def start_consumer(result_queue)
+  def start_consumer(group_id, result_queue)
     thread = Thread.new do
       kafka = Kafka.new(
         seed_brokers: kafka_brokers,
@@ -72,7 +73,7 @@ describe "Consumer groups", fuzz: true do
         connect_timeout: 20,
       )
 
-      consumer = kafka.consumer(group_id: "fuzz", session_timeout: 30, offset_retention_time: 300)
+      consumer = kafka.consumer(group_id: group_id, session_timeout: 30, offset_retention_time: 300)
       consumer.subscribe(topic)
 
       consumer.each_message do |message|
