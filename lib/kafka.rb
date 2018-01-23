@@ -13,7 +13,13 @@ module Kafka
       @partition = partition
       @offset = offset
 
-      super()
+      #
+      # ProcessingErrors are only ever used to wrap exceptions raised
+      # by a consumer whilst processing messages dispatched to it; it
+      # is therefore safe to assume that ProcessingErrors will always
+      # have a meaningful causal exception
+      #
+      super($!.inspect)
     end
   end
 
