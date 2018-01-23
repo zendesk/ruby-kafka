@@ -540,6 +540,15 @@ module Kafka
       }.to_h
     end
 
+    # Check whether current cluster supports a specific version or not
+    #
+    # @param api_key [Integer] API key.
+    # @param version [Integer] API version.
+    # @return [Boolean]
+    def support_api?(api_key, version = nil)
+      @cluster.support_api?(api_key, version)
+    end
+
     def apis
       @cluster.apis
     end
