@@ -30,7 +30,7 @@ module Kafka
         end
         # Timeout is in ms.
         encoder.write_int32(@timeout * 1000)
-        encoder.write_boolean(false)
+        encoder.write_boolean(@validate_only)
       end
     end
 
