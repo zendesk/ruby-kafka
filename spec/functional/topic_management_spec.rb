@@ -21,6 +21,9 @@ describe "Topic management API", functional: true do
   end
 
   example "create partitions" do
+    unless kafka.support_api?(Kafka::Protocol::CREATE_PARTITIONS_API)
+      skip("This Kafka version not support ")
+    end
     topic = generate_topic_name
 
     kafka.create_topic(topic, num_partitions: 3)
@@ -31,6 +34,9 @@ describe "Topic management API", functional: true do
   end
 
   example "validate partition creation" do
+    unless kafka.support_api?(Kafka::Protocol::CREATE_PARTITIONS_API)
+      skip("This Kafka version not support ")
+    end
     topic = generate_topic_name
 
     kafka.create_topic(topic, num_partitions: 3)
