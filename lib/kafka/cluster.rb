@@ -60,7 +60,7 @@ module Kafka
       elsif version.nil?
         return true
       else
-        return (info.min_version..info.max_version).include?(version)
+        return info.version_supported?(version)
       end
     end
 

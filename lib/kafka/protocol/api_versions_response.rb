@@ -13,6 +13,10 @@ module Kafka
           Protocol.api_name(api_key)
         end
 
+        def version_supported?(version)
+          (min_version..max_version).include?(version)
+        end
+
         def to_s
           "#{api_name}=#{min_version}..#{max_version}"
         end
