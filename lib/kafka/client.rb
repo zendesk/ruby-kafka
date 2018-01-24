@@ -473,6 +473,18 @@ module Kafka
       @cluster.delete_topic(name, timeout: timeout)
     end
 
+    # Create partitions for a topic.
+    #
+    # @param name [String] the name of the topic.
+    # @param num_partitions [Integer] the number of desired partitions for
+    # the topic
+    # @param timeout [Integer] a duration of time to wait for the new
+    # partitions to be added.
+    # @return [nil]
+    def create_partitions_for(name, num_partitions: 1, timeout: 30)
+      @cluster.create_partitions_for(name, num_partitions: num_partitions, timeout: timeout)
+    end
+
     # Lists all topics in the cluster.
     #
     # @return [Array<String>] the list of topic names.
@@ -524,6 +536,15 @@ module Kafka
         partition_offsets = @cluster.resolve_offsets(topic, partition_ids, :latest)
         [topic, partition_offsets.collect { |k, v| [k, v - 1] }.to_h]
       }.to_h
+    end
+
+    # Check whether current cluster supports a specific version or not
+    #
+    # @param api_key [Integer] API key.
+    # @param version [Integer] API version.
+    # @return [Boolean]
+    def supports_api?(api_key, version = nil)
+      @cluster.supports_api?(api_key, version)
     end
 
     def apis

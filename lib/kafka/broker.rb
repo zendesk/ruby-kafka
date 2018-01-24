@@ -121,6 +121,12 @@ module Kafka
       send_request(request)
     end
 
+    def create_partitions(**options)
+      request = Protocol::CreatePartitionsRequest.new(**options)
+
+      send_request(request)
+    end
+
     def api_versions
       request = Protocol::ApiVersionsRequest.new
 

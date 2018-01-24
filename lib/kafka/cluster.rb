@@ -53,6 +53,17 @@ module Kafka
       apis.find {|api| api.api_key == api_key }
     end
 
+    def supports_api?(api_key, version = nil)
+      info = api_info(api_key)
+      if info.nil?
+        return false
+      elsif version.nil?
+        return true
+      else
+        return (info.min_version..info.max_version).include?(version)
+      end
+    end
+
     def apis
       @apis ||=
         begin
@@ -197,6 +208,26 @@ module Kafka
       end
 
       @logger.info "Topic `#{name}` was deleted"
+    end
+
+    def create_partitions_for(name, num_partitions:, timeout:)
+      options = {
+        topics: [[name, num_partitions, nil]],
+        timeout: timeout
+      }
+
+      broker = controller_broker
+
+      @logger.info "Creating #{num_partitions} partition(s) for topic `#{name}` using controller broker #{broker}"
+
+      response = broker.create_partitions(**options)
+
+      response.errors.each do |topic, error_code, error_message|
+        Protocol.handle_error(error_code, error_message)
+      end
+      mark_as_stale!
+
+      @logger.info "Topic `#{name}` was updated"
     end
 
     def resolve_offsets(topic, partitions, offset)
