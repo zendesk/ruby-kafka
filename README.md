@@ -77,7 +77,7 @@ Or install it yourself as:
   </tr>
   <tr>
     <th>Producer API</th>
-    <td>Full support</td>
+    <td>Full support in v0.4.x</td>
     <td>Full support in v0.4.x</td>
     <td>Full support in v0.5.x</td>
     <td>Limited support</td>
