@@ -30,7 +30,6 @@ module Kafka
       # @param boolean [Boolean]
       # @return [nil]
       def write_boolean(boolean)
-        # Note: 0x1 is represented by 1 byte when being written into the socket
         write(boolean ? write_int8(1) : write_int8(0))
       end
 
