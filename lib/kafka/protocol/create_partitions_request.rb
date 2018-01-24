@@ -2,8 +2,8 @@ module Kafka
   module Protocol
 
     class CreatePartitionsRequest
-      def initialize(topics:, timeout:, validate_only:)
-        @topics, @timeout, @validate_only = topics, timeout, validate_only
+      def initialize(topics:, timeout:)
+        @topics, @timeout = topics, timeout
       end
 
       def api_key
@@ -30,7 +30,9 @@ module Kafka
         end
         # Timeout is in ms.
         encoder.write_int32(@timeout * 1000)
-        encoder.write_boolean(@validate_only)
+        # validate_only. There isn't any use case for this in real life. So
+        # let's ignore it for now
+        encoder.write_boolean(false)
       end
     end
 

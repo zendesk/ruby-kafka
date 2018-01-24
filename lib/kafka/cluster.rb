@@ -210,12 +210,10 @@ module Kafka
       @logger.info "Topic `#{name}` was deleted"
     end
 
-    def create_partitions_for(name, num_partitions:, timeout:, validate_only:)
-      assignments = nil
+    def create_partitions_for(name, num_partitions:, timeout:)
       options = {
-        topics: [[name, num_partitions, assignments]],
-        timeout: timeout,
-        validate_only: validate_only
+        topics: [[name, num_partitions, nil]],
+        timeout: timeout
       }
 
       broker = controller_broker

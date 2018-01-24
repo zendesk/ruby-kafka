@@ -479,12 +479,10 @@ module Kafka
     # @param num_partitions [Integer] the number of desired partitions for
     # the topic
     # @param timeout [Integer] a duration of time to wait for the new
-    # @param validate_only [Boolean] whether this request is to validate only
-    # without actually execute it
     # partitions to be added.
     # @return [nil]
-    def create_partitions_for(name, num_partitions: 1, timeout: 30, validate_only: false)
-      @cluster.create_partitions_for(name, num_partitions: num_partitions, timeout: timeout, validate_only: validate_only)
+    def create_partitions_for(name, num_partitions: 1, timeout: 30)
+      @cluster.create_partitions_for(name, num_partitions: num_partitions, timeout: timeout)
     end
 
     # Lists all topics in the cluster.
