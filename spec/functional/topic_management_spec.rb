@@ -37,7 +37,10 @@ describe "Topic management API", functional: true do
     unless kafka.supports_api?(Kafka::Protocol::DESCRIBE_CONFIGS_API)
       skip("This Kafka version not support ")
     end
+
+    topic = generate_topic_name
     configs = kafka.describe_topic(topic, %w(retention.ms retention.bytes non_exists))
+
     expect(configs.keys).to eql(%w(retention.ms retention.bytes))
     expect(configs['retention.ms']).to be_a(String)
     expect(configs['retention.bytes']).to be_a(String)
