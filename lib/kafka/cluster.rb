@@ -53,7 +53,7 @@ module Kafka
       apis.find {|api| api.api_key == api_key }
     end
 
-    def support_api?(api_key, version = nil)
+    def supports_api?(api_key, version = nil)
       info = api_info(api_key)
       if info.nil?
         return false

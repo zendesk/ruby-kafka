@@ -545,8 +545,8 @@ module Kafka
     # @param api_key [Integer] API key.
     # @param version [Integer] API version.
     # @return [Boolean]
-    def support_api?(api_key, version = nil)
-      @cluster.support_api?(api_key, version)
+    def supports_api?(api_key, version = nil)
+      @cluster.supports_api?(api_key, version)
     end
 
     def apis
