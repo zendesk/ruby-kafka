@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Add support for the topic deletion API (#528).
+- Add support for the partition creation API (#533).
 
 ## v0.5.2
 
