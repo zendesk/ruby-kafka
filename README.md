@@ -74,6 +74,7 @@ Or install it yourself as:
     <th>Kafka 0.9</th>
     <th>Kafka 0.10</th>
     <th>Kafka 0.11</th>
+    <th>Kafka 1.0</th>
   </tr>
   <tr>
     <th>Producer API</th>
@@ -81,12 +82,14 @@ Or install it yourself as:
     <td>Full support in v0.4.x</td>
     <td>Full support in v0.5.x</td>
     <td>Limited support</td>
+    <td>Limited support</td>
   </tr>
   <tr>
     <th>Consumer API</th>
     <td>Unsupported</td>
     <td>Full support in v0.4.x</td>
     <td>Full support in v0.5.x</td>
+    <td>Limited support</td>
     <td>Limited support</td>
   </tr>
 </table>
@@ -97,6 +100,7 @@ This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with t
 - **Kafka 0.9:** Full support for the Producer and Consumer API in ruby-kafka v0.4.x.
 - **Kafka 0.10:** Full support for the Producer and Consumer API in ruby-kafka v0.5.x. Note that you _must_ run version 0.10.1 or higher of Kafka due to limitations in 0.10.0.
 - **Kafka 0.11:** Everything that works with Kafka 0.10 should still work, but so far no features specific to Kafka 0.11 have been added.
+- **Kafka 0.11:** Everything that works with Kafka 0.10 should still work, but so far no features specific to Kafka 1.0 have been added.
 
 This library requires Ruby 2.1 or higher.
 
