@@ -46,7 +46,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
 6. [Support and Discussion](#support-and-discussion)
 7. [Roadmap](#roadmap)
 8. [Higher level libraries](#higher-level-libraries)
-    1. [Message processing frameworks](#message-processing-framework)
+    1. [Message processing frameworks](#message-processing-frameworks)
     2. [Message publishing libraries](#message-publishing-libraries)
 
 ## Installation
