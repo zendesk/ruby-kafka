@@ -371,7 +371,9 @@ module Kafka
 
       while @running
         begin
-          yield
+          @instrumenter.instrument("loop.consumer") do
+            yield
+          end
         rescue HeartbeatError, OffsetCommitError
           join_group
         rescue RebalanceInProgress
