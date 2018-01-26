@@ -244,6 +244,8 @@ module Kafka
   # @see Client#initialize
   # @return [Client]
   def self.new(seed_brokers = nil, **options)
+    # We allow `seed_brokers` to be passed in either as a positional _or_ as a
+    # keyword argument.
     if seed_brokers.nil?
       Client.new(**options)
     else

@@ -115,13 +115,10 @@ A client must be initialized with at least one Kafka broker, from which the enti
 ```ruby
 require "kafka"
 
-kafka = Kafka.new(
-  # At least one of these nodes must be available:
-  seed_brokers: ["kafka1:9092", "kafka2:9092"],
-
-  # Set an optional client id in order to identify the client to Kafka:
-  client_id: "my-application",
-)
+# The first argument is a list of "seed brokers" that will be queried for the full
+# cluster topology. At least one of these *must* be available. `client_id` is
+# used to identify this client in logs and metrics. It's optional but recommended.
+kafka = Kafka.new(["kafka1:9092", "kafka2:9092"], client_id: "my-application")
 ```
 
 ### Producing Messages to Kafka
@@ -430,10 +427,7 @@ require "kafka"
 
 # Configure the Kafka client with the broker hosts and the Rails
 # logger.
-$kafka = Kafka.new(
-  seed_brokers: ["kafka1:9092", "kafka2:9092"],
-  logger: Rails.logger,
-)
+$kafka = Kafka.new(["kafka1:9092", "kafka2:9092"], logger: Rails.logger)
 
 # Set up an asynchronous producer that delivers its buffered messages
 # every ten seconds:
@@ -473,7 +467,7 @@ Consuming messages from a Kafka topic with ruby-kafka is simple:
 ```ruby
 require "kafka"
 
-kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
 
 kafka.each_message(topic: "greetings") do |message|
   puts message.offset, message.key, message.value
@@ -496,7 +490,7 @@ Using the API is simple:
 ```ruby
 require "kafka"
 
-kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
 
 # Consumers with the same group id will form a Consumer Group together.
 consumer = kafka.consumer(group_id: "my-consumer")
@@ -884,10 +878,7 @@ By enabling SSL encryption you can have some confidence that messages can be sen
 In this case you just need to pass a valid CA certificate as a string when configuring your `Kafka` client:
 
 ```ruby
-kafka = Kafka.new(
-  ssl_ca_cert: File.read('my_ca_cert.pem'),
-  # ...
-)
+kafka = Kafka.new(["kafka1:9092"], ssl_ca_cert: File.read('my_ca_cert.pem'))
 ```
 
 Without passing the CA certificate to the client it would be impossible to protect against [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
@@ -898,10 +889,7 @@ If you want to use the CA certs from your system's default certificate store, yo
 can use:
 
 ```ruby
-kafka = Kafka.new(
-  ssl_ca_certs_from_system: true
-  # ...
-)
+kafka = Kafka.new(["kafka1:9092"], ssl_ca_certs_from_system: true)
 ```
 
 This configures the store to look up CA certificates from the system default certificate store on an as needed basis. The location of the store can usually be determined by: 
@@ -913,6 +901,7 @@ In order to authenticate the client to the cluster, you need to pass in a certif
 
 ```ruby
 kafka = Kafka.new(
+  ["kafka1:9092"],
   ssl_ca_cert: File.read('my_ca_cert.pem'),
   ssl_client_cert: File.read('my_client_cert.pem'),
   ssl_client_cert_key: File.read('my_client_cert_key.pem'),
@@ -935,6 +924,7 @@ In order to authenticate using GSSAPI, set your principal and optionally your ke
 
 ```ruby
 kafka = Kafka.new(
+  ["kafka1:9092"],
   sasl_gssapi_principal: 'kafka/kafka.example.com@EXAMPLE.COM',
   sasl_gssapi_keytab: '/etc/keytabs/kafka.keytab',
   # ...
@@ -946,6 +936,7 @@ In order to authenticate using PLAIN, you must set your username and password wh
 
 ```ruby
 kafka = Kafka.new(
+  ["kafka1:9092"],
   ssl_ca_cert: File.read('/etc/openssl/cert.pem'), # Optional but highly recommended
   sasl_plain_username: 'username',
   sasl_plain_password: 'password'
@@ -960,6 +951,7 @@ Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#se
 
 ```ruby
 kafka = Kafka.new(
+  ["kafka1:9092"],
   sasl_scram_username: 'username',
   sasl_scram_password: 'password',
   sasl_scram_mechanism: 'sha256',
