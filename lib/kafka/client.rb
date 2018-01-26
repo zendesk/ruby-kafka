@@ -473,11 +473,21 @@ module Kafka
       @cluster.delete_topic(name, timeout: timeout)
     end
 
-    # Describe configs of a topic.
+    # Describe the configuration of a topic.
+    #
+    # Retrieves the topic configuration from the Kafka brokers. Configuration names
+    # refer to [Kafka's topic-level configs](https://kafka.apache.org/documentation/#topicconfigs).
+    #
+    # @note This is an alpha level API and is subject to change.
+    #
+    # @example Describing the cleanup policy config of a topic
+    #   kafka = Kafka.new(seed_brokers: ["kafka1:9092"])
+    #   kafka.describe_topic("my-topic", ["cleanup.policy"])
+    #   #=> { "cleanup.policy" => "delete" }
     #
     # @param name [String] the name of the topic.
     # @param configs [Array<String>] array of desired config names.
-    # @return [Hash<string, string>]
+    # @return [Hash<String, String>]
     def describe_topic(name, configs = [])
       @cluster.describe_topic(name, configs)
     end
