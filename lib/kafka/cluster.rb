@@ -210,6 +210,25 @@ module Kafka
       @logger.info "Topic `#{name}` was deleted"
     end
 
+    def describe_topic(name, configs = [])
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_TOPIC, name, configs]]
+      }
+      broker = controller_broker
+
+      @logger.info "Fetching topic `#{name}`'s configs using controller broker #{broker}"
+
+      response = broker.describe_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+      topic_description = response.resources.first
+      topic_description.configs.each_with_object({}) do |config, hash|
+        hash[config.name] = config.value
+      end
+    end
+
     def create_partitions_for(name, num_partitions:, timeout:)
       options = {
         topics: [[name, num_partitions, nil]],

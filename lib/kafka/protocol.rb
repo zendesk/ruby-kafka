@@ -27,6 +27,7 @@ module Kafka
     API_VERSIONS_API = 18
     CREATE_TOPICS_API = 19
     DELETE_TOPICS_API = 20
+    DESCRIBE_CONFIGS_API = 32
     CREATE_PARTITIONS_API = 37
 
     # A mapping from numeric API keys to symbolic API names.
@@ -46,6 +47,7 @@ module Kafka
       API_VERSIONS_API => :api_versions,
       CREATE_TOPICS_API => :create_topics,
       DELETE_TOPICS_API => :delete_topics,
+      DESCRIBE_CONFIGS_API => :describe_configs_api,
       CREATE_PARTITIONS_API => :create_partitions
     }
 
@@ -89,6 +91,25 @@ module Kafka
       40 => InvalidConfig,
       41 => NotController,
       42 => InvalidRequest
+    }
+
+    # A mapping from int to corresponding resource type in symbol.
+    # https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/resource/ResourceType.java
+    RESOURCE_TYPE_UNKNOWN = 0
+    RESOURCE_TYPE_ANY = 1
+    RESOURCE_TYPE_TOPIC = 2
+    RESOURCE_TYPE_GROUP = 3
+    RESOURCE_TYPE_CLUSTER = 4
+    RESOURCE_TYPE_TRANSACTIONAL_ID = 5
+    RESOURCE_TYPE_DELEGATION_TOKEN = 6
+    RESOURCE_TYPES = {
+      RESOURCE_TYPE_UNKNOWN => :unknown,
+      RESOURCE_TYPE_ANY => :any,
+      RESOURCE_TYPE_TOPIC => :topic,
+      RESOURCE_TYPE_GROUP => :group,
+      RESOURCE_TYPE_CLUSTER => :cluster,
+      RESOURCE_TYPE_TRANSACTIONAL_ID => :transactional_id,
+      RESOURCE_TYPE_DELEGATION_TOKEN => :delegation_token,
     }
 
     # Handles an error code by either doing nothing (if there was no error) or
@@ -147,5 +168,7 @@ require "kafka/protocol/create_topics_request"
 require "kafka/protocol/create_topics_response"
 require "kafka/protocol/delete_topics_request"
 require "kafka/protocol/delete_topics_response"
+require "kafka/protocol/describe_configs_request"
+require "kafka/protocol/describe_configs_response"
 require "kafka/protocol/create_partitions_request"
 require "kafka/protocol/create_partitions_response"

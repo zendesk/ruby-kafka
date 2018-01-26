@@ -121,6 +121,12 @@ module Kafka
       send_request(request)
     end
 
+    def describe_configs(**options)
+      request = Protocol::DescribeConfigsRequest.new(**options)
+
+      send_request(request)
+    end
+
     def create_partitions(**options)
       request = Protocol::CreatePartitionsRequest.new(**options)
 
