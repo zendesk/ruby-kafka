@@ -481,7 +481,7 @@ module Kafka
     # @note This is an alpha level API and is subject to change.
     #
     # @example Describing the cleanup policy config of a topic
-    #   kafka = Kafka.new(seed_brokers: ["kafka1:9092"])
+    #   kafka = Kafka.new(["kafka1:9092"])
     #   kafka.describe_topic("my-topic", ["cleanup.policy"])
     #   #=> { "cleanup.policy" => "delete" }
     #

@@ -10,7 +10,7 @@ describe "Producer API", functional: true do
 
   example "listing available topics in the cluster" do
     # Use a clean Kafka instance to avoid hitting caches.
-    kafka = Kafka.new(seed_brokers: KAFKA_BROKERS, logger: LOGGER)
+    kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
 
     topics = kafka.topics
 

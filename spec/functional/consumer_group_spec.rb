@@ -6,7 +6,7 @@ describe "Consumer API", functional: true do
     messages = (1..1000).to_a
 
     begin
-      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+      kafka = Kafka.new(kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
@@ -22,7 +22,7 @@ describe "Consumer API", functional: true do
     received_messages = []
 
     consumers = 2.times.map do
-      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
+      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
       consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
       consumer.subscribe(topic)
       consumer
@@ -60,7 +60,7 @@ describe "Consumer API", functional: true do
     var = ConditionVariable.new
 
     Thread.new do
-      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+      kafka = Kafka.new(kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
@@ -88,7 +88,7 @@ describe "Consumer API", functional: true do
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
-        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
+        kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
         consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
         consumer.subscribe(topic)
 
