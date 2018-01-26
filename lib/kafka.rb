@@ -243,8 +243,12 @@ module Kafka
   #
   # @see Client#initialize
   # @return [Client]
-  def self.new(**options)
-    Client.new(**options)
+  def self.new(seed_brokers = nil, **options)
+    if seed_brokers.nil?
+      Client.new(**options)
+    else
+      Client.new(seed_brokers: seed_brokers, **options)
+    end
   end
 end
 
