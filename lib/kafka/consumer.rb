@@ -20,7 +20,7 @@ module Kafka
   #
   #     require "kafka"
   #
-  #     kafka = Kafka.new(seed_brokers: ["kafka1:9092", "kafka2:9092"])
+  #     kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
   #
   #     # Create a new Consumer instance in the group `my-group`:
   #     consumer = kafka.consumer(group_id: "my-group")

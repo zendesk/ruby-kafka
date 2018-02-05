@@ -14,7 +14,7 @@ module Kafka
   # do it for you, e.g.
   #
   #     # Will instantiate Kafka::Client
-  #     kafka = Kafka.new(...)
+  #     kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
   #
   #     # Will instantiate Kafka::Producer
   #     producer = kafka.producer
@@ -106,12 +106,7 @@ module Kafka
   #     # cluster to auto-create topics.
   #     topic = "random-messages"
   #
-  #     kafka = Kafka.new(
-  #       seed_brokers: brokers,
-  #       client_id: "simple-producer",
-  #       logger: logger,
-  #     )
-  #
+  #     kafka = Kafka.new(brokers, client_id: "simple-producer", logger: logger)
   #     producer = kafka.producer
   #
   #     begin
