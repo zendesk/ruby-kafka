@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.5.3
+
 - Add support for the topic deletion API (#528).
 - Add support for the partition creation API (#533).
 - Allow passing in the seed brokers in a positional argument (#538).
