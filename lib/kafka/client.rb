@@ -457,10 +457,16 @@ module Kafka
     # @param replication_factor [Integer] the replication factor of the topic.
     # @param timeout [Integer] a duration of time to wait for the topic to be
     #   completely created.
+    # @param config_entries [Hash] topic-level configs to use for the topic.
+    #   See https://kafka.apache.org/documentation/#topicconfigs.
     # @raise [Kafka::TopicAlreadyExists] if the topic already exists.
     # @return [nil]
-    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30)
-      @cluster.create_topic(name, num_partitions: num_partitions, replication_factor: replication_factor, timeout: timeout)
+    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30, config_entries: {})
+      @cluster.create_topic(name,
+                            num_partitions: num_partitions,
+                            replication_factor: replication_factor,
+                            timeout: timeout,
+                            config_entries: config_entries)
     end
 
     # Delete a topic in the cluster.

@@ -28,7 +28,10 @@ module Kafka
           encoder.write_array([])
 
           # Config entries. We don't care.
-          encoder.write_array([])
+          encoder.write_array(config.fetch(:config_entries)) do |config_name, config_value|
+            encoder.write_string(config_name)
+            encoder.write_string(config_value)
+          end
         end
 
         # Timeout is in ms.

@@ -156,12 +156,13 @@ module Kafka
       raise
     end
 
-    def create_topic(name, num_partitions:, replication_factor:, timeout:)
+    def create_topic(name, num_partitions:, replication_factor:, timeout:, config_entries:)
       options = {
         topics: {
           name => {
             num_partitions: num_partitions,
             replication_factor: replication_factor,
+            config_entries: config_entries,
           }
         },
         timeout: timeout,

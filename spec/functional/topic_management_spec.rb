@@ -10,6 +10,20 @@ describe "Topic management API", functional: true do
     expect(partitions).to eq 3
   end
 
+  example "creating a topic with config entries" do
+    unless kafka.supports_api?(Kafka::Protocol::DESCRIBE_CONFIGS_API)
+      skip("This Kafka version not support ")
+    end
+
+    topic = generate_topic_name
+    expect(kafka.topics).not_to include(topic)
+
+    kafka.create_topic(topic, num_partitions: 3, config_entries: { 'cleanup.policy' => 'compact' })
+
+    configs = kafka.describe_topic(topic, %w(cleanup.policy))
+    expect(configs['cleanup.policy']).to eq('compact')
+  end
+
   example "deleting topics" do
     topic = generate_topic_name
 
