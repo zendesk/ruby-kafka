@@ -18,10 +18,10 @@ describe "Topic management API", functional: true do
     topic = generate_topic_name
     expect(kafka.topics).not_to include(topic)
 
-    kafka.create_topic(topic, num_partitions: 3, config_entries: { 'cleanup.policy' => 'compact' })
+    kafka.create_topic(topic, num_partitions: 3, config: { "cleanup.policy" => "compact" })
 
-    configs = kafka.describe_topic(topic, %w(cleanup.policy))
-    expect(configs['cleanup.policy']).to eq('compact')
+    configs = kafka.describe_topic(topic, ["cleanup.policy"])
+    expect(configs.fetch("cleanup.policy")).to eq("compact")
   end
 
   example "deleting topics" do

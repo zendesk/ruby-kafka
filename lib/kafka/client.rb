@@ -451,22 +451,32 @@ module Kafka
 
     # Creates a topic in the cluster.
     #
+    # @example Creating a topic with log compaction
+    #   # Enable log compaction:
+    #   config = { "cleanup.policy" => "compact" }
+    #
+    #   # Create the topic:
+    #   kafka.create_topic("dns-mappings", config: config)
+    #
     # @param name [String] the name of the topic.
     # @param num_partitions [Integer] the number of partitions that should be created
     #   in the topic.
     # @param replication_factor [Integer] the replication factor of the topic.
     # @param timeout [Integer] a duration of time to wait for the topic to be
     #   completely created.
-    # @param config_entries [Hash] topic-level configs to use for the topic.
-    #   See https://kafka.apache.org/documentation/#topicconfigs.
+    # @param config [Hash] topic configuration entries. See
+    #   [the Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs)
+    #   for more information.
     # @raise [Kafka::TopicAlreadyExists] if the topic already exists.
     # @return [nil]
-    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30, config_entries: {})
-      @cluster.create_topic(name,
-                            num_partitions: num_partitions,
-                            replication_factor: replication_factor,
-                            timeout: timeout,
-                            config_entries: config_entries)
+    def create_topic(name, num_partitions: 1, replication_factor: 1, timeout: 30, config: {})
+      @cluster.create_topic(
+        name,
+        num_partitions: num_partitions,
+        replication_factor: replication_factor,
+        timeout: timeout,
+        config: config,
+      )
     end
 
     # Delete a topic in the cluster.
