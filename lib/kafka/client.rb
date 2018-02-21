@@ -405,10 +405,7 @@ module Kafka
     # @param topic [String] the topic to consume messages from.
     #
     # @param start_from_beginning [Boolean] whether to start from the beginning
-    #   of the topic or just subscribe to new messages being produced. This
-    #   only applies when first consuming a topic partition – once the consumer
-    #   has checkpointed its progress, it will always resume from the last
-    #   checkpoint.
+    #   of the topic or just subscribe to new messages being produced.
     #
     # @param max_wait_time [Integer] the maximum amount of time to wait before
     #   the server responds, in seconds.
