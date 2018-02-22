@@ -148,4 +148,60 @@ describe "Consumer API", functional: true do
 
     expect(processed_messages).to eq(num_messages * 2)
   end
+
+  example "consumers process all messages in-order and non-duplicated" do
+    topic = create_random_topic(num_partitions: 2)
+    message_count = 500
+    messages_set_1 = (1..500).to_a
+    messages_set_2 = (501..1000).to_a
+
+    begin
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+      producer = kafka.producer
+      messages_set_1.each do |i|
+        producer.produce(i.to_s, topic: topic, partition: 0)
+      end
+      messages_set_2.each do |i|
+        producer.produce(i.to_s, topic: topic, partition: 1)
+      end
+      producer.deliver_messages
+    end
+
+    group_id = "test#{rand(1000)}"
+    received_messages = {}
+
+    consumers = 2.times.map do
+      kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
+      consumer = kafka.consumer(group_id: group_id)
+      consumer.subscribe(topic)
+      consumer
+    end
+
+    threads = consumers.map do |consumer|
+      t = Thread.new do
+        received_messages[Thread.current] = []
+        puts received_messages
+        consumer.each_message do |message|
+          received_messages[Thread.current] << message
+
+          if received_messages[Thread.current].count == message_count
+            consumer.stop
+          end
+        end
+      end
+      t.abort_on_exception = true
+      t
+    end
+
+    threads.each(&:join)
+
+    received_messages.each do |_thread, messages|
+      values = messages.map(&:value).map(&:to_i)
+      if messages.first.partition == 0
+        expect(values).to eql(messages_set_1)
+      else
+        expect(values).to eql(messages_set_2)
+      end
+    end
+  end
 end
