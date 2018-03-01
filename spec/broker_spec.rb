@@ -132,4 +132,14 @@ describe Kafka::Broker do
       broker.disconnect
     end
   end
+
+  describe "#to_s" do
+    it "doesn't fail when building connection fails" do
+      expect(connection_builder).to receive(:build_connection).and_raise(Kafka::ConnectionError)
+
+      expect do
+        broker.to_s
+      end.not_to raise_error
+    end
+  end
 end

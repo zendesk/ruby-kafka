@@ -19,7 +19,7 @@ module Kafka
 
     # @return [String]
     def to_s
-      "#{connection} (node_id=#{@node_id.inspect})"
+      "#{connection_to_s} (node_id=#{@node_id.inspect})"
     end
 
     # @return [nil]
@@ -162,6 +162,10 @@ module Kafka
 
     def connection
       @connection ||= @connection_builder.build_connection(@host, @port)
+    end
+
+    def connection_to_s
+      connection.to_s rescue nil
     end
   end
 end
