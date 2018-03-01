@@ -24,7 +24,12 @@ module Kafka
 
     # @return [nil]
     def disconnect
-      connection.close
+      connection.close if connected?
+    end
+
+    # @return [Boolean]
+    def connected?
+      !@connection.nil?
     end
 
     # Fetches cluster metadata from the broker.
