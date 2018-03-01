@@ -357,7 +357,14 @@ module Kafka
           @logger.error "Failed to fetch metadata from #{node}: #{e}"
           errors << [node, e]
         ensure
-          broker.disconnect unless broker.nil?
+          begin
+            broker.disconnect unless broker.nil?
+          rescue => e
+            # Failure #2
+            # borker wansn't nil
+            # Connection refused - connect(2) for
+            # And it wasn't trying to connnect to the rest of the seed brokers
+          end
         end
       end
 
