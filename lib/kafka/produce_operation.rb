@@ -100,6 +100,19 @@ module Kafka
 
           handle_response(broker, response) if response
         rescue ConnectionError => e
+          # Failure #1 - broker.to_s on connection
+          # Connection refused - connect(2) for
+          #
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/connection.rb:139:in `rescue in open'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/connection.rb:118:in `open'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/connection.rb:95:in `block in send_request'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/instrumenter.rb:21:in `instrument'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/connection.rb:94:in `send_request'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/sasl_authenticator.rb:39:in `authenticate!'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/connection_builder.rb:25:in `build_connection'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/broker.rb:159:in `connection'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/broker.rb:22:in `to_s'",
+          #  "/Users/michal.wrobel/.rbenv/versions/2.4.3/lib/ruby/gems/2.4.0/gems/ruby-kafka-0.5.3/lib/kafka/produce_operation.rb:103:in `rescue in block in send_buffered_messages'",
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
           # Mark the cluster as stale in order to force a cluster metadata refresh.

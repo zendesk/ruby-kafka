@@ -19,7 +19,8 @@ module Kafka
 
     # @return [String]
     def to_s
-      "#{connection} (node_id=#{@node_id.inspect})"
+      #"#{connection} (node_id=#{@node_id.inspect})"
+      "(node_id=#{@node_id.inspect})"
     end
 
     # @return [nil]
