@@ -31,6 +31,9 @@ describe Kafka::Broker do
     def send_request(request)
       @mocked_response
     end
+
+    def close
+    end
   end
 
   describe "#address_match?" do
@@ -110,6 +113,23 @@ describe Kafka::Broker do
       )
 
       expect(actual_response.topics).to eq []
+    end
+  end
+
+  describe "#disconnect" do
+    it "doesn't close a connection if it's not connected yet " do
+      expect(connection).not_to receive(:close)
+      broker.disconnect
+    end
+
+    it "closes a connection if the connection is present" do
+      expect(connection).to receive(:close)
+
+      broker.fetch_messages(
+        max_wait_time: 0, min_bytes: 0, max_bytes: 10 * 1024, topics: {}
+      )
+
+      broker.disconnect
     end
   end
 end

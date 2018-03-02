@@ -19,12 +19,17 @@ module Kafka
 
     # @return [String]
     def to_s
-      "#{connection} (node_id=#{@node_id.inspect})"
+      "#{@host}:#{@port} (node_id=#{@node_id.inspect})"
     end
 
     # @return [nil]
     def disconnect
-      connection.close
+      connection.close if connected?
+    end
+
+    # @return [Boolean]
+    def connected?
+      !@connection.nil?
     end
 
     # Fetches cluster metadata from the broker.
