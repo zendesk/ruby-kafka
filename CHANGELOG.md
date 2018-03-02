@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Add support for config entries in the topic creation API.
+- Don't fail on retry when the cluster is secured (#545).
 
 ## v0.5.3
 
