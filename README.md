@@ -70,25 +70,31 @@ Or install it yourself as:
 <table>
   <tr>
     <th></th>
-    <th>Kafka 0.8</th>
-    <th>Kafka 0.9</th>
-    <th>Kafka 0.10</th>
-    <th>Kafka 0.11</th>
-    <th>Kafka 1.0</th>
-  </tr>
-  <tr>
     <th>Producer API</th>
+    <th>Consumer API</th>
+  </tr>
+  <tr>
+    <th>Kafka 0.8</th>
+    <td>Full support in v0.4.x</td>
+    <td>Unsupported</td>
+  </tr>
+  <tr>
+    <th>Kafka 0.9</th>
     <td>Full support in v0.4.x</td>
     <td>Full support in v0.4.x</td>
+  </tr>
+  <tr>
+    <th>Kafka 0.10</th>
     <td>Full support in v0.5.x</td>
+    <td>Full support in v0.5.x</td>
+  </tr>
+  <tr>
+    <th>Kafka 0.11</th>
     <td>Limited support</td>
     <td>Limited support</td>
   </tr>
   <tr>
-    <th>Consumer API</th>
-    <td>Unsupported</td>
-    <td>Full support in v0.4.x</td>
-    <td>Full support in v0.5.x</td>
+    <th>Kafka 1.0</th>
     <td>Limited support</td>
     <td>Limited support</td>
   </tr>
