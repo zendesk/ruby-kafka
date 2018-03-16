@@ -15,15 +15,27 @@ module Kafka
       @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
 
+      # Long poll until at least this many bytes can be fetched.
       @min_bytes = 1
-      @max_bytes = 10485760
+
+      # Long poll at most this number of seconds.
       @max_wait_time = 1
+
+      # The maximum number of bytes to fetch for any given fetch request.
+      @max_bytes = 10485760
+
+      # The maximum number of bytes to fetch per partition, by topic.
+      @max_bytes_per_partition = {}
 
       @thread = Thread.new do
         loop while true
       end
 
       @thread.abort_on_exception = true
+    end
+
+    def subscribe(topic, max_bytes_per_partition:)
+      @commands << [:subscribe, [topic, max_bytes_per_partition]]
     end
 
     def seek(topic, partition, offset)
@@ -98,6 +110,11 @@ module Kafka
       handle_reset
     end
 
+    def handle_subscribe(topic, max_bytes_per_partition)
+      @logger.info "Will fetch at most #{max_bytes_per_partition} bytes at a time per partition from #{topic}"
+      @max_bytes_per_partition[topic] = max_bytes_per_partition
+    end
+
     def handle_seek(topic, partition, offset)
       @logger.info "Seeking #{topic}/#{partition} to offset #{offset}"
       @next_offsets[topic][partition] = offset
@@ -140,8 +157,11 @@ module Kafka
       )
 
       @next_offsets.each do |topic, partitions|
+        # Fetch at most this many bytes from any single partition.
+        max_bytes = @max_bytes_per_partition[topic]
+
         partitions.each do |partition, offset|
-          operation.fetch_from_partition(topic, partition, offset: offset)
+          operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
         end
       end
 

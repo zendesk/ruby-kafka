@@ -56,9 +56,6 @@ module Kafka
       # Whether or not the consumer is currently consuming messages.
       @running = false
 
-      # The maximum number of bytes to fetch from a single partition, by topic.
-      @max_bytes = {}
-
       # Hash containing offsets for each topic and partition that has the
       # automatically_mark_as_processed feature disabled. Offset manager is only active
       # when everything is suppose to happen automatically. Otherwise we need to keep track of the
@@ -94,7 +91,7 @@ module Kafka
 
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)
-      @max_bytes[topic] = max_bytes_per_partition
+      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
 
       nil
     end

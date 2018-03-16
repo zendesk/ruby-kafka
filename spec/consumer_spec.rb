@@ -8,7 +8,7 @@ describe Kafka::Consumer do
   let(:group) { double(:group) }
   let(:offset_manager) { double(:offset_manager) }
   let(:heartbeat) { double(:heartbeat) }
-  let(:fetcher) { double(:fetcher, configure: nil, seek: nil, start: nil, stop: nil) }
+  let(:fetcher) { double(:fetcher, configure: nil, subscribe: nil, seek: nil, start: nil, stop: nil) }
   let(:session_timeout) { 30 }
   let(:assigned_partitions) { { "greetings" => [0] } }
 
