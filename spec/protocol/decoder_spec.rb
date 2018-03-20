@@ -29,13 +29,13 @@ describe Kafka::Protocol::Decoder do
     end
   end
 
-  describe '#varints' do
+  describe '#varint' do
     context 'data = 0' do
       it do
         io = new_io_from_binaries("00000000")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 0
+        expect(decoder.varint).to eq 0
       end
     end
 
@@ -44,7 +44,7 @@ describe Kafka::Protocol::Decoder do
         io = new_io_from_binaries("00001010")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 10
+        expect(decoder.varint).to eq 10
       end
     end
 
@@ -53,7 +53,7 @@ describe Kafka::Protocol::Decoder do
         io = new_io_from_binaries("01111111")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 127
+        expect(decoder.varint).to eq 127
       end
     end
 
@@ -62,7 +62,7 @@ describe Kafka::Protocol::Decoder do
         io = new_io_from_binaries("10101100", "00000010")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 300
+        expect(decoder.varint).to eq 300
       end
     end
 
@@ -71,7 +71,7 @@ describe Kafka::Protocol::Decoder do
         io = new_io_from_binaries("11111111", "01111111")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 16383
+        expect(decoder.varint).to eq 16383
       end
     end
 
@@ -80,7 +80,7 @@ describe Kafka::Protocol::Decoder do
         io = new_io_from_binaries("11110010", "10010000", "10000000", "10011100", "00100101")
         decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varints).to eq 9990834290
+        expect(decoder.varint).to eq 9990834290
       end
     end
   end

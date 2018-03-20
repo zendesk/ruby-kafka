@@ -1,6 +1,6 @@
 module Kafka
   module Protocol
-    VARINTS_MASK = 0b10000000
+    VARINT_MASK = 0b10000000
 
     # A decoder wraps an IO object, making it easy to read specific data types
     # from it. The Kafka protocol is not self-describing, so a client must call
@@ -85,14 +85,14 @@ module Kafka
       # Read an integer under varints serializing from the IO object.
       #
       # @return [Integer]
-      def varints
+      def varint
         group = 0
         data = 0
         loop do
           chunk = int8
-          data += (chunk & (~VARINTS_MASK)) << (group * 7)
+          data += (chunk & (~VARINT_MASK)) << (group * 7)
           group += 1
-          break if (chunk & VARINTS_MASK) == 0
+          break if (chunk & VARINT_MASK) == 0
         end
         data
       end

@@ -2,7 +2,7 @@ require "stringio"
 
 module Kafka
   module Protocol
-    VARINTS_MASK = 0b10000000
+    VARINT_MASK = 0b10000000
 
     # An encoder wraps an IO object, making it easy to write specific data types
     # to it.
@@ -101,15 +101,15 @@ module Kafka
       #
       # @param string [Integer]
       # @return [nil]
-      def write_varints(int)
+      def write_varint(int)
         loop do
-          chunk = int & (~VARINTS_MASK)
+          chunk = int & (~VARINT_MASK)
           int = int >> 7
           if int == 0
             write_int8(chunk)
             return
           else
-            write_int8(chunk + VARINTS_MASK)
+            write_int8(chunk + VARINT_MASK)
           end
         end
       end
