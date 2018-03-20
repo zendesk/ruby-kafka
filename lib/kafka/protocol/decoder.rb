@@ -1,11 +1,11 @@
 module Kafka
   module Protocol
-    VARINT_MASK = 0b10000000
-
     # A decoder wraps an IO object, making it easy to read specific data types
     # from it. The Kafka protocol is not self-describing, so a client must call
     # these methods in just the right order for things to work.
     class Decoder
+      VARINT_MASK = 0b10000000
+
       def self.from_string(str, **options)
         new(StringIO.new(str), options)
       end
@@ -91,11 +91,11 @@ module Kafka
         data = 0
         loop do
           chunk = int8
-          data += (chunk & (~VARINT_MASK)) << (group * 7)
-          group += 1
+          data |= (chunk & (~VARINT_MASK)) << group
+          group += 7
           break if (chunk & VARINT_MASK) == 0
         end
-        data
+        data & 0b1 != 0 ?  ~(data >> 1) : (data >> 1)
       end
 
       # Decodes a list of bytes from the IO object.

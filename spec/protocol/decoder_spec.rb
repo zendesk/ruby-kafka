@@ -39,48 +39,79 @@ describe Kafka::Protocol::Decoder do
       end
     end
 
-    context 'data is stored in 1 group' do
-      it do
-        io = new_io_from_binaries("00001010")
-        decoder = Kafka::Protocol::Decoder.new(io)
+    context 'data is positive' do
+      context 'data is stored in 1 group' do
+        it do
+          io = new_io_from_binaries("00010100")
+          decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varint).to eq 10
+          expect(decoder.varint).to eq 10
+        end
+      end
+
+      context 'data exceeds max of 1 group' do
+        it do
+          io = new_io_from_binaries("01111110")
+          decoder = Kafka::Protocol::Decoder.new(io)
+
+          expect(decoder.varint).to eq 63
+        end
+      end
+
+      context 'data is stored in 2 groups' do
+        it do
+          io = new_io_from_binaries("11011000", "00000100")
+          decoder = Kafka::Protocol::Decoder.new(io)
+
+          expect(decoder.varint).to eq 300
+        end
+      end
+
+      context 'data is stored in 3 groups' do
+        it do
+          io = new_io_from_binaries("10000010", "10100011", "00011010")
+          decoder = Kafka::Protocol::Decoder.new(io)
+
+          expect(decoder.varint).to eq 215233
+        end
       end
     end
 
-    context 'data exceeds max of 1 group' do
-      it do
-        io = new_io_from_binaries("01111111")
-        decoder = Kafka::Protocol::Decoder.new(io)
+    context 'data is negative' do
+      context 'data is stored in 1 group' do
+        it do
+          io = new_io_from_binaries("00010011")
+          decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varint).to eq 127
+          expect(decoder.varint).to eq -10
+        end
       end
-    end
 
-    context 'data is stored in 2 groups' do
-      it do
-        io = new_io_from_binaries("10101100", "00000010")
-        decoder = Kafka::Protocol::Decoder.new(io)
+      context 'data exceeds max of 1 group' do
+        it do
+          io = new_io_from_binaries("01111101")
+          decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varint).to eq 300
+          expect(decoder.varint).to eq -63
+        end
       end
-    end
 
-    context 'data exceeds the max of 2 groups' do
-      it do
-        io = new_io_from_binaries("11111111", "01111111")
-        decoder = Kafka::Protocol::Decoder.new(io)
+      context 'data is stored in 2 groups' do
+        it do
+          io = new_io_from_binaries("11010111", "00000100")
+          decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varint).to eq 16383
+          expect(decoder.varint).to eq -300
+        end
       end
-    end
 
-    context 'data is stored in 5 groups' do
-      it do
-        io = new_io_from_binaries("11110010", "10010000", "10000000", "10011100", "00100101")
-        decoder = Kafka::Protocol::Decoder.new(io)
+      context 'data is stored in 3 groups' do
+        it do
+          io = new_io_from_binaries("10000001", "10100011", "00011010")
+          decoder = Kafka::Protocol::Decoder.new(io)
 
-        expect(decoder.varint).to eq 9990834290
+          expect(decoder.varint).to eq -215233
+        end
       end
     end
   end
