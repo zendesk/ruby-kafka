@@ -6,15 +6,16 @@ module Kafka
     # from it. The Kafka protocol is not self-describing, so a client must call
     # these methods in just the right order for things to work.
     class Decoder
-      def self.from_string(str)
-        new(StringIO.new(str))
+      def self.from_string(str, **options)
+        new(StringIO.new(str), options)
       end
 
       # Initializes a new decoder.
       #
       # @param io [IO] an object that acts as an IO.
-      def initialize(io)
+      def initialize(io, fixed_collection_size: true)
         @io = io
+        @fixed_collection_size = fixed_collection_size
       end
 
       def eof?
@@ -65,7 +66,7 @@ module Kafka
       #
       # @return [Array]
       def array(&block)
-        size = int32
+        size = fixed_collection_size? ? int32 : varint
         size.times.map(&block)
       end
 
@@ -73,7 +74,7 @@ module Kafka
       #
       # @return [String]
       def string
-        size = int16
+        size = fixed_collection_size? ? int16 : varint
 
         if size == -1
           nil
@@ -101,7 +102,7 @@ module Kafka
       #
       # @return [String]
       def bytes
-        size = int32
+        size = fixed_collection_size? ? int32 : varint
 
         if size == -1
           nil
@@ -124,6 +125,12 @@ module Kafka
         raise EOFError if data.size != number_of_bytes
 
         data
+      end
+
+      private
+
+      def fixed_collection_size?
+        @fixed_collection_size == true
       end
     end
   end
