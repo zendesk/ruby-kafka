@@ -84,6 +84,7 @@ module Kafka
       end
 
       # Read an integer under varints serializing from the IO object.
+      # https://developers.google.com/protocol-buffers/docs/encoding#varints
       #
       # @return [Integer]
       def varint
