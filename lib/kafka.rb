@@ -42,6 +42,7 @@ module Kafka
 
   # When the record array length doesn't match real number of received records
   class InsufficientDataMessage < Error
+  end
 
   class UnknownError < ProtocolError
   end
