@@ -10,7 +10,8 @@ module Kafka
         headers: {},
         attributes: 0,
         offset_delta: 0,
-        timestamp_delta: 0
+        timestamp_delta: 0,
+        create_time: Time.now
       )
         @key = key
         @value = value
@@ -24,23 +25,19 @@ module Kafka
       end
 
       def self.decode(decoder)
-        record_length = decoder.varint
-        record_decoder = Decoder.from_string(
-          decoder.read(record_length),
-          fixed_collection_size: false
-        )
+        record_decoder = Decoder.from_string(decoder.varint_bytes)
 
         attributes = record_decoder.int8
         timestamp_delta = record_decoder.varint
         offset_delta = record_decoder.varint
 
-        key = record_decoder.string
-        value = record_decoder.bytes
+        key = record_decoder.varint_string
+        value = record_decoder.varint_bytes
 
         headers = {}
-        record_decoder.array do
-          header_key = record_decoder.string
-          header_value = record_decoder.bytes
+        record_decoder.varint_array do
+          header_key = record_decoder.varint_string
+          header_value = record_decoder.varint_bytes
 
           headers[header_key] = header_value
         end

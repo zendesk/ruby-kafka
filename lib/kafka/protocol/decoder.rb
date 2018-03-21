@@ -6,16 +6,15 @@ module Kafka
     class Decoder
       VARINT_MASK = 0b10000000
 
-      def self.from_string(str, **options)
-        new(StringIO.new(str), options)
+      def self.from_string(str)
+        new(StringIO.new(str))
       end
 
       # Initializes a new decoder.
       #
       # @param io [IO] an object that acts as an IO.
-      def initialize(io, fixed_collection_size: true)
+      def initialize(io)
         @io = io
-        @fixed_collection_size = fixed_collection_size
       end
 
       def eof?
@@ -66,7 +65,16 @@ module Kafka
       #
       # @return [Array]
       def array(&block)
-        size = fixed_collection_size? ? int32 : varint
+        size = int32
+        size.times.map(&block)
+      end
+
+      # Decodes an array from the IO object.
+      # Just like #array except the size is in varint format
+      #
+      # @return [Array]
+      def varint_array(&block)
+        size = varint
         size.times.map(&block)
       end
 
@@ -74,7 +82,20 @@ module Kafka
       #
       # @return [String]
       def string
-        size = fixed_collection_size? ? int16 : varint
+        size = int16
+
+        if size == -1
+          nil
+        else
+          read(size)
+        end
+      end
+
+      # Decodes a string from the IO object, the size is in varint format
+      #
+      # @return [String]
+      def varint_string
+        size = varint
 
         if size == -1
           nil
@@ -103,7 +124,20 @@ module Kafka
       #
       # @return [String]
       def bytes
-        size = fixed_collection_size? ? int32 : varint
+        size = int32
+
+        if size == -1
+          nil
+        else
+          read(size)
+        end
+      end
+
+      # Decodes a list of bytes from the IO object. The size is in varint format
+      #
+      # @return [String]
+      def varint_bytes
+        size =  varint
 
         if size == -1
           nil
@@ -126,12 +160,6 @@ module Kafka
         raise EOFError if data.size != number_of_bytes
 
         data
-      end
-
-      private
-
-      def fixed_collection_size?
-        @fixed_collection_size == true
       end
     end
   end
