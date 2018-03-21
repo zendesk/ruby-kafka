@@ -102,7 +102,9 @@ module Kafka
       # @param string [Integer]
       # @return [nil]
       def write_varint(int)
-        int = (int << 1) ^ (int >> 31)
+        int = int << 1
+        int = ~int | 1 if int < 0
+
         loop do
           chunk = int & (~VARINT_MASK)
           int = int >> 7
