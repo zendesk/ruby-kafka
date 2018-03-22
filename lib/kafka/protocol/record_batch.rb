@@ -1,10 +1,12 @@
+require "kafka/protocol/record"
+
 module Kafka
   module Protocol
     class RecordBatch
       # The size of metadata before the real record data
       RECORD_BATCH_OVERHEAD = 49
 
-      attr_reader :records
+      attr_reader :records, :partition_leader_epoch, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
 
       def initialize(
           records: [],
@@ -40,10 +42,12 @@ module Kafka
         record_batch_decoder = Decoder.from_string(record_batch_raw)
 
         partition_leader_epoch = record_batch_decoder.int32
+        # Currently, the magic byte is used to distingush legacy MessageSet and
+        # RecordBatch. Therefore, we don't care about magic byte here yet.
         _magic_byte = record_batch_decoder.int8
         _crc = record_batch_decoder.int32
 
-        attributes = record_batch_decoder.int32
+        attributes = record_batch_decoder.int16
         codec_id = attributes & 0b111
         in_traction = (attributes & 0b10000) == 1
         has_control_message = (attributes & 0b100000) == 1
@@ -61,7 +65,7 @@ module Kafka
           record_batch_raw.size - RECORD_BATCH_OVERHEAD
         )
         if codec_id != 0
-          codec = Compression.find_codec_by_id(@codec_id)
+          codec = Compression.find_codec_by_id(codec_id)
           records_array_raw = codec.decompress(records_array_raw)
         end
 

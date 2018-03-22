@@ -28,7 +28,7 @@ module Kafka
       end
 
       def generate_absolute_timestamp(first_timestamp)
-        @offset = Time.at(first_timestamp + timestamp_delta)
+        @create_time = Time.at(first_timestamp / 1000 + timestamp_delta)
       end
 
       def self.decode(decoder)
