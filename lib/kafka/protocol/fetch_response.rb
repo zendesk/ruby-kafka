@@ -1,4 +1,5 @@
 require "kafka/protocol/message_set"
+require "kafka/protocol/record_batch"
 
 module Kafka
   module Protocol
