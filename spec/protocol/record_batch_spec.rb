@@ -35,12 +35,12 @@ describe Kafka::Protocol::RecordBatch do
   let(:sample_record_batch) do
     Kafka::Protocol::RecordBatch.new(
       first_offset: 1,
-      first_timestamp: 1521656000000,
+      first_timestamp: Time.at(1521656000),
       partition_leader_epoch: 2,
       codec_id: codec_id,
       has_control_message: false,
       last_offset_delta: 3,
-      max_timestamp: 1521658000000,
+      max_timestamp: Time.at(1521658000),
       producer_id: 123456,
       producer_epoch: 2,
       first_sequence: 0,
@@ -222,7 +222,12 @@ describe Kafka::Protocol::RecordBatch do
     let(:encoder) { Kafka::Protocol::Encoder.new(buffer) }
 
     context 'Empty record batch' do
-      let(:record_batch) { Kafka::Protocol::RecordBatch.new }
+      let(:record_batch) do
+        Kafka::Protocol::RecordBatch.new(
+          first_timestamp: Time.at(0),
+          max_timestamp: Time.at(0)
+        )
+      end
 
       it 'encodes an empty batch with no records' do
         record_batch.encode(encoder)
@@ -277,7 +282,7 @@ describe Kafka::Protocol::RecordBatch do
 
         # Records verification
         expect(record_batch.last_offset_delta).to eql 0
-        expect(record_batch.max_timestamp).to eql 0
+        expect(record_batch.max_timestamp.to_i).to eql 0
 
         # Transaction information
         expect(record_batch.producer_id).to eql 0
@@ -348,7 +353,9 @@ end
 def expect_matched_batch_metadata(record_batch)
   # Records verification
   expect(record_batch.last_offset_delta).to eql 3
-  expect(record_batch.max_timestamp).to eql 1521658000000
+  expect(record_batch.first_offset).to eql 1
+  expect(record_batch.first_timestamp.to_i).to eql 1521656000
+  expect(record_batch.max_timestamp.to_i).to eql 1521658000
 
   # Transaction information
   expect(record_batch.producer_id).to eql 123456

@@ -7,12 +7,12 @@ module Kafka
       # The size of metadata before the real record data
       RECORD_BATCH_OVERHEAD = 49
 
-      attr_reader :records, :first_offset, :partition_leader_epoch, :codec_id, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
+      attr_reader :records, :first_offset, :first_timestamp, :partition_leader_epoch, :codec_id, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
 
       def initialize(
           records: [],
           first_offset: 0,
-          first_timestamp: 0,
+          first_timestamp: Time.now,
           partition_leader_epoch: 0,
           codec_id: 0,
           in_traction: false,
@@ -21,7 +21,7 @@ module Kafka
           producer_id: 0,
           producer_epoch: 0,
           first_sequence: 0,
-          max_timestamp: 0
+          max_timestamp: Time.now
       )
         @records = records
         @first_offset = first_offset
@@ -72,8 +72,8 @@ module Kafka
 
         encoder.write_int16(attributes)
         encoder.write_int32(@last_offset_delta)
-        encoder.write_int64(@first_timestamp)
-        encoder.write_int64(@max_timestamp)
+        encoder.write_int64((@first_timestamp.to_f * 1000).to_i)
+        encoder.write_int64((@max_timestamp.to_f * 1000).to_i)
 
         encoder.write_int64(@producer_id)
         encoder.write_int16(@producer_epoch)
@@ -122,8 +122,8 @@ module Kafka
         has_control_message = (attributes & 0b100000) == 1
 
         last_offset_delta = record_batch_decoder.int32
-        first_timestamp = record_batch_decoder.int64
-        max_timestamp = record_batch_decoder.int64
+        first_timestamp = Time.at(record_batch_decoder.int64 / 1000)
+        max_timestamp = Time.at(record_batch_decoder.int64 / 1000)
 
         producer_id = record_batch_decoder.int64
         producer_epoch = record_batch_decoder.int16
