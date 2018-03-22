@@ -255,7 +255,6 @@ def expect_matched_batch_metadata(record_batch)
   expect(record_batch.partition_leader_epoch).to eql 2
   expect(record_batch.in_traction).to eql false
   expect(record_batch.has_control_message).to eql false
-
 end
 
 def expect_matched_records(records)

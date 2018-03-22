@@ -117,7 +117,7 @@ module Kafka
           group += 7
           break if (chunk & VARINT_MASK) == 0
         end
-        data & 0b1 != 0 ?  ~(data >> 1) : (data >> 1)
+        data & 0b1 != 0 ? ~(data >> 1) : (data >> 1)
       end
 
       # Decodes a list of bytes from the IO object.
