@@ -264,7 +264,7 @@ def expect_matched_records(records)
   expect(record_1.attributes).to eql(1)
 
   expect(record_1.timestamp_delta).to eql(1000)
-  expect(record_1.create_time.to_s).to eql('2018-03-22 01:30:00 +0700')
+  expect(record_1.create_time.to_i).to eql(1521657000)
 
   expect(record_1.offset_delta).to eql(1)
   expect(record_1.offset).to eql(2)
@@ -276,7 +276,7 @@ def expect_matched_records(records)
   record_2 = records.last
   expect(record_2.attributes).to eql(2)
   expect(record_2.timestamp_delta).to eql(2000)
-  expect(record_2.create_time.to_s).to eql('2018-03-22 01:46:40 +0700')
+  expect(record_2.create_time.to_i).to eql(1521658000)
   expect(record_2.offset_delta).to eql(2)
   expect(record_2.offset).to eql(3)
 
