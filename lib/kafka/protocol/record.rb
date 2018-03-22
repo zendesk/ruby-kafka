@@ -31,6 +31,26 @@ module Kafka
         @create_time = Time.at(first_timestamp / 1000 + timestamp_delta)
       end
 
+      def encode(encoder)
+        record_buffer = StringIO.new
+
+        record_encoder = Encoder.new(record_buffer)
+
+        record_encoder.write_int8(@attributes)
+        record_encoder.write_varint(@timestamp_delta)
+        record_encoder.write_varint(@offset_delta)
+
+        record_encoder.write_varint_string(@key)
+        record_encoder.write_varint_bytes(@value)
+
+        record_encoder.write_varint_array(@headers.to_a) do |header_key, header_value|
+          record_encoder.write_varint_string(header_key)
+          record_encoder.write_varint_bytes(header_value)
+        end
+
+        encoder.write_varint_bytes(record_buffer.string)
+      end
+
       def self.decode(decoder)
         record_decoder = Decoder.from_string(decoder.varint_bytes)
 
