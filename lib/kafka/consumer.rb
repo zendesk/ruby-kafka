@@ -365,16 +365,22 @@ module Kafka
     #   before raising an error
     # @return batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
     def poll(min_bytes: 1, max_bytes: 10485760, max_wait_time: 5, max_retries: 20)
+      @fetcher.configure(
+        min_bytes: min_bytes,
+        max_bytes: max_bytes,
+        max_wait_time: max_wait_time,
+      )
+
+      @running = true
+      @fetcher.start
+
       retry_or_raise(retries: max_retries) do
-        batches = fetch_batches(
-          min_bytes: min_bytes,
-          max_bytes: max_bytes,
-          max_wait_time: max_wait_time,
-          automatically_mark_as_processed: false
-        )
+        batches = fetch_batches
         send_heartbeat_if_necessary
         batches
       end
+    ensure
+      @fetcher.stop
     end
 
     def commit_offsets

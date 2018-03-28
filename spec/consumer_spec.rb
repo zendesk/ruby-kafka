@@ -227,13 +227,14 @@ describe Kafka::Consumer do
   describe "#poll" do
     let(:messages) {
       [
-        Kafka::FetchedMessage.new(
+        double(:message, {
           value: "hello",
           key: nil,
           topic: "greetings",
           partition: 0,
-          offset: 42,
-        )
+          offset: 13,
+          create_time: Time.now,
+        })
       ]
     }
 
@@ -249,11 +250,11 @@ describe Kafka::Consumer do
     }
 
     it "returns fetched batch" do
-      done = false
+      expect(fetcher).to receive(:start)
+      allow(fetcher).to receive(:data?) { fetched_batches.any? }
+      allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }
 
-      expect(fetch_operation).to receive(:fetch_from_partition).with("greetings", 0, offset: 42, max_bytes: anything)
-
-      consumer.poll()
+      expect(consumer.poll()).to eql fetched_batches
     end
   end
 
