@@ -1,4 +1,66 @@
 describe Kafka::Protocol::Decoder do
+  describe '#peek' do
+    let(:decoder) { Kafka::Protocol::Decoder.from_string(data) }
+
+    context 'io stream is empty' do
+      let(:data) { "" }
+      it 'returns empty array' do
+        expect(decoder.peek(3, 1)).to eql([])
+      end
+    end
+
+    context 'data in io stream is shorted than expected' do
+      let(:data) { "12345" }
+
+      before do
+        decoder.read(1)
+      end
+
+      it 'returns partial byte array' do
+        expect(decoder.peek(2, 5)).to eql([52, 53])
+      end
+
+      it 'does not change the read offset' do
+        decoder.peek(2, 5)
+        expect(decoder.read(1)).to eql("2")
+      end
+    end
+
+    context 'read without offset' do
+      let(:data) { "12345" }
+
+      before do
+        decoder.read(1)
+      end
+
+      it 'returns desired bytes array' do
+        expect(decoder.peek(0, 2)).to eql([50, 51])
+      end
+
+      it 'does not change the read offset' do
+        decoder.peek(0, 2)
+        expect(decoder.read(1)).to eql("2")
+      end
+    end
+
+    context 'peek with offset' do
+      let(:data) { "12345" }
+
+      before do
+        decoder.read(1)
+      end
+
+      it 'returns desired bytes array' do
+        expect(decoder.peek(2, 2)).to eql([52, 53])
+      end
+
+      it 'does not change the read offset' do
+        decoder.peek(2, 2)
+        expect(decoder.read(1)).to eql("2")
+      end
+    end
+  end
+
   describe "#read" do
     it "reads the specified number of bytes" do
       data = "helloworld"

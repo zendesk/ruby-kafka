@@ -21,6 +21,16 @@ module Kafka
         @io.eof?
       end
 
+      # Get some next bytes without touching the current io offset
+      #
+      # @return [Integer]
+      def peek(offset, length)
+        data = @io.read(offset + length)
+        @io.ungetc(data)
+        return [] if data.nil?
+        data.bytes[offset, offset + length]
+      end
+
       # Decodes an 8-bit boolean from the IO object.
       #
       # @return [Boolean]
