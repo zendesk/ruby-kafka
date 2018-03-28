@@ -170,7 +170,7 @@ module Kafka
     # subscribes to.
     #
     # Each message is yielded to the provided block. If the block returns
-    # without raising an exeption, the message will be considered successfully
+    # without raising an exception, the message will be considered successfully
     # processed. At regular intervals the offset of the most recent successfully
     # processed message in each partition will be committed to the Kafka
     # offset store. If the consumer crashes or leaves the group, the group member
@@ -564,11 +564,12 @@ module Kafka
         @logger.debug "Attempt ##{try} of #{retries}"
         yield
       rescue *RETRYABLE_POLL_EXCEPTIONS => ex
-        if [HeartbeatError, OffsetCommitError].include?(ex.class)
+        case ex
+        when HeartbeatError, OffsetCommitError
           join_group
-        elsif [FetchError, NotLeaderForPartition, UnknownTopicOrPartition].include?(ex.class)
+        when FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
-        elsif LeaderNotAvailable == ex.class
+        when LeaderNotAvailable
           @logger.error "Leader not available; waiting 1s before retrying"
           @cluster.mark_as_stale!
           sleep 1
