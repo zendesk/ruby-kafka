@@ -16,15 +16,20 @@ module Kafka
     #       MessageSetSize => int32
     #
     class FetchResponse
+      MAGIC_BYTE_OFFSET = 16
+      MAGIC_BYTE_LENGTH = 1
+
       class FetchedPartition
         attr_reader :partition, :error_code
-        attr_reader :highwater_mark_offset, :messages
+        attr_reader :highwater_mark_offset, :last_stable_offset, :aborted_transactions, :messages
 
-        def initialize(partition:, error_code:, highwater_mark_offset:, messages:)
+        def initialize(partition:, error_code:, highwater_mark_offset:, last_stable_offset:, aborted_transactions:, messages:)
           @partition = partition
           @error_code = error_code
           @highwater_mark_offset = highwater_mark_offset
           @messages = messages
+          @last_stable_offset = last_stable_offset
+          @aborted_transactions = aborted_transactions
         end
       end
 
@@ -54,15 +59,36 @@ module Kafka
             partition = decoder.int32
             error_code = decoder.int16
             highwater_mark_offset = decoder.int64
+            last_stable_offset = decoder.int64
 
-            message_set_decoder = Decoder.from_string(decoder.bytes)
-            message_set = MessageSet.decode(message_set_decoder)
+            aborted_transactions = decoder.array do
+              producer_id = decoder.int64
+              first_offset = decoder.int64
+              {
+                producer_id: producer_id,
+                first_offset: first_offset
+              }
+            end
+
+            messages_decoder = Decoder.from_string(decoder.bytes)
+            messages = []
+            magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
+
+            if magic_byte == RecordBatch::MAGIC_BYTE
+              record_batch = RecordBatch.decode(messages_decoder)
+              messages = record_batch.records
+            else
+              message_set = MessageSet.decode(messages_decoder)
+              messages = message_set.messages
+            end
 
             FetchedPartition.new(
               partition: partition,
               error_code: error_code,
               highwater_mark_offset: highwater_mark_offset,
-              messages: message_set.messages,
+              last_stable_offset: last_stable_offset,
+              aborted_transactions: aborted_transactions,
+              messages: messages
             )
           end
 
