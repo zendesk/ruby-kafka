@@ -14,7 +14,7 @@ require "kafka/sasl_authenticator"
 
 module Kafka
   class Client
-    URI_SCHEMES = ["kafka", "kafka+ssl"]
+    URI_SCHEMES = ["kafka", "kafka+ssl", "plaintext", "ssl"]
 
     # Initializes a new Kafka client.
     #
@@ -647,6 +647,12 @@ module Kafka
         connection = "kafka://" + connection unless connection =~ /:\/\//
         uri = URI.parse(connection)
         uri.port ||= 9092 # Default Kafka port.
+        case uri.scheme
+        when 'plaintext'
+          uri.scheme = 'kafka'
+        when 'ssl'
+          uri.scheme = 'kafka+ssl'
+        end
 
         unless URI_SCHEMES.include?(uri.scheme)
           raise Kafka::Error, "invalid protocol `#{uri.scheme}` in `#{connection}`"
