@@ -1,4 +1,5 @@
-require "kafka/protocol/record"
+require 'digest/crc32'
+require 'kafka/protocol/record'
 
 module Kafka
   module Protocol
@@ -57,11 +58,11 @@ module Kafka
         record_batch_encoder.write_int32(@partition_leader_epoch)
         record_batch_encoder.write_int8(MAGIC_BYTE)
 
-        data = encode_record_batch_body
-        crc = Zlib.crc32(data)
+        body = encode_record_batch_body
+        crc = Digest::CRC32c.checksum(body)
 
         record_batch_encoder.write_int32(crc)
-        record_batch_encoder.write(data)
+        record_batch_encoder.write(body)
 
         encoder.write_bytes(record_batch_buffer.string)
       end
@@ -104,6 +105,20 @@ module Kafka
         @codec_id != 0
       end
 
+      def fulfill_relative_data
+        first_record = records.min_by { |record| record.create_time }
+        @first_timestamp = first_record.nil? ? Time.now : first_record.create_time
+
+        last_record = records.max_by { |record| record.create_time }
+        @max_timestamp = last_record.nil? ? Time.now : last_record.create_time
+
+        records.each_with_index do |record, index|
+          record.offset_delta = index
+          record.timestamp_delta = (record.create_time - first_timestamp).to_i
+        end
+        @last_offset_delta = records.length - 1
+      end
+
       def self.decode(decoder)
         first_offset = decoder.int64
 
@@ -142,8 +157,8 @@ module Kafka
         records_array = []
         until records_array_decoder.eof?
           record = Record.decode(records_array_decoder)
-          record.generate_absolute_offset(first_offset)
-          record.generate_absolute_timestamp(first_timestamp)
+          record.offset = first_offset + record.offset_delta
+          record.create_time = first_timestamp + record.timestamp_delta
           records_array << record
         end
 
