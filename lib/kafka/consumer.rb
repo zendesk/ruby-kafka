@@ -212,6 +212,8 @@ module Kafka
             })
           end
           batch.messages.each do |message|
+            next if paused?(message.topic, message.partition)
+
             notification = {
               topic: message.topic,
               partition: message.partition,
@@ -229,7 +231,10 @@ module Kafka
             @instrumenter.instrument("process_message.consumer", notification) do
               begin
                 yield message
-                @current_offsets[message.topic][message.partition] = message.offset
+
+                unless paused?(message.topic, message.partition)
+                  @current_offsets[message.topic][message.partition] = message.offset
+                end
               rescue => e
                 location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
                 backtrace = e.backtrace.join("\n")
