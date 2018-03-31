@@ -19,7 +19,7 @@ module Kafka
           in_traction: false,
           has_control_message: false,
           last_offset_delta: 0,
-          producer_id: 0,
+          producer_id: -1,
           producer_epoch: 0,
           first_sequence: 0,
           max_timestamp: Time.now

@@ -12,7 +12,7 @@ describe Kafka::Protocol::RecordBatch do
       # Magic byte
       0x2,
       # CRC
-      0x59, 0x5f, 0xb7, 0xdd,
+      0x0, 0x0, 0x0, 0x0,
       # Attributes
       0x0, 0x0,
       # Last offset delta
@@ -22,7 +22,7 @@ describe Kafka::Protocol::RecordBatch do
       # Max timestamp
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
       # Producer ID
-      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
       # Producer epoch
       0x0, 0x0,
       # First sequence
@@ -231,7 +231,7 @@ describe Kafka::Protocol::RecordBatch do
 
       it 'encodes an empty batch with no records' do
         record_batch.encode(encoder)
-        expect(buffer.string.bytes).to eql empty_record_batch_bytes
+        expect(strip_crc(buffer.string.bytes)).to eql empty_record_batch_bytes
       end
     end
 
@@ -285,7 +285,7 @@ describe Kafka::Protocol::RecordBatch do
         expect(record_batch.max_timestamp.to_i).to eql 0
 
         # Transaction information
-        expect(record_batch.producer_id).to eql 0
+        expect(record_batch.producer_id).to eql -1
         expect(record_batch.producer_epoch).to eql 0
 
         expect(record_batch.first_sequence).to eql 0

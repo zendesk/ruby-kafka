@@ -78,6 +78,5 @@ workflows:
   test:
     jobs:
       - unit
-      - kafka-0.10
       - kafka-0.11
       - kafka-1.0
