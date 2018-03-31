@@ -20,21 +20,21 @@ class FakeBroker
 
   def produce(messages_for_topics:, required_acks:, timeout:)
     messages_for_topics.each do |topic, messages_for_topic|
-      messages_for_topic.each do |partition, message_set|
+      messages_for_topic.each do |partition, record_batch|
         @messages[topic] ||= {}
         @messages[topic][partition] ||= []
-        @messages[topic][partition].concat(message_set.messages)
+        @messages[topic][partition].concat(record_batch.records)
       end
     end
 
     topics = messages_for_topics.map {|topic, messages_for_topic|
       Kafka::Protocol::ProduceResponse::TopicInfo.new(
         topic: topic,
-        partitions: messages_for_topic.map {|partition, message_set|
+        partitions: messages_for_topic.map {|partition, record_batch|
           Kafka::Protocol::ProduceResponse::PartitionInfo.new(
             partition: partition,
             error_code: error_code_for_partition(topic, partition),
-            offset: message_set.messages.size,
+            offset: record_batch.records.size,
             timestamp: (Time.now.to_f * 1000).to_i,
           )
         }

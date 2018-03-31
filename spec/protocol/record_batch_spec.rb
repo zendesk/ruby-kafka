@@ -12,7 +12,7 @@ describe Kafka::Protocol::RecordBatch do
       # Magic byte
       0x2,
       # CRC
-      0xe9, 0xec, 0x3d, 0xb1,
+      0x59, 0x5f, 0xb7, 0xdd,
       # Attributes
       0x0, 0x0,
       # Last offset delta
