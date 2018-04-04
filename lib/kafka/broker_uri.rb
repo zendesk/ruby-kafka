@@ -17,11 +17,13 @@ module Kafka
     # @param str [String] a Kafka broker URI string.
     # @return [URI]
     def self.parse(str)
-      str = "kafka://" + str unless str =~ /:\/\//
+      # Make sure there's a scheme part if it's missing.
+      str = "kafka://" + str unless str.include?("://")
 
       uri = URI.parse(str)
       uri.port ||= DEFAULT_PORT
 
+      # Map some schemes to others.
       case uri.scheme
       when 'plaintext'
         uri.scheme = 'kafka'
