@@ -1,10 +1,10 @@
 require "openssl"
-require "uri"
 
 require "kafka/cluster"
 require "kafka/producer"
 require "kafka/consumer"
 require "kafka/heartbeat"
+require "kafka/broker_uri"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
@@ -14,8 +14,6 @@ require "kafka/sasl_authenticator"
 
 module Kafka
   class Client
-    URI_SCHEMES = ["kafka", "kafka+ssl", "plaintext", "ssl"]
-
     # Initializes a new Kafka client.
     #
     # @param seed_brokers [Array<String>, String] the list of brokers used to initialize
@@ -643,23 +641,7 @@ module Kafka
         seed_brokers = seed_brokers.split(",")
       end
 
-      seed_brokers.map do |connection|
-        connection = "kafka://" + connection unless connection =~ /:\/\//
-        uri = URI.parse(connection)
-        uri.port ||= 9092 # Default Kafka port.
-        case uri.scheme
-        when 'plaintext'
-          uri.scheme = 'kafka'
-        when 'ssl'
-          uri.scheme = 'kafka+ssl'
-        end
-
-        unless URI_SCHEMES.include?(uri.scheme)
-          raise Kafka::Error, "invalid protocol `#{uri.scheme}` in `#{connection}`"
-        end
-
-        uri
-      end
+      seed_brokers.map {|str| BrokerUri.parse(str) }
     end
   end
 end
