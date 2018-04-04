@@ -2,6 +2,7 @@ require "uri"
 
 module Kafka
   module BrokerUri
+    DEFAULT_PORT = 9092
     URI_SCHEMES = ["kafka", "kafka+ssl", "plaintext", "ssl"]
 
     # Parses a Kafka broker URI string.
@@ -17,8 +18,9 @@ module Kafka
     # @return [URI]
     def self.parse(str)
       str = "kafka://" + str unless str =~ /:\/\//
+
       uri = URI.parse(str)
-      uri.port ||= 9092 # Default Kafka port.
+      uri.port ||= DEFAULT_PORT
 
       case uri.scheme
       when 'plaintext'
