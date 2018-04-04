@@ -1,5 +1,4 @@
-require "openssl"
-
+require "kafka/ssl_context"
 require "kafka/cluster"
 require "kafka/producer"
 require "kafka/consumer"
@@ -63,7 +62,13 @@ module Kafka
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
-      ssl_context = build_ssl_context(ssl_ca_cert_file_path, ssl_ca_cert, ssl_client_cert, ssl_client_cert_key, ssl_ca_certs_from_system)
+      ssl_context = SslContext.build(
+        ca_cert_file_path: ssl_ca_cert_file_path,
+        ca_cert: ssl_ca_cert,
+        client_cert: ssl_client_cert,
+        client_cert_key: ssl_client_cert_key,
+        ca_certs_from_system: ssl_ca_certs_from_system,
+      )
 
       sasl_authenticator = SaslAuthenticator.new(
         sasl_gssapi_principal: sasl_gssapi_principal,
@@ -601,39 +606,6 @@ module Kafka
         broker_pool: broker_pool,
         logger: @logger,
       )
-    end
-
-    def build_ssl_context(ca_cert_file_path, ca_cert, client_cert, client_cert_key, ssl_ca_certs_from_system)
-      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || ssl_ca_certs_from_system
-
-      ssl_context = OpenSSL::SSL::SSLContext.new
-
-      if client_cert && client_cert_key
-        ssl_context.set_params(
-          cert: OpenSSL::X509::Certificate.new(client_cert),
-          key: OpenSSL::PKey.read(client_cert_key)
-        )
-      elsif client_cert && !client_cert_key
-        raise ArgumentError, "Kafka client initialized with `ssl_client_cert` but no `ssl_client_cert_key`. Please provide both."
-      elsif !client_cert && client_cert_key
-        raise ArgumentError, "Kafka client initialized with `ssl_client_cert_key`, but no `ssl_client_cert`. Please provide both."
-      end
-
-      if ca_cert || ca_cert_file_path || ssl_ca_certs_from_system
-        store = OpenSSL::X509::Store.new
-        Array(ca_cert).each do |cert|
-          store.add_cert(OpenSSL::X509::Certificate.new(cert))
-        end
-        if ca_cert_file_path
-          store.add_file(ca_cert_file_path)
-        end
-        if ssl_ca_certs_from_system
-          store.set_default_paths
-        end
-        ssl_context.cert_store = store
-      end
-
-      ssl_context
     end
 
     def normalize_seed_brokers(seed_brokers)
