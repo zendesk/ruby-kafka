@@ -25,16 +25,17 @@ module Kafka
     #         Value => bytes
     #
     class ProduceRequest
-      attr_reader :transactional_id, :required_acks, :timeout, :messages_for_topics
+      attr_reader :transactional_id, :required_acks, :timeout, :messages_for_topics, :compressor
 
       # @param required_acks [Integer]
       # @param timeout [Integer]
       # @param messages_for_topics [Hash]
-      def initialize(transactional_id: nil, required_acks:, timeout:, messages_for_topics:)
+      def initialize(transactional_id: nil, required_acks:, timeout:, messages_for_topics:, compressor: nil)
         @transactional_id = transactional_id
         @required_acks = required_acks
         @timeout = timeout
         @messages_for_topics = messages_for_topics
+        @compressor = compressor
       end
 
       def api_key
@@ -69,9 +70,19 @@ module Kafka
             encoder.write_int32(partition)
 
             record_batch.fulfill_relative_data
-            encoded_record_batch = Encoder.encode_with(record_batch)
+            encoded_record_batch = compress(record_batch)
             encoder.write_bytes(encoded_record_batch)
           end
+        end
+      end
+
+      private
+
+      def compress(record_batch)
+        if @compressor.nil?
+          Protocol::Encoder.encode_with(record_batch)
+        else
+          @compressor.compress(record_batch)
         end
       end
     end

@@ -8,7 +8,9 @@ module Kafka
       # The size of metadata before the real record data
       RECORD_BATCH_OVERHEAD = 49
 
-      attr_reader :records, :first_offset, :first_timestamp, :partition_leader_epoch, :codec_id, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
+      attr_reader :records, :first_offset, :first_timestamp, :partition_leader_epoch, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
+
+      attr_accessor :codec_id
 
       def initialize(
           records: [],
@@ -41,6 +43,10 @@ module Kafka
         @partition_leader_epoch = partition_leader_epoch
         @in_traction = in_traction
         @has_control_message = has_control_message
+      end
+
+      def size
+        @records.size
       end
 
       def attributes
