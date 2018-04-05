@@ -38,7 +38,8 @@ describe Kafka::Protocol::RecordBatch do
       first_timestamp: Time.at(1521656000),
       partition_leader_epoch: 2,
       codec_id: codec_id,
-      has_control_message: false,
+      in_transaction: true,
+      is_control_batch: true,
       last_offset_delta: 3,
       max_timestamp: Time.at(1521658000),
       producer_id: 123456,
@@ -147,7 +148,7 @@ describe Kafka::Protocol::RecordBatch do
       # CRC
       0x0, 0x0, 0x0, 0x0,
       # Attributes
-      0x0, 0x0,
+      0x0, 0b00110000,
       sample_record_batch_metadata_bytes,
       record_1_bytes,
       record_2_bytes
@@ -167,7 +168,7 @@ describe Kafka::Protocol::RecordBatch do
       # CRC
       0x0, 0x0, 0x0, 0x0,
       # Attributes
-      0x0, 0x1,
+      0x0, 0b00110001,
       sample_record_batch_metadata_bytes,
       Kafka::GzipCodec.new.compress(
         (record_1_bytes + record_2_bytes).pack("C*")
@@ -188,7 +189,7 @@ describe Kafka::Protocol::RecordBatch do
       # CRC
       0x0, 0x0, 0x0, 0x0,
       # Attributes
-      0x0, 0x2,
+      0x0, 0b00110010,
       sample_record_batch_metadata_bytes,
       Kafka::SnappyCodec.new.compress(
         (record_1_bytes + record_2_bytes).pack("C*")
@@ -209,7 +210,7 @@ describe Kafka::Protocol::RecordBatch do
       # CRC
       0x0, 0x0, 0x0, 0x0,
       # Attributes
-      0x0, 0x3,
+      0x0, 0b00110011,
       sample_record_batch_metadata_bytes,
       Kafka::LZ4Codec.new.compress(
         (record_1_bytes + record_2_bytes).pack("C*")
@@ -290,8 +291,8 @@ describe Kafka::Protocol::RecordBatch do
 
         expect(record_batch.first_sequence).to eql 0
         expect(record_batch.partition_leader_epoch).to eql 0
-        expect(record_batch.in_traction).to eql false
-        expect(record_batch.has_control_message).to eql false
+        expect(record_batch.in_transaction).to eql false
+        expect(record_batch.is_control_batch).to eql false
       end
     end
 
@@ -363,8 +364,8 @@ def expect_matched_batch_metadata(record_batch)
 
   expect(record_batch.first_sequence).to eql 0
   expect(record_batch.partition_leader_epoch).to eql 2
-  expect(record_batch.in_traction).to eql false
-  expect(record_batch.has_control_message).to eql false
+  expect(record_batch.in_transaction).to eql true
+  expect(record_batch.is_control_batch).to eql true
 end
 
 def expect_matched_records(records)

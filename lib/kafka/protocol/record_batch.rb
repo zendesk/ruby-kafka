@@ -7,8 +7,12 @@ module Kafka
       MAGIC_BYTE = 2
       # The size of metadata before the real record data
       RECORD_BATCH_OVERHEAD = 49
+      # Masks to extract information from attributes
+      CODEC_ID_MASK = 0b00000111
+      IN_TRANSACTION_MASK = 0b00010000
+      IS_CONTROL_BATCH_MASK = 0b00100000
 
-      attr_reader :records, :first_offset, :first_timestamp, :partition_leader_epoch, :in_traction, :has_control_message, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
+      attr_reader :records, :first_offset, :first_timestamp, :partition_leader_epoch, :in_transaction, :is_control_batch, :last_offset_delta, :max_timestamp, :producer_id, :producer_epoch, :first_sequence
 
       attr_accessor :codec_id
 
@@ -18,8 +22,8 @@ module Kafka
           first_timestamp: Time.now,
           partition_leader_epoch: 0,
           codec_id: 0,
-          in_traction: false,
-          has_control_message: false,
+          in_transaction: false,
+          is_control_batch: false,
           last_offset_delta: 0,
           producer_id: -1,
           producer_epoch: 0,
@@ -41,8 +45,8 @@ module Kafka
 
         @first_sequence = first_sequence
         @partition_leader_epoch = partition_leader_epoch
-        @in_traction = in_traction
-        @has_control_message = has_control_message
+        @in_transaction = in_transaction
+        @is_control_batch = is_control_batch
       end
 
       def size
@@ -51,8 +55,8 @@ module Kafka
 
       def attributes
         0x0000 | @codec_id |
-          (@in_traction ? 0x10000 : 0x0) |
-          (@has_control_message ? 0x100000 : 0x0)
+          (@in_transaction ? IN_TRANSACTION_MASK : 0x0) |
+          (@is_control_batch ? IS_CONTROL_BATCH_MASK : 0x0)
       end
 
       def encode(encoder)
@@ -138,9 +142,9 @@ module Kafka
         _crc = record_batch_decoder.int32
 
         attributes = record_batch_decoder.int16
-        codec_id = attributes & 0b111
-        in_traction = (attributes & 0b10000) == 1
-        has_control_message = (attributes & 0b100000) == 1
+        codec_id = attributes & CODEC_ID_MASK
+        in_transaction = (attributes & IN_TRANSACTION_MASK) > 0
+        is_control_batch = (attributes & IS_CONTROL_BATCH_MASK) > 0
 
         last_offset_delta = record_batch_decoder.int32
         first_timestamp = Time.at(record_batch_decoder.int64 / 1000)
@@ -175,8 +179,8 @@ module Kafka
           first_offset: first_offset,
           first_timestamp: first_timestamp,
           partition_leader_epoch: partition_leader_epoch,
-          in_traction: in_traction,
-          has_control_message: has_control_message,
+          in_transaction: in_transaction,
+          is_control_batch: is_control_batch,
           last_offset_delta: last_offset_delta,
           producer_id: producer_id,
           producer_epoch: producer_epoch,
