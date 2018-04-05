@@ -291,6 +291,9 @@ module Kafka
 
         batches.each do |batch|
           unless batch.empty?
+            raw_messages = batch.messages
+            batch.messages = raw_messages.reject(&:is_control_record)
+
             notification = {
               topic: batch.topic,
               partition: batch.partition,
@@ -316,9 +319,10 @@ module Kafka
                 @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
 
                 raise ProcessingError.new(batch.topic, batch.partition, offset_range)
+              ensure
+                batch.messages = raw_messages
               end
             end
-
             mark_message_as_processed(batch.messages.last) if automatically_mark_as_processed
           end
 
