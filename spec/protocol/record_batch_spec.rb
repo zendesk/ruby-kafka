@@ -384,6 +384,8 @@ def expect_matched_records(records)
   expect(record_1.value).to eql('world')
   expect(record_1.headers).to eql('a' => '12')
 
+  expect(record_1.is_control_record).to eql(true)
+
   record_2 = records.last
   expect(record_2.attributes).to eql(2)
   expect(record_2.timestamp_delta).to eql(2000)
@@ -394,6 +396,8 @@ def expect_matched_records(records)
   expect(record_2.key).to eql('ruby')
   expect(record_2.value).to eql('kafka')
   expect(record_2.headers).to eql('b' => '34')
+
+  expect(record_2.is_control_record).to eql(false)
 end
 
 # Compression usually has random factors. Therefore, the content and crc change

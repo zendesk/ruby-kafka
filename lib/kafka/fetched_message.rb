@@ -31,5 +31,10 @@ module Kafka
     def create_time
       @message.create_time
     end
+
+    # @return [Boolean] whether this record is a control record
+    def is_control_record
+      @message.is_control_record
+    end
   end
 end

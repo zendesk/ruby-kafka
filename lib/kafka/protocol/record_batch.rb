@@ -47,6 +47,8 @@ module Kafka
         @partition_leader_epoch = partition_leader_epoch
         @in_transaction = in_transaction
         @is_control_batch = is_control_batch
+
+        mark_control_record
       end
 
       def size
@@ -187,6 +189,13 @@ module Kafka
           first_sequence: first_sequence,
           max_timestamp: max_timestamp
         )
+      end
+
+      def mark_control_record
+        if in_transaction && is_control_batch
+          record = @records.first
+          record.is_control_record = true unless record.nil?
+        end
       end
     end
   end

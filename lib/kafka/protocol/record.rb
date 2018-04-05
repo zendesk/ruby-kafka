@@ -2,7 +2,7 @@ module Kafka
   module Protocol
     class Record
       attr_reader :key, :value, :headers, :attributes, :bytesize
-      attr_accessor :offset_delta, :timestamp_delta, :offset, :create_time
+      attr_accessor :offset_delta, :timestamp_delta, :offset, :create_time, :is_control_record
 
       def initialize(
         key: nil,
@@ -11,7 +11,8 @@ module Kafka
         attributes: 0,
         offset_delta: 0,
         timestamp_delta: 0,
-        create_time: Time.now
+        create_time: Time.now,
+        is_control_record: false
       )
         @key = key
         @value = value
@@ -21,6 +22,7 @@ module Kafka
         @offset_delta = offset_delta
         @timestamp_delta = timestamp_delta
         @create_time = create_time
+        @is_control_record = is_control_record
 
         @bytesize = @key.to_s.bytesize + @value.to_s.bytesize
       end
