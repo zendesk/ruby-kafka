@@ -64,7 +64,6 @@ module Kafka
     end
 
     def compress_record_batch(record_batch)
-      byebug
       if @codec.nil? || record_batch.size < @threshold
         record_batch.codec_id = 0
         return Protocol::Encoder.encode_with(record_batch)
