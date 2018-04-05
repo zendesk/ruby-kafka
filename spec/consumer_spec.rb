@@ -60,6 +60,7 @@ describe Kafka::Consumer do
           partition: 0,
           offset: 13,
           create_time: Time.now,
+          is_control_record: false
         })
       ]
     }
