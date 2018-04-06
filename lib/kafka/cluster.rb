@@ -187,6 +187,11 @@ module Kafka
         sleep 1
 
         retry
+      rescue Kafka::UnknownTopicOrPartition
+        @logger.warn "Topic `#{name}` not yet created, waiting 1s..."
+        sleep 1
+
+        retry
       end
 
       @logger.info "Topic `#{name}` was created"
