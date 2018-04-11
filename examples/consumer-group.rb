@@ -22,6 +22,12 @@ consumer.subscribe(topic)
 trap("TERM") { consumer.stop }
 trap("INT") { consumer.stop }
 
-consumer.each_message do |message|
-  puts message.value
+begin
+  consumer.each_message do |message|
+  end
+rescue Kafka::ProcessingError => e
+  warn "Got #{e.cause}"
+  consumer.pause(e.topic, e.partition, timeout: 20)
+
+  retry
 end

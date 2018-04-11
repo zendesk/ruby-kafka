@@ -8,7 +8,7 @@ describe Kafka::Consumer do
   let(:group) { double(:group) }
   let(:offset_manager) { double(:offset_manager) }
   let(:heartbeat) { double(:heartbeat) }
-  let(:fetch_operation) { double(:fetch_operation) }
+  let(:fetcher) { double(:fetcher, configure: nil, subscribe: nil, seek: nil, start: nil, stop: nil) }
   let(:session_timeout) { 30 }
   let(:assigned_partitions) { { "greetings" => [0] } }
 
@@ -19,14 +19,37 @@ describe Kafka::Consumer do
       instrumenter: instrumenter,
       group: group,
       offset_manager: offset_manager,
+      fetcher: fetcher,
       session_timeout: session_timeout,
       heartbeat: heartbeat,
     )
   }
 
-  before do
-    allow(Kafka::FetchOperation).to receive(:new) { fetch_operation }
+  let(:messages) {
+    [
+      double(:message, {
+        value: "hello",
+        key: nil,
+        topic: "greetings",
+        partition: 0,
+        offset: 13,
+        create_time: Time.now,
+      })
+    ]
+  }
 
+  let(:fetched_batches) {
+    [
+      Kafka::FetchedBatch.new(
+        topic: "greetings",
+        partition: 0,
+        highwater_mark_offset: 42,
+        messages: messages,
+      )
+    ]
+  }
+
+  before do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:disconnect)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
@@ -44,39 +67,14 @@ describe Kafka::Consumer do
 
     allow(heartbeat).to receive(:send_if_necessary)
 
-    allow(fetch_operation).to receive(:fetch_from_partition)
-    allow(fetch_operation).to receive(:execute) { fetched_batches }
+    allow(fetcher).to receive(:data?) { fetched_batches.any? }
+    allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }
 
     consumer.subscribe("greetings")
   end
 
   describe "#each_message" do
-    let(:messages) {
-      [
-        double(:message, {
-          value: "hello",
-          key: nil,
-          topic: "greetings",
-          partition: 0,
-          offset: 13,
-          create_time: Time.now,
-        })
-      ]
-    }
-
-    let(:fetched_batches) {
-      [
-        Kafka::FetchedBatch.new(
-          topic: "greetings",
-          partition: 0,
-          highwater_mark_offset: 42,
-          messages: messages,
-        )
-      ]
-    }
-
     it "instruments" do
-      expect(instrumenter).to receive(:instrument).once.with('fetch_batch.consumer', anything)
       expect(instrumenter).to receive(:instrument).once.with('start_process_message.consumer', anything)
       expect(instrumenter).to receive(:instrument).once.with('process_message.consumer', anything)
 
@@ -107,7 +105,7 @@ describe Kafka::Consumer do
     end
 
     it "stops if SignalException is encountered" do
-      allow(fetch_operation).to receive(:execute) { raise SignalException, "SIGTERM" }
+      allow(fetcher).to receive(:poll) { [:exception, SignalException.new("SIGTERM")] }
 
       consumer.each_message {}
 
@@ -119,11 +117,11 @@ describe Kafka::Consumer do
 
       allow(offset_manager).to receive(:seek_to_default) { done = true }
 
-      allow(fetch_operation).to receive(:execute) {
+      allow(fetcher).to receive(:poll) {
         if done
-          fetched_batches
+          [:batches, fetched_batches]
         else
-          raise Kafka::OffsetOutOfRange
+          [:exception, Kafka::OffsetOutOfRange.new]
         end
       }
 
@@ -143,7 +141,7 @@ describe Kafka::Consumer do
         consumer.stop
       end
 
-      expect(fetch_operation).to_not have_received(:fetch_from_partition).with("greetings", 42, anything)
+      expect(fetcher).to_not have_received(:seek).with("greetings", 42, anything)
 
       consumer.resume("greetings", 42)
 
@@ -151,7 +149,7 @@ describe Kafka::Consumer do
         consumer.stop
       end
 
-      expect(fetch_operation).to have_received(:fetch_from_partition).with("greetings", 42, anything)
+      expect(fetcher).to have_received(:seek).with("greetings", 42, anything)
     end
 
     it "automatically resumes partitions if a timeout is set" do
@@ -188,30 +186,6 @@ describe Kafka::Consumer do
   end
 
   describe "#each_batch" do
-    let(:messages) {
-      [
-        double(:message, {
-          value: "hello",
-          key: nil,
-          topic: "greetings",
-          partition: 0,
-          offset: 13,
-          create_time: Time.now,
-        })
-      ]
-    }
-
-    let(:fetched_batches) {
-      [
-        Kafka::FetchedBatch.new(
-          topic: "greetings",
-          partition: 0,
-          highwater_mark_offset: 42,
-          messages: messages,
-        )
-      ]
-    }
-
     it "does not mark as processed when automatically_mark_as_processed is false" do
       expect(offset_manager).not_to receive(:mark_as_processed)
 
