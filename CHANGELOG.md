@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Fetch messages asynchronously (#526).
+
 ## v0.5.5
 
 - Support PLAINTEXT and SSL URI schemes (#550).
