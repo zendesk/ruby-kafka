@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.5.5
+
+- Support PLAINTEXT and SSL URI schemes (#550).
+
 ## v0.5.4
 
 - Add support for config entries in the topic creation API (#540).
