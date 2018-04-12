@@ -484,7 +484,7 @@ module Kafka
         end
       end
     rescue OffsetOutOfRange => e
-      @logger.error "Invalid offset for #{e.topic}/#{e.partition}, resetting to default offset"
+      @logger.error "Invalid offset #{e.offset} for #{e.topic}/#{e.partition}, resetting to default offset"
 
       @offset_manager.seek_to_default(e.topic, e.partition)
 
