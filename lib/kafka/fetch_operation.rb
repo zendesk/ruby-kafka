@@ -80,6 +80,7 @@ module Kafka
             rescue Kafka::OffsetOutOfRange => e
               e.topic = fetched_topic.name
               e.partition = fetched_partition.partition
+              e.offset = topics.fetch(e.topic).fetch(e.partition).fetch(:fetch_offset)
 
               raise e
             rescue Kafka::Error => e
