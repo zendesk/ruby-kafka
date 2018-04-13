@@ -7,9 +7,10 @@ module Kafka
     # The default broker setting for offsets.retention.minutes is 1440.
     DEFAULT_RETENTION_TIME = 1440 * 60
 
-    def initialize(cluster:, group:, logger:, commit_interval:, commit_threshold:, offset_retention_time:)
+    def initialize(cluster:, group:, fetcher:, logger:, commit_interval:, commit_threshold:, offset_retention_time:)
       @cluster = cluster
       @group = group
+      @fetcher = fetcher
       @logger = logger
       @commit_interval = commit_interval
       @commit_threshold = commit_threshold
@@ -80,6 +81,8 @@ module Kafka
     def seek_to(topic, partition, offset)
       @processed_offsets[topic] ||= {}
       @processed_offsets[topic][partition] = offset
+
+      @fetcher.seek(topic, partition, offset)
     end
 
     # Return the next offset that should be fetched for the specified partition.
