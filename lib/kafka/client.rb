@@ -291,9 +291,16 @@ module Kafka
         instrumenter: instrumenter,
       )
 
+      fetcher = Fetcher.new(
+        cluster: initialize_cluster,
+        logger: @logger,
+        instrumenter: instrumenter,
+      )
+
       offset_manager = OffsetManager.new(
         cluster: cluster,
         group: group,
+        fetcher: fetcher,
         logger: @logger,
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,
@@ -303,12 +310,6 @@ module Kafka
       heartbeat = Heartbeat.new(
         group: group,
         interval: heartbeat_interval,
-      )
-
-      fetcher = Fetcher.new(
-        cluster: initialize_cluster,
-        logger: @logger,
-        instrumenter: instrumenter,
       )
 
       Consumer.new(
