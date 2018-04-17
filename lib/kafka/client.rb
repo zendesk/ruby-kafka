@@ -82,6 +82,10 @@ module Kafka
         logger: @logger
       )
 
+      if sasl_authenticator.enabled? && ssl_context.nil?
+        raise ArgumentError, "SASL authentication requires that SSL is configured"
+      end
+
       @connection_builder = ConnectionBuilder.new(
         client_id: client_id,
         connect_timeout: connect_timeout,
