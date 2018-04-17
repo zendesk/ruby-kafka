@@ -28,21 +28,25 @@ module Kafka
         mechanism: sasl_scram_mechanism,
         logger: @logger,
       )
+
+      @mechanism = [@gssapi, @plain, @scram].find(&:configured?)
+    end
+
+    def enabled?
+      !@mechanism.nil?
     end
 
     def authenticate!(connection)
-      mechanism = [@gssapi, @plain, @scram].find(&:configured?)
+      return unless enabled?
 
-      return if mechanism.nil?
-
-      ident = mechanism.ident
+      ident = @mechanism.ident
       response = connection.send_request(Kafka::Protocol::SaslHandshakeRequest.new(ident))
 
       unless response.error_code == 0 && response.enabled_mechanisms.include?(ident)
         raise Kafka::Error, "#{ident} is not supported."
       end
 
-      mechanism.authenticate!(connection.to_s, connection.encoder, connection.decoder)
+      @mechanism.authenticate!(connection.to_s, connection.encoder, connection.decoder)
     end
   end
 end
