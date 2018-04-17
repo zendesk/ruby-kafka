@@ -924,6 +924,8 @@ Typically, Kafka certificates come in the JKS format, which isn't supported by r
 
 Kafka has support for using SASL to authenticate clients. Currently GSSAPI, SCRAM and PLAIN mechanisms are supported by ruby-kafka.
 
+**NOTE:** In order to use SASL for authentication, you need to configure SSL encryption by passing `ssl_ca_cert` or enabling `ssl_ca_certs_from_system`.
+
 ##### GSSAPI
 In order to authenticate using GSSAPI, set your principal and optionally your keytab when initializing the Kafka client:
 
