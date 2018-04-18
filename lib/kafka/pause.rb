@@ -12,6 +12,7 @@ module Kafka
       @started_at = nil
       @pauses = 0
       @timeout = nil
+      @max_timeout = nil
       @exponential_backoff = false
     end
 
@@ -26,9 +27,10 @@ module Kafka
     # @param timeout [nil, Integer] if specified, the partition will automatically
     #   resume after this many seconds.
     # @param exponential_backoff [Boolean] whether to enable exponential timeouts.
-    def pause!(timeout: nil, exponential_backoff: false)
+    def pause!(timeout: nil, max_timeout: nil, exponential_backoff: false)
       @started_at = @clock.now
       @timeout = timeout
+      @max_timeout = max_timeout
       @exponential_backoff = exponential_backoff
       @pauses += 1
     end
@@ -40,6 +42,7 @@ module Kafka
     def resume!
       @started_at = nil
       @timeout = nil
+      @max_timeout = nil
     end
 
     # Whether the partition is currently paused.
@@ -66,8 +69,14 @@ module Kafka
     private
 
     def ends_at
+      # Apply an exponential backoff to the timeout.
       backoff_factor = @exponential_backoff ? 2**(@pauses - 1) : 1
-      @started_at + (backoff_factor * @timeout)
+      timeout = backoff_factor * @timeout
+
+      # If set, don't allow a timeout longer than max_timeout.
+      timeout = @max_timeout if @max_timeout && timeout > @max_timeout
+
+      @started_at + timeout
     end
   end
 end

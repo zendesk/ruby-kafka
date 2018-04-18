@@ -123,12 +123,22 @@ module Kafka
     #
     # @param topic [String]
     # @param partition [Integer]
-    # @param timeout [Integer] the number of seconds to pause the partition for,
+    # @param timeout [nil, Integer] the number of seconds to pause the partition for,
     #   or `nil` if the partition should not be automatically resumed.
+    # @param max_timeout [nil, Integer] the maximum number of seconds to pause for,
+    #   or `nil` if no maximum should be enforced.
     # @param exponential_backoff [Boolean] whether to enable exponential backoff.
     # @return [nil]
-    def pause(topic, partition, timeout: nil, exponential_backoff: false)
-      pause_for(topic, partition).pause!(timeout: timeout, exponential_backoff: exponential_backoff)
+    def pause(topic, partition, timeout: nil, max_timeout: nil, exponential_backoff: false)
+      if max_timeout && !exponential_backoff
+        raise ArgumentError, "`max_timeout` only makes sense when `exponential_backoff` is enabled"
+      end
+
+      pause_for(topic, partition).pause!(
+        timeout: timeout,
+        max_timeout: max_timeout,
+        exponential_backoff: exponential_backoff,
+      )
     end
 
     # Resume processing of a topic partition.
