@@ -235,6 +235,23 @@ module Kafka
       end
     end
 
+    def alter_topic(name, configs = {})
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_TOPIC, name, configs]]
+      }
+      broker = controller_broker
+
+      @logger.info "Fetching topic `#{name}`'s configs using controller broker #{broker}"
+
+      response = broker.alter_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      nil
+    end
+
     def create_partitions_for(name, num_partitions:, timeout:)
       options = {
         topics: [[name, num_partitions, nil]],
