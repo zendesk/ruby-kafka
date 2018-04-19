@@ -969,7 +969,7 @@ kafka = Kafka.new(
 
 ### Topic management
 
-Beside the main functionalities, ruby-kafka supports some interfaces to support topic management. The list of topic configurations could be found at [Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs)
+In addition to producing and consuming messages, ruby-kafka supports managing Kafka topics and their configurations. See [the Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs) for a full list of topic configuration keys.
 
 #### List all topics
 
@@ -985,23 +985,20 @@ kafka.topics
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.create_topic('topic')
-# => true
+kafka.create_topic("topic")
 ```
 
 By default, the new topic has 1 partition, replication factor 1 and default configs from the brokers. Those configurations are customizable:
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.create_topic(
-    'topic',
-    num_partitions: 3,
-    replication_factor: 2,
-    config: {
-      'max.message.bytes' => 100000
-    }
+kafka.create_topic("topic",
+  num_partitions: 3,
+  replication_factor: 2,
+  config: {
+    "max.message.bytes" => 100000
+  }
 )
-# => true
 ```
 
 #### Create more partitions for a topic
@@ -1010,37 +1007,36 @@ After a topic is created, you can increase the number of partitions for the topi
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.create_partitions_for('topic', num_partitions: 10)
-# => true
+kafka.create_partitions_for("topic", num_partitions: 10)
 ```
 
-#### Fetch a topic configurations (alpha feature)
+#### Fetch configuration for a topic (alpha feature)
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.describe_topic('topic', ['max.message.bytes', 'retention.ms'])
+kafka.describe_topic("topic", ["max.message.bytes", "retention.ms"])
 # => {"max.message.bytes"=>"100000", "retention.ms"=>"604800000"}
 ```
 
-#### Alter a topic (alpha feature)
+#### Alter a topic configuration (alpha feature)
 
-Update the topic configurations. **NOTE**: This feature is for advanced usage. If you misconfigure something, there would be some unexpected behaviors.
+Update the topic configurations.
+
+**NOTE**: This feature is for advanced usage. Only use this if you know what you're doing.
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.alter_topic('topic', 'max.message.bytes' => 100000, 'retention.ms' => 604800000)
-# => true
+kafka.alter_topic("topic", "max.message.bytes" => 100000, "retention.ms" => 604800000)
 ```
 
 #### Delete a topic
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
-kafka.delete_topic('topic')
-# => true
+kafka.delete_topic("topic")
 ```
 
-After a topic is marked deleted, Kafka only hides it from clients. It would take a while before a topic is completely deleted.
+After a topic is marked as deleted, Kafka only hides it from clients. It would take a while before a topic is completely deleted.
 
 ## Design
 
