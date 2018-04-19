@@ -37,6 +37,7 @@ A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distribute
     9. [Security](#security)
         1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
         2. [Authentication using SASL](#authentication-using-sasl)
+    10. [Topic management](#topic-management)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -965,6 +966,81 @@ kafka = Kafka.new(
   # ...
 )
 ```
+
+### Topic management
+
+Beside the main functionalities, ruby-kafka supports some interfaces to support topic management. The list of topic configurations could be found at [Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs)
+
+#### List all topics
+
+Return an array of topic names.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.topics
+# => ["topic1", "topic2", "topic3"]
+```
+
+#### Create a topic
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_topic('topic')
+# => true
+```
+
+By default, the new topic has 1 partition, replication factor 1 and default configs from the brokers. Those configurations are customizable:
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_topic(
+    'topic',
+    num_partitions: 3,
+    replication_factor: 2,
+    config: {
+      'max.message.bytes' => 100000
+    }
+)
+# => true
+```
+
+#### Create more partitions for a topic
+
+After a topic is created, you can increase the number of partitions for the topic. The new number of partitions must be creater than the current one.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_partitions_for('topic', num_partitions: 10)
+# => true
+```
+
+#### Fetch a topic configurations (alpha feature)
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.describe_topic('topic', ['max.message.bytes', 'retention.ms'])
+# => {"max.message.bytes"=>"100000", "retention.ms"=>"604800000"}
+```
+
+#### Alter a topic (alpha feature)
+
+Update the topic configurations. **NOTE**: This feature is for advanced usage. If you misconfigure something, there would be some unexpected behaviors.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.alter_topic('topic', 'max.message.bytes' => 100000, 'retention.ms' => 604800000)
+# => true
+```
+
+#### Delete a topic
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.delete_topic('topic')
+# => true
+```
+
+After a topic is marked deleted, Kafka only hides it from clients. It would take a while before a topic is completely deleted.
 
 ## Design
 
