@@ -239,9 +239,10 @@ module Kafka
       options = {
         resources: [[Kafka::Protocol::RESOURCE_TYPE_TOPIC, name, configs]]
       }
+
       broker = controller_broker
 
-      @logger.info "Fetching topic `#{name}`'s configs using controller broker #{broker}"
+      @logger.info "Altering the config for topic `#{name}` using controller broker #{broker}"
 
       response = broker.alter_configs(**options)
 

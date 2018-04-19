@@ -522,19 +522,17 @@ module Kafka
 
     # Alter the configuration of a topic.
     #
-    # Change the topic configuration. Configuration names
-    # refer to [Kafka's topic-level configs](https://kafka.apache.org/documentation/#topicconfigs).
+    # Configuration keys must match
+    # [Kafka's topic-level configs](https://kafka.apache.org/documentation/#topicconfigs).
     #
     # @note This is an alpha level API and is subject to change.
     #
     # @example Describing the cleanup policy config of a topic
     #   kafka = Kafka.new(["kafka1:9092"])
-    #   kafka.alter_topic("my-topic", "cleanup.policy" => "delete",
-    #   "max.message.byte" => "100000")
+    #   kafka.alter_topic("my-topic", "cleanup.policy" => "delete", "max.message.byte" => "100000")
     #
     # @param name [String] the name of the topic.
-    # @param configs [Hash<String, String>] hash of desired config names
-    # name values.
+    # @param configs [Hash<String, String>] hash of desired config keys and values.
     # @return [nil]
     def alter_topic(name, configs = {})
       @cluster.alter_topic(name, configs)
