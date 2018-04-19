@@ -62,7 +62,7 @@ describe "Topic management API", functional: true do
 
   example "alter a topic configuration" do
     unless kafka.supports_api?(Kafka::Protocol::ALTER_CONFIGS_API)
-      skip("This Kafka version not support AlterTopic API")
+      skip("This Kafka version not support AlterConfig API")
     end
 
     topic = generate_topic_name
