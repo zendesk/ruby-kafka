@@ -69,7 +69,7 @@ describe "Topic management API", functional: true do
     kafka.create_topic(topic, num_partitions: 3)
     kafka.alter_topic(
       topic,
-      'retention.ms' => '1234567',
+      'retention.ms' => 1234567,
       'max.message.bytes' => '987654'
     )
 

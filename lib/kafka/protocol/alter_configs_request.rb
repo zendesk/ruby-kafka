@@ -25,6 +25,10 @@ module Kafka
 
           configs = configs.to_a
           encoder.write_array(configs) do |config_name, config_value|
+            # Config value is nullable. In other cases, we must write the
+            # stringified value.
+            config_value = config_value.to_s unless config_value.nil?
+
             encoder.write_string(config_name)
             encoder.write_string(config_value)
           end
