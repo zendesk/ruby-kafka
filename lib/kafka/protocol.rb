@@ -28,6 +28,7 @@ module Kafka
     CREATE_TOPICS_API = 19
     DELETE_TOPICS_API = 20
     DESCRIBE_CONFIGS_API = 32
+    ALTER_CONFIGS_API = 33
     CREATE_PARTITIONS_API = 37
 
     # A mapping from numeric API keys to symbolic API names.
@@ -170,5 +171,7 @@ require "kafka/protocol/delete_topics_request"
 require "kafka/protocol/delete_topics_response"
 require "kafka/protocol/describe_configs_request"
 require "kafka/protocol/describe_configs_response"
+require "kafka/protocol/alter_configs_request"
+require "kafka/protocol/alter_configs_response"
 require "kafka/protocol/create_partitions_request"
 require "kafka/protocol/create_partitions_response"
