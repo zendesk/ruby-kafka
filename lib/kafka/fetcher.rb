@@ -75,6 +75,10 @@ module Kafka
     private
 
     def loop
+      @instrumenter.instrument("loop.fetcher", {
+        queue_size: @queue.size,
+      })
+
       if !@commands.empty?
         cmd, args = @commands.deq
 

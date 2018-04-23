@@ -258,5 +258,17 @@ module Kafka
 
       attach_to "async_producer.kafka"
     end
+
+    class FetcherSubscriber < StatsdSubscriber
+      def loop(event)
+        queue_size = event.payload.fetch(:queue_size)
+        client = event.payload.fetch(:client_id)
+        group_id = event.payload.fetch(:group_id)
+
+        gauge("fetcher.#{client}.#{group_id}.queue_size", queue_size)
+      end
+
+      attach_to "fetcher.kafka"
+    end
   end
 end
