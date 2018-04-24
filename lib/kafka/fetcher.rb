@@ -103,6 +103,7 @@ module Kafka
 
     def handle_reset
       @next_offsets.clear
+      @queue.clear
     end
 
     def handle_stop(*)
