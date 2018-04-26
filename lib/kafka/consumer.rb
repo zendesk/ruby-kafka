@@ -465,6 +465,12 @@ module Kafka
     def resume_paused_partitions!
       @pauses.each do |topic, partitions|
         partitions.each do |partition, pause|
+          @instrumenter.instrument("pause_status.consumer", {
+            topic: topic,
+            partition: partition,
+            duration: pause.pause_duration,
+          })
+
           if pause.paused? && pause.expired?
             @logger.info "Automatically resuming partition #{topic}/#{partition}, pause timeout expired"
             resume(topic, partition)
