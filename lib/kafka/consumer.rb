@@ -207,6 +207,10 @@ module Kafka
 
         batches.each do |batch|
           batch.messages.each do |message|
+            # Break out of the loop if the partition has been paused, e.g. when
+            # processing the previous message in the batch.
+            break if paused?(batch.topic, batch.partition)
+
             notification = {
               topic: message.topic,
               partition: message.partition,
@@ -243,9 +247,11 @@ module Kafka
             return if !@running
           end
 
-          # We've successfully processed a batch from the partition, so we can clear
-          # the pause.
-          pause_for(batch.topic, batch.partition).reset!
+          unless paused?(batch.topic, batch.partition)
+            # We've successfully processed a batch from the partition, so we can clear
+            # the pause state.
+            pause_for(batch.topic, batch.partition).reset!
+          end
         end
 
         # We may not have received any messages, but it's still a good idea to
