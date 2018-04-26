@@ -155,6 +155,17 @@ module Kafka
         end
       end
 
+      def pause_status(event)
+        client = event.payload.fetch(:client_id)
+        group_id = event.payload.fetch(:group_id)
+        topic = event.payload.fetch(:topic)
+        partition = event.payload.fetch(:partition)
+
+        duration = event.payload.fetch(:duration)
+
+        gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.pause.duration", duration)
+      end
+
       attach_to "consumer.kafka"
     end
 

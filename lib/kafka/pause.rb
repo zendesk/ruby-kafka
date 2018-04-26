@@ -56,6 +56,14 @@ module Kafka
       !expired?
     end
 
+    def pause_duration
+      if paused?
+        Time.now - @started_at
+      else
+        0
+      end
+    end
+
     # Whether the pause has expired.
     def expired?
       !@timeout.nil? && @clock.now >= ends_at
