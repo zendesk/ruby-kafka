@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
 
   # An ordered sequence of messages fetched from a Kafka partition.

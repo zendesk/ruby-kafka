@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/protocol/member_assignment"
 
 module Kafka

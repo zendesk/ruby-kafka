@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/snappy_codec"
 require "kafka/gzip_codec"
 require "kafka/lz4_codec"

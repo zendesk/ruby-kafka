@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka"
 
 ready "message serialization" do

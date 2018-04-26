@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Reads lines from STDIN, writing them to Kafka.
 #
 # You need to define the environment variable KAFKA_BROKERS for this

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::RoundRobinAssignmentStrategy do
   it "assigns all partitions" do
     cluster = double(:cluster)

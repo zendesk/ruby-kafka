@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "timecop"
 
 describe Kafka::Consumer do

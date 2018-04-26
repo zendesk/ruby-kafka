@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Producer API", functional: true do
   let(:producer) { kafka.producer(max_retries: 3, retry_backoff: 1) }
 

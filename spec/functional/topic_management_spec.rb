@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Topic management API", functional: true do
   example "creating topics" do
     topic = generate_topic_name

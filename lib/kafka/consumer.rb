@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/consumer_group"
 require "kafka/offset_manager"
 require "kafka/fetcher"

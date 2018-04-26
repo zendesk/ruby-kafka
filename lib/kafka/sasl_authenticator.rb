@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'kafka/sasl/plain'
 require 'kafka/sasl/gssapi'
 require 'kafka/sasl/scram'

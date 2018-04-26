@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Protocol::Message do
   include Kafka::Protocol
 

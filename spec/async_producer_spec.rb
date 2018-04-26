@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FakeInstrumenter
   Metric = Struct.new(:name, :payload)
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "snappy"
 
 describe "Compression", functional: true do

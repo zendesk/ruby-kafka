@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Batch Consumer API", functional: true do
   example "consuming messages using the batch API" do
     num_partitions = 15

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Compressor do
   describe ".compress" do
     let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }

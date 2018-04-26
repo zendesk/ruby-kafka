@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
 
   # The protocol layer of the library.

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Protocol::Decoder do
   describe "#read" do
     it "reads the specified number of bytes" do
