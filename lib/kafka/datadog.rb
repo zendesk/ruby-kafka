@@ -217,6 +217,15 @@ module Kafka
         end
       end
 
+      def loop(event)
+        tags = {
+          client: event.payload.fetch(:client_id),
+          group_id: event.payload.fetch(:group_id),
+        }
+
+        histogram("consumer.loop.duration", event.duration, tags: tags)
+      end
+
       def pause_status(event)
         tags = {
           client: event.payload.fetch(:client_id),
