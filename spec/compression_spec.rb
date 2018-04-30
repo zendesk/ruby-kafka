@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Compression do
   Kafka::Compression.codecs.each do |codec_name|
     describe codec_name.to_s do

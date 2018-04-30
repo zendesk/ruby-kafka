@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Partitioner, "#partition_for_key" do
   let(:partitioner) { Kafka::Partitioner }
   let(:message) { double(:message, key: nil, partition_key: "yolo") }

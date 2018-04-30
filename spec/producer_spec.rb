@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "fake_broker"
 require "timecop"
 

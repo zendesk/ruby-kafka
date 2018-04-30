@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
 
   # Manages a consumer's position in partitions, figures out where to resume processing

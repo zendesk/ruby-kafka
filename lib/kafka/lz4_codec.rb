@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class LZ4Codec
     def codec_id

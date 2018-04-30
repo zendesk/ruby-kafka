@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "stringio"
 require "kafka/socket_with_timeout"
 require "kafka/ssl_socket_with_timeout"

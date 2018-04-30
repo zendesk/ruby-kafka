@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "set"
 require "kafka/partitioner"
 require "kafka/message_buffer"

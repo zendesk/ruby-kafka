@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   # Manages the pause state of a partition.
   #

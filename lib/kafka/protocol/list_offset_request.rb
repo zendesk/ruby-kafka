@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   module Protocol
     # A request to list the available offsets for a set of topics/partitions.

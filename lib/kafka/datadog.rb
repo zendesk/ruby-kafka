@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 begin
   require "datadog/statsd"
 rescue LoadError

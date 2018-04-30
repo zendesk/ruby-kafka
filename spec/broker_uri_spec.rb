@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::BrokerUri do
   it "accepts valid seed brokers URIs" do
     expect(Kafka::BrokerUri.parse("kafka://hello").to_s).to eq "kafka://hello:9092"

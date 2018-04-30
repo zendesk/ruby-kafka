@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::BrokerPool do
   let(:connection_builder) { double('connection_builder') }
   let(:connection) { double('connection') }

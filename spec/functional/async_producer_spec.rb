@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Producer API", functional: true do
   let(:producer) { kafka.async_producer(max_retries: 1, retry_backoff: 0) }
   let(:topic) { create_random_topic(num_partitions: 3) }

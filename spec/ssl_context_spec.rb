@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::SslContext do
   it "raises ArgumentError if a client cert but no client cert key is passed" do
     expect {

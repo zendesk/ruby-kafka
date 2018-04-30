@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/statsd"
 require "socket"
 require "fake_statsd_agent"

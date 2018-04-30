@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/protocol/consumer_group_protocol"
 
 module Kafka

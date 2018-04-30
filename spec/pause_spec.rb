@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Pause do
   describe "#paused?" do
     let(:clock) { double(:clock, now: 30) }

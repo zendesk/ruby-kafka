@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::MessageBuffer do
   let(:buffer) { Kafka::MessageBuffer.new }
 

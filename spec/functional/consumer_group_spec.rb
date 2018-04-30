@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Consumer API", functional: true do
   let(:offset_retention_time) { 30 }
 

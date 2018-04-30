@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class GzipCodec
     def codec_id

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/ssl_context"
 require "kafka/cluster"
 require "kafka/producer"

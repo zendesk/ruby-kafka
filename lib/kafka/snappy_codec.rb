@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class SnappyCodec
     def codec_id

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Protocol::Message do
   it "encodes and decodes messages" do
     message = Kafka::Protocol::Message.new(

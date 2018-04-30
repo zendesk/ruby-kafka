@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class ConnectionBuilder
     def initialize(client_id:, logger:, instrumenter:, connect_timeout:, socket_timeout:, ssl_context:, sasl_authenticator:)

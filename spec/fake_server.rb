@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FakeServer
   SUPPORTED_MECHANISMS = ['PLAIN', 'SCRAM-SHA-256', 'SCRAM-SHA-512']
 

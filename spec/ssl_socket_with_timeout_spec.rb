@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::SSLSocketWithTimeout, ".open" do
   it "times out if the server doesn't accept the connection within the timeout" do
     host = "172.16.0.0" # this address is non-routable!

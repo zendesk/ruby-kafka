@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/protocol/message_set"
 
 module Kafka
