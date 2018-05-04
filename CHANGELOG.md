@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.1
+
+- Fix bug with exponential pausing causing pauses never to stop.
+
 ## v0.6.0
 
 - Fetch messages asynchronously (#526).
