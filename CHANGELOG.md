@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.0
+
 - Fetch messages asynchronously (#526).
 - Add support for exponential backoff in pauses (#566).
 - Instrument pause durations (#574).
