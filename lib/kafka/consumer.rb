@@ -162,7 +162,8 @@ module Kafka
     # @param partition [Integer]
     # @return [Boolean] true if the partition is paused, false otherwise.
     def paused?(topic, partition)
-      pause_for(topic, partition).paused?
+      pause = pause_for(topic, partition)
+      pause.paused? && !pause.expired?
     end
 
     # Fetches and enumerates the messages in the topics that the consumer group

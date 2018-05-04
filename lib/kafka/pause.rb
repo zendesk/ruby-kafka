@@ -47,15 +47,11 @@ module Kafka
       @max_timeout = nil
     end
 
-    # Whether the partition is currently paused.
+    # Whether the partition is currently paused. The pause may have expired, in which
+    # case {#expired?} should be checked as well.
     def paused?
       # This is nil if we're not currently paused.
-      return false if @started_at.nil?
-
-      # If no timeout is set we pause forever.
-      return true if @timeout.nil?
-
-      !expired?
+      !@started_at.nil?
     end
 
     def pause_duration
@@ -68,7 +64,11 @@ module Kafka
 
     # Whether the pause has expired.
     def expired?
-      !@timeout.nil? && @clock.now >= ends_at
+      # We never expire the pause if timeout is nil.
+      return false if @timeout.nil?
+
+      # Have we passed the end of the pause duration?
+      @clock.now >= ends_at
     end
 
     # Resets the pause state, ensuring that the next pause is not exponential.
