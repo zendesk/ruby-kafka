@@ -146,6 +146,12 @@ module Kafka
       send_request(request)
     end
 
+    def list_groups
+      request = Protocol::ListGroupsRequest.new
+
+      send_request(request)
+    end
+
     def api_versions
       request = Protocol::ApiVersionsRequest.new
 

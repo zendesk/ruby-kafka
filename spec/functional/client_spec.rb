@@ -22,6 +22,20 @@ describe "Producer API", functional: true do
     expect(kafka.has_topic?(deleted_topic)).to eq false
   end
 
+  example "listing consumer groups working in the cluster" do
+    kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
+
+    group_id = "consumer-group-#{rand(1000)}"
+    kafka.deliver_message('test', topic: topic)
+    consumer = kafka.consumer(group_id: group_id)
+    consumer.subscribe(topic)
+    consumer.each_message do |msg|
+      consumer.stop
+    end
+
+    expect(kafka.groups).to include(group_id)
+  end
+
   example "fetching the partition count for a topic" do
     expect(kafka.partitions_for(topic)).to eq 3
   end

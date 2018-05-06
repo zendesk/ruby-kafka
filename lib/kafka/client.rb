@@ -559,6 +559,13 @@ module Kafka
       @cluster.list_topics
     end
 
+    # Lists all consumer groups in the cluster
+    #
+    # @return [Array<String>] the list of group ids
+    def groups
+      @cluster.list_groups
+    end
+
     def has_topic?(topic)
       @cluster.clear_target_topics
       @cluster.add_target_topics([topic])
