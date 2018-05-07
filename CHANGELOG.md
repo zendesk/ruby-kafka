@@ -4,6 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Add list groups API (#582).
 - Use mutable String constructor (#584).
 
 ## v0.6.1
