@@ -158,6 +158,12 @@ module Kafka
       send_request(request)
     end
 
+    def describe_groups(**options)
+      request = Protocol::DescribeGroupsRequest.new(**options)
+
+      send_request(request)
+    end
+
     private
 
     def send_request(request)
