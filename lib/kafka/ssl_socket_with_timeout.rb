@@ -90,13 +90,14 @@ module Kafka
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     # @return [String] the data that was read from the socket.
     def read(num_bytes)
-      buffer = ''
+      buffer = String.new
+
       until buffer.length >= num_bytes
         begin
-          # unlike plain tcp sockets, ssl sockets don't support IO.select
+          # Unlike plain TCP sockets, SSL sockets don't support IO.select
           # properly.
           # Instead, timeouts happen on a per read basis, and we have to
-          # catch exceptions from read_nonblock, and gradually build up
+          # catch exceptions from read_nonblock and gradually build up
           # our read buffer.
           buffer << @ssl_socket.read_nonblock(num_bytes - buffer.length)
         rescue IO::WaitReadable
@@ -113,6 +114,7 @@ module Kafka
           end
         end
       end
+
       buffer
     end
 
