@@ -61,13 +61,13 @@ describe "Producer API", functional: true do
     expect(member['client_host']).to_not be_nil
     expect(member['member_id']).to_not be_nil
     expect(member['topics'].first['name']).to eq(topic)
-    expect(member['topics'].first['partitions'].sort).to eq([0,1,2])
+    expect(member['topics'].first['partitions'].sort).to eq([0, 1, 2])
   end
 
   example "describing non-existent consumer group" do
     group_id = "consumer-group=#{rand(1000)}"
     result = kafka.describe_group(group_id)
-    expect(result).to eq("state"=>"Dead", "protocol"=>"", "members"=>[])
+    expect(result).to eq("state" => "Dead", "protocol" => "", "members" => [])
   end
 
   example "describing an inactive consumer group" do
@@ -82,7 +82,7 @@ describe "Producer API", functional: true do
     end
 
     result = kafka.describe_group(group_id)
-    expect(result).to eq("state"=>"Empty", "protocol"=>"", "members"=>[])
+    expect(result).to eq("state" => "Empty", "protocol" => "", "members" => [])
   end
 
   example "fetching the partition count for a topic" do

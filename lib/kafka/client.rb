@@ -568,7 +568,7 @@ module Kafka
     # @param group_id [String] the id of the consumer group
     # @return [Hash]
     def describe_group(group_id)
-      @cluster.describe_groups(group_ids: [group_id])[group_id]
+      @cluster.describe_group(group_id)
     end
 
     # Create partitions for a topic.
