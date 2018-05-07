@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Use mutable String constructor (#584).
+
 ## v0.6.1
 
 - Fix bug with exponential pausing causing pauses never to stop.
