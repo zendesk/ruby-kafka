@@ -90,7 +90,8 @@ module Kafka
     # @raise [Errno::ETIMEDOUT] if the timeout is exceeded.
     # @return [String] the data that was read from the socket.
     def read(num_bytes)
-      buffer = ''
+      buffer = String.new
+
       until buffer.length >= num_bytes
         begin
           # unlike plain tcp sockets, ssl sockets don't support IO.select
