@@ -540,6 +540,14 @@ module Kafka
       @cluster.alter_topic(name, configs)
     end
 
+    # Describe a consumer group
+    #
+    # @param group_id [String] the id of the consumer group
+    # @return [Kafka::Protocol::DescribeGroupsResponse::Group]
+    def describe_group(group_id)
+      @cluster.describe_group(group_id)
+    end
+
     # Create partitions for a topic.
     #
     # @param name [String] the name of the topic.

@@ -25,6 +25,7 @@ module Kafka
     HEARTBEAT_API = 12
     LEAVE_GROUP_API = 13
     SYNC_GROUP_API = 14
+    DESCRIBE_GROUPS_API = 15
     LIST_GROUPS_API = 16
     SASL_HANDSHAKE_API = 17
     API_VERSIONS_API = 18
@@ -180,3 +181,5 @@ require "kafka/protocol/create_partitions_request"
 require "kafka/protocol/create_partitions_response"
 require "kafka/protocol/list_groups_request"
 require "kafka/protocol/list_groups_response"
+require "kafka/protocol/describe_groups_request"
+require "kafka/protocol/describe_groups_response"

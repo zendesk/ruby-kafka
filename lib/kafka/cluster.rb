@@ -255,6 +255,13 @@ module Kafka
       nil
     end
 
+    def describe_group(group_id)
+      response = get_group_coordinator(group_id: group_id).describe_groups(group_ids: [group_id])
+      group = response.groups.first
+      Protocol.handle_error(group.error_code)
+      group
+    end
+
     def create_partitions_for(name, num_partitions:, timeout:)
       options = {
         topics: [[name, num_partitions, nil]],
