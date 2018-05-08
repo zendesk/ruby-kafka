@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Add support for the Describe Groups API (#583).
+
+## v0.6.2
+
 - Add list groups API (#582).
 - Use mutable String constructor (#584).
 
