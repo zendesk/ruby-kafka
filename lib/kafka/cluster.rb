@@ -259,31 +259,7 @@ module Kafka
       response = get_group_coordinator(group_id: group_id).describe_groups(group_ids: [group_id])
       group = response.groups.first
       Protocol.handle_error(group.error_code)
-
-      group_hash = {}
-      group_hash['state'] = group.state
-      group_hash['protocol'] = group.protocol
-      group_hash['members'] = []
-
-      group.members.each do |member|
-        member_hash = {}
-
-        member_hash['member_id'] = member.member_id
-        member_hash['client_host'] = member.client_host
-        member_hash['client_id'] = member.client_id
-        member_hash['topics'] = []
-
-        member.member_assignment.topics.each do |topic, partitions|
-          topic_hash = {}
-          topic_hash['name'] = topic
-          topic_hash['partitions'] = partitions
-          member_hash['topics'] << topic_hash
-        end
-
-        group_hash['members'] << member_hash
-      end
-
-      group_hash
+      group
     end
 
     def create_partitions_for(name, num_partitions:, timeout:)

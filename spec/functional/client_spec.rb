@@ -29,7 +29,6 @@ describe "Producer API", functional: true do
     kafka.deliver_message('test', topic: topic)
     consumer = kafka.consumer(group_id: group_id)
     consumer.subscribe(topic)
-
     consumer.each_message do |msg|
       consumer.stop
     end
@@ -39,40 +38,39 @@ describe "Producer API", functional: true do
 
   example "describing consumer group with active consumer" do
     group_id = "consumer-group=#{rand(1000)}"
-    result = nil
 
     kafka.deliver_message('test', topic: topic)
     consumer = kafka.consumer(group_id: group_id)
     consumer.subscribe(topic)
 
+    result = nil
     consumer.each_message do |msg|
       result = kafka.describe_group(group_id)
       consumer.stop
     end
 
-    expect(result.keys).to eq(['state', 'protocol', 'members'])
-    expect(result['state']).to eq('Stable')
-    expect(result['protocol']).to eq('standard')
-    expect(result['members'].count).to eq(1)
+    expect(result.state).to eq('Stable')
+    expect(result.protocol).to eq('standard')
+    expect(result.members.count).to eq(1)
 
-    member = result['members'].first
-    expect(member.keys).to eq(['member_id', 'client_host', 'client_id', 'topics'])
-    expect(member['client_id']).to_not be_nil
-    expect(member['client_host']).to_not be_nil
-    expect(member['member_id']).to_not be_nil
-    expect(member['topics'].first['name']).to eq(topic)
-    expect(member['topics'].first['partitions'].sort).to eq([0, 1, 2])
+    member = result.members.first
+    expect(member.client_id).to_not be_nil
+    expect(member.client_host).to_not be_nil
+    expect(member.member_id).to_not be_nil
+    expect(member.member_assignment).to be_an_instance_of(Kafka::Protocol::MemberAssignment)
+    expect(member.member_assignment.topics[topic].sort).to eq([0, 1, 2])
   end
 
   example "describing non-existent consumer group" do
     group_id = "consumer-group=#{rand(1000)}"
     result = kafka.describe_group(group_id)
-    expect(result).to eq("state" => "Dead", "protocol" => "", "members" => [])
+    expect(result.state).to eq('Dead')
+    expect(result.protocol).to be_empty
+    expect(result.members).to be_empty
   end
 
   example "describing an inactive consumer group" do
     group_id = "consumer-group=#{rand(1000)}"
-    result = nil
 
     kafka.deliver_message('test', topic: topic)
     consumer = kafka.consumer(group_id: group_id)
@@ -82,7 +80,9 @@ describe "Producer API", functional: true do
     end
 
     result = kafka.describe_group(group_id)
-    expect(result).to eq("state" => "Empty", "protocol" => "", "members" => [])
+    expect(result.state).to eq('Empty')
+    expect(result.protocol).to be_empty
+    expect(result.members).to be_empty
   end
 
   example "fetching the partition count for a topic" do

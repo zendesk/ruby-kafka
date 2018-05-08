@@ -542,31 +542,8 @@ module Kafka
 
     # Describe a consumer group
     #
-    # @example Describing a group with id 'my-group'
-    #
-    #   kafka = Kafka.new(["kafka1:9092"])
-    #   kafka.describe_group('my-group')
-    #   #=>
-    #   {
-    #     "state"=>"Stable",
-    #     "protocol"=>"standard",
-    #     "members"=> [
-    #       {
-    #         "member_id"=>"ruby-kafka-5fa8db8c-862e-4c6f-aa8b-31b8b1a18d23",
-    #         "client_host"=>"/172.20.0.1",
-    #         "client_id"=>"ruby-kafka",
-    #         "topics"=> [
-    #           {
-    #             "name"=>"topic-1",
-    #             "partitions"=>[2, 1, 0]
-    #           }
-    #         ]
-    #       }
-    #     ]
-    #   }
-    #
     # @param group_id [String] the id of the consumer group
-    # @return [Hash]
+    # @return [Kafka::Protocol::DescribeGroupsResponse::Group]
     def describe_group(group_id)
       @cluster.describe_group(group_id)
     end
