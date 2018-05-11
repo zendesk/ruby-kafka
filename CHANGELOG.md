@@ -4,6 +4,9 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.3
+
+- Allow configuring the max size of the queue connecting the fetcher thread with the consumer.
 - Add support for the Describe Groups API (#583).
 
 ## v0.6.2
