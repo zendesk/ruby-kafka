@@ -4,14 +4,13 @@ require "kafka/fetch_operation"
 
 module Kafka
   class Fetcher
-    MAX_QUEUE_SIZE = 100
-
     attr_reader :queue
 
-    def initialize(cluster:, logger:, instrumenter:)
+    def initialize(cluster:, logger:, instrumenter:, max_queue_size:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
+      @max_queue_size = max_queue_size
 
       @queue = Queue.new
       @commands = Queue.new
@@ -89,10 +88,10 @@ module Kafka
         send("handle_#{cmd}", *args)
       elsif !@running
         sleep 0.1
-      elsif @queue.size < MAX_QUEUE_SIZE
+      elsif @queue.size < @max_queue_size
         step
       else
-        @logger.warn "Reached max fetcher queue size (#{MAX_QUEUE_SIZE}), sleeping 1s"
+        @logger.warn "Reached max fetcher queue size (#{@max_queue_size}), sleeping 1s"
         sleep 1
       end
     end
