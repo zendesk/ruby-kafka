@@ -277,8 +277,19 @@ module Kafka
     #   than the session window.
     # @param offset_retention_time [Integer] the time period that committed
     #   offsets will be retained, in seconds. Defaults to the broker setting.
+    # @param fetcher_max_queue_size [Integer] max number of items in the fetch queue that
+    #   are stored for further processing. Note, that each item in the queue represents a
+    #   response from a single broker.
     # @return [Consumer]
-    def consumer(group_id:, session_timeout: 30, offset_commit_interval: 10, offset_commit_threshold: 0, heartbeat_interval: 10, offset_retention_time: nil)
+    def consumer(
+        group_id:,
+        session_timeout: 30,
+        offset_commit_interval: 10,
+        offset_commit_threshold: 0,
+        heartbeat_interval: 10,
+        offset_retention_time: nil,
+        fetcher_max_queue_size: 100
+    )
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {
@@ -301,6 +312,7 @@ module Kafka
         cluster: initialize_cluster,
         logger: @logger,
         instrumenter: instrumenter,
+        max_queue_size: fetcher_max_queue_size
       )
 
       offset_manager = OffsetManager.new(
