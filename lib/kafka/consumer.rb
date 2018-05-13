@@ -555,7 +555,7 @@ module Kafka
       @pauses[topic][partition]
     end
 
-    RETRYABLE_POLL_EXCEPTIONS=[
+    RETRYABLE_POLL_EXCEPTIONS = [
       HeartbeatError,
       OffsetCommitError,
       FetchError,
