@@ -371,16 +371,16 @@ module Kafka
         max_wait_time: max_wait_time,
       )
 
-      @running = true
-      @fetcher.start
+      unless @running
+        @running = true
+        @fetcher.start
+      end
 
       retry_or_raise(retries: max_retries) do
         batches = fetch_batches
         send_heartbeat_if_necessary
         batches
       end
-    ensure
-      @fetcher.stop
     end
 
     def commit_offsets
