@@ -352,6 +352,7 @@ module Kafka
     # @return [nil]
     def seek(topic, partition, offset)
       @offset_manager.seek_to(topic, partition, offset)
+      @fetcher.seek(topic, partition, offset)
     end
 
     # @param min_bytes [Integer] the minimum number of bytes to read before
