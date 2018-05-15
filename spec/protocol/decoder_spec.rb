@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 describe Kafka::Protocol::Decoder do
   describe '#peek' do
     let(:decoder) { Kafka::Protocol::Decoder.from_string(data) }
