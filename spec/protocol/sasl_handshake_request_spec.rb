@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Protocol::SaslHandshakeRequest do
   describe "#api_key" do
     let(:request) { Kafka::Protocol::SaslHandshakeRequest.new('GSSAPI') }

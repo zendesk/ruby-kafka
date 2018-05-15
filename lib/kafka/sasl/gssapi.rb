@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   module Sasl
     class Gssapi

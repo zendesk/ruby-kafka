@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class FetchedMessage
     # @return [String] the name of the topic that the message was written to.

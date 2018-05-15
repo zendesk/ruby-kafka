@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   class PendingMessage
     attr_reader :value, :key, :topic, :partition, :partition_key, :create_time, :bytesize

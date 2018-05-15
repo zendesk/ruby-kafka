@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Consumes lines from a Kafka partition and writes them to STDOUT.
 #
 # You need to define the environment variable KAFKA_BROKERS for this

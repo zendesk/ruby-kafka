@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/broker_pool"
 require "set"
 
@@ -187,6 +189,11 @@ module Kafka
         sleep 1
 
         retry
+      rescue Kafka::UnknownTopicOrPartition
+        @logger.warn "Topic `#{name}` not yet created, waiting 1s..."
+        sleep 1
+
+        retry
       end
 
       @logger.info "Topic `#{name}` was created"
@@ -228,6 +235,31 @@ module Kafka
       topic_description.configs.each_with_object({}) do |config, hash|
         hash[config.name] = config.value
       end
+    end
+
+    def alter_topic(name, configs = {})
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_TOPIC, name, configs]]
+      }
+
+      broker = controller_broker
+
+      @logger.info "Altering the config for topic `#{name}` using controller broker #{broker}"
+
+      response = broker.alter_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      nil
+    end
+
+    def describe_group(group_id)
+      response = get_group_coordinator(group_id: group_id).describe_groups(group_ids: [group_id])
+      group = response.groups.first
+      Protocol.handle_error(group.error_code)
+      group
     end
 
     def create_partitions_for(name, num_partitions:, timeout:)
@@ -310,6 +342,15 @@ module Kafka
       response.topics.select do |topic|
         topic.topic_error_code == 0
       end.map(&:topic_name)
+    end
+
+    def list_groups
+      refresh_metadata_if_necessary!
+      cluster_info.brokers.map do |broker|
+        response = connect_to_broker(broker.node_id).list_groups
+        Protocol.handle_error(response.error_code)
+        response.groups.map(&:group_id)
+      end.flatten.uniq
     end
 
     def disconnect

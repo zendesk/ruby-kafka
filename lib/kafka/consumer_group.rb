@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "set"
 require "kafka/round_robin_assignment_strategy"
 

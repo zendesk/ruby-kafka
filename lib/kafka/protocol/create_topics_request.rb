@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   module Protocol
 
@@ -27,8 +29,8 @@ module Kafka
           # Replica assignments. We don't care.
           encoder.write_array([])
 
-          # Config entries. We don't care.
           encoder.write_array(config.fetch(:config)) do |config_name, config_value|
+            config_value = config_value.to_s unless config_value.nil?
             encoder.write_string(config_name)
             encoder.write_string(config_value)
           end

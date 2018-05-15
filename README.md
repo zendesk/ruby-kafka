@@ -2,7 +2,6 @@
 
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-Although parts of this library work with Kafka 0.8 – specifically, the Producer API – it's being tested and developed against Kafka 0.9. The Consumer API is Kafka 0.9+ only.
 
 ## Table of Contents
 
@@ -38,6 +37,7 @@ Although parts of this library work with Kafka 0.8 – specifically, the Produce
     9. [Security](#security)
         1. [Encryption and Authentication using SSL](#encryption-and-authentication-using-ssl)
         2. [Authentication using SASL](#authentication-using-sasl)
+    10. [Topic management](#topic-management)
 4. [Design](#design)
     1. [Producer Design](#producer-design)
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
@@ -925,6 +925,8 @@ Typically, Kafka certificates come in the JKS format, which isn't supported by r
 
 Kafka has support for using SASL to authenticate clients. Currently GSSAPI, SCRAM and PLAIN mechanisms are supported by ruby-kafka.
 
+**NOTE:** In order to use SASL for authentication, you need to configure SSL encryption by passing `ssl_ca_cert` or enabling `ssl_ca_certs_from_system`.
+
 ##### GSSAPI
 In order to authenticate using GSSAPI, set your principal and optionally your keytab when initializing the Kafka client:
 
@@ -964,6 +966,77 @@ kafka = Kafka.new(
   # ...
 )
 ```
+
+### Topic management
+
+In addition to producing and consuming messages, ruby-kafka supports managing Kafka topics and their configurations. See [the Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs) for a full list of topic configuration keys.
+
+#### List all topics
+
+Return an array of topic names.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.topics
+# => ["topic1", "topic2", "topic3"]
+```
+
+#### Create a topic
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_topic("topic")
+```
+
+By default, the new topic has 1 partition, replication factor 1 and default configs from the brokers. Those configurations are customizable:
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_topic("topic",
+  num_partitions: 3,
+  replication_factor: 2,
+  config: {
+    "max.message.bytes" => 100000
+  }
+)
+```
+
+#### Create more partitions for a topic
+
+After a topic is created, you can increase the number of partitions for the topic. The new number of partitions must be creater than the current one.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.create_partitions_for("topic", num_partitions: 10)
+```
+
+#### Fetch configuration for a topic (alpha feature)
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.describe_topic("topic", ["max.message.bytes", "retention.ms"])
+# => {"max.message.bytes"=>"100000", "retention.ms"=>"604800000"}
+```
+
+#### Alter a topic configuration (alpha feature)
+
+Update the topic configurations.
+
+**NOTE**: This feature is for advanced usage. Only use this if you know what you're doing.
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.alter_topic("topic", "max.message.bytes" => 100000, "retention.ms" => 604800000)
+```
+
+#### Delete a topic
+
+```ruby
+kafka = Kafka.new(["kafka:9092"])
+kafka.delete_topic("topic")
+```
+
+After a topic is marked as deleted, Kafka only hides it from clients. It would take a while before a topic is completely deleted.
 
 ## Design
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
 
   # The protocol layer of the library.
@@ -23,11 +25,14 @@ module Kafka
     HEARTBEAT_API = 12
     LEAVE_GROUP_API = 13
     SYNC_GROUP_API = 14
+    DESCRIBE_GROUPS_API = 15
+    LIST_GROUPS_API = 16
     SASL_HANDSHAKE_API = 17
     API_VERSIONS_API = 18
     CREATE_TOPICS_API = 19
     DELETE_TOPICS_API = 20
     DESCRIBE_CONFIGS_API = 32
+    ALTER_CONFIGS_API = 33
     CREATE_PARTITIONS_API = 37
 
     # A mapping from numeric API keys to symbolic API names.
@@ -170,5 +175,11 @@ require "kafka/protocol/delete_topics_request"
 require "kafka/protocol/delete_topics_response"
 require "kafka/protocol/describe_configs_request"
 require "kafka/protocol/describe_configs_response"
+require "kafka/protocol/alter_configs_request"
+require "kafka/protocol/alter_configs_response"
 require "kafka/protocol/create_partitions_request"
 require "kafka/protocol/create_partitions_response"
+require "kafka/protocol/list_groups_request"
+require "kafka/protocol/list_groups_response"
+require "kafka/protocol/describe_groups_request"
+require "kafka/protocol/describe_groups_response"

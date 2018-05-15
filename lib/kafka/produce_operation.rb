@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/protocol/message_set"
 require "kafka/protocol/record_batch"
 

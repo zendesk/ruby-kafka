@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Kafka
   module Protocol
     # A decoder wraps an IO object, making it easy to read specific data types

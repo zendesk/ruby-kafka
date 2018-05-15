@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "kafka/version"
 
 module Kafka
@@ -48,7 +50,7 @@ module Kafka
   end
 
   class OffsetOutOfRange < ProtocolError
-    attr_accessor :topic, :partition
+    attr_accessor :topic, :partition, :offset
   end
 
   # The request is for a topic or partition that does not exist on the broker.

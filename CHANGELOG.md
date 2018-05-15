@@ -4,6 +4,30 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.3
+
+- Allow configuring the max size of the queue connecting the fetcher thread with the consumer.
+- Add support for the Describe Groups API (#583).
+
+## v0.6.2
+
+- Add list groups API (#582).
+- Use mutable String constructor (#584).
+
+## v0.6.1
+
+- Fix bug with exponential pausing causing pauses never to stop.
+
+## v0.6.0
+
+- Fetch messages asynchronously (#526).
+- Add support for exponential backoff in pauses (#566).
+- Instrument pause durations (#574).
+
+## v0.5.5
+
+- Support PLAINTEXT and SSL URI schemes (#550).
+
 ## v0.5.4
 
 - Add support for config entries in the topic creation API (#540).

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "logger"
 require "kafka/connection"
 require "kafka/protocol"
@@ -132,14 +134,32 @@ module Kafka
       send_request(request)
     end
 
+    def alter_configs(**options)
+      request = Protocol::AlterConfigsRequest.new(**options)
+
+      send_request(request)
+    end
+
     def create_partitions(**options)
       request = Protocol::CreatePartitionsRequest.new(**options)
 
       send_request(request)
     end
 
+    def list_groups
+      request = Protocol::ListGroupsRequest.new
+
+      send_request(request)
+    end
+
     def api_versions
       request = Protocol::ApiVersionsRequest.new
+
+      send_request(request)
+    end
+
+    def describe_groups(**options)
+      request = Protocol::DescribeGroupsRequest.new(**options)
 
       send_request(request)
     end

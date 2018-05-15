@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Kafka::Cluster do
   describe "#get_leader" do
     let(:broker) { double(:broker) }

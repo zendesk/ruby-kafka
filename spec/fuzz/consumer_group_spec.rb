@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "Consumer groups", fuzz: true do
   let(:logger) { LOGGER }
   let(:num_messages) { 10_000 }

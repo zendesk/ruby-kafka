@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'fake_server'
 
 describe Kafka::SaslAuthenticator do

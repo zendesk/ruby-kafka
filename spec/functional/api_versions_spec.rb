@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "API Versions API", functional: true do
   example "getting the API versions that are supported by the Kafka brokers" do
     produce_api = kafka.apis.find {|v| v.api_key == 0 }
