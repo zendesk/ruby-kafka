@@ -28,8 +28,8 @@ module Kafka
       # @return [Integer]
       def peek(offset, length)
         data = @io.read(offset + length)
-        @io.ungetc(data)
         return [] if data.nil?
+        @io.ungetc(data)
         data.bytes[offset, offset + length]
       end
 
