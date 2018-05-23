@@ -30,7 +30,7 @@ module Kafka
         data = @io.read(offset + length)
         return [] if data.nil?
         @io.ungetc(data)
-        data.bytes[offset, offset + length]
+        data.bytes[offset, offset + length] || []
       end
 
       # Decodes an 8-bit boolean from the IO object.

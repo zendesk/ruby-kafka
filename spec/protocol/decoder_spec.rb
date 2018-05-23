@@ -1,6 +1,15 @@
 describe Kafka::Protocol::Decoder do
   describe '#peek' do
-    let(:decoder) { Kafka::Protocol::Decoder.from_string(data) }
+    let(:io) { StringIO.new(data) }
+    let(:decoder) { Kafka::Protocol::Decoder.new(io) }
+
+    context 'io stream is shorter' do
+      let(:data) { 'he' }
+
+      it 'returns empty array' do
+        expect(decoder.peek(3, 1)).to eql([])
+      end
+    end
 
     context 'io stream is empty' do
       let(:data) { "" }
