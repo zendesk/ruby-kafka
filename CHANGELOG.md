@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
+
 ## v0.6.3
 
 - Allow configuring the max size of the queue connecting the fetcher thread with the consumer.
