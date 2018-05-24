@@ -33,7 +33,7 @@ describe "Producer API", functional: true do
     value = rand(10_000).to_s
     producer.produce(value, topic: topic, partition: 0)
 
-    sleep 0.2
+    sleep 1
 
     messages = kafka.fetch_messages(
       topic: topic,

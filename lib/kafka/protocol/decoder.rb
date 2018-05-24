@@ -2,11 +2,12 @@
 
 module Kafka
   module Protocol
-
     # A decoder wraps an IO object, making it easy to read specific data types
     # from it. The Kafka protocol is not self-describing, so a client must call
     # these methods in just the right order for things to work.
     class Decoder
+      VARINT_MASK = 0b10000000
+
       def self.from_string(str)
         new(StringIO.new(str))
       end
@@ -20,6 +21,16 @@ module Kafka
 
       def eof?
         @io.eof?
+      end
+
+      # Get some next bytes without touching the current io offset
+      #
+      # @return [Integer]
+      def peek(offset, length)
+        data = @io.read(offset + length)
+        return [] if data.nil?
+        @io.ungetc(data)
+        data.bytes[offset, offset + length] || []
       end
 
       # Decodes an 8-bit boolean from the IO object.
@@ -70,6 +81,15 @@ module Kafka
         size.times.map(&block)
       end
 
+      # Decodes an array from the IO object.
+      # Just like #array except the size is in varint format
+      #
+      # @return [Array]
+      def varint_array(&block)
+        size = varint
+        size.times.map(&block)
+      end
+
       # Decodes a string from the IO object.
       #
       # @return [String]
@@ -83,11 +103,53 @@ module Kafka
         end
       end
 
+      # Decodes a string from the IO object, the size is in varint format
+      #
+      # @return [String]
+      def varint_string
+        size = varint
+
+        if size == -1
+          nil
+        else
+          read(size)
+        end
+      end
+
+      # Read an integer under varints serializing from the IO object.
+      # https://developers.google.com/protocol-buffers/docs/encoding#varints
+      #
+      # @return [Integer]
+      def varint
+        group = 0
+        data = 0
+        loop do
+          chunk = int8
+          data |= (chunk & (~VARINT_MASK)) << group
+          group += 7
+          break if (chunk & VARINT_MASK) == 0
+        end
+        data & 0b1 != 0 ? ~(data >> 1) : (data >> 1)
+      end
+
       # Decodes a list of bytes from the IO object.
       #
       # @return [String]
       def bytes
         size = int32
+
+        if size == -1
+          nil
+        else
+          read(size)
+        end
+      end
+
+      # Decodes a list of bytes from the IO object. The size is in varint format
+      #
+      # @return [String]
+      def varint_bytes
+        size =  varint
 
         if size == -1
           nil

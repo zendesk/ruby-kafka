@@ -76,6 +76,31 @@ describe Kafka::Consumer do
   end
 
   describe "#each_message" do
+    let(:messages) {
+      [
+        double(:message, {
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 0,
+          offset: 13,
+          create_time: Time.now,
+          is_control_record: false
+        })
+      ]
+    }
+
+    let(:fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 0,
+          highwater_mark_offset: 42,
+          messages: messages,
+        )
+      ]
+    }
+
     it "instruments" do
       expect(instrumenter).to receive(:instrument).once.with('start_process_message.consumer', anything)
       expect(instrumenter).to receive(:instrument).once.with('process_message.consumer', anything)
@@ -188,6 +213,31 @@ describe Kafka::Consumer do
   end
 
   describe "#each_batch" do
+    let(:messages) {
+      [
+        double(:message, {
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 0,
+          offset: 13,
+          create_time: Time.now,
+          is_control_record: false
+        })
+      ]
+    }
+
+    let(:fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 0,
+          highwater_mark_offset: 42,
+          messages: messages,
+        )
+      ]
+    }
+
     it "does not mark as processed when automatically_mark_as_processed is false" do
       expect(offset_manager).not_to receive(:mark_as_processed)
 

@@ -4,10 +4,10 @@ require "stringio"
 
 module Kafka
   module Protocol
-
     # An encoder wraps an IO object, making it easy to write specific data types
     # to it.
     class Encoder
+      VARINT_MASK = 0b10000000
 
       # Initializes a new encoder.
       #
@@ -85,6 +85,20 @@ module Kafka
         end
       end
 
+      # Writes an array to the IO object.
+      # Just like #write_array, unless the size is under varint format
+      #
+      # @param array [Array]
+      # @return [nil]
+      def write_varint_array(array, &block)
+        if array.nil?
+          write_varint(-1)
+        else
+          write_varint(array.size)
+          array.each(&block)
+        end
+      end
+
       # Writes a string to the IO object.
       #
       # @param string [String]
@@ -98,6 +112,40 @@ module Kafka
         end
       end
 
+      # Writes a string to the IO object, the size is under varint format
+      #
+      # @param string [String]
+      # @return [nil]
+      def write_varint_string(string)
+        if string.nil?
+          write_varint(-1)
+        else
+          write_varint(string.bytesize)
+          write(string)
+        end
+      end
+
+      # Writes an integer under varints serializing to the IO object.
+      # https://developers.google.com/protocol-buffers/docs/encoding#varints
+      #
+      # @param string [Integer]
+      # @return [nil]
+      def write_varint(int)
+        int = int << 1
+        int = ~int | 1 if int < 0
+
+        loop do
+          chunk = int & (~VARINT_MASK)
+          int = int >> 7
+          if int == 0
+            write_int8(chunk)
+            return
+          else
+            write_int8(chunk | VARINT_MASK)
+          end
+        end
+      end
+
       # Writes a byte string to the IO object.
       #
       # @param bytes [String]
@@ -107,6 +155,19 @@ module Kafka
           write_int32(-1)
         else
           write_int32(bytes.bytesize)
+          write(bytes)
+        end
+      end
+
+      # Writes a byte string to the IO object, the size is under varint format
+      #
+      # @param bytes [String]
+      # @return [nil]
+      def write_varint_bytes(bytes)
+        if bytes.nil?
+          write_varint(-1)
+        else
+          write_varint(bytes.bytesize)
           write(bytes)
         end
       end

@@ -27,15 +27,17 @@ module Kafka
     #         Value => bytes
     #
     class ProduceRequest
-      attr_reader :required_acks, :timeout, :messages_for_topics
+      attr_reader :transactional_id, :required_acks, :timeout, :messages_for_topics, :compressor
 
       # @param required_acks [Integer]
       # @param timeout [Integer]
       # @param messages_for_topics [Hash]
-      def initialize(required_acks:, timeout:, messages_for_topics:)
+      def initialize(transactional_id: nil, required_acks:, timeout:, messages_for_topics:, compressor: nil)
+        @transactional_id = transactional_id
         @required_acks = required_acks
         @timeout = timeout
         @messages_for_topics = messages_for_topics
+        @compressor = compressor
       end
 
       def api_key
@@ -43,7 +45,7 @@ module Kafka
       end
 
       def api_version
-        2
+        3
       end
 
       def response_class
@@ -59,22 +61,30 @@ module Kafka
       end
 
       def encode(encoder)
+        encoder.write_string(@transactional_id)
         encoder.write_int16(@required_acks)
         encoder.write_int32(@timeout)
 
         encoder.write_array(@messages_for_topics) do |topic, messages_for_partition|
           encoder.write_string(topic)
 
-          encoder.write_array(messages_for_partition) do |partition, message_set|
+          encoder.write_array(messages_for_partition) do |partition, record_batch|
             encoder.write_int32(partition)
 
-            # When encoding the message set into the request, the bytesize of the message
-            # set must precede the actual data. Therefore we need to encode the entire
-            # message set into a separate buffer first.
-            encoded_message_set = Encoder.encode_with(message_set)
-
-            encoder.write_bytes(encoded_message_set)
+            record_batch.fulfill_relative_data
+            encoded_record_batch = compress(record_batch)
+            encoder.write_bytes(encoded_record_batch)
           end
+        end
+      end
+
+      private
+
+      def compress(record_batch)
+        if @compressor.nil?
+          Protocol::Encoder.encode_with(record_batch)
+        else
+          @compressor.compress(record_batch)
         end
       end
     end

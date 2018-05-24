@@ -17,6 +17,8 @@ module Kafka
     #       MaxBytes => int32
     #
     class FetchRequest
+      ISOLATION_READ_UNCOMMITTED = 0
+      ISOLATION_READ_COMMITTED = 1
 
       # @param max_wait_time [Integer]
       # @param min_bytes [Integer]
@@ -34,7 +36,7 @@ module Kafka
       end
 
       def api_version
-        3
+        4
       end
 
       def response_class
@@ -46,6 +48,7 @@ module Kafka
         encoder.write_int32(@max_wait_time)
         encoder.write_int32(@min_bytes)
         encoder.write_int32(@max_bytes)
+        encoder.write_int8(ISOLATION_READ_COMMITTED)
 
         encoder.write_array(@topics) do |topic, partitions|
           encoder.write_string(topic)

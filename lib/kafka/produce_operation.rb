@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "kafka/protocol/message_set"
+require "kafka/protocol/record_batch"
 
 module Kafka
   # A produce operation attempts to send all messages in a buffer to the Kafka cluster.
@@ -86,12 +87,10 @@ module Kafka
 
           messages_for_topics = {}
 
-          message_buffer.each do |topic, partition, messages|
-            message_set = Protocol::MessageSet.new(messages: messages)
-            message_set = @compressor.compress(message_set)
-
+          message_buffer.each do |topic, partition, records|
+            record_batch = Protocol::RecordBatch.new(records: records)
             messages_for_topics[topic] ||= {}
-            messages_for_topics[topic][partition] = message_set
+            messages_for_topics[topic][partition] = record_batch
           end
 
           response = broker.produce(
