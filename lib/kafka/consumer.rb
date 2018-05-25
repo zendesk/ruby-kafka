@@ -203,7 +203,9 @@ module Kafka
       consumer_loop do
         batches = fetch_batches
 
-        batches.each do |batch|
+        # make sure any old batches, fetched prior to the completion of a consumer group sync,
+        # are only processed if the batches are from brokers for which this broker is still responsible.
+        batches.select { |batch| @group.subscribed_partitions[batch.topic].include?(batch.partition) }.each do |batch|
           batch.messages.each do |message|
             notification = {
               topic: message.topic,
@@ -287,7 +289,9 @@ module Kafka
       consumer_loop do
         batches = fetch_batches
 
-        batches.each do |batch|
+        # make sure any old batches, fetched prior to the completion of a consumer group sync,
+        # are only processed if the batches are from brokers for which this broker is still responsible.
+        batches.select { |batch| @group.subscribed_partitions[batch.topic].include?(batch.partition) }.each do |batch|
           unless batch.empty?
             notification = {
               topic: batch.topic,
