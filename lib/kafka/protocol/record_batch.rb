@@ -189,6 +189,8 @@ module Kafka
           first_sequence: first_sequence,
           max_timestamp: max_timestamp
         )
+      rescue EOFError
+        raise InsufficientDataMessage, 'Partial trailing record detected!'
       end
 
       def mark_control_record

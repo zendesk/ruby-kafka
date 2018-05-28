@@ -74,11 +74,21 @@ module Kafka
 
             messages_decoder = Decoder.from_string(decoder.bytes)
             messages = []
-            magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
 
+            magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
             if magic_byte == RecordBatch::MAGIC_BYTE
-              record_batch = RecordBatch.decode(messages_decoder)
-              messages = record_batch.records
+              until messages_decoder.eof?
+                begin
+                  record_batch = RecordBatch.decode(messages_decoder)
+                  messages += record_batch.records
+                rescue InsufficientDataMessage
+                  if messages.length > 0
+                    break
+                  else
+                    raise
+                  end
+                end
+              end
             else
               message_set = MessageSet.decode(messages_decoder)
               messages = message_set.messages
