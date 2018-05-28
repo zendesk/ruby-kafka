@@ -1004,7 +1004,7 @@ kafka.create_topic("topic",
 
 #### Create more partitions for a topic
 
-After a topic is created, you can increase the number of partitions for the topic. The new number of partitions must be creater than the current one.
+After a topic is created, you can increase the number of partitions for the topic. The new number of partitions must be greater than the current one.
 
 ```ruby
 kafka = Kafka.new(["kafka:9092"])
