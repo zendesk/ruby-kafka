@@ -51,6 +51,44 @@ describe Kafka::Consumer do
     ]
   }
 
+  shared_context 'from unassigned partition' do
+    let(:unassigned_messages) do
+      [
+        double(:message, {
+          value: "hello",
+          key: nil,
+          topic: "greetings",
+          partition: 1,
+          offset: 10,
+          create_time: Time.now,
+        })
+      ]
+    end
+
+    let(:old_fetched_batches) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 1,
+          highwater_mark_offset: 42,
+          messages: unassigned_messages,
+        )
+      ]
+    }
+
+    before do
+      @count = 0
+      allow(fetcher).to receive(:poll) {
+        @count += 1
+        if @count == 1
+          [:batches, old_fetched_batches]
+        else
+          [:batches, fetched_batches]
+        end
+      }
+    end
+  end
+
   before do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:disconnect)
@@ -178,6 +216,33 @@ describe Kafka::Consumer do
         consumer.stop
       end
     end
+
+    context 'message from #fetch_batches is old, and from a partition not assigned to this consumer' do
+      include_context 'from unassigned partition'
+
+      it 'does not update offsets for messages from unassigned partitions' do
+        consumer.each_message do |message|
+          consumer.stop
+        end
+
+        expect(offset_manager).to have_received(:commit_offsets_if_necessary).twice
+
+        offsets = consumer.instance_variable_get(:@current_offsets)
+        expect(offsets['greetings'].keys).not_to include(1)
+      end
+
+      it 'does not process messages from unassigned partitions' do
+        @yield_count = 0
+
+        consumer.each_message do |message|
+          @yield_count += 1
+          consumer.stop
+        end
+
+        expect(offset_manager).to have_received(:commit_offsets_if_necessary).twice
+        expect(@yield_count).to eq 1
+      end
+    end
   end
 
   describe "#commit_offsets" do
@@ -213,6 +278,35 @@ describe Kafka::Consumer do
       }
 
       expect(log.string).to include "Exception raised when processing greetings/0 in offset range 13..13 -- RuntimeError: yolo"
+    end
+
+    context 'message from #fetch_batches is old, and from a partition not assigned to this consumer' do
+      include_context 'from unassigned partition'
+
+      it 'does not update offsets for messages from unassigned partitions' do
+        consumer.each_batch do |batch|
+          consumer.stop
+        end
+
+        expect(offset_manager).to have_received(:commit_offsets_if_necessary).twice
+
+        offsets = consumer.instance_variable_get(:@current_offsets)
+        expect(offsets['greetings'].keys).not_to include(1)
+      end
+
+      it 'does not process messages from unassigned partitions' do
+        @yield_count = 0
+
+        consumer.each_batch do |batch|
+          batch.messages.each do |message|
+            @yield_count += 1
+          end
+          consumer.stop
+        end
+
+        expect(offset_manager).to have_received(:commit_offsets_if_necessary).twice
+        expect(@yield_count).to eq 1
+      end
     end
   end
 
