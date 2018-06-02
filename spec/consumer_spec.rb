@@ -67,7 +67,7 @@ describe Kafka::Consumer do
     allow(group).to receive(:member?) { true }
     allow(group).to receive(:subscribed_partitions) { assigned_partitions }
 
-    allow(heartbeat).to receive(:send_if_necessary)
+    allow(heartbeat).to receive(:trigger)
 
     allow(fetcher).to receive(:data?) { fetched_batches.any? }
     allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }
@@ -274,10 +274,17 @@ describe Kafka::Consumer do
     end
   end
 
-  describe "#send_heartbeat_if_necessary" do
+  describe "#trigger_heartbeat" do
     it "sends heartbeat if necessary" do
-      expect(heartbeat).to receive(:send_if_necessary)
-      consumer.send_heartbeat_if_necessary
+      expect(heartbeat).to receive(:trigger)
+      consumer.trigger_heartbeat
+    end
+  end
+
+  describe "#trigger_heartbeat!" do
+    it "always sends heartbeat" do
+      expect(heartbeat).to receive(:trigger!)
+      consumer.trigger_heartbeat!
     end
   end
 end
