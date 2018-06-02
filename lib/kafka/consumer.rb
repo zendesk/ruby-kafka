@@ -235,7 +235,7 @@ module Kafka
             mark_message_as_processed(message) if automatically_mark_as_processed
             @offset_manager.commit_offsets_if_necessary
 
-            @heartbeat.trigger
+            trigger_heartbeat
 
             return if !@running
           end
@@ -330,7 +330,7 @@ module Kafka
 
           @offset_manager.commit_offsets_if_necessary
 
-          @heartbeat.trigger
+          trigger_heartbeat
 
           return if !@running
         end
@@ -496,7 +496,7 @@ module Kafka
 
       join_group unless @group.member?
 
-      @heartbeat.trigger
+      trigger_heartbeat
 
       resume_paused_partitions!
 
