@@ -280,7 +280,7 @@ describe Kafka::Consumer do
       expect(log.string).to include "Exception raised when processing greetings/0 in offset range 13..13 -- RuntimeError: yolo"
     end
 
-    context 'message from #fetch_batches is old, and from a partition not assigned to this consumer' do
+    context 'message from #fetch_batches is old, and from a partition not assigned to this consumer.' do
       include_context 'from unassigned partition'
 
       it 'does not update offsets for messages from unassigned partitions' do
