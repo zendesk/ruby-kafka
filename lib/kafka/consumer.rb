@@ -374,6 +374,10 @@ module Kafka
       @heartbeat.trigger!
     end
 
+    # Aliases for the external API compatibility
+    alias send_heartbeat_if_necessary trigger_heartbeat
+    alias send_heartbeat trigger_heartbeat!
+
     private
 
     def consumer_loop

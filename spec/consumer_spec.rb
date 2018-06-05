@@ -287,4 +287,16 @@ describe Kafka::Consumer do
       consumer.trigger_heartbeat!
     end
   end
+
+  describe '#send_heartbeat_if_necessary' do
+    subject(:method_original_name) { consumer.method(:send_heartbeat_if_necessary).original_name }
+
+    it { expect(method_original_name).to eq(:trigger_heartbeat) }
+  end
+
+  describe '#send_heartbeat' do
+    subject(:method_original_name) { consumer.method(:send_heartbeat).original_name }
+
+    it { expect(method_original_name).to eq(:trigger_heartbeat!) }
+  end
 end
