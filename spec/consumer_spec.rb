@@ -104,6 +104,8 @@ describe Kafka::Consumer do
     allow(group).to receive(:leave)
     allow(group).to receive(:member?) { true }
     allow(group).to receive(:subscribed_partitions) { assigned_partitions }
+    allow(group).to receive(:assigned_to?) { false }
+    allow(group).to receive(:assigned_to?).with('greetings', 0) { true }
 
     allow(heartbeat).to receive(:send_if_necessary)
 

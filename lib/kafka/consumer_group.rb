@@ -31,6 +31,10 @@ module Kafka
       @assigned_partitions.select { |topic, _| @topics.include?(topic) }
     end
 
+    def assigned_to?(topic, partition)
+      subscribed_partitions[topic].include?(partition)
+    end
+
     def member?
       !@generation_id.nil?
     end
