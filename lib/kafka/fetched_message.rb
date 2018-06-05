@@ -38,5 +38,9 @@ module Kafka
     def is_control_record
       @message.is_control_record
     end
+
+    def to_s
+      "#{topic}/#{partition}:#{offset}"
+    end
   end
 end

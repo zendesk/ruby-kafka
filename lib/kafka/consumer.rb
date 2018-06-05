@@ -204,7 +204,14 @@ module Kafka
         batches = fetch_batches
 
         batches.each do |batch|
+          committed_offset = @offset_manager.next_offset_for(batch.topic, batch.partition)
+
           batch.messages.each do |message|
+            if message.offset < committed_offset
+              @logger.warn "Skipping message #{message} (committed offset is #{committed_offset})"
+              next
+            end
+
             notification = {
               topic: message.topic,
               partition: message.partition,

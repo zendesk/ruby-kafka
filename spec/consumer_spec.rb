@@ -60,7 +60,7 @@ describe Kafka::Consumer do
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
     allow(offset_manager).to receive(:mark_as_processed)
-    allow(offset_manager).to receive(:next_offset_for) { 42 }
+    allow(offset_manager).to receive(:next_offset_for) { 13 }
 
     allow(group).to receive(:subscribe)
     allow(group).to receive(:leave)
