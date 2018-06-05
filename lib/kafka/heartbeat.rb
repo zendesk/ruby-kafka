@@ -8,11 +8,13 @@ module Kafka
       @last_heartbeat = Time.now
     end
 
-    def send_if_necessary
-      if Time.now > @last_heartbeat + @interval
-        @group.heartbeat
-        @last_heartbeat = Time.now
-      end
+    def trigger!
+      @group.heartbeat
+      @last_heartbeat = Time.now
+    end
+
+    def trigger
+      trigger! if Time.now > @last_heartbeat + @interval
     end
   end
 end
