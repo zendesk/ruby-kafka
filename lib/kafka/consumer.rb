@@ -509,7 +509,9 @@ module Kafka
 
         case tag
         when :batches
-          message
+          # make sure any old batches, fetched prior to the completion of a consumer group sync,
+          # are only processed if the batches are from brokers for which this broker is still responsible.
+          message.select { |batch| @group.assigned_to?(batch.topic, batch.partition) }
         when :exception
           raise message
         end
