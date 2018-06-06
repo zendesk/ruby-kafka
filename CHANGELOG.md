@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.4
+
+- Fix bug that caused consumers to jump back and reprocess messages (#595).
+
 ## v0.6.3
 
 - Allow configuring the max size of the queue connecting the fetcher thread with the consumer.
