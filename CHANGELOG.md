@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## v0.6.5
+
+- Fix bug related to partition assignment.
+
 ## v0.6.4
 
 - Fix bug that caused consumers to jump back and reprocess messages (#595).
