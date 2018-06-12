@@ -32,7 +32,7 @@ module Kafka
     end
 
     def assigned_to?(topic, partition)
-      subscribed_partitions.fetch(topic, "").include?(partition)
+      subscribed_partitions.fetch(topic, []).include?(partition)
     end
 
     def member?
