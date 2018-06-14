@@ -6,6 +6,18 @@ Changes and additions to the library will be listed here.
 
 - Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
 
+## 0.6.7
+
+- Handle case where consumer doesn't know about the topic (#597 + 0e302cbd0f31315bf81c1d1645520413ad6b58f0)
+
+## v0.6.5
+
+- Fix bug related to partition assignment.
+
+## v0.6.4
+
+- Fix bug that caused consumers to jump back and reprocess messages (#595).
+
 ## v0.6.3
 
 - Allow configuring the max size of the queue connecting the fetcher thread with the consumer.
