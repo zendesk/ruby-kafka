@@ -356,6 +356,7 @@ module Kafka
           @buffer.write(
             value: message.value,
             key: message.key,
+            headers: message.headers,
             topic: message.topic,
             partition: partition,
             create_time: message.create_time,
