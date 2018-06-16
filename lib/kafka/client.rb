@@ -109,6 +109,7 @@ module Kafka
     #
     # @param value [String, nil] the message value.
     # @param key [String, nil] the message key.
+    # @param headers [Hash<String, String>] the headers for the message.
     # @param topic [String] the topic that the message should be written to.
     # @param partition [Integer, nil] the partition that the message should be written
     #   to, or `nil` if either `partition_key` is passed or the partition should be
@@ -118,16 +119,17 @@ module Kafka
     # @param retries [Integer] the number of times to retry the delivery before giving
     #   up.
     # @return [nil]
-    def deliver_message(value, key: nil, topic:, partition: nil, partition_key: nil, retries: 1)
+    def deliver_message(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, retries: 1)
       create_time = Time.now
 
       message = PendingMessage.new(
-        value,
-        key,
-        topic,
-        partition,
-        partition_key,
-        create_time,
+        value: value,
+        key: key,
+        headers: headers,
+        topic: topic,
+        partition: partition,
+        partition_key: partition_key,
+        create_time: create_time
       )
 
       if partition.nil?

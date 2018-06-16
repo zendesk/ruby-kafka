@@ -120,7 +120,16 @@ describe "Producer API", functional: true do
         kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0)
       end
     }.to raise_exception(Kafka::DeliveryFailed) {|exception|
-      expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("yolo", "xoxo", topic, 0, nil, now)]
+      expect(exception.failed_messages).to eq [
+        Kafka::PendingMessage.new(
+          value: "yolo",
+          key: "xoxo",
+          topic: topic,
+          partition: 0,
+          partition_key: nil,
+          create_time: now
+        )
+      ]
     }
   end
 

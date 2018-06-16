@@ -139,7 +139,16 @@ describe Kafka::Producer do
       producer.produce("hello1", topic: "greetings", partition: 0)
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
-        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+        expect(exception.failed_messages).to eq [
+          Kafka::PendingMessage.new(
+            value: "hello1",
+            key: nil,
+            topic: "greetings",
+            partition: 0,
+            partition_key: nil,
+            create_time: now
+          )
+        ]
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -178,7 +187,15 @@ describe Kafka::Producer do
       producer.produce("hello1", topic: "greetings", partition: 0)
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
-        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+          expect(exception.failed_messages).to eq [Kafka::PendingMessage.new(
+            value: "hello1",
+            key: nil,
+            topic: "greetings",
+            partition: 0,
+            partition_key: nil,
+            create_time: now
+          )
+        ]
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -198,7 +215,16 @@ describe Kafka::Producer do
       producer.produce("hello1", topic: "greetings", partition: 0)
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
-        expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("hello1", nil, "greetings", 0, nil, now)]
+        expect(exception.failed_messages).to eq [
+          Kafka::PendingMessage.new(
+            value: "hello1",
+            key: nil,
+            topic: "greetings",
+            partition: 0,
+            partition_key: nil,
+            create_time: now
+          )
+        ]
       }
 
       # The producer was not able to write the message, but it's still buffered.
