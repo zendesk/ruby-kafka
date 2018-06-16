@@ -37,6 +37,7 @@ module Kafka
   #       puts message.topic
   #       puts message.partition
   #       puts message.key
+  #       puts message.headers
   #       puts message.value
   #       puts message.offset
   #     end
@@ -213,6 +214,7 @@ module Kafka
               create_time: message.create_time,
               key: message.key,
               value: message.value,
+              headers: message.headers
             }
 
             # Instrument an event immediately so that subscribers don't have to wait until
