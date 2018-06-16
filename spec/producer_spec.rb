@@ -187,10 +187,11 @@ describe Kafka::Producer do
     it "handles when there's a connection error when fetching topic metadata" do
       allow(cluster).to receive(:get_leader).and_raise(Kafka::ConnectionError)
 
-      producer.produce("hello1", topic: "greetings", partition: 0, headers: {hello: 'World'})
+      producer.produce("hello1", topic: "greetings", partition: 0, headers: { hello: 'World' })
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
-          expect(exception.failed_messages).to eq [Kafka::PendingMessage.new(
+        expect(exception.failed_messages).to eq([
+          Kafka::PendingMessage.new(
             value: "hello1",
             key: nil,
             headers: {
@@ -201,7 +202,7 @@ describe Kafka::Producer do
             partition_key: nil,
             create_time: now
           )
-        ]
+        ])
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -218,7 +219,7 @@ describe Kafka::Producer do
     it "handles when there's a connection error when refreshing cluster metadata" do
       allow(cluster).to receive(:refresh_metadata_if_necessary!).and_raise(Kafka::ConnectionError)
 
-      producer.produce("hello1", topic: "greetings", partition: 0, headers: {hello: 'World'})
+      producer.produce("hello1", topic: "greetings", partition: 0, headers: { hello: 'World' })
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq [

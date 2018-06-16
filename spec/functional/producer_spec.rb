@@ -88,7 +88,6 @@ describe "Producer API", functional: true do
   example 'support record headers' do
     topic = "topic#{rand(1000)}"
 
-
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce(
       "hello", topic: topic,
