@@ -32,6 +32,7 @@ describe Kafka::Consumer do
       double(:message, {
         value: "hello",
         key: nil,
+        headers: {},
         topic: "greetings",
         partition: 0,
         offset: 13,
@@ -81,6 +82,7 @@ describe Kafka::Consumer do
         double(:message, {
           value: "hello",
           key: nil,
+          headers: {},
           topic: "greetings",
           partition: 0,
           offset: 13,
@@ -218,6 +220,7 @@ describe Kafka::Consumer do
         double(:message, {
           value: "hello",
           key: nil,
+          headers: {},
           topic: "greetings",
           partition: 0,
           offset: 13,
