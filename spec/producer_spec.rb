@@ -136,13 +136,16 @@ describe Kafka::Producer do
     it "handles when a partition temporarily doesn't have a leader" do
       broker1.mark_partition_with_error(topic: "greetings", partition: 0, error_code: 5)
 
-      producer.produce("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0, headers: { hello: 'World' })
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq [
           Kafka::PendingMessage.new(
             value: "hello1",
             key: nil,
+            headers: {
+              hello: 'World'
+            },
             topic: "greetings",
             partition: 0,
             partition_key: nil,
@@ -184,12 +187,15 @@ describe Kafka::Producer do
     it "handles when there's a connection error when fetching topic metadata" do
       allow(cluster).to receive(:get_leader).and_raise(Kafka::ConnectionError)
 
-      producer.produce("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0, headers: {hello: 'World'})
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
           expect(exception.failed_messages).to eq [Kafka::PendingMessage.new(
             value: "hello1",
             key: nil,
+            headers: {
+              hello: 'World'
+            },
             topic: "greetings",
             partition: 0,
             partition_key: nil,
@@ -212,13 +218,16 @@ describe Kafka::Producer do
     it "handles when there's a connection error when refreshing cluster metadata" do
       allow(cluster).to receive(:refresh_metadata_if_necessary!).and_raise(Kafka::ConnectionError)
 
-      producer.produce("hello1", topic: "greetings", partition: 0)
+      producer.produce("hello1", topic: "greetings", partition: 0, headers: {hello: 'World'})
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq [
           Kafka::PendingMessage.new(
             value: "hello1",
             key: nil,
+            headers: {
+              hello: 'World'
+            },
             topic: "greetings",
             partition: 0,
             partition_key: nil,

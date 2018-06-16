@@ -69,4 +69,25 @@ describe "Producer API", functional: true do
 
     producer.shutdown
   end
+
+  example 'support record headers' do
+    topic = "topic#{rand(1000)}"
+
+    producer = kafka.async_producer(delivery_threshold: 1)
+    producer.produce(
+      "hello", topic: topic,
+      headers: { hello: 'World', 'greeting' => 'is great', bye: 1, love: nil }
+    )
+
+    sleep 0.2
+    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+    expect(messages[0].value).to eq "hello"
+    expect(messages[0].headers).to eql(
+      'hello' => 'World',
+      'greeting' => 'is great',
+      'bye' => '1',
+      'love' => ''
+    )
+  end
 end
