@@ -40,8 +40,8 @@ module Kafka
         record_encoder.write_varint_bytes(@value)
 
         record_encoder.write_varint_array(@headers.to_a) do |header_key, header_value|
-          record_encoder.write_varint_string(header_key)
-          record_encoder.write_varint_bytes(header_value)
+          record_encoder.write_varint_string(header_key.to_s)
+          record_encoder.write_varint_bytes(header_value.to_s)
         end
 
         encoder.write_varint_bytes(record_buffer.string)

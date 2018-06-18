@@ -84,4 +84,45 @@ describe "Producer API", functional: true do
 
     expect(messages.last.value).to eq "hello"
   end
+
+  example 'support record headers' do
+    topic = "topic#{rand(1000)}"
+
+    producer = kafka.producer(max_retries: 10, retry_backoff: 1)
+    producer.produce(
+      "hello", topic: topic,
+      headers: { hello: 'World', 'greeting' => 'is great', bye: 1, love: nil }
+    )
+    producer.produce(
+      "hello2", topic: topic,
+      headers: { 'other' => 'headers' }
+    )
+    producer.produce("hello3", topic: topic, headers: {})
+    producer.produce("hello4", topic: topic)
+
+    producer.deliver_messages
+
+    expect(producer.buffer_size).to eq 0
+
+    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+    expect(messages[0].value).to eq "hello"
+    expect(messages[0].headers).to eql(
+      'hello' => 'World',
+      'greeting' => 'is great',
+      'bye' => '1',
+      'love' => ''
+    )
+
+    expect(messages[1].value).to eq "hello2"
+    expect(messages[1].headers).to eql(
+      'other' => 'headers'
+    )
+
+    expect(messages[2].value).to eq "hello3"
+    expect(messages[2].headers).to eql({})
+
+    expect(messages[3].value).to eq "hello4"
+    expect(messages[3].headers).to eql({})
+  end
 end

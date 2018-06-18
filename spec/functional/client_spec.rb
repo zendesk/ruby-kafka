@@ -117,10 +117,22 @@ describe "Producer API", functional: true do
 
     expect {
       Timecop.freeze(now) do
-        kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0)
+        kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0, headers: { hello: 'World' })
       end
     }.to raise_exception(Kafka::DeliveryFailed) {|exception|
-      expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("yolo", "xoxo", topic, 0, nil, now)]
+      expect(exception.failed_messages).to eq [
+        Kafka::PendingMessage.new(
+          value: "yolo",
+          key: "xoxo",
+          headers: {
+            hello: "World",
+          },
+          topic: topic,
+          partition: 0,
+          partition_key: nil,
+          create_time: now
+        )
+      ]
     }
   end
 
@@ -169,5 +181,25 @@ describe "Producer API", functional: true do
 
     expect(offsets[topic][0]).to eq 1
     expect(offsets[topic][1]).to eq 1
+  end
+
+  example 'support record headers' do
+    topic = create_random_topic(num_partitions: 1, num_replicas: 1)
+
+    kafka.deliver_message(
+      "hello", topic: topic,
+      headers: { hello: 'World', 'greeting' => 'is great', bye: 1, love: nil }
+    )
+
+    sleep 0.2
+    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+
+    expect(messages[0].value).to eq "hello"
+    expect(messages[0].headers).to eql(
+      'hello' => 'World',
+      'greeting' => 'is great',
+      'bye' => '1',
+      'love' => ''
+    )
   end
 end

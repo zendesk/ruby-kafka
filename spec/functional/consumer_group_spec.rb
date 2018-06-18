@@ -206,4 +206,32 @@ describe "Consumer API", functional: true do
       end
     end
   end
+
+  example 'support record headers' do
+    topic = create_random_topic(num_partitions: 1)
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce(
+      'hello', topic: topic, headers: { 'TracingID' => 'a1', 'SpanID' => 'b2' }
+    )
+    producer.produce(
+      'hello2', topic: topic, headers: { 'TracingID' => 'c3', 'SpanID' => 'd4' }
+    )
+    producer.deliver_messages
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic)
+
+    headers = []
+    consumer.each_message do |message|
+      headers << message.headers
+      break if headers.length == 2
+    end
+
+    expect(headers).to eql(
+      [
+        { 'TracingID' => 'a1', 'SpanID' => 'b2' },
+        { 'TracingID' => 'c3', 'SpanID' => 'd4' }
+      ]
+    )
+  end
 end

@@ -34,6 +34,11 @@ module Kafka
       @message.create_time
     end
 
+    # @return [Hash<String, String>] the headers of the message.
+    def headers
+      @message.headers
+    end
+
     # @return [Boolean] whether this record is a control record
     def is_control_record
       @message.is_control_record
