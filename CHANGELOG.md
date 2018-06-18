@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
+- Support record headers (#604).
 
 ## 0.6.7
 
