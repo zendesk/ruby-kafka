@@ -241,8 +241,10 @@ module Kafka
 
       def deliver_messages
         @producer.deliver_messages
-      rescue DeliveryFailed, ConnectionError
-        # Failed to deliver messages -- nothing to do but try again later.
+      rescue DeliveryFailed, ConnectionError => e
+        # Failed to deliver messages -- nothing to do but log and try again later.
+        @logger.error("Failed to asynchronously deliver messages: #{e.message}")
+        @instrumenter.instrument("error.async_producer", { error: e })
       end
 
       def threshold_reached?
