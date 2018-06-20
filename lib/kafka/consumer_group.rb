@@ -179,7 +179,7 @@ module Kafka
 
     def coordinator
       @coordinator ||= @cluster.get_group_coordinator(group_id: @group_id)
-    rescue GroupCoordinatorNotAvailable
+    rescue CoordinatorNotAvailable
       @logger.error "Group coordinator not available for group `#{@group_id}`"
 
       sleep 1
