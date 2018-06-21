@@ -20,7 +20,7 @@ module Kafka
     TOPIC_METADATA_API = 3
     OFFSET_COMMIT_API = 8
     OFFSET_FETCH_API = 9
-    GROUP_COORDINATOR_API = 10
+    FIND_COORDINATOR_API = 10
     JOIN_GROUP_API = 11
     HEARTBEAT_API = 12
     LEAVE_GROUP_API = 13
@@ -43,7 +43,7 @@ module Kafka
       TOPIC_METADATA_API => :topic_metadata,
       OFFSET_COMMIT_API => :offset_commit,
       OFFSET_FETCH_API => :offset_fetch,
-      GROUP_COORDINATOR_API => :group_coordinator,
+      FIND_COORDINATOR_API => :find_coordinator,
       JOIN_GROUP_API => :join_group,
       HEARTBEAT_API => :heartbeat,
       LEAVE_GROUP_API => :leave_group,
@@ -70,7 +70,7 @@ module Kafka
        9 => ReplicaNotAvailable,
       10 => MessageSizeTooLarge,
       12 => OffsetMetadataTooLarge,
-      15 => GroupCoordinatorNotAvailable,
+      15 => CoordinatorNotAvailable,
       16 => NotCoordinatorForGroup,
       17 => InvalidTopic,
       18 => RecordListTooLarge,
@@ -117,6 +117,11 @@ module Kafka
       RESOURCE_TYPE_DELEGATION_TOKEN => :delegation_token,
     }
 
+    # Coordinator types. Since Kafka 0.11.0, there are types of coordinators:
+    # Group and Transaction
+    COORDINATOR_TYPE_GROUP = 0
+    COORDINATOR_TYPE_TRANSACTION = 1
+
     # Handles an error code by either doing nothing (if there was no error) or
     # by raising an appropriate exception.
     #
@@ -151,8 +156,8 @@ require "kafka/protocol/fetch_request"
 require "kafka/protocol/fetch_response"
 require "kafka/protocol/list_offset_request"
 require "kafka/protocol/list_offset_response"
-require "kafka/protocol/group_coordinator_request"
-require "kafka/protocol/group_coordinator_response"
+require "kafka/protocol/find_coordinator_request"
+require "kafka/protocol/find_coordinator_response"
 require "kafka/protocol/join_group_request"
 require "kafka/protocol/join_group_response"
 require "kafka/protocol/sync_group_request"

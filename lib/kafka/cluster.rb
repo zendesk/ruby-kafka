@@ -116,9 +116,12 @@ module Kafka
       cluster_info.brokers.each do |broker_info|
         begin
           broker = connect_to_broker(broker_info.node_id)
-          response = broker.find_group_coordinator(group_id: group_id)
+          response = broker.find_coordinator(
+            coordinator_type: Kafka::Protocol::COORDINATOR_TYPE_GROUP,
+            coordinator_key: group_id
+          )
 
-          Protocol.handle_error(response.error_code)
+          Protocol.handle_error(response.error_code, response.error_message)
 
           coordinator_id = response.coordinator_id
 
@@ -137,7 +140,7 @@ module Kafka
           @logger.debug "Connected to coordinator: #{coordinator} for group `#{group_id}`"
 
           return coordinator
-        rescue GroupCoordinatorNotAvailable
+        rescue CoordinatorNotAvailable
           @logger.debug "Coordinator not available; retrying in 1s"
           sleep 1
           retry

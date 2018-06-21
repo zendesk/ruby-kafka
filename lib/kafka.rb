@@ -91,7 +91,7 @@ module Kafka
   class OffsetMetadataTooLarge < ProtocolError
   end
 
-  class GroupCoordinatorNotAvailable < ProtocolError
+  class CoordinatorNotAvailable < ProtocolError
   end
 
   class NotCoordinatorForGroup < ProtocolError

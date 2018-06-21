@@ -104,8 +104,8 @@ module Kafka
       send_request(request)
     end
 
-    def find_group_coordinator(**options)
-      request = Protocol::GroupCoordinatorRequest.new(**options)
+    def find_coordinator(**options)
+      request = Protocol::FindCoordinatorRequest.new(**options)
 
       send_request(request)
     end
