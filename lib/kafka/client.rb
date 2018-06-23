@@ -2,6 +2,7 @@
 
 require "kafka/ssl_context"
 require "kafka/cluster"
+require "kafka/transaction_manager"
 require "kafka/producer"
 require "kafka/consumer"
 require "kafka/heartbeat"
@@ -218,15 +219,39 @@ module Kafka
     #   are per-partition rather than per-topic or per-producer.
     #
     # @return [Kafka::Producer] the Kafka producer.
-    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: :all, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
+    def producer(
+      compression_codec: nil,
+      compression_threshold: 1,
+      ack_timeout: 5,
+      required_acks: :all,
+      max_retries: 2,
+      retry_backoff: 1,
+      max_buffer_size: 1000,
+      max_buffer_bytesize: 10_000_000,
+      idempotence: false,
+      transactional: false,
+      transactional_id: nil,
+      transactional_timeout: 60
+    )
+      cluster = initialize_cluster
       compressor = Compressor.new(
         codec_name: compression_codec,
         threshold: compression_threshold,
         instrumenter: @instrumenter,
       )
 
+      transaction_manager = TransactionManager.new(
+        cluster: cluster,
+        logger: @logger,
+        idempotence: idempotence,
+        transactional: transactional,
+        transactional_id: transactional_id,
+        transactional_timeout: transactional_timeout
+      )
+
       Producer.new(
-        cluster: initialize_cluster,
+        cluster: cluster,
+        transaction_manager: transaction_manager,
         logger: @logger,
         instrumenter: @instrumenter,
         compressor: compressor,
@@ -235,7 +260,7 @@ module Kafka
         max_retries: max_retries,
         retry_backoff: retry_backoff,
         max_buffer_size: max_buffer_size,
-        max_buffer_bytesize: max_buffer_bytesize,
+        max_buffer_bytesize: max_buffer_bytesize
       )
     end
 

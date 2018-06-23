@@ -127,8 +127,9 @@ module Kafka
   #
   class Producer
 
-    def initialize(cluster:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
+    def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
       @cluster = cluster
+      @transaction_manager = transaction_manager
       @logger = logger
       @instrumenter = instrumenter
       @required_acks = required_acks == :all ? -1 : required_acks
