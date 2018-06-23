@@ -110,46 +110,21 @@ module Kafka
 
     def get_group_coordinator(group_id:)
       @logger.debug "Getting group coordinator for `#{group_id}`"
+      refresh_metadata_if_necessary!
+      get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_GROUP, group_id)
+    end
+
+    def get_transaction_coordinator(transactional_id:)
+      @logger.debug "Getting transaction coordinator for `#{transactional_id}`"
 
       refresh_metadata_if_necessary!
 
-      cluster_info.brokers.each do |broker_info|
-        begin
-          broker = connect_to_broker(broker_info.node_id)
-          response = broker.find_coordinator(
-            coordinator_type: Kafka::Protocol::COORDINATOR_TYPE_GROUP,
-            coordinator_key: group_id
-          )
-
-          Protocol.handle_error(response.error_code, response.error_message)
-
-          coordinator_id = response.coordinator_id
-
-          @logger.debug "Coordinator for group `#{group_id}` is #{coordinator_id}. Connecting..."
-
-          # It's possible that a new broker is introduced to the cluster and
-          # becomes the coordinator before we have a chance to refresh_metadata.
-          coordinator = begin
-            connect_to_broker(coordinator_id)
-          rescue Kafka::NoSuchBroker
-            @logger.debug "Broker #{coordinator_id} missing from broker cache, refreshing"
-            refresh_metadata!
-            connect_to_broker(coordinator_id)
-          end
-
-          @logger.debug "Connected to coordinator: #{coordinator} for group `#{group_id}`"
-
-          return coordinator
-        rescue CoordinatorNotAvailable
-          @logger.debug "Coordinator not available; retrying in 1s"
-          sleep 1
-          retry
-        rescue ConnectionError => e
-          @logger.error "Failed to get group coordinator info from #{broker}: #{e}"
-        end
+      if transactional_id.nil?
+        # Get a random_broker
+        @logger.debug "Transaction ID is not available. Choose a random broker."
+        return random_broker
       end
-
-      raise Kafka::Error, "Failed to find group coordinator"
+      get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_TRANSACTION, transactional_id)
     end
 
     def partitions_for(topic)
@@ -423,6 +398,46 @@ module Kafka
 
     def controller_broker
       connect_to_broker(cluster_info.controller_id)
+    end
+
+    def get_coordinator(coordinator_type, coordinator_key)
+      cluster_info.brokers.each do |broker_info|
+        begin
+          broker = connect_to_broker(broker_info.node_id)
+          response = broker.find_coordinator(
+            coordinator_type: coordinator_type,
+            coordinator_key: coordinator_key
+          )
+
+          Protocol.handle_error(response.error_code, response.error_message)
+
+          coordinator_id = response.coordinator_id
+
+          @logger.debug "Coordinator for `#{coordinator_key}` is #{coordinator_id}. Connecting..."
+
+          # It's possible that a new broker is introduced to the cluster and
+          # becomes the coordinator before we have a chance to refresh_metadata.
+          coordinator = begin
+            connect_to_broker(coordinator_id)
+          rescue Kafka::NoSuchBroker
+            @logger.debug "Broker #{coordinator_id} missing from broker cache, refreshing"
+            refresh_metadata!
+            connect_to_broker(coordinator_id)
+          end
+
+          @logger.debug "Connected to coordinator: #{coordinator} for `#{coordinator_key}`"
+
+          return coordinator
+        rescue CoordinatorNotAvailable
+          @logger.debug "Coordinator not available; retrying in 1s"
+          sleep 1
+          retry
+        rescue ConnectionError => e
+          @logger.error "Failed to get coordinator info from #{broker}: #{e}"
+        end
+      end
+
+      raise Kafka::Error, "Failed to find coordinator"
     end
   end
 end
