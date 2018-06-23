@@ -14,45 +14,46 @@ module Kafka
     # The replica id of non-brokers is always -1.
     REPLICA_ID = -1
 
-    PRODUCE_API = 0
-    FETCH_API = 1
-    LIST_OFFSET_API = 2
-    TOPIC_METADATA_API = 3
-    OFFSET_COMMIT_API = 8
-    OFFSET_FETCH_API = 9
-    FIND_COORDINATOR_API = 10
-    JOIN_GROUP_API = 11
-    HEARTBEAT_API = 12
-    LEAVE_GROUP_API = 13
-    SYNC_GROUP_API = 14
-    DESCRIBE_GROUPS_API = 15
-    LIST_GROUPS_API = 16
-    SASL_HANDSHAKE_API = 17
-    API_VERSIONS_API = 18
-    CREATE_TOPICS_API = 19
-    DELETE_TOPICS_API = 20
-    DESCRIBE_CONFIGS_API = 32
-    ALTER_CONFIGS_API = 33
+    PRODUCE_API           = 0
+    FETCH_API             = 1
+    LIST_OFFSET_API       = 2
+    TOPIC_METADATA_API    = 3
+    OFFSET_COMMIT_API     = 8
+    OFFSET_FETCH_API      = 9
+    FIND_COORDINATOR_API  = 10
+    JOIN_GROUP_API        = 11
+    HEARTBEAT_API         = 12
+    LEAVE_GROUP_API       = 13
+    SYNC_GROUP_API        = 14
+    DESCRIBE_GROUPS_API   = 15
+    LIST_GROUPS_API       = 16
+    SASL_HANDSHAKE_API    = 17
+    API_VERSIONS_API      = 18
+    CREATE_TOPICS_API     = 19
+    DELETE_TOPICS_API     = 20
+    INIT_PRODUCER_ID_API  = 22
+    DESCRIBE_CONFIGS_API  = 32
+    ALTER_CONFIGS_API     = 33
     CREATE_PARTITIONS_API = 37
 
     # A mapping from numeric API keys to symbolic API names.
     APIS = {
-      PRODUCE_API => :produce,
-      FETCH_API => :fetch,
-      LIST_OFFSET_API => :list_offset,
-      TOPIC_METADATA_API => :topic_metadata,
-      OFFSET_COMMIT_API => :offset_commit,
-      OFFSET_FETCH_API => :offset_fetch,
-      FIND_COORDINATOR_API => :find_coordinator,
-      JOIN_GROUP_API => :join_group,
-      HEARTBEAT_API => :heartbeat,
-      LEAVE_GROUP_API => :leave_group,
-      SYNC_GROUP_API => :sync_group,
-      SASL_HANDSHAKE_API => :sasl_handshake,
-      API_VERSIONS_API => :api_versions,
-      CREATE_TOPICS_API => :create_topics,
-      DELETE_TOPICS_API => :delete_topics,
-      DESCRIBE_CONFIGS_API => :describe_configs_api,
+      PRODUCE_API           => :produce,
+      FETCH_API             => :fetch,
+      LIST_OFFSET_API       => :list_offset,
+      TOPIC_METADATA_API    => :topic_metadata,
+      OFFSET_COMMIT_API     => :offset_commit,
+      OFFSET_FETCH_API      => :offset_fetch,
+      FIND_COORDINATOR_API  => :find_coordinator,
+      JOIN_GROUP_API        => :join_group,
+      HEARTBEAT_API         => :heartbeat,
+      LEAVE_GROUP_API       => :leave_group,
+      SYNC_GROUP_API        => :sync_group,
+      SASL_HANDSHAKE_API    => :sasl_handshake,
+      API_VERSIONS_API      => :api_versions,
+      CREATE_TOPICS_API     => :create_topics,
+      DELETE_TOPICS_API     => :delete_topics,
+      DESCRIBE_CONFIGS_API  => :describe_configs_api,
       CREATE_PARTITIONS_API => :create_partitions
     }
 
@@ -100,19 +101,19 @@ module Kafka
 
     # A mapping from int to corresponding resource type in symbol.
     # https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/resource/ResourceType.java
-    RESOURCE_TYPE_UNKNOWN = 0
-    RESOURCE_TYPE_ANY = 1
-    RESOURCE_TYPE_TOPIC = 2
-    RESOURCE_TYPE_GROUP = 3
-    RESOURCE_TYPE_CLUSTER = 4
+    RESOURCE_TYPE_UNKNOWN          = 0
+    RESOURCE_TYPE_ANY              = 1
+    RESOURCE_TYPE_TOPIC            = 2
+    RESOURCE_TYPE_GROUP            = 3
+    RESOURCE_TYPE_CLUSTER          = 4
     RESOURCE_TYPE_TRANSACTIONAL_ID = 5
     RESOURCE_TYPE_DELEGATION_TOKEN = 6
     RESOURCE_TYPES = {
-      RESOURCE_TYPE_UNKNOWN => :unknown,
-      RESOURCE_TYPE_ANY => :any,
-      RESOURCE_TYPE_TOPIC => :topic,
-      RESOURCE_TYPE_GROUP => :group,
-      RESOURCE_TYPE_CLUSTER => :cluster,
+      RESOURCE_TYPE_UNKNOWN          => :unknown,
+      RESOURCE_TYPE_ANY              => :any,
+      RESOURCE_TYPE_TOPIC            => :topic,
+      RESOURCE_TYPE_GROUP            => :group,
+      RESOURCE_TYPE_CLUSTER          => :cluster,
       RESOURCE_TYPE_TRANSACTIONAL_ID => :transactional_id,
       RESOURCE_TYPE_DELEGATION_TOKEN => :delegation_token,
     }
@@ -188,3 +189,5 @@ require "kafka/protocol/list_groups_request"
 require "kafka/protocol/list_groups_response"
 require "kafka/protocol/describe_groups_request"
 require "kafka/protocol/describe_groups_response"
+require "kafka/protocol/init_producer_id_request"
+require "kafka/protocol/init_producer_id_response"

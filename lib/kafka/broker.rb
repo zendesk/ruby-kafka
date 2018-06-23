@@ -164,6 +164,12 @@ module Kafka
       send_request(request)
     end
 
+    def init_producer_id(**options)
+      request = Protocol::InitProducerIDRequest.new(**options)
+
+      send_request(request)
+    end
+
     private
 
     def send_request(request)
