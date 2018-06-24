@@ -58,7 +58,7 @@ describe "Producer API", functional: true do
   end
 
   example "writing to a an explicit partition of a topic that doesn't yet exist" do
-    topic = "topic#{rand(1000)}"
+    topic = "topic#{SecureRandom.uuid}"
 
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic, partition: 0)
@@ -72,7 +72,7 @@ describe "Producer API", functional: true do
   end
 
   example "writing to a an unspecified partition of a topic that doesn't yet exist" do
-    topic = "topic#{rand(1000)}"
+    topic = "topic#{SecureRandom.uuid}"
 
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic)
