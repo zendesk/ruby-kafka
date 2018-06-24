@@ -42,6 +42,10 @@ module Kafka
     end
 
     def execute
+      if (@transaction_manager.idempotent? || @transaction_manager.transactional?) && required_acks != -1
+        raise 'You must set required_acks option to :all to use idempotent / transactional production'
+      end
+
       @instrumenter.instrument("send_messages.producer") do |notification|
         message_count = @buffer.size
 
@@ -106,6 +110,7 @@ module Kafka
 
           response = broker.produce(
             messages_for_topics: records_for_topics,
+            compressor: @compressor,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
             transactional_id: @transaction_manager.transactional_id
