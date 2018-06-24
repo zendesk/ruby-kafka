@@ -32,7 +32,7 @@ module Kafka
       # @param required_acks [Integer]
       # @param timeout [Integer]
       # @param messages_for_topics [Hash]
-      def initialize(transactional_id:, required_acks:, timeout:, messages_for_topics:, compressor: nil)
+      def initialize(transactional_id: nil, required_acks:, timeout:, messages_for_topics:, compressor: nil)
         @transactional_id = transactional_id
         @required_acks = required_acks
         @timeout = timeout
