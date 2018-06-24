@@ -280,6 +280,7 @@ module Kafka
 
       operation = ProduceOperation.new(
         cluster: @cluster,
+        transaction_manager: @transaction_manager,
         buffer: @buffer,
         required_acks: @required_acks,
         ack_timeout: @ack_timeout,

@@ -30,8 +30,9 @@ module Kafka
   # * `:sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
+    def initialize(cluster:, transaction_manager:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
       @cluster = cluster
+      @transaction_manager = transaction_manager
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
@@ -47,6 +48,9 @@ module Kafka
         notification[:message_count] = message_count
 
         begin
+          if @transaction_manager.idempotent? || @transaction_manager.transactional?
+            @transaction_manager.init_producer_id
+          end
           send_buffered_messages
         ensure
           notification[:sent_message_count] = message_count - @buffer.size
@@ -85,21 +89,29 @@ module Kafka
         begin
           @logger.info "Sending #{message_buffer.size} messages to #{broker}"
 
-          messages_for_topics = {}
+          records_for_topics = {}
 
           message_buffer.each do |topic, partition, records|
-            record_batch = Protocol::RecordBatch.new(records: records)
-            messages_for_topics[topic] ||= {}
-            messages_for_topics[topic][partition] = record_batch
+            record_batch = Protocol::RecordBatch.new(
+              records: records,
+              first_sequence: @transaction_manager.next_sequence_for(
+                topic, partition
+              ),
+              producer_id: @transaction_manager.producer_id,
+              producer_epoch: @transaction_manager.producer_epoch
+            )
+            records_for_topics[topic] ||= {}
+            records_for_topics[topic][partition] = record_batch
           end
 
           response = broker.produce(
-            messages_for_topics: messages_for_topics,
+            messages_for_topics: records_for_topics,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
+            transactional_id: @transaction_manager.transactional_id
           )
 
-          handle_response(broker, response) if response
+          handle_response(broker, response, records_for_topics) if response
         rescue ConnectionError => e
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
@@ -109,12 +121,19 @@ module Kafka
       end
     end
 
-    def handle_response(broker, response)
+    def handle_response(broker, response, records_for_topics)
       response.each_partition do |topic_info, partition_info|
         topic = topic_info.topic
         partition = partition_info.partition
-        messages = @buffer.messages_for(topic: topic, partition: partition)
+        record_batch = records_for_topics[topic][partition]
+        records = record_batch.records
         ack_time = Time.now
+
+        if @transaction_manager.idempotent? || @transaction_manager.transactional?
+          @transaction_manager.update_sequence_for(
+            topic, partition, record_batch.first_sequence + record_batch.size
+          )
+        end
 
         begin
           begin
@@ -128,14 +147,14 @@ module Kafka
             raise e
           end
 
-          messages.each_with_index do |message, index|
+          records.each_with_index do |record, index|
             @instrumenter.instrument("ack_message.producer", {
-              key: message.key,
-              value: message.value,
+              key: record.key,
+              value: record.value,
               topic: topic,
               partition: partition,
               offset: partition_info.offset + index,
-              delay: ack_time - message.create_time,
+              delay: ack_time - record.create_time,
             })
           end
         rescue Kafka::CorruptMessage
@@ -156,7 +175,7 @@ module Kafka
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          @logger.debug "Successfully appended #{messages.count} messages to #{topic}/#{partition} on #{broker}"
+          @logger.debug "Successfully appended #{records.count} messages to #{topic}/#{partition} on #{broker}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)

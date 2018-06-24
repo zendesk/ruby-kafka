@@ -155,8 +155,16 @@ module Kafka
         instrumenter: @instrumenter,
       )
 
+      transaction_manager = TransactionManager.new(
+        cluster: @cluster,
+        logger: @logger,
+        idempotent: false,
+        transactional: false
+      )
+
       operation = ProduceOperation.new(
         cluster: @cluster,
+        transaction_manager: transaction_manager,
         buffer: buffer,
         required_acks: 1,
         ack_timeout: 10,
@@ -228,7 +236,7 @@ module Kafka
       retry_backoff: 1,
       max_buffer_size: 1000,
       max_buffer_bytesize: 10_000_000,
-      idempotence: false,
+      idempotent: false,
       transactional: false,
       transactional_id: nil,
       transactional_timeout: 60
@@ -243,7 +251,7 @@ module Kafka
       transaction_manager = TransactionManager.new(
         cluster: cluster,
         logger: @logger,
-        idempotence: idempotence,
+        idempotent: idempotent,
         transactional: transactional,
         transactional_id: transactional_id,
         transactional_timeout: transactional_timeout
