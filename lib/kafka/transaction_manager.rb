@@ -9,7 +9,7 @@ module Kafka
     def initialize(
       cluster:,
       logger:,
-      idempotence: false,
+      idempotent: false,
       transactional: false,
       transactional_id: nil,
       transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT
@@ -21,11 +21,21 @@ module Kafka
       @transactional_id = transactional_id
       @transactional_timeout = transactional_timeout
 
-      # If transactional mode is enabled, idempotence must be enabled
-      @idempotence = transactional ? true : idempotence
+      # If transactional mode is enabled, idempotent must be enabled
+      @idempotent = transactional ? true : idempotent
 
       @producer_id = -1
       @producer_epoch = 0
+
+      @sequences = {}
+    end
+
+    def idempotent?
+      @idempotent == true
+    end
+
+    def transactional?
+      @idempotent == true
     end
 
     def init_producer_id(force = false)
@@ -40,8 +50,25 @@ module Kafka
       )
       Protocol.handle_error(response.error_code)
 
+      # Reset producer id
+      byebug
       @producer_id = response.producer_id
       @producer_epoch = response.producer_epoch
+
+      # Reset sequence
+      @sequences = {}
+
+      @logger.debug "Current Producer ID is #{@producer_id} and Producer Epoch is #{@producer_epoch}"
+    end
+
+    def next_sequence_for(topic, partition)
+      @sequences[topic] ||= {}
+      @sequences[topic][partition] ||= 0
+    end
+
+    def update_sequence_for(topic, partition, sequence)
+      @sequences[topic] ||= {}
+      @sequences[topic][partition] = sequence
     end
   end
 end
