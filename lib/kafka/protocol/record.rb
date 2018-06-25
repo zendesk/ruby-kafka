@@ -47,6 +47,13 @@ module Kafka
         encoder.write_varint_bytes(record_buffer.string)
       end
 
+      def ==(other)
+        offset_delta == other.offset_delta &&
+          timestamp_delta == other.timestamp_delta &&
+          offset == other.offset &&
+          is_control_record == other.is_control_record
+      end
+
       def self.decode(decoder)
         record_decoder = Decoder.from_string(decoder.varint_bytes)
 
