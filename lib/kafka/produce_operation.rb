@@ -42,7 +42,7 @@ module Kafka
     end
 
     def execute
-      if (@transaction_manager.idempotent? || @transaction_manager.transactional?) && required_acks != -1
+      if (@transaction_manager.idempotent? || @transaction_manager.transactional?) && @required_acks != -1
         raise 'You must set required_acks option to :all to use idempotent / transactional production'
       end
 
