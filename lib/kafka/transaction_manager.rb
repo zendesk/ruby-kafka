@@ -51,7 +51,6 @@ module Kafka
       Protocol.handle_error(response.error_code)
 
       # Reset producer id
-      byebug
       @producer_id = response.producer_id
       @producer_epoch = response.producer_epoch
 
