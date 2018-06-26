@@ -64,7 +64,7 @@ describe "Idempotent producer API", functional: true do
     begin
       allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_raise(Errno::ETIMEDOUT)
       producer.deliver_messages
-    rescue
+    rescue Kafka::DeliveryFailed
     end
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_call_original
@@ -88,7 +88,7 @@ describe "Idempotent producer API", functional: true do
     begin
       allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
       producer.deliver_messages
-    rescue
+    rescue Kafka::DeliveryFailed
     end
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
@@ -106,7 +106,11 @@ describe "Idempotent producer API", functional: true do
     100.times do |index|
       producer.produce('Hello', topic: topic, partition: index)
     end
+    producer.deliver_messages
 
+    100.times do |index|
+      producer.produce('Hi', topic: topic, partition: index)
+    end
     # Simulate the situation that only one broker is down
     raised = 1
     begin
@@ -118,7 +122,7 @@ describe "Idempotent producer API", functional: true do
         end
       end
       producer.deliver_messages
-    rescue
+    rescue Kafka::DeliveryFailed
     end
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
@@ -126,8 +130,9 @@ describe "Idempotent producer API", functional: true do
 
     100.times do |index|
       records = kafka.fetch_messages(topic: topic, partition: index, offset: :earliest)
-      expect(records.length).to eql(1)
-      expect(records.first.value).to eql('Hello')
+      expect(records.length).to eql(2)
+      expect(records[0].value).to eql('Hello')
+      expect(records[1].value).to eql('Hi')
     end
   end
 end
