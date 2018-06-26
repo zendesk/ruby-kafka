@@ -10,3 +10,4 @@
 .env
 *.log
 *.swp
+.byebug_history
