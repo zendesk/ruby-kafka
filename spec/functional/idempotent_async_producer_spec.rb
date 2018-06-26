@@ -1,28 +1,24 @@
 # frozen_string_literal: true
 
-describe "Idempotent producer", functional: true do
-  let(:producer) { kafka.producer(max_retries: 3, retry_backoff: 1, idempotent: true) }
-
+describe "Idempotent async producer", functional: true do
+  let(:producer) { kafka.async_producer(max_retries: 3, delivery_interval: 1, retry_backoff: 1, idempotent: true) }
   after do
     producer.shutdown
   end
 
   example 'duplication if idempotent is not enabled' do
-    producer = kafka.producer(max_retries: 3, retry_backoff: 1, idempotent: false)
+    producer = kafka.async_producer(max_retries: 3, delivery_interval: 1, retry_backoff: 1, idempotent: false)
     topic = create_random_topic(num_partitions: 3)
 
     producer.produce('Hello', topic: topic, partition: 0)
-    producer.deliver_messages
+    sleep 2
 
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
     producer.produce('Hi', topic: topic, partition: 0)
-    begin
-      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
-      producer.deliver_messages
-    rescue
-    end
+    sleep 2
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    producer.deliver_messages
+    sleep 2
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
     expect(records.length).to eql(3)
@@ -38,9 +34,8 @@ describe "Idempotent producer", functional: true do
       producer.produce(index.to_s, topic: topic, partition: 0)
       producer.produce(index.to_s, topic: topic, partition: 1)
       producer.produce(index.to_s, topic: topic, partition: 2)
-      producer.deliver_messages if index % 50 == 0
     end
-    producer.deliver_messages
+    sleep 2
 
     kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest).each_with_index do |record, index|
       expect(record.value).to eql(index.to_s)
@@ -57,18 +52,15 @@ describe "Idempotent producer", functional: true do
     topic = create_random_topic(num_partitions: 3)
 
     producer.produce('Hello', topic: topic, partition: 0)
-    producer.deliver_messages
+    sleep 2
 
-    producer.produce('Hi', topic: topic, partition: 0)
     # Simulate the situation that all brokers fail to write
-    begin
-      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_raise(Errno::ETIMEDOUT)
-      producer.deliver_messages
-    rescue Kafka::DeliveryFailed
-    end
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_raise(Errno::ETIMEDOUT)
+    producer.produce('Hi', topic: topic, partition: 0)
+    sleep 2
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_call_original
-    producer.deliver_messages
+    sleep 2
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
     expect(records.length).to eql(2)
@@ -80,19 +72,15 @@ describe "Idempotent producer", functional: true do
     topic = create_random_topic(num_partitions: 3)
 
     producer.produce('Hello', topic: topic, partition: 0)
-    producer.deliver_messages
-
-    producer.produce('Hi', topic: topic, partition: 0)
+    sleep 2
 
     # Simulate the situation that all brokers fail to read
-    begin
-      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
-      producer.deliver_messages
-    rescue Kafka::DeliveryFailed
-    end
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
+    producer.produce('Hi', topic: topic, partition: 0)
+    sleep 2
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    producer.deliver_messages
+    sleep 2
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
     expect(records.length).to eql(2)
@@ -106,11 +94,8 @@ describe "Idempotent producer", functional: true do
     100.times do |index|
       producer.produce('Hello', topic: topic, partition: index)
     end
-    producer.deliver_messages
+    sleep 2
 
-    100.times do |index|
-      producer.produce('Hi', topic: topic, partition: index)
-    end
     # Simulate the situation that only one broker is down
     raised = 1
     begin
@@ -121,12 +106,15 @@ describe "Idempotent producer", functional: true do
           raise Errno::ETIMEDOUT
         end
       end
-      producer.deliver_messages
     rescue Kafka::DeliveryFailed
     end
+    100.times do |index|
+      producer.produce('Hi', topic: topic, partition: index)
+    end
+    sleep 2
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    producer.deliver_messages
+    sleep 2
 
     100.times do |index|
       records = kafka.fetch_messages(topic: topic, partition: index, offset: :earliest)
