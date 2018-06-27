@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'kafka/transaction_state_machine'
 
 module Kafka
@@ -83,13 +84,37 @@ module Kafka
       nil
     end
 
-    def add_partition_to_transaction(topic, partition)
-      @transaction_partitions[topic] ||= {}
-      @transaction_partitions[topic][partition] ||= false
+    def add_partitions_to_transaction(topic_partitions)
+      force_transactional!
 
-      if !@transaction_partitions[topic][partition]
-        response = transaction_coordinator.add_partitions_to_txn(topic, partition)
+      # Extract newly created partitions
+      new_topic_partitions = {}
+      topic_partitions.each do |topic, partitions|
+        partitions.each do |partition|
+          @transaction_partitions[topic] ||= {}
+          if !@transaction_partitions[topic][partition]
+            new_topic_partitions[topic] = []
+            new_topic_partitions[topic] << partition
+          end
+        end
+      end
+
+      unless new_topic_partitions.empty?
+        response = transaction_coordinator.add_partitions_to_txn(
+          transactional_id: @transactional_id,
+          producer_id: @producer_id,
+          producer_epoch: @producer_epoch,
+          topics: new_topic_partitions
+        )
         Protocol.handle_error(response.error_code)
+
+        # Update added topic partitions
+        new_topic_partitions.each do |topic, partitions|
+          partitions.each do |partition|
+            @transaction_partitions[topic] ||= {}
+            @transaction_partitions[topic][partition] = true
+          end
+        end
       end
 
       nil

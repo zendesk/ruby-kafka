@@ -66,12 +66,16 @@ module Kafka
 
     def send_buffered_messages
       messages_for_broker = {}
+      topic_partitions = {}
 
       @buffer.each do |topic, partition, messages|
         begin
           broker = @cluster.get_leader(topic, partition)
 
           @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
+
+          topic_partitions[topic] ||= Set.new
+          topic_partitions[topic].add(partition)
 
           messages_for_broker[broker] ||= MessageBuffer.new
           messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
@@ -87,6 +91,11 @@ module Kafka
           # We'll mark the cluster as stale in order to force a metadata refresh.
           @cluster.mark_as_stale!
         end
+      end
+
+      # Add topic and partition to transaction
+      if @transaction_manager.transactional?
+        @transaction_manager.add_partitions_to_transaction(topic_partitions)
       end
 
       messages_for_broker.each do |broker, message_buffer|
@@ -106,11 +115,6 @@ module Kafka
             )
             records_for_topics[topic] ||= {}
             records_for_topics[topic][partition] = record_batch
-
-            # Add topic and partition to transaction
-            if @transaction_manager.transactional?
-              @transaction_manager.add_partition_to_transaction(topic, partition)
-            end
           end
 
           response = broker.produce(
