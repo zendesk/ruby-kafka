@@ -9,6 +9,7 @@ require "kafka/pending_message"
 require "kafka/compressor"
 
 module Kafka
+  class AbortTransaction < StandardError; end
 
   # Allows sending messages to a Kafka cluster.
   #
@@ -202,6 +203,12 @@ module Kafka
           "Cannot produce to #{topic}, max buffer bytesize (#{@max_buffer_bytesize} bytes) reached"
       end
 
+      # If the producer is in transactional mode, all the message production
+      # must be used when the producer is currently in transaction
+      if @transaction_manager.transactional? && !@transaction_manager.in_transaction?
+        raise 'You must trigger begin_transaction before producing messages'
+      end
+
       @target_topics.add(topic)
       @pending_message_queue.write(message)
 
@@ -269,6 +276,34 @@ module Kafka
     # @return [nil]
     def shutdown
       @cluster.disconnect
+    end
+
+    def init_transactions
+      @transaction_manager.init_transactions
+    end
+
+    def begin_transaction
+      @transaction_manager.begin_transaction
+    end
+
+    def commit_transaction
+      @transaction_manager.commit_transaction
+    end
+
+    def abort_transaction
+      @transaction_manager.commit_transaction
+    end
+
+    def with_transaction
+      raise 'with_transaction requires a block' unless block_given?
+      begin_transaction
+      yield
+      commit_transaction
+    rescue Kafka::Producer::AbortTransaction
+      abort_transaction
+    rescue
+      abort_transaction
+      raise
     end
 
     private

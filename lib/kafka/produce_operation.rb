@@ -106,6 +106,11 @@ module Kafka
             )
             records_for_topics[topic] ||= {}
             records_for_topics[topic][partition] = record_batch
+
+            # Add topic and partition to transaction
+            if @transaction_manager.transactional?
+              @transaction_manager.add_partition_to_transaction(topic, partition)
+            end
           end
 
           response = broker.produce(
