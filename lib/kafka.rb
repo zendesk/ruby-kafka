@@ -245,6 +245,38 @@ module Kafka
   class FailedScramAuthentication < SaslScramError
   end
 
+  # The broker received an out of order sequence number
+  class OutOfOrderSequenceNumberError < Error
+  end
+
+  # The broker received a duplicate sequence number
+  class DuplicateSequenceNumberError < Error
+  end
+
+  # Producer attempted an operation with an old epoch. Either there is a newer producer with the same transactionalId, or the producer's transaction has been expired by the broker.
+  class InvalidProducerEpochError < Error
+  end
+
+  # The producer attempted a transactional operation in an invalid state
+  class InvalidTxnStateError < Error
+  end
+
+  # The producer attempted to use a producer id which is not currently assigned to its transactional id
+  class InvalidProducerIDMappingError < Error
+  end
+
+  # The transaction timeout is larger than the maximum value allowed by the broker (as configured by transaction.max.timeout.ms).
+  class InvalidTransactionTimeoutError < Error
+  end
+
+  # The producer attempted to update a transaction while another concurrent operation on the same transaction was ongoing
+  class ConcurrentTransactionError < Error
+  end
+
+  # Indicates that the transaction coordinator sending a WriteTxnMarker is no longer the current coordinator for a given producer
+  class TransactionCoordinatorFencedError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize
