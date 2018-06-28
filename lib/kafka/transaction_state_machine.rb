@@ -9,14 +9,14 @@ module Kafka
       UNINITIALIZED          = :uninitialized,
       READY                  = :ready,
       IN_TRANSACTION         = :in_trasaction,
-      COMMITTING_TRANSACTION = :commiting_transaction,
+      COMMITTING_TRANSACTION = :committing_transaction,
       ABORTING_TRANSACTION   = :aborting_transaction,
       ERROR                  = :error
     ]
 
     TRANSITIONS = {
       UNINITIALIZED          => [READY, ERROR],
-      READY                  => [UNINITIALIZED],
+      READY                  => [UNINITIALIZED, COMMITTING_TRANSACTION, ABORTING_TRANSACTION],
       IN_TRANSACTION         => [READY],
       COMMITTING_TRANSACTION => [IN_TRANSACTION],
       ABORTING_TRANSACTION   => [READY],
@@ -32,7 +32,9 @@ module Kafka
 
     def transition_to!(next_state)
       raise InvalidStateError unless STATES.include?(next_state)
-      raise InvalidTransitionError unless TRANSITIONS[next_state].include?(@state)
+      unless TRANSITIONS[next_state].include?(@state)
+        raise InvalidTransitionError, "Could not transition from state '#{@state}' to state '#{next_state}'"
+      end
       @logger.debug("Transaction state changed to '#{next_state}'!")
       @mutex.synchronize { @state = next_state }
     end
@@ -49,7 +51,7 @@ module Kafka
       @mutex.synchronize { @state == IN_TRANSACTION }
     end
 
-    def commiting_transaction?
+    def committing_transaction?
       @mutex.synchronize { @state == COMMITTING_TRANSACTION }
     end
 
