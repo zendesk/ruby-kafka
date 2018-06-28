@@ -5,6 +5,8 @@ require 'kafka/transaction_state_machine'
 module Kafka
   class TransactionManager
     DEFAULT_TRANSACTION_TIMEOUT = 60 # 60 seconds
+    TRANSACTION_RESULT_COMMIT = true
+    TRANSACTION_RESULT_ABORT = false
 
     attr_reader :producer_id, :producer_epoch, :transactional_id
 
@@ -106,13 +108,13 @@ module Kafka
           producer_epoch: @producer_epoch,
           topics: new_topic_partitions
         )
-        Protocol.handle_error(response.error_code)
 
         # Update added topic partitions
-        new_topic_partitions.each do |topic, partitions|
-          partitions.each do |partition|
-            @transaction_partitions[topic] ||= {}
-            @transaction_partitions[topic][partition] = true
+        response.errors do |tp|
+          tp.partitions.each do |p|
+            Protocol.handle_error(p.error_code)
+            @transaction_partitions[tp.topic] ||= {}
+            @transaction_partitions[tp.topic][p.partition] = true
           end
         end
       end
@@ -138,7 +140,7 @@ module Kafka
     def commit_transaction
       force_transactional!
 
-      if @transaction_state.commiting_transaction?
+      if @transaction_state.committing_transaction?
         @logger.warn("Transaction is being committed")
         return
       end
@@ -147,12 +149,12 @@ module Kafka
         raise 'Transaction is not valid to commit'
       end
 
-      @transaction_state.transition_to!(TransactionStateMachine::COMMITING_TRANSACTION)
+      @transaction_state.transition_to!(TransactionStateMachine::COMMITTING_TRANSACTION)
       response = transaction_coordinator.end_txn(
         transactional_id: @transactional_id,
         producer_id: @producer_id,
         producer_epoch: @producer_epoch,
-        transaction_result: true
+        transaction_result: TRANSACTION_RESULT_COMMIT
       )
       Protocol.handle_error(response.error_code)
       @transaction_state.transition_to!(TransactionStateMachine::READY)
@@ -180,7 +182,7 @@ module Kafka
         transactional_id: @transactional_id,
         producer_id: @producer_id,
         producer_epoch: @producer_epoch,
-        transaction_result: false
+        transaction_result: TRANSACTION_RESULT_ABORT
       )
       Protocol.handle_error(response)
       @transaction_state.transition_to!(TransactionStateMachine::READY)
@@ -198,7 +200,13 @@ module Kafka
     private
 
     def force_transactional!
-      raise 'Please turn on transactional mode to use transaction' unless transactional?
+      unless transactional?
+        raise 'Please turn on transactional mode to use transaction'
+      end
+
+      if @transactional_id.nil? || @transactional_id.empty?
+        raise 'Please provide a transaction_id to use transactional mode'
+      end
     end
 
     def transaction_coordinator
