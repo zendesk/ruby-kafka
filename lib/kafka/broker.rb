@@ -170,6 +170,12 @@ module Kafka
       send_request(request)
     end
 
+    def add_partitions_to_txn(**options)
+      request = Protocol::AddPartitionsToTxnRequest.new(**options)
+
+      send_request(request)
+    end
+
     private
 
     def send_request(request)
