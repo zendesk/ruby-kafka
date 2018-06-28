@@ -176,6 +176,12 @@ module Kafka
       send_request(request)
     end
 
+    def end_txn(**options)
+      request = Protocol::EndTxnRequest.new(**options)
+
+      send_request(request)
+    end
+
     private
 
     def send_request(request)
