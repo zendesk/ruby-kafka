@@ -92,13 +92,15 @@ module Kafka
               raise e
             end
 
-            messages = fetched_partition.messages.map {|message|
-              FetchedMessage.new(
-                message: message,
-                topic: fetched_topic.name,
-                partition: fetched_partition.partition,
-              )
-            }
+            messages = fetched_partition.messages.map do |message|
+              if !message.is_a?(Kafka::Protocol::Record) || !message.is_control_record
+                FetchedMessage.new(
+                  message: message,
+                  topic: fetched_topic.name,
+                  partition: fetched_partition.partition,
+                )
+              end
+            end.compact
 
             FetchedBatch.new(
               topic: fetched_topic.name,
