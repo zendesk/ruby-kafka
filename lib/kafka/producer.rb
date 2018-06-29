@@ -9,8 +9,6 @@ require "kafka/pending_message"
 require "kafka/compressor"
 
 module Kafka
-  class AbortTransaction < StandardError; end
-
   # Allows sending messages to a Kafka cluster.
   #
   # Typically you won't instantiate this class yourself, but rather have {Kafka::Client}
@@ -127,6 +125,7 @@ module Kafka
   #     end
   #
   class Producer
+    class AbortTransaction < StandardError; end
 
     def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
       @cluster = cluster
@@ -275,6 +274,7 @@ module Kafka
     #
     # @return [nil]
     def shutdown
+      @transaction_manager.close
       @cluster.disconnect
     end
 
@@ -291,7 +291,7 @@ module Kafka
     end
 
     def abort_transaction
-      @transaction_manager.commit_transaction
+      @transaction_manager.abort_transaction
     end
 
     def with_transaction

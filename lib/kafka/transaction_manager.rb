@@ -197,6 +197,16 @@ module Kafka
       @transaction_state.in_transaction?
     end
 
+    def close
+      if in_transaction?
+        @logger.warn("Aborting pending transaction ...")
+        abort_transaction
+      elsif @transaction_state.aborting_transaction? || @transaction_state.committing_transaction?
+        @logger.warn("Transaction is finishing. Sleeping until finish!")
+        sleep 5
+      end
+    end
+
     private
 
     def force_transactional!
