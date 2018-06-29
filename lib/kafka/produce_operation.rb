@@ -110,6 +110,7 @@ module Kafka
               first_sequence: @transaction_manager.next_sequence_for(
                 topic, partition
               ),
+              in_transaction: @transaction_manager.transactional?,
               producer_id: @transaction_manager.producer_id,
               producer_epoch: @transaction_manager.producer_epoch
             )

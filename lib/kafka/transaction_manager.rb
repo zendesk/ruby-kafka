@@ -41,7 +41,7 @@ module Kafka
     end
 
     def transactional?
-      @idempotent == true
+      @transactional == true && !@transactional_id.nil?
     end
 
     def init_producer_id(force = false)
@@ -95,7 +95,7 @@ module Kafka
         partitions.each do |partition|
           @transaction_partitions[topic] ||= {}
           if !@transaction_partitions[topic][partition]
-            new_topic_partitions[topic] = []
+            new_topic_partitions[topic] ||= []
             new_topic_partitions[topic] << partition
           end
         end
@@ -110,7 +110,7 @@ module Kafka
         )
 
         # Update added topic partitions
-        response.errors do |tp|
+        response.errors.each do |tp|
           tp.partitions.each do |p|
             Protocol.handle_error(p.error_code)
             @transaction_partitions[tp.topic] ||= {}
@@ -157,7 +157,7 @@ module Kafka
         transaction_result: TRANSACTION_RESULT_COMMIT
       )
       Protocol.handle_error(response.error_code)
-      @transaction_state.transition_to!(TransactionStateMachine::READY)
+      complete_transaction
 
       nil
     rescue
@@ -185,7 +185,7 @@ module Kafka
         transaction_result: TRANSACTION_RESULT_ABORT
       )
       Protocol.handle_error(response)
-      @transaction_state.transition_to!(TransactionStateMachine::READY)
+      complete_transaction
 
       nil
     rescue
@@ -213,6 +213,11 @@ module Kafka
       @cluster.get_transaction_coordinator(
         transactional_id: @transactional_id
       )
+    end
+
+    def complete_transaction
+      @transaction_state.transition_to!(TransactionStateMachine::READY)
+      @transaction_partitions = {}
     end
   end
 end
