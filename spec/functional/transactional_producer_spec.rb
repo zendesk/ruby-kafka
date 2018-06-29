@@ -22,7 +22,19 @@ describe "Transactional producer", functional: true do
     producer.deliver_messages
     producer.commit_transaction
 
-    expect_topic_messages(topic, ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5'])
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
+    expect(records.length).to eql(2)
+    expect(records[0].value).to eql('Test 1')
+    expect(records[1].value).to eql('Test 3')
+
+    records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest)
+    expect(records.length).to eql(2)
+    expect(records[0].value).to eql('Test 2')
+    expect(records[1].value).to eql('Test 4')
+
+    records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest)
+    expect(records.length).to eql(1)
+    expect(records[0].value).to eql('Test 5')
 
     producer.shutdown
   end
@@ -51,7 +63,19 @@ describe "Transactional producer", functional: true do
     producer.deliver_messages
     producer.commit_transaction
 
-    expect_topic_messages(topic, ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5'])
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
+    expect(records.length).to eql(2)
+    expect(records[0].value).to eql('Test 1')
+    expect(records[1].value).to eql('Test 3')
+
+    records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest)
+    expect(records.length).to eql(2)
+    expect(records[0].value).to eql('Test 2')
+    expect(records[1].value).to eql('Test 4')
+
+    records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest)
+    expect(records.length).to eql(1)
+    expect(records[0].value).to eql('Test 5')
     producer.shutdown
   end
 
@@ -71,27 +95,30 @@ describe "Transactional producer", functional: true do
     producer.produce('Test 2', topic: topic, partition: 1)
     producer.produce('Test 3', topic: topic, partition: 2)
     producer.deliver_messages
+
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(0)
+
+    records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(0)
+
+    records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(0)
+
     producer.commit_transaction
 
-    producer.begin_transaction
-    producer.produce('Test 4', topic: topic, partition: 0)
-    producer.produce('Test 5', topic: topic, partition: 1)
-    producer.deliver_messages
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(1)
+    expect(records[0].value).to eql('Test 1')
 
-    expect_topic_messages(topic, ['Test 1', 'Test 2', 'Test 3'])
-    producer.commit_transaction
-    expect_topic_messages(topic, ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5'])
+    records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(1)
+    expect(records[0].value).to eql('Test 2')
+
+    records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(1)
+    expect(records[0].value).to eql('Test 3')
+
     producer.shutdown
   end
-end
-
-def expect_topic_messages(topic, expected_messages)
-  consumer = kafka.consumer(group_id: SecureRandom.uuid)
-  consumer.subscribe(topic)
-  messages = []
-  consumer.each_message do |message|
-    messages << message.value
-    break if messages.length == expected_messages.length
-  end
-  expect(messages).to match_array(expected_messages)
 end
