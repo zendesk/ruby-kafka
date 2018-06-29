@@ -72,28 +72,32 @@ module Kafka
               }
             end
 
-            messages_decoder = Decoder.from_string(decoder.bytes)
+            messages_raw = decoder.bytes
             messages = []
 
-            magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
-            if magic_byte == RecordBatch::MAGIC_BYTE
-              until messages_decoder.eof?
-                begin
-                  record_batch = RecordBatch.decode(messages_decoder)
-                  unless record_batch.is_control_batch
-                    messages += record_batch.records
-                  end
-                rescue InsufficientDataMessage
-                  if messages.length > 0
-                    break
-                  else
-                    raise
+            if !messages_raw.nil? && !messages_raw.empty?
+              messages_decoder = Decoder.from_string(messages_raw)
+
+              magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
+              if magic_byte == RecordBatch::MAGIC_BYTE
+                until messages_decoder.eof?
+                  begin
+                    record_batch = RecordBatch.decode(messages_decoder)
+                    unless record_batch.is_control_batch
+                      messages += record_batch.records
+                    end
+                  rescue InsufficientDataMessage
+                    if messages.length > 0
+                      break
+                    else
+                      raise
+                    end
                   end
                 end
+              else
+                message_set = MessageSet.decode(messages_decoder)
+                messages = message_set.messages
               end
-            else
-              message_set = MessageSet.decode(messages_decoder)
-              messages = message_set.messages
             end
 
             FetchedPartition.new(
