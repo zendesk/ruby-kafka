@@ -56,6 +56,8 @@ describe "Transactional producer", functional: true do
     producer.deliver_messages
     producer.commit_transaction
 
+    sleep 1
+
     producer.begin_transaction
     producer.produce('Test 3', topic: topic, partition: 0)
     producer.produce('Test 4', topic: topic, partition: 1)
