@@ -40,23 +40,26 @@ module Kafka
 
     # A mapping from numeric API keys to symbolic API names.
     APIS = {
-      PRODUCE_API           => :produce,
-      FETCH_API             => :fetch,
-      LIST_OFFSET_API       => :list_offset,
-      TOPIC_METADATA_API    => :topic_metadata,
-      OFFSET_COMMIT_API     => :offset_commit,
-      OFFSET_FETCH_API      => :offset_fetch,
-      FIND_COORDINATOR_API  => :find_coordinator,
-      JOIN_GROUP_API        => :join_group,
-      HEARTBEAT_API         => :heartbeat,
-      LEAVE_GROUP_API       => :leave_group,
-      SYNC_GROUP_API        => :sync_group,
-      SASL_HANDSHAKE_API    => :sasl_handshake,
-      API_VERSIONS_API      => :api_versions,
-      CREATE_TOPICS_API     => :create_topics,
-      DELETE_TOPICS_API     => :delete_topics,
-      DESCRIBE_CONFIGS_API  => :describe_configs_api,
-      CREATE_PARTITIONS_API => :create_partitions
+      PRODUCE_API               => :produce,
+      FETCH_API                 => :fetch,
+      LIST_OFFSET_API           => :list_offset,
+      TOPIC_METADATA_API        => :topic_metadata,
+      OFFSET_COMMIT_API         => :offset_commit,
+      OFFSET_FETCH_API          => :offset_fetch,
+      FIND_COORDINATOR_API      => :find_coordinator,
+      JOIN_GROUP_API            => :join_group,
+      HEARTBEAT_API             => :heartbeat,
+      LEAVE_GROUP_API           => :leave_group,
+      SYNC_GROUP_API            => :sync_group,
+      SASL_HANDSHAKE_API        => :sasl_handshake,
+      API_VERSIONS_API          => :api_versions,
+      CREATE_TOPICS_API         => :create_topics,
+      DELETE_TOPICS_API         => :delete_topics,
+      INIT_PRODUCER_ID_API      => :init_producer_id_api,
+      ADD_PARTITIONS_TO_TXN_API => :add_partitions_to_txn_api,
+      END_TXN_API               => :end_txn_api,
+      DESCRIBE_CONFIGS_API      => :describe_configs_api,
+      CREATE_PARTITIONS_API     => :create_partitions
     }
 
     # A mapping from numeric error codes to exception classes.
