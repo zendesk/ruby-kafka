@@ -305,4 +305,36 @@ describe "Transactional producer", functional: true do
 
     producer.shutdown
   end
+
+  example 'Transaction is idempotent by default' do
+    producer = kafka.producer(
+      transactional: true,
+      transactional_id: SecureRandom.uuid
+    )
+
+    topic = create_random_topic(num_partitions: 3)
+
+    producer.init_transactions
+    producer.begin_transaction
+    producer.produce('Test 1', topic: topic, partition: 0)
+    producer.deliver_messages
+
+    producer.produce('Test 2', topic: topic, partition: 0)
+    begin
+      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
+      producer.deliver_messages
+    rescue
+    end
+
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
+    producer.deliver_messages
+    producer.commit_transaction
+
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(2)
+    expect(records[0].value).to eql('Test 1')
+    expect(records[1].value).to eql('Test 2')
+
+    producer.shutdown
+  end
 end
