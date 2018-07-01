@@ -337,4 +337,36 @@ describe "Transactional producer", functional: true do
 
     producer.shutdown
   end
+
+  # Expensive tests to run. The transactional timeout is a myth. Kafka doesn't
+  # handle short timeout well. It works perfectly for longer timeout (over 1
+  # minute).
+  example 'Timeout transaction' do
+    producer = kafka.producer(
+      transactional: true,
+      transactional_id: SecureRandom.uuid,
+      transactional_timeout: 10
+    )
+
+    topic = create_random_topic(num_partitions: 3)
+
+    producer.init_transactions
+    producer.begin_transaction
+    expect do
+      90.times do |index|
+        producer.produce("Test #{index}", topic: topic, partition: 0)
+        producer.deliver_messages
+        sleep 1
+      end
+    end.to raise_error(Kafka::InvalidProducerEpochError)
+
+    expect do
+      producer.commit_transaction
+    end.to raise_error(Kafka::InvalidProducerEpochError)
+
+    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
+    expect(records.length).to eql(0)
+
+    producer.shutdown
+  end
 end
