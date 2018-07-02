@@ -19,7 +19,7 @@ module Kafka
       READY                  => [UNINITIALIZED, COMMITTING_TRANSACTION, ABORTING_TRANSACTION],
       IN_TRANSACTION         => [READY],
       COMMITTING_TRANSACTION => [IN_TRANSACTION],
-      ABORTING_TRANSACTION   => [READY],
+      ABORTING_TRANSACTION   => [IN_TRANSACTION],
       # Any states can transition to error state
       ERROR                  => STATES
     }
@@ -56,7 +56,7 @@ module Kafka
     end
 
     def aborting_transaction?
-      @mutex.synchronize { @state = ABORTING_TRANSACTION }
+      @mutex.synchronize { @state == ABORTING_TRANSACTION }
     end
 
     def error?

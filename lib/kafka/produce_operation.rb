@@ -46,6 +46,10 @@ module Kafka
         raise 'You must set required_acks option to :all to use idempotent / transactional production'
       end
 
+      if @transaction_manager.transactional? && !@transaction_manager.in_transaction?
+        raise "Produce operation can only be executed in a pending transaction"
+      end
+
       @instrumenter.instrument("send_messages.producer") do |notification|
         message_count = @buffer.size
 
@@ -144,12 +148,6 @@ module Kafka
         records = record_batch.records
         ack_time = Time.now
 
-        if @transaction_manager.idempotent? || @transaction_manager.transactional?
-          @transaction_manager.update_sequence_for(
-            topic, partition, record_batch.first_sequence + record_batch.size
-          )
-        end
-
         begin
           begin
             Protocol.handle_error(partition_info.error_code)
@@ -160,6 +158,12 @@ module Kafka
             })
 
             raise e
+          end
+
+          if @transaction_manager.idempotent? || @transaction_manager.transactional?
+            @transaction_manager.update_sequence_for(
+              topic, partition, record_batch.first_sequence + record_batch.size
+            )
           end
 
           records.each_with_index do |record, index|

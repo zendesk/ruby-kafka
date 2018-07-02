@@ -184,7 +184,7 @@ module Kafka
         producer_epoch: @producer_epoch,
         transaction_result: TRANSACTION_RESULT_ABORT
       )
-      Protocol.handle_error(response)
+      Protocol.handle_error(response.error_code)
       complete_transaction
 
       nil
