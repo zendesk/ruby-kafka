@@ -20,6 +20,8 @@ module Kafka
   #     operation.execute
   #
   class FetchOperation
+    ABORTED_TRANSACTION_SIGNAL = "\x00\x00\x00\x00".freeze
+
     def initialize(cluster:, logger:, min_bytes: 1, max_bytes: 10485760, max_wait_time: 5)
       @cluster = cluster
       @logger = logger
@@ -92,15 +94,7 @@ module Kafka
               raise e
             end
 
-            messages = fetched_partition.messages.map do |message|
-              if !message.is_a?(Kafka::Protocol::Record) || !message.is_control_record
-                FetchedMessage.new(
-                  message: message,
-                  topic: fetched_topic.name,
-                  partition: fetched_partition.partition,
-                )
-              end
-            end.compact
+            messages = extract_messages(fetched_topic, fetched_partition)
 
             FetchedBatch.new(
               topic: fetched_topic.name,
@@ -150,6 +144,44 @@ module Kafka
           @logger.debug "Offset for #{topic}/#{partition} is #{resolved_offset.inspect}"
 
           topics[topic][partition][:fetch_offset] = resolved_offset || 0
+        end
+      end
+    end
+
+    def extract_messages(fetched_topic, fetched_partition)
+      return [] if fetched_partition.messages.empty?
+
+      if fetched_partition.messages.first.is_a?(Kafka::Protocol::MessageSet)
+        fetched_partition.messages.flat_map { |message_set| message_set.messages }
+      else
+        records_by_producer_id = {}
+        fetched_partition.messages.each do |record_batch|
+          record_batch.records.each do |record|
+            if record.is_control_record
+              exclude_aborted_transaction(
+                record, records_by_producer_id, fetched_partition.aborted_transactions
+              )
+            else
+              records_by_producer_id[record_batch.producer_id] ||= []
+              records_by_producer_id[record_batch.producer_id] << FetchedMessage.new(
+                message: record,
+                topic: fetched_topic.name,
+                partition: fetched_partition.partition
+              )
+            end
+          end
+        end
+        records_by_producer_id.values.flatten
+      end
+    end
+
+    def exclude_aborted_transaction(control_record, records_by_producer_id, aborted_transactions)
+      return if control_record.key != ABORTED_TRANSACTION_SIGNAL || aborted_transactions.empty?
+      aborted_transactions.each do |abort_transaction|
+        if records_by_producer_id.key?(abort_transaction[:producer_id])
+          records_by_producer_id[abort_transaction[:producer_id]].reject! do |record|
+            record.offset >= abort_transaction[:first_offset]
+          end
         end
       end
     end

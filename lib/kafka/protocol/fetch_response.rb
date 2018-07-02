@@ -83,9 +83,7 @@ module Kafka
                 until messages_decoder.eof?
                   begin
                     record_batch = RecordBatch.decode(messages_decoder)
-                    unless record_batch.is_control_batch
-                      messages += record_batch.records
-                    end
+                    messages << record_batch
                   rescue InsufficientDataMessage
                     if messages.length > 0
                       break
@@ -96,7 +94,7 @@ module Kafka
                 end
               else
                 message_set = MessageSet.decode(messages_decoder)
-                messages = message_set.messages
+                messages << message_set
               end
             end
 
