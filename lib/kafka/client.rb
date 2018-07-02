@@ -473,9 +473,6 @@ module Kafka
           offsets[batch.partition] = batch.last_offset + 1
         end
       end
-    rescue UnknownTopicOrPartition => e
-      @cluster.mark_as_stale! # Mark as stale in case topic does in fact exist but has been reassgined to another broker
-      raise e
     end
 
     # Creates a topic in the cluster.
