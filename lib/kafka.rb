@@ -293,4 +293,3 @@ module Kafka
 end
 
 require "kafka/client"
-require "kafka/transaction_state_machine"

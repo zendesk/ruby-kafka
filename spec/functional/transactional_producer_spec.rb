@@ -428,7 +428,7 @@ describe "Transactional producer", functional: true do
     producer = kafka.producer(
       transactional: true,
       transactional_id: SecureRandom.uuid,
-      transactional_timeout: 10
+      transactional_timeout: 5
     )
 
     topic = create_random_topic(num_partitions: 3)
@@ -436,7 +436,7 @@ describe "Transactional producer", functional: true do
     producer.init_transactions
     producer.begin_transaction
     expect do
-      90.times do |index|
+      120.times do |index|
         producer.produce("Test #{index}", topic: topic, partition: 0)
         producer.deliver_messages
         sleep 1
