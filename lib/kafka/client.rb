@@ -54,12 +54,15 @@ module Kafka
     #
     # @param sasl_scram_mechanism [String, nil] Scram mechanism, either "sha256" or "sha512"
     #
+    # @param sasl_over_ssl [Boolean] whether to enforce SSL with SASL
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
                    sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
-                   sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil, ssl_ca_certs_from_system: false)
+                   sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -84,7 +87,7 @@ module Kafka
         logger: @logger
       )
 
-      if sasl_authenticator.enabled? && ssl_context.nil?
+      if sasl_authenticator.enabled? && sasl_over_ssl && ssl_context.nil?
         raise ArgumentError, "SASL authentication requires that SSL is configured"
       end
 
