@@ -244,6 +244,8 @@ describe "Transactional producer", functional: true do
     producer_1.deliver_messages
     producer_1.commit_transaction
 
+    sleep 1
+
     producer_2 = kafka.producer(
       transactional: true,
       transactional_id: transactional_id
@@ -436,21 +438,17 @@ describe "Transactional producer", functional: true do
     producer.init_transactions
     producer.begin_transaction
     expect do
-      120.times do |index|
+      60.times do |index|
         producer.produce("Test #{index}", topic: topic, partition: 0)
         producer.deliver_messages
         sleep 1
       end
-    end.to raise_error(Kafka::InvalidProducerEpochError)
-
-    expect do
       producer.commit_transaction
-    end.to raise_error(Kafka::InvalidProducerEpochError)
+      producer.shutdown
+    end.to raise_error(Kafka::Error)
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
     expect(records.length).to eql(0)
-
-    producer.shutdown
   end
 
   example 'Client excludes aborted messages' do
