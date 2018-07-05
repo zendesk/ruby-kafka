@@ -7,6 +7,9 @@ Changes and additions to the library will be listed here.
 - Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
 - Support record headers (#604).
 - Add instrumenter and logger when async message delivery fails (#603).
+- Upgrade and rename GroupCoordinator API to FindCoordinator API (#606).
+- Refresh cluster metadata after topic re-assignment (#609).
+- Disable SASL over SSL with a new config (#613).
 
 ## 0.6.7
 
