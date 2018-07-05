@@ -439,6 +439,7 @@ module Kafka
       if old_generation_id && @group.generation_id != old_generation_id + 1
         # We've been out of the group for at least an entire generation, no
         # sense in trying to hold on to offset data
+        clear_current_offsets
         @offset_manager.clear_offsets
       else
         # After rejoining the group we may have been assigned a new set of
@@ -446,6 +447,7 @@ module Kafka
         # having the consumer go back and reprocess messages if it's assigned
         # a partition it used to be assigned to way back. For that reason, we
         # only keep commits for the partitions that we're still assigned.
+        clear_current_offsets(excluding: @group.assigned_partitions)
         @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
       end
 
@@ -531,6 +533,14 @@ module Kafka
 
     def pause_for(topic, partition)
       @pauses[topic][partition]
+    end
+
+    def clear_current_offsets(excluding: {})
+      @current_offsets.each do |topic, partitions|
+        partitions.keep_if do |partition, _|
+          excluding.fetch(topic, []).include?(partition)
+        end
+      end
     end
   end
 end

@@ -89,6 +89,46 @@ describe Kafka::Consumer do
     end
   end
 
+  shared_context 'with partition reassignment' do
+    let(:messages_after_partition_reassignment) {
+      [
+        double(:message, {
+          value: "hello",
+          key: nil,
+          headers: {},
+          topic: "greetings",
+          partition: 1,
+          offset: 10,
+          create_time: Time.now,
+          is_control_record: false
+        })
+      ]
+    }
+
+    let(:batches_after_partition_reassignment) {
+      [
+        Kafka::FetchedBatch.new(
+          topic: "greetings",
+          partition: 1,
+          highwater_mark_offset: 42,
+          messages: messages_after_partition_reassignment,
+        )
+      ]
+    }
+
+    before do
+      @count = 0
+      allow(fetcher).to receive(:poll) {
+        @count += 1
+        if @count == 1
+          [:batches, fetched_batches]
+        else
+          [:batches, batches_after_partition_reassignment]
+        end
+      }
+    end
+  end
+
   before do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:disconnect)
@@ -243,6 +283,63 @@ describe Kafka::Consumer do
 
         expect(offset_manager).to have_received(:commit_offsets_if_necessary).twice
         expect(@yield_count).to eq 1
+      end
+    end
+
+    context 'consumer joins a new group' do
+      include_context 'with partition reassignment'
+
+      let(:group) { double(:group).as_null_object }
+      let(:fetcher) { double(:fetcher).as_null_object }
+      let(:current_offsets) { consumer.instance_variable_get(:@current_offsets) }
+      let(:assigned_partitions) { { 'greetings' => [0] } }
+      let(:reassigned_partitions) { { 'greetings' => [1] } }
+
+      before do
+        allow(heartbeat).to receive(:trigger) do
+          next unless @encounter_rebalance
+          @encounter_rebalance = false
+          raise Kafka::RebalanceInProgress
+        end
+
+        consumer.each_message do |message|
+          consumer.stop
+        end
+
+        allow(group).to receive(:assigned_partitions).and_return(reassigned_partitions)
+        allow(group).to receive(:assigned_to?).with('greetings', 1) { true }
+        allow(group).to receive(:assigned_to?).with('greetings', 0) { false }
+        allow(group).to receive(:generation_id).and_return(*generation_ids)
+
+        @encounter_rebalance = true
+      end
+
+      context 'with subsequent group generations' do
+        let(:generation_ids) { [1, 2] }
+
+        it 'removes local offsets for partitions it is no longer assigned' do
+          expect(offset_manager).to receive(:clear_offsets_excluding).with(reassigned_partitions)
+
+          expect do
+            consumer.each_message do |message|
+              consumer.stop
+            end
+          end.to change { current_offsets['greetings'].keys }.from([0]).to([1])
+        end
+      end
+
+      context 'with group generations further apart' do
+        let(:generation_ids) { [1, 3] }
+
+        it 'clears local offsets' do
+          expect(offset_manager).to receive(:clear_offsets)
+
+          expect do
+            consumer.each_message do |message|
+              consumer.stop
+            end
+          end.to change { current_offsets['greetings'].keys }.from([0]).to([1])
+        end
       end
     end
   end
