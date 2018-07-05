@@ -102,6 +102,7 @@ describe Kafka::Consumer do
     allow(offset_manager).to receive(:next_offset_for) { 42 }
 
     allow(group).to receive(:subscribe)
+    allow(group).to receive(:group_id)
     allow(group).to receive(:leave)
     allow(group).to receive(:member?) { true }
     allow(group).to receive(:subscribed_partitions) { assigned_partitions }

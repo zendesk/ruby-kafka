@@ -476,7 +476,14 @@ module Kafka
         offset = @offset_manager.next_offset_for(topic, partition)
       end
 
-      @fetcher.seek(topic, partition, offset)
+      @instrumenter.instrument('set_offset.consumer',
+                               group_id: @group.group_id,
+                               topic: topic,
+                               partition: partition,
+                               offset: offset) do
+
+        @fetcher.seek(topic, partition, offset)
+      end
     end
 
     def resume_paused_partitions!
