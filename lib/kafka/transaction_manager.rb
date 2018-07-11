@@ -84,10 +84,17 @@ module Kafka
       @transaction_state.transition_to!(TransactionStateMachine::READY)
 
       nil
+    rescue
+      @transaction_state.transition_to!(TransactionStateMachine::ERROR)
+      raise
     end
 
     def add_partitions_to_transaction(topic_partitions)
       force_transactional!
+
+      if @transaction_state.uninitialized?
+        raise 'Transaction is uninitialized'
+      end
 
       # Extract newly created partitions
       new_topic_partitions = {}
@@ -195,6 +202,10 @@ module Kafka
 
     def in_transaction?
       @transaction_state.in_transaction?
+    end
+
+    def error?
+      @transaction_state.error?
     end
 
     def close
