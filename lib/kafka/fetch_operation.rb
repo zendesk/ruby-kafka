@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "kafka/fetched_batch"
+require "kafka/fetch_offset_resolver"
 
 module Kafka
 
@@ -29,6 +30,10 @@ module Kafka
       @max_bytes = max_bytes
       @max_wait_time = max_wait_time
       @topics = {}
+
+      @offset_resolver = Kafka::FetchOffsetResolver.new(
+        logger: logger
+      )
     end
 
     def fetch_from_partition(topic, partition, offset: :latest, max_bytes: 1048576)
@@ -66,7 +71,7 @@ module Kafka
       end
 
       topics_by_broker.flat_map {|broker, topics|
-        resolve_offsets(broker, topics)
+        @offset_resolver.resolve!(broker, topics)
 
         options = {
           max_wait_time: @max_wait_time * 1000, # Kafka expects ms, not secs
@@ -112,41 +117,6 @@ module Kafka
     end
 
     private
-
-    def resolve_offsets(broker, topics)
-      pending_topics = {}
-
-      topics.each do |topic, partitions|
-        partitions.each do |partition, options|
-          offset = options.fetch(:fetch_offset)
-          next if offset >= 0
-
-          @logger.debug "Resolving offset `#{offset}` for #{topic}/#{partition}..."
-
-          pending_topics[topic] ||= []
-          pending_topics[topic] << {
-            partition: partition,
-            time: offset,
-            max_offsets: 1,
-          }
-        end
-      end
-
-      return topics if pending_topics.empty?
-
-      response = broker.list_offsets(topics: pending_topics)
-
-      pending_topics.each do |topic, partitions|
-        partitions.each do |options|
-          partition = options.fetch(:partition)
-          resolved_offset = response.offset_for(topic, partition)
-
-          @logger.debug "Offset for #{topic}/#{partition} is #{resolved_offset.inspect}"
-
-          topics[topic][partition][:fetch_offset] = resolved_offset || 0
-        end
-      end
-    end
 
     def extract_messages(fetched_topic, fetched_partition)
       return [] if fetched_partition.messages.empty?
