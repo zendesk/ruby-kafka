@@ -219,7 +219,7 @@ describe Kafka::FetchedBatchGenerator do
       end
     end
 
-    context 'including aborted control records and single aborted transaction' do
+    context 'including aborted control records and aborted transactions' do
       let(:record_1) { Kafka::Protocol::Record.new(value: 'Hello', offset: 12) }
       let(:record_2) { Kafka::Protocol::Record.new(value: 'World', offset: 13) }
       let(:record_3) { Kafka::Protocol::Record.new(value: 'Bye', offset: 14) }
@@ -231,6 +231,10 @@ describe Kafka::FetchedBatchGenerator do
           highwater_mark_offset: 1,
           last_stable_offset: 1,
           aborted_transactions: [
+            Kafka::Protocol::FetchResponse::AbortedTransaction.new(
+              producer_id: 5,
+              first_offset: 16
+            ),
             Kafka::Protocol::FetchResponse::AbortedTransaction.new(
               producer_id: 5,
               first_offset: 10
@@ -313,6 +317,15 @@ describe Kafka::FetchedBatchGenerator do
                 )
               ]
             ),
+            Kafka::Protocol::RecordBatch.new(
+              producer_id: 5,
+              in_transaction: true,
+              first_offset: 16,
+              last_offset_delta: 0,
+              records: [
+                Kafka::Protocol::Record.new(value: 'Aborted 4', offset: 16)
+              ]
+            ),
           ]
         )
       end
@@ -329,10 +342,6 @@ describe Kafka::FetchedBatchGenerator do
         expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record_2)
         expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
       end
-    end
-
-    context 'including aborted control records and multiple aborted transactions' do
-
     end
   end
 end
