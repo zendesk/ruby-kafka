@@ -8,9 +8,11 @@ module Kafka
     # ## API Specification
     #
     #     OffsetResponse => [TopicName [PartitionOffsets]]
-    #       PartitionOffsets => Partition ErrorCode [Offset]
+    #       ThrottleTimeMS => int32
+    #       PartitionOffsets => Partition ErrorCode Timestamp Offset
     #       Partition => int32
     #       ErrorCode => int16
+    #       Timestamp => int64
     #       Offset => int64
     #
     class ListOffsetResponse

@@ -10,12 +10,18 @@ module Kafka
     #
     # ## API Specification
     #
-    #     FetchResponse => [TopicName [Partition ErrorCode HighwaterMarkOffset MessageSetSize MessageSet]]
+    #     FetchResponse => ThrottleTimeMS [TopicName [Partition ErrorCode HighwaterMarkOffset LastStableOffset [AbortedTransaction] Records]]
+    #       ThrottleTimeMS => int32
     #       TopicName => string
     #       Partition => int32
     #       ErrorCode => int16
     #       HighwaterMarkOffset => int64
+    #       LastStableOffset => int64
     #       MessageSetSize => int32
+    #       AbortedTransaction => [
+    #             ProducerId => int64
+    #             FirstOffset => int64
+    #       ]
     #
     class FetchResponse
       MAGIC_BYTE_OFFSET = 16

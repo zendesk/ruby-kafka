@@ -278,22 +278,65 @@ module Kafka
       @cluster.disconnect
     end
 
+    # Initializes the producer to ready for future transactions. This method
+    # should be triggered once, before any tranactions are created.
+    #
+    # @return [nil]
     def init_transactions
       @transaction_manager.init_transactions
     end
 
+    # Mark the beginning of a transaction. This method transitions the state
+    # of the transaction trantiions to IN_TRANSACTION.
+    #
+    # All producing operations can only be executed while the transation is
+    # in this state. The records are persisted by Kafka brokers, but not visible
+    # the consumers until the #commit_transaction method is trigger. After a
+    # timeout period without committed, the transaction is timeout and
+    # considered as aborted.
+    #
+    # @return [nil]
     def begin_transaction
       @transaction_manager.begin_transaction
     end
 
+    # This method commits the pending transaction, marks all the produced
+    # records committed. After that, they are visible to the consumers.
+    #
+    # This method can only be called if and only if the current transaction
+    # is at IN_TRANSACTION state.
+    #
+    # @return [nil]
     def commit_transaction
       @transaction_manager.commit_transaction
     end
 
+    # This method abort the pending transaction, marks all the produced
+    # records aborted. All the records will be wiped out by the brokers and the
+    # cosumers don't have a chance to consume those messages, except they enable
+    # consuming uncommitted option.
+    #
+    # This method can only be called if and only if the current transaction
+    # is at IN_TRANSACTION state.
+    #
+    # @return [nil]
     def abort_transaction
       @transaction_manager.abort_transaction
     end
 
+    # Syntactic sugar to enable easier transaction usage. Do the following steps
+    #
+    # - Start the transaction (with Producer#begin_transaction)
+    # - Yield the given block
+    # - Commit the transaction (with Producer#commit_transaction)
+    #
+    # If the block raises exception, the transaction is automatically aborted
+    # *before* bubble up the exception.
+    #
+    # If the block raises Kafka::Producer::AbortTransaction indicator exception,
+    # it aborts the transaction silently, without throwing up that exception.
+    #
+    # @return [nil]
     def with_transaction
       raise 'with_transaction requires a block' unless block_given?
       begin_transaction

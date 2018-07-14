@@ -108,12 +108,20 @@ module Kafka
       connect_to_broker(get_leader_id(topic, partition))
     end
 
+    # Finds the broker acting as the coordinator of the given group.
+    #
+    # @param group_id: [String]
+    # @return [Broker] the broker that's currently coordinator.
     def get_group_coordinator(group_id:)
       @logger.debug "Getting group coordinator for `#{group_id}`"
       refresh_metadata_if_necessary!
       get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_GROUP, group_id)
     end
 
+    # Finds the broker acting as the coordinator of the given transaction.
+    #
+    # @param transactional_id: [String]
+    # @return [Broker] the broker that's currently coordinator.
     def get_transaction_coordinator(transactional_id:)
       @logger.debug "Getting transaction coordinator for `#{transactional_id}`"
 

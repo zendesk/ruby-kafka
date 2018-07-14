@@ -8,10 +8,10 @@ module Kafka
     #
     #     OffsetRequest => ReplicaId [TopicName [Partition Time MaxNumberOfOffsets]]
     #       ReplicaId => int32
+    #       IsolationLevel => int8
     #       TopicName => string
     #       Partition => int32
     #       Time => int64
-    #       MaxNumberOfOffsets => int32
     #
     class ListOffsetRequest
       ISOLATION_READ_UNCOMMITTED = 0
