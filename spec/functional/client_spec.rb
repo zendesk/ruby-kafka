@@ -6,11 +6,8 @@ describe "Producer API", functional: true do
   let!(:topic) { create_random_topic(num_partitions: 3) }
   let!(:deleted_topic) { create_random_topic(num_partitions: 3) }
 
-  before do
-    kafka.delete_topic(deleted_topic)
-  end
-
   example "listing available topics in the cluster" do
+    kafka.delete_topic(deleted_topic)
     # Use a clean Kafka instance to avoid hitting caches.
     kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
 
