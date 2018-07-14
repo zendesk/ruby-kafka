@@ -83,6 +83,8 @@ module Kafka
       @transaction_partitions = {}
       @transaction_state.transition_to!(TransactionStateMachine::READY)
 
+      @logger.info "Transaction #{@transactional_id} is initialized, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+
       nil
     rescue
       @transaction_state.transition_to!(TransactionStateMachine::ERROR)
@@ -104,6 +106,8 @@ module Kafka
           if !@transaction_partitions[topic][partition]
             new_topic_partitions[topic] ||= []
             new_topic_partitions[topic] << partition
+
+            @logger.info "Adding parition #{topic}/#{partition}  to transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
           end
         end
       end
@@ -138,6 +142,8 @@ module Kafka
       raise 'Transaction is not ready' unless @transaction_state.ready?
       @transaction_state.transition_to!(TransactionStateMachine::IN_TRANSACTION)
 
+      @logger.info "Begin transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+
       nil
     rescue
       @transaction_state.transition_to!(TransactionStateMachine::ERROR)
@@ -157,6 +163,9 @@ module Kafka
       end
 
       @transaction_state.transition_to!(TransactionStateMachine::COMMITTING_TRANSACTION)
+
+      @logger.info "Commiting transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+
       response = transaction_coordinator.end_txn(
         transactional_id: @transactional_id,
         producer_id: @producer_id,
@@ -164,6 +173,8 @@ module Kafka
         transaction_result: TRANSACTION_RESULT_COMMIT
       )
       Protocol.handle_error(response.error_code)
+
+      @logger.info "Transaction #{@transactional_id} is committed, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
       complete_transaction
 
       nil
@@ -185,6 +196,9 @@ module Kafka
       end
 
       @transaction_state.transition_to!(TransactionStateMachine::ABORTING_TRANSACTION)
+
+      @logger.info "Aborting transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+
       response = transaction_coordinator.end_txn(
         transactional_id: @transactional_id,
         producer_id: @producer_id,
@@ -192,6 +206,9 @@ module Kafka
         transaction_result: TRANSACTION_RESULT_ABORT
       )
       Protocol.handle_error(response.error_code)
+
+      @logger.info "Transaction #{@transactional_id} is aborted, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+
       complete_transaction
 
       nil
