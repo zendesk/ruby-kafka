@@ -44,6 +44,15 @@ module Kafka
         end
       end
 
+      class AbortedTransaction
+        attr_reader :producer_id, :first_offset
+
+        def initialize(producer_id:, first_offset:)
+          @producer_id = producer_id
+          @first_offset = first_offset
+        end
+      end
+
       attr_reader :topics
 
       def initialize(topics: [], throttle_time_ms: 0)
@@ -66,10 +75,10 @@ module Kafka
             aborted_transactions = decoder.array do
               producer_id = decoder.int64
               first_offset = decoder.int64
-              {
+              AbortedTransaction.new(
                 producer_id: producer_id,
                 first_offset: first_offset
-              }
+              )
             end
 
             messages_raw = decoder.bytes

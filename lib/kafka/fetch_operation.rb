@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require "kafka/fetched_batch"
 require "kafka/fetched_offset_resolver"
-require "kafka/fetched_message_extractor"
+require "kafka/fetched_batch_generator"
 
 module Kafka
 
@@ -31,9 +30,6 @@ module Kafka
       @topics = {}
 
       @offset_resolver = Kafka::FetchedOffsetResolver.new(
-        logger: logger
-      )
-      @messages_extractor = Kafka::FetchedMessageExtractor.new(
         logger: logger
       )
     end
@@ -101,14 +97,11 @@ module Kafka
               raise e
             end
 
-            messages = @messages_extractor.extract(fetched_topic.name, fetched_partition)
-
-            FetchedBatch.new(
-              topic: fetched_topic.name,
-              partition: fetched_partition.partition,
-              highwater_mark_offset: fetched_partition.highwater_mark_offset,
-              messages: messages,
-            )
+            Kafka::FetchedBatchGenerator.new(
+              fetched_topic.name,
+              fetched_partition,
+              logger: @logger
+            ).generate
           end
         end
       end

@@ -55,6 +55,10 @@ module Kafka
         @records.size
       end
 
+      def last_offset
+        @first_offset + @last_offset_delta
+      end
+
       def attributes
         0x0000 | @codec_id |
           (@in_transaction ? IN_TRANSACTION_MASK : 0x0) |
