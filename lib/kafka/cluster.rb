@@ -285,8 +285,7 @@ module Kafka
             topic => broker_partitions.map {|partition|
               {
                 partition: partition,
-                time: offset,
-                max_offsets: 1,
+                time: offset
               }
             }
           }

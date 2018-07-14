@@ -54,12 +54,14 @@ describe Kafka::FetchedOffsetResolver do
               Kafka::Protocol::ListOffsetResponse::PartitionOffsetInfo.new(
                 partition: 0,
                 error_code: 0,
-                offsets: [11],
+                timestamp: 0,
+                offset: 11
               ),
               Kafka::Protocol::ListOffsetResponse::PartitionOffsetInfo.new(
                 partition: 1,
                 error_code: 0,
-                offsets: [22],
+                timestamp: 0,
+                offset: 22
               )
             ]
           ),
@@ -69,7 +71,8 @@ describe Kafka::FetchedOffsetResolver do
               Kafka::Protocol::ListOffsetResponse::PartitionOffsetInfo.new(
                 partition: 3,
                 error_code: 0,
-                offsets: [55],
+                timestamp: 0,
+                offset: 55
               )
             ]
           )
@@ -84,20 +87,17 @@ describe Kafka::FetchedOffsetResolver do
         'hello' => [
           {
             partition: 0,
-            time: -1,
-            max_offsets: 1
+            time: -1
           },
           {
             partition: 1,
-            time: -2,
-            max_offsets: 1
+            time: -2
           }
         ],
         'hi' => [
           {
             partition: 3,
-            time: -1,
-            max_offsets: 1
+            time: -1
           }
         ]
       }

@@ -24,12 +24,13 @@ module Kafka
       end
 
       class PartitionOffsetInfo
-        attr_reader :partition, :error_code, :offsets
+        attr_reader :partition, :error_code, :timestamp, :offset
 
-        def initialize(partition:, error_code:, offsets:)
+        def initialize(partition:, error_code:, timestamp:, offset:)
           @partition = partition
           @error_code = error_code
-          @offsets = offsets
+          @timestamp = timestamp
+          @offset = offset
         end
       end
 
@@ -56,10 +57,11 @@ module Kafka
 
         Protocol.handle_error(partition_info.error_code)
 
-        partition_info.offsets.first
+        partition_info.offset
       end
 
       def self.decode(decoder)
+        _throttle_time_ms = decoder.int32
         topics = decoder.array do
           name = decoder.string
 
@@ -67,7 +69,8 @@ module Kafka
             PartitionOffsetInfo.new(
               partition: decoder.int32,
               error_code: decoder.int16,
-              offsets: decoder.array { decoder.int64 },
+              timestamp: decoder.int64,
+              offset: decoder.int64
             )
           end
 

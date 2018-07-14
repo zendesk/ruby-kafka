@@ -38,8 +38,7 @@ module Kafka
           pending_topics[topic] ||= []
           pending_topics[topic] << {
             partition: partition,
-            time: offset,
-            max_offsets: 1,
+            time: offset
           }
         end
       end
