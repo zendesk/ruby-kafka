@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require "kafka/fetched_batch"
-require "kafka/fetch_offset_resolver"
+require "kafka/fetched_offset_resolver"
+require "kafka/fetched_message_extractor"
 
 module Kafka
 
@@ -21,8 +22,6 @@ module Kafka
   #     operation.execute
   #
   class FetchOperation
-    ABORTED_TRANSACTION_SIGNAL = "\x00\x00\x00\x00".freeze
-
     def initialize(cluster:, logger:, min_bytes: 1, max_bytes: 10485760, max_wait_time: 5)
       @cluster = cluster
       @logger = logger
@@ -31,7 +30,10 @@ module Kafka
       @max_wait_time = max_wait_time
       @topics = {}
 
-      @offset_resolver = Kafka::FetchOffsetResolver.new(
+      @offset_resolver = Kafka::FetchedOffsetResolver.new(
+        logger: logger
+      )
+      @messages_extractor = Kafka::FetchedMessageExtractor.new(
         logger: logger
       )
     end
@@ -70,7 +72,7 @@ module Kafka
         end
       end
 
-      topics_by_broker.flat_map {|broker, topics|
+      topics_by_broker.flat_map do |broker, topics|
         @offset_resolver.resolve!(broker, topics)
 
         options = {
@@ -82,8 +84,8 @@ module Kafka
 
         response = broker.fetch_messages(**options)
 
-        response.topics.flat_map {|fetched_topic|
-          fetched_topic.partitions.map {|fetched_partition|
+        response.topics.flat_map do |fetched_topic|
+          fetched_topic.partitions.map do |fetched_partition|
             begin
               Protocol.handle_error(fetched_partition.error_code)
             rescue Kafka::OffsetOutOfRange => e
@@ -99,7 +101,7 @@ module Kafka
               raise e
             end
 
-            messages = extract_messages(fetched_topic, fetched_partition)
+            messages = @messages_extractor.extract(fetched_topic.name, fetched_partition)
 
             FetchedBatch.new(
               topic: fetched_topic.name,
@@ -107,53 +109,13 @@ module Kafka
               highwater_mark_offset: fetched_partition.highwater_mark_offset,
               messages: messages,
             )
-          }
-        }
-      }
+          end
+        end
+      end
     rescue Kafka::ConnectionError, Kafka::LeaderNotAvailable, Kafka::NotLeaderForPartition
       @cluster.mark_as_stale!
 
       raise
-    end
-
-    private
-
-    def extract_messages(fetched_topic, fetched_partition)
-      return [] if fetched_partition.messages.empty?
-
-      if fetched_partition.messages.first.is_a?(Kafka::Protocol::MessageSet)
-        fetched_partition.messages.flat_map { |message_set| message_set.messages }
-      else
-        records_by_producer_id = {}
-        fetched_partition.messages.each do |record_batch|
-          record_batch.records.each do |record|
-            if record.is_control_record
-              exclude_aborted_transaction(
-                record, records_by_producer_id, fetched_partition.aborted_transactions
-              )
-            else
-              records_by_producer_id[record_batch.producer_id] ||= []
-              records_by_producer_id[record_batch.producer_id] << FetchedMessage.new(
-                message: record,
-                topic: fetched_topic.name,
-                partition: fetched_partition.partition
-              )
-            end
-          end
-        end
-        records_by_producer_id.values.flatten
-      end
-    end
-
-    def exclude_aborted_transaction(control_record, records_by_producer_id, aborted_transactions)
-      return if control_record.key != ABORTED_TRANSACTION_SIGNAL || aborted_transactions.empty?
-      aborted_transactions.each do |abort_transaction|
-        if records_by_producer_id.key?(abort_transaction[:producer_id])
-          records_by_producer_id[abort_transaction[:producer_id]].reject! do |record|
-            record.offset >= abort_transaction[:first_offset]
-          end
-        end
-      end
     end
   end
 end

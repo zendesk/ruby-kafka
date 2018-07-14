@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe Kafka::FetchOffsetResolver do
+describe Kafka::FetchedOffsetResolver do
   let(:broker) { double(:broker) }
   let(:logger) { LOGGER }
   let(:resolver) { described_class.new(logger: logger) }

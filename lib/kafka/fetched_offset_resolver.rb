@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Kafka
-  class FetchOffsetResolver
+  class FetchedOffsetResolver
     def initialize(logger:)
       @logger = logger
     end
