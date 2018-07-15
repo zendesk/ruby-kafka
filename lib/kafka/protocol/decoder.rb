@@ -6,8 +6,6 @@ module Kafka
     # from it. The Kafka protocol is not self-describing, so a client must call
     # these methods in just the right order for things to work.
     class Decoder
-      VARINT_MASK = 0b10000000
-
       def self.from_string(str)
         new(StringIO.new(str))
       end
@@ -123,12 +121,11 @@ module Kafka
       def varint
         group = 0
         data = 0
-        loop do
-          chunk = int8
-          data |= (chunk & (~VARINT_MASK)) << group
+        while (chunk = int8) & 0x80 != 0
+          data |= (chunk & 0x7f) << group
           group += 7
-          break if (chunk & VARINT_MASK) == 0
         end
+        data |= chunk << group
         data & 0b1 != 0 ? ~(data >> 1) : (data >> 1)
       end
 
