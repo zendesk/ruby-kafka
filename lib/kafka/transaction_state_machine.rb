@@ -40,27 +40,33 @@ module Kafka
     end
 
     def uninitialized?
-      @mutex.synchronize { @state == UNINITIALIZED }
+      in_state?(UNINITIALIZED)
     end
 
     def ready?
-      @mutex.synchronize { @state == READY }
+      in_state?(READY)
     end
 
     def in_transaction?
-      @mutex.synchronize { @state == IN_TRANSACTION }
+      in_state?(IN_TRANSACTION)
     end
 
     def committing_transaction?
-      @mutex.synchronize { @state == COMMITTING_TRANSACTION }
+      in_state?(COMMITTING_TRANSACTION)
     end
 
     def aborting_transaction?
-      @mutex.synchronize { @state == ABORTING_TRANSACTION }
+      in_state?(ABORTING_TRANSACTION)
     end
 
     def error?
-      @mutex.synchronize { @state == ERROR }
+      in_state?(ERROR)
+    end
+
+    private
+
+    def in_state?(state)
+      @mutex.synchronize { @state == state }
     end
   end
 end

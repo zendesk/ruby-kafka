@@ -131,8 +131,9 @@ module Kafka
         # Get a random_broker
         @logger.debug "Transaction ID is not available. Choose a random broker."
         return random_broker
+      else
+        get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_TRANSACTION, transactional_id)
       end
-      get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_TRANSACTION, transactional_id)
     end
 
     def partitions_for(topic)

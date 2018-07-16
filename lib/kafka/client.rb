@@ -257,7 +257,7 @@ module Kafka
         idempotent: idempotent,
         transactional: transactional,
         transactional_id: transactional_id,
-        transactional_timeout: transactional_timeout
+        transactional_timeout: transactional_timeout,
       )
 
       Producer.new(
@@ -271,7 +271,7 @@ module Kafka
         max_retries: max_retries,
         retry_backoff: retry_backoff,
         max_buffer_size: max_buffer_size,
-        max_buffer_bytesize: max_buffer_bytesize
+        max_buffer_bytesize: max_buffer_bytesize,
       )
     end
 

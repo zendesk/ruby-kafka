@@ -297,7 +297,7 @@ describe "Transactional producer", functional: true do
     rescue; end
   end
 
-  example 'with_transaction syntax' do
+  example '#transaction syntax' do
     producer = kafka.producer(
       transactional: true,
       transactional_id: SecureRandom.uuid
@@ -306,7 +306,7 @@ describe "Transactional producer", functional: true do
     topic = create_random_topic(num_partitions: 3)
 
     producer.init_transactions
-    producer.with_transaction do
+    producer.transaction do
       producer.produce('Test 1', topic: topic, partition: 0)
       producer.produce('Test 2', topic: topic, partition: 1)
       producer.deliver_messages
@@ -329,7 +329,7 @@ describe "Transactional producer", functional: true do
     producer.shutdown
   end
 
-  example 'with_transaction block raises error' do
+  example '#transaction syntax, block raises error' do
     producer = kafka.producer(
       transactional: true,
       transactional_id: SecureRandom.uuid
@@ -339,7 +339,7 @@ describe "Transactional producer", functional: true do
 
     producer.init_transactions
     expect do
-      producer.with_transaction do
+      producer.transaction do
         producer.produce('Test 1', topic: topic, partition: 0)
         producer.produce('Test 2', topic: topic, partition: 1)
         producer.produce('Test 3', topic: topic, partition: 2)
@@ -360,7 +360,7 @@ describe "Transactional producer", functional: true do
     producer.shutdown
   end
 
-  example 'with_transaction block actively aborts the transaction' do
+  example '#transaction syntax, block actively aborts the transaction' do
     producer = kafka.producer(
       transactional: true,
       transactional_id: SecureRandom.uuid
@@ -370,7 +370,7 @@ describe "Transactional producer", functional: true do
 
     producer.init_transactions
     expect do
-      producer.with_transaction do
+      producer.transaction do
         producer.produce('Test 1', topic: topic, partition: 0)
         producer.produce('Test 2', topic: topic, partition: 1)
         producer.produce('Test 3', topic: topic, partition: 2)

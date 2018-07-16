@@ -28,7 +28,7 @@ module Kafka
       @transaction_partitions = {}
 
       # If transactional mode is enabled, idempotent must be enabled
-      @idempotent = transactional ? true : idempotent
+      @idempotent = transactional || idempotent
 
       @producer_id = -1
       @producer_epoch = 0

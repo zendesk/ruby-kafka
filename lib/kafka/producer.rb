@@ -337,8 +337,8 @@ module Kafka
     # it aborts the transaction silently, without throwing up that exception.
     #
     # @return [nil]
-    def with_transaction
-      raise 'with_transaction requires a block' unless block_given?
+    def transaction
+      raise 'This method requires a block' unless block_given?
       begin_transaction
       yield
       commit_transaction
