@@ -872,6 +872,21 @@ When sending many messages, it's likely that the client needs to send some messa
 
 Make sure your application can survive being blocked for so long.
 
+**Consumer timeouts** can be configured when calling `#consumer` on a client instance:
+
+* `session_timeout` - once this value is reached, the broker will remove the consumer from the list of connected
+  consumers. The timeout is reached if there are no successful poll ("get more messages") or heartbeat requests.
+* `heartbeat_interval` - this is the time between when heartbeats are sent.
+   Ideally this should be set to about 1/3 your session timeout so that if
+   a heartbeat fails, you have enough time to retry and re-connect before
+   the consumer is removed.
+* `poll_timeout` - this will also force the consumer to be removed if it's reached.
+  This essentially represents the *time taken to process a single message*. If
+  this time exceeds the poll timeout, the consumer will be taken out of the group.
+  By default this is set to `Integer::MAX`, meaning there is no effective timeout.
+  
+Also see [Consumer Checkpointing, above](#consumer-checkpointing) for more options.
+
 ### Security
 
 #### Encryption and Authentication using SSL
@@ -1095,7 +1110,11 @@ Last stable release with support for the Kafka 0.9 protocol. Bug and security fi
 
 ### v0.5
 
-Latest stable release, with native support for the Kafka 0.10 protocol and eventually newer protocol versions. Kafka 0.9 is no longer supported by this release series.
+Release with native support for the Kafka 0.10 protocol and eventually newer protocol versions. Kafka 0.9 is no longer supported by this release series.
+
+### v0.6
+
+Latest stable release.
 
 ## Higher level libraries
 

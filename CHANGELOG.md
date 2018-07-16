@@ -10,6 +10,7 @@ Changes and additions to the library will be listed here.
 - Upgrade and rename GroupCoordinator API to FindCoordinator API (#606).
 - Refresh cluster metadata after topic re-assignment (#609).
 - Disable SASL over SSL with a new config (#613).
+- Move heartbeat to a separate thread and add poll_timeout configuration.
 
 ## 0.6.7
 

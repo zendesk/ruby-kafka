@@ -23,7 +23,8 @@ describe Kafka::Consumer do
       offset_manager: offset_manager,
       fetcher: fetcher,
       session_timeout: session_timeout,
-      heartbeat: heartbeat,
+      heartbeat_interval: 10,
+      poll_timeout: 10
     )
   }
 
@@ -148,10 +149,14 @@ describe Kafka::Consumer do
     allow(group).to receive(:assigned_to?) { false }
     allow(group).to receive(:assigned_to?).with('greetings', 0) { true }
 
-    allow(heartbeat).to receive(:trigger)
-
     allow(fetcher).to receive(:data?) { fetched_batches.any? }
     allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }
+
+    allow(heartbeat).to receive(:trigger)
+    allow(heartbeat).to receive(:start)
+    allow(heartbeat).to receive(:message_started)
+    allow(heartbeat).to receive(:stop)
+    allow(Kafka::Heartbeat).to receive(:new).and_return(heartbeat)
 
     consumer.subscribe("greetings")
   end
@@ -182,6 +187,9 @@ describe Kafka::Consumer do
         )
       ]
     }
+    before do
+      allow(consumer).to receive(:join_group)
+    end
 
     it "instruments" do
       expect(instrumenter).to receive(:instrument).once.with('start_process_message.consumer', anything)
@@ -286,6 +294,34 @@ describe Kafka::Consumer do
       end
     end
 
+    it 'ticks the heartbeat' do
+      expect(heartbeat).to receive(:start).once
+      expect(heartbeat).to receive(:message_started).twice
+      expect(heartbeat).to receive(:stop).once
+      last = false
+      consumer.each_message do |_|
+        unless last
+          last = true
+          next
+        end
+        consumer.stop
+      end
+    end
+
+    it 'ticks the heartbeat in batch mode' do
+      expect(heartbeat).to receive(:start).once
+      expect(heartbeat).to receive(:message_started).twice
+      expect(heartbeat).to receive(:stop).once
+      last = false
+      consumer.each_batch do |_|
+        unless last
+          last = true
+          next
+        end
+        consumer.stop
+      end
+    end
+
     context 'message from #fetch_batches is old, and from a partition not assigned to this consumer' do
       include_context 'from unassigned partition'
 
@@ -323,25 +359,20 @@ describe Kafka::Consumer do
       let(:reassigned_partitions) { { 'greetings' => [1] } }
 
       before do
-        allow(heartbeat).to receive(:trigger) do
-          next unless @encounter_rebalance
-          @encounter_rebalance = false
-          raise Kafka::RebalanceInProgress
-        end
-
-        consumer.each_message do |message|
+        consumer.each_message do |_|
           consumer.stop
         end
-
         allow(group).to receive(:assigned_partitions).and_return(reassigned_partitions)
         allow(group).to receive(:assigned_to?).with('greetings', 1) { true }
         allow(group).to receive(:assigned_to?).with('greetings', 0) { false }
         allow(group).to receive(:generation_id).and_return(*generation_ids)
-
-        @encounter_rebalance = true
       end
 
       context 'with subsequent group generations' do
+        before do
+          allow(consumer).to receive(:join_group).and_call_original
+          allow(offset_manager).to receive(:clear_offsets)
+        end
         let(:generation_ids) { [1, 2] }
 
         it 'removes local offsets for partitions it is no longer assigned' do
@@ -357,6 +388,10 @@ describe Kafka::Consumer do
 
       context 'with group generations further apart' do
         let(:generation_ids) { [1, 3] }
+
+        before do
+          allow(consumer).to receive(:join_group).and_call_original
+        end
 
         it 'clears local offsets' do
           expect(offset_manager).to receive(:clear_offsets)
@@ -404,6 +439,10 @@ describe Kafka::Consumer do
         )
       ]
     }
+
+    before do
+      allow(consumer).to receive(:join_group)
+    end
 
     it "does not mark as processed when automatically_mark_as_processed is false" do
       expect(offset_manager).not_to receive(:mark_as_processed)

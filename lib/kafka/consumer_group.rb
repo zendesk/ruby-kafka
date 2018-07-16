@@ -5,7 +5,7 @@ require "kafka/round_robin_assignment_strategy"
 
 module Kafka
   class ConsumerGroup
-    attr_reader :assigned_partitions, :generation_id
+    attr_reader :assigned_partitions, :generation_id, :group_id
 
     def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
@@ -115,6 +115,10 @@ module Kafka
       sleep 1
       @coordinator = nil
       retry
+    end
+
+    def to_s
+      "Group #{@group_id} Member #{@member_id} Topics #{@assigned_topics.keys}"
     end
 
     private

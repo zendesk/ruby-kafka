@@ -4,6 +4,7 @@ require "kafka/consumer_group"
 require "kafka/offset_manager"
 require "kafka/fetcher"
 require "kafka/pause"
+require "thread"
 
 module Kafka
 
@@ -44,7 +45,8 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:,
+                   session_timeout:, heartbeat_interval:, poll_timeout:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
@@ -52,7 +54,14 @@ module Kafka
       @offset_manager = offset_manager
       @session_timeout = session_timeout
       @fetcher = fetcher
-      @heartbeat = heartbeat
+      @heartbeat = Heartbeat.new(
+        group: group,
+        logger: @logger,
+        consumer: self,
+        interval: heartbeat_interval,
+        poll_timeout: poll_timeout,
+        instrumenter: instrumenter
+      )
 
       @pauses = Hash.new {|h, k|
         h[k] = Hash.new {|h2, k2|
@@ -73,6 +82,7 @@ module Kafka
       #   when user commits message other than last in a batch, this would make ruby-kafka refetch
       #   some already consumed messages
       @current_offsets = Hash.new { |h, k| h[k] = {} }
+      @semaphore = Mutex.new
     end
 
     # Subscribes the consumer to a topic.
@@ -110,6 +120,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @heartbeat.stop
       @cluster.disconnect
     end
 
@@ -223,6 +234,7 @@ module Kafka
 
             @instrumenter.instrument("process_message.consumer", notification) do
               begin
+                @heartbeat.message_started
                 yield message unless message.is_control_record
                 @current_offsets[message.topic][message.partition] = message.offset
               rescue => e
@@ -236,8 +248,6 @@ module Kafka
 
             mark_message_as_processed(message) if automatically_mark_as_processed
             @offset_manager.commit_offsets_if_necessary
-
-            trigger_heartbeat
 
             return if !@running
           end
@@ -309,6 +319,7 @@ module Kafka
 
             @instrumenter.instrument("process_batch.consumer", notification) do
               begin
+                @heartbeat.message_started
                 yield batch
                 @current_offsets[batch.topic][batch.partition] = batch.last_offset
               rescue => e
@@ -331,8 +342,6 @@ module Kafka
           end
 
           @offset_manager.commit_offsets_if_necessary
-
-          trigger_heartbeat
 
           return if !@running
         end
@@ -380,12 +389,56 @@ module Kafka
     alias send_heartbeat_if_necessary trigger_heartbeat
     alias send_heartbeat trigger_heartbeat!
 
+    def join_group
+      # No need to rejoin the group if we're already joining it. Check to see
+      # if another thread has the lock, and if so, wait until the lock is done,
+      # i.e. the join is finished, and return immediately.
+      unless @semaphore.try_lock
+        sleep(0.1) while @semaphore.locked?
+        return
+      end
+      old_generation_id = @group.generation_id
+
+      @group.join
+
+      if old_generation_id && @group.generation_id != old_generation_id + 1
+        # We've been out of the group for at least an entire generation, no
+        # sense in trying to hold on to offset data
+        clear_current_offsets
+        @offset_manager.clear_offsets
+      else
+        # After rejoining the group we may have been assigned a new set of
+        # partitions. Keeping the old offset commits around forever would risk
+        # having the consumer go back and reprocess messages if it's assigned
+        # a partition it used to be assigned to way back. For that reason, we
+        # only keep commits for the partitions that we're still assigned.
+        clear_current_offsets(excluding: @group.assigned_partitions)
+        @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
+      end
+
+      @fetcher.reset
+
+      @group.assigned_partitions.each do |topic, partitions|
+        partitions.each do |partition|
+          if paused?(topic, partition)
+            @logger.warn "Not fetching from #{topic}/#{partition} due to pause"
+          else
+            seek_to_next(topic, partition)
+          end
+        end
+      end
+    ensure
+      @semaphore.unlock if @semaphore.locked?
+    end
+
     private
 
     def consumer_loop
       @running = true
 
       @fetcher.start
+      join_group
+      @heartbeat.start
 
       while @running
         begin
@@ -436,39 +489,6 @@ module Kafka
       @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
     end
 
-    def join_group
-      old_generation_id = @group.generation_id
-
-      @group.join
-
-      if old_generation_id && @group.generation_id != old_generation_id + 1
-        # We've been out of the group for at least an entire generation, no
-        # sense in trying to hold on to offset data
-        clear_current_offsets
-        @offset_manager.clear_offsets
-      else
-        # After rejoining the group we may have been assigned a new set of
-        # partitions. Keeping the old offset commits around forever would risk
-        # having the consumer go back and reprocess messages if it's assigned
-        # a partition it used to be assigned to way back. For that reason, we
-        # only keep commits for the partitions that we're still assigned.
-        clear_current_offsets(excluding: @group.assigned_partitions)
-        @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
-      end
-
-      @fetcher.reset
-
-      @group.assigned_partitions.each do |topic, partitions|
-        partitions.each do |partition|
-          if paused?(topic, partition)
-            @logger.warn "Not fetching from #{topic}/#{partition} due to pause"
-          else
-            seek_to_next(topic, partition)
-          end
-        end
-      end
-    end
-
     def seek_to_next(topic, partition)
       # When automatic marking is off, the first poll needs to be based on the last committed
       # offset from Kafka, that's why we fallback in case of nil (it may not be 0)
@@ -503,8 +523,6 @@ module Kafka
       return [] if !@running
 
       join_group unless @group.member?
-
-      trigger_heartbeat
 
       resume_paused_partitions!
 

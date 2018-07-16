@@ -286,6 +286,11 @@ module Kafka
     # @param fetcher_max_queue_size [Integer] max number of items in the fetch queue that
     #   are stored for further processing. Note, that each item in the queue represents a
     #   response from a single broker.
+    #  @param poll_timeout [Integer] the number of seconds to wait from when
+    #   a message begins processing until the session times out. This will
+    #   manually time out even if heartbeats are still being sent. The default
+    #   for this is Integer::MAX, meaning effectively this is not used
+    #   by default.
     # @return [Consumer]
     def consumer(
         group_id:,
@@ -294,7 +299,8 @@ module Kafka
         offset_commit_threshold: 0,
         heartbeat_interval: 10,
         offset_retention_time: nil,
-        fetcher_max_queue_size: 100
+        fetcher_max_queue_size: 100,
+        poll_timeout: Integer::MAX
     )
       cluster = initialize_cluster
 
@@ -331,20 +337,16 @@ module Kafka
         offset_retention_time: offset_retention_time
       )
 
-      heartbeat = Heartbeat.new(
-        group: group,
-        interval: heartbeat_interval,
-      )
-
       Consumer.new(
         cluster: cluster,
         logger: @logger,
+        heartbeat_interval: heartbeat_interval,
+        poll_timeout: poll_timeout,
         instrumenter: instrumenter,
         group: group,
         offset_manager: offset_manager,
         fetcher: fetcher,
-        session_timeout: session_timeout,
-        heartbeat: heartbeat,
+        session_timeout: session_timeout
       )
     end
 
