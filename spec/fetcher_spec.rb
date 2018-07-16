@@ -5,12 +5,13 @@ describe Kafka::Fetcher do
   let(:instrumenter) { double(:instrumenter) }
   let(:logger) { Logger.new(StringIO.new) }
   let(:cluster) { double(:cluster) }
-  let(:fetcher) { described_class.new(group: group,
-                                      instrumenter: instrumenter,
-                                      logger: logger,
-                                      cluster: cluster,
-                                      max_queue_size: 1
-                                      )}
+  let(:fetcher) do
+    described_class.new(group: group,
+                        instrumenter: instrumenter,
+                        logger: logger,
+                        cluster: cluster,
+                        max_queue_size: 1)
+  end
 
   before do
     # don't actually start the loop
@@ -28,7 +29,8 @@ describe Kafka::Fetcher do
         group_id: '123',
         topic: 'my-topic',
         partition: 1,
-        offset: 2)
+        offset: 2
+      )
     end
   end
 end
