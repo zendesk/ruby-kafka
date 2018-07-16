@@ -128,6 +128,8 @@ describe "Idempotent producer", functional: true do
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
     producer.deliver_messages
 
+    sleep 0.5
+
     100.times do |index|
       records = kafka.fetch_messages(topic: topic, partition: index, offset: :earliest)
       expect(records.length).to eql(2)
