@@ -772,7 +772,7 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
 * `leave_group.consumer.kafka` is sent whenever a consumer leaves a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
   
-* `set_offset.consumer.kafka` is sent when a consumer first seeks to an offset. It includes the following payload:
+* `seek.consumer.kafka` is sent when a consumer first seeks to an offset. It includes the following payload:
   * `group_id` is the consumer group id.
   * `topic` is the topic we are seeking in.
   * `partition` is the partition we are seeking in.
