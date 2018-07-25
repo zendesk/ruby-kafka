@@ -40,14 +40,17 @@ module Kafka
     # @param topics [Array<String>]
     # @return [nil]
     def add_target_topics(topics)
-      new_topics = Set.new(topics).delete_if {|o| @target_topics.include? o }
+      topics = Set.new(topics)
+      unless topics.subset?(@target_topics)
+        new_topics = topics - @target_topics
 
-      unless new_topics.empty?
-        @logger.info "New topics added to target list: #{new_topics.to_a.join(', ')}"
+        unless new_topics.empty?
+          @logger.info "New topics added to target list: #{new_topics.to_a.join(', ')}"
 
-        @target_topics.merge(new_topics)
+          @target_topics.merge(new_topics)
 
-        refresh_metadata!
+          refresh_metadata!
+        end
       end
     end
 
