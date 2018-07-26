@@ -7,7 +7,7 @@ module Kafka
     LOOP_WAIT_TIME = 1 # seconds
 
     # :nodoc:
-    def initialize(group:, consumer:, interval:, logger:, poll_timeout:Integer::MAX,
+    def initialize(group:, consumer:, interval:, logger:, poll_timeout: Float::INFINITY,
                    instrumenter:)
       @group = group
       @consumer = consumer

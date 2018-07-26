@@ -289,7 +289,7 @@ module Kafka
     #  @param poll_timeout [Integer] the number of seconds to wait from when
     #   a message begins processing until the session times out. This will
     #   manually time out even if heartbeats are still being sent. The default
-    #   for this is Integer::MAX, meaning effectively this is not used
+    #   for this is Float::INFINITY, meaning effectively this is not used
     #   by default.
     # @return [Consumer]
     def consumer(
@@ -300,7 +300,7 @@ module Kafka
         heartbeat_interval: 10,
         offset_retention_time: nil,
         fetcher_max_queue_size: 100,
-        poll_timeout: Integer::MAX
+        poll_timeout: Float::INFINITY
     )
       cluster = initialize_cluster
 
