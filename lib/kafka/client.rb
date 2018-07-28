@@ -316,6 +316,7 @@ module Kafka
 
       fetcher = Fetcher.new(
         cluster: initialize_cluster,
+        group: group,
         logger: @logger,
         instrumenter: instrumenter,
         max_queue_size: fetcher_max_queue_size
