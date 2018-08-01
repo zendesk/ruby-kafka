@@ -6,11 +6,12 @@ module Kafka
   class Fetcher
     attr_reader :queue
 
-    def initialize(cluster:, logger:, instrumenter:, max_queue_size:)
+    def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
       @max_queue_size = max_queue_size
+      @group = group
 
       @queue = Queue.new
       @commands = Queue.new
@@ -122,6 +123,11 @@ module Kafka
     end
 
     def handle_seek(topic, partition, offset)
+      @instrumenter.instrument('seek.consumer',
+                               group_id: @group.group_id,
+                               topic: topic,
+                               partition: partition,
+                               offset: offset)
       @logger.info "Seeking #{topic}/#{partition} to offset #{offset}"
       @next_offsets[topic][partition] = offset
     end

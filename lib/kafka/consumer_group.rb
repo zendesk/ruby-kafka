@@ -5,7 +5,7 @@ require "kafka/round_robin_assignment_strategy"
 
 module Kafka
   class ConsumerGroup
-    attr_reader :assigned_partitions, :generation_id
+    attr_reader :assigned_partitions, :generation_id, :group_id
 
     def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
@@ -100,13 +100,18 @@ module Kafka
     def heartbeat
       @logger.debug "Sending heartbeat..."
 
-      response = coordinator.heartbeat(
-        group_id: @group_id,
-        generation_id: @generation_id,
-        member_id: @member_id,
-      )
+      @instrumenter.instrument('heartbeat.consumer',
+                               group_id: @group_id,
+                               topic_partitions: @assigned_partitions) do
 
-      Protocol.handle_error(response.error_code)
+        response = coordinator.heartbeat(
+          group_id: @group_id,
+          generation_id: @generation_id,
+          member_id: @member_id,
+        )
+
+        Protocol.handle_error(response.error_code)
+      end
     rescue ConnectionError, UnknownMemberId, RebalanceInProgress, IllegalGeneration => e
       @logger.error "Error sending heartbeat: #{e}"
       raise HeartbeatError, e
