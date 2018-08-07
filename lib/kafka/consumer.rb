@@ -310,9 +310,7 @@ module Kafka
             @instrumenter.instrument("process_batch.consumer", notification) do
               begin
                 yield batch
-                unless batch.empty?
-                  @current_offsets[batch.topic][batch.partition] = batch.last_offset
-                end
+                @current_offsets[batch.topic][batch.partition] = batch.last_offset
               rescue => e
                 offset_range = (batch.first_offset..batch.last_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
