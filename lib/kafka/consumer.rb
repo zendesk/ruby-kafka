@@ -310,7 +310,7 @@ module Kafka
             @instrumenter.instrument("process_batch.consumer", notification) do
               begin
                 yield batch
-                unless batch.messages.empty?
+                unless batch.empty?
                   @current_offsets[batch.topic][batch.partition] = batch.last_offset
                 end
               rescue => e
