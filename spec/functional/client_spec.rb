@@ -2,7 +2,7 @@
 
 require "timecop"
 
-describe "Producer API", functional: true do
+describe "Client API", functional: true do
   let!(:topic) { create_random_topic(num_partitions: 3) }
   let!(:deleted_topic) { create_random_topic(num_partitions: 3) }
 
