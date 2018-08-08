@@ -120,6 +120,10 @@ module Kafka
         broker
       end
 
+      def controller_broker
+        find_broker(controller_id)
+      end
+
       def partitions_for(topic_name)
         topic = @topics.find {|t| t.topic_name == topic_name }
 

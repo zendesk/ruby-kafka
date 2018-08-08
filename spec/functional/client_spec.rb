@@ -22,6 +22,13 @@ describe "Client API", functional: true do
     expect(kafka.has_topic?(deleted_topic)).to eq false
   end
 
+  example "listing brokers in the cluster" do
+    brokers = kafka.brokers
+    controller = kafka.controller_broker
+
+    expect(brokers).to include controller
+  end
+
   example "listing consumer groups working in the cluster" do
     kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
 
