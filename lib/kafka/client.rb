@@ -2,6 +2,7 @@
 
 require "kafka/ssl_context"
 require "kafka/cluster"
+require "kafka/broker_info"
 require "kafka/producer"
 require "kafka/consumer"
 require "kafka/heartbeat"

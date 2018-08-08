@@ -21,7 +21,7 @@ describe Kafka::Cluster do
     it "raises LeaderNotAvailable if there's no leader for the partition" do
       metadata = Kafka::Protocol::MetadataResponse.new(
         brokers: [
-          Kafka::Protocol::MetadataResponse::BrokerInfo.new(
+          Kafka::BrokerInfo.new(
             node_id: 42,
             host: "test1",
             port: 9092,
@@ -52,7 +52,7 @@ describe Kafka::Cluster do
     it "raises InvalidTopic if the topic is invalid" do
       metadata = Kafka::Protocol::MetadataResponse.new(
         brokers: [
-          Kafka::Protocol::MetadataResponse::BrokerInfo.new(
+          Kafka::BrokerInfo.new(
             node_id: 42,
             host: "test1",
             port: 9092,
