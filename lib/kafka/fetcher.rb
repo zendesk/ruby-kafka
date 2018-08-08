@@ -144,9 +144,9 @@ module Kafka
             highwater_mark_offset: batch.highwater_mark_offset,
             message_count: batch.messages.count,
           })
-        end
 
-        @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1
+          @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1
+        end
       end
 
       @queue << [:batches, batches]
