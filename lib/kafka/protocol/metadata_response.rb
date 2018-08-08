@@ -33,20 +33,6 @@ module Kafka
     #         Isr => [int32]
     #
     class MetadataResponse
-      class BrokerInfo
-        attr_reader :node_id, :host, :port
-
-        def initialize(node_id:, host:, port:)
-          @node_id = node_id
-          @host = host
-          @port = port
-        end
-
-        def to_s
-          "#{host}:#{port} (node_id=#{node_id})"
-        end
-      end
-
       class PartitionMetadata
         attr_reader :partition_id, :leader
 
@@ -77,7 +63,7 @@ module Kafka
         end
       end
 
-      # @return [Array<BrokerInfo>] the list of brokers in the cluster.
+      # @return [Array<Kafka::BrokerInfo>] the list of brokers in the cluster.
       attr_reader :brokers
 
       # @return [Array<TopicMetadata>] the list of topics in the cluster.
@@ -125,13 +111,17 @@ module Kafka
       # Finds the broker info for the given node id.
       #
       # @param node_id [Integer] the node id of the broker.
-      # @return [BrokerInfo] information about the broker.
+      # @return [Kafka::BrokerInfo] information about the broker.
       def find_broker(node_id)
         broker = @brokers.find {|broker| broker.node_id == node_id }
 
         raise Kafka::NoSuchBroker, "No broker with id #{node_id}" if broker.nil?
 
         broker
+      end
+
+      def controller_broker
+        find_broker(controller_id)
       end
 
       def partitions_for(topic_name)
