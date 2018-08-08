@@ -653,6 +653,13 @@ module Kafka
       @cluster.apis
     end
 
+    # List all brokers in the cluster.
+    #
+    # @return [Array<Kafka::BrokerInfo>] the list of brokers.
+    def brokers
+      @cluster.cluster_info.brokers
+    end
+
     # Closes all connections to the Kafka brokers and frees up used resources.
     #
     # @return [nil]
