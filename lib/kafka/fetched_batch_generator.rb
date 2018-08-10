@@ -26,6 +26,7 @@ module Kafka
       FetchedBatch.new(
         topic: @topic,
         partition: @fetched_partition.partition,
+        last_offset: @last_offset,
         highwater_mark_offset: @fetched_partition.highwater_mark_offset,
         messages: messages
       )
@@ -36,6 +37,7 @@ module Kafka
     def extract_messages
       @fetched_partition.messages.flat_map do |message_set|
         message_set.messages.map do |message|
+          @last_offset = message.offset if @last_offset.nil? || @last_offset < message.offset
           FetchedMessage.new(
             message: message,
             topic: @topic,
@@ -69,6 +71,7 @@ module Kafka
         end
 
         record_batch.records.each do |record|
+          @last_offset = record.offset if @last_offset.nil? || @last_offset < record.offset
           unless record.is_control_record
             records << FetchedMessage.new(
               message: record,

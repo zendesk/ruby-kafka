@@ -510,7 +510,7 @@ module Kafka
 
         batches.each do |batch|
           batch.messages.each(&block)
-          offsets[batch.partition] = batch.last_offset + 1 unless batch.empty?
+          offsets[batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
         end
       end
     end

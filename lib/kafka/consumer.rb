@@ -310,9 +310,9 @@ module Kafka
             @instrumenter.instrument("process_batch.consumer", notification) do
               begin
                 yield batch
-                @current_offsets[batch.topic][batch.partition] = batch.last_offset
+                @current_offsets[batch.topic][batch.partition] = batch.last_offset unless batch.unknown_last_offset?
               rescue => e
-                offset_range = (batch.first_offset..batch.last_offset)
+                offset_range = (batch.first_offset..batch.last_offset || batch.highwater_mark_offset)
                 location = "#{batch.topic}/#{batch.partition} in offset range #{offset_range}"
                 backtrace = e.backtrace.join("\n")
 
