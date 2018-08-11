@@ -59,7 +59,6 @@ module Kafka
   #     producer.shutdown
   #
   class AsyncProducer
-
     # Initializes a new AsyncProducer.
     #
     # @param sync_producer [Kafka::Producer] the synchronous producer that should
@@ -221,7 +220,7 @@ module Kafka
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.info "Restarting in 10 seconds..."
 
-        sleep 10
+        sleep Kafka::DEFAULT_BACKOFFS[:unexpected_error]
         retry
       rescue Exception => e
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"

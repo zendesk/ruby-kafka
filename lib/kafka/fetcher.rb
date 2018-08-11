@@ -21,7 +21,7 @@ module Kafka
       @min_bytes = 1
 
       # Long poll at most this number of seconds.
-      @max_wait_time = 1
+      @max_wait_time = Kafka::DEFAULT_BACKOFFS[:no_partitions_to_fetch_from]
 
       # The maximum number of bytes to fetch for any given fetch request.
       @max_bytes = 10485760
@@ -88,12 +88,12 @@ module Kafka
 
         send("handle_#{cmd}", *args)
       elsif !@running
-        sleep 0.1
+        sleep Kafka::DEFAULT_BACKOFFS[:loop_not_running]
       elsif @queue.size < @max_queue_size
         step
       else
         @logger.warn "Reached max fetcher queue size (#{@max_queue_size}), sleeping 1s"
-        sleep 1
+        sleep Kafka::DEFAULT_BACKOFFS[:loop_max_reached]
       end
     end
 
@@ -152,7 +152,7 @@ module Kafka
       @queue << [:batches, batches]
     rescue Kafka::NoPartitionsToFetchFrom
       @logger.warn "No partitions to fetch from, sleeping for 1s"
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:no_partitions_to_fetch_from]
     rescue Kafka::Error => e
       @queue << [:exception, e]
     end

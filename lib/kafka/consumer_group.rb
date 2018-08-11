@@ -48,12 +48,12 @@ module Kafka
       synchronize
     rescue NotCoordinatorForGroup
       @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:not_coordinator_for_group]
       @coordinator = nil
       retry
     rescue ConnectionError
       @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:connection_error]
       @cluster.mark_as_stale!
       @coordinator = nil
       retry
@@ -117,7 +117,7 @@ module Kafka
       raise HeartbeatError, e
     rescue NotCoordinatorForGroup
       @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:not_coordinator_for_group]
       @coordinator = nil
       retry
     end
@@ -147,7 +147,7 @@ module Kafka
       @logger.error "Failed to join group; resetting member id and retrying in 1s..."
 
       @member_id = ""
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:unknown_member_id]
 
       retry
     end
@@ -191,7 +191,7 @@ module Kafka
     rescue CoordinatorNotAvailable
       @logger.error "Group coordinator not available for group `#{@group_id}`"
 
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:coordinator_not_available]
 
       retry
     end

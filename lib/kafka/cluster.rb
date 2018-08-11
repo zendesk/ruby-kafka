@@ -4,13 +4,11 @@ require "kafka/broker_pool"
 require "set"
 
 module Kafka
-
   # A cluster represents the state of a Kafka cluster. It needs to be initialized
   # with a non-empty list of seed brokers. The first seed broker that the cluster can connect
   # to will be asked for the cluster metadata, which allows the cluster to map topic
   # partitions to the current leader for those partitions.
   class Cluster
-
     # Initializes a Cluster with a set of seed brokers.
     #
     # The cluster will try to fetch cluster metadata from one of the brokers.
@@ -176,12 +174,12 @@ module Kafka
         end
       rescue Kafka::LeaderNotAvailable
         @logger.warn "Leader not yet available for `#{name}`, waiting 1s..."
-        sleep 1
+        sleep Kafka::DEFAULT_BACKOFFS[:leader_not_available]
 
         retry
       rescue Kafka::UnknownTopicOrPartition
         @logger.warn "Topic `#{name}` not yet created, waiting 1s..."
-        sleep 1
+        sleep Kafka::DEFAULT_BACKOFFS[:unknown_topic_or_partition]
 
         retry
       end
@@ -442,7 +440,7 @@ module Kafka
           return coordinator
         rescue CoordinatorNotAvailable
           @logger.debug "Coordinator not available; retrying in 1s"
-          sleep 1
+          sleep Kafka::DEFAULT_BACKOFFS[:coordinator_not_available]
           retry
         rescue ConnectionError => e
           @logger.error "Failed to get coordinator info from #{broker}: #{e}"

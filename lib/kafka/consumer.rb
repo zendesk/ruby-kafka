@@ -6,7 +6,6 @@ require "kafka/fetcher"
 require "kafka/pause"
 
 module Kafka
-
   # A client that consumes messages from a Kafka cluster in coordination with
   # other clients.
   #
@@ -43,7 +42,6 @@ module Kafka
   #     end
   #
   class Consumer
-
     def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
       @logger = logger
@@ -403,7 +401,7 @@ module Kafka
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"
           @cluster.mark_as_stale!
-          sleep 1
+          sleep Kafka::DEFAULT_BACKOFFS[:leader_not_available]
         rescue ConnectionError => e
           @logger.error "Connection error #{e.class}: #{e.message}"
           @cluster.mark_as_stale!
@@ -431,7 +429,7 @@ module Kafka
       return if attempts.zero?
 
       @logger.error "Retrying to make final offsets commit (#{attempts} attempts left)"
-      sleep(0.1)
+      sleep Kafka::DEFAULT_BACKOFFS[:offset_commit_error]
       make_final_offsets_commit!(attempts - 1)
     rescue Kafka::Error => e
       @logger.error "Encountered error while shutting down; #{e.class}: #{e.message}"
@@ -511,7 +509,7 @@ module Kafka
 
       if !@fetcher.data?
         @logger.debug "No batches to process"
-        sleep 2
+        sleep Kafka::DEFAULT_BACKOFFS[:no_batches_to_process]
         []
       else
         tag, message = @fetcher.poll

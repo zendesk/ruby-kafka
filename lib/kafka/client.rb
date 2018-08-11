@@ -195,7 +195,7 @@ module Kafka
           attempt += 1
           @logger.warn "Error while delivering message, #{e.class}: #{e.message}; retrying after 1s..."
 
-          sleep 1
+          sleep Kafka::DEFAULT_BACKOFFS[:message_delivery_error]
 
           retry
         end

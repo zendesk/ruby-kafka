@@ -3,7 +3,6 @@
 require "kafka/protocol/member_assignment"
 
 module Kafka
-
   # A consumer group partition assignment strategy that assigns partitions to
   # consumers in a round-robin fashion.
   class RoundRobinAssignmentStrategy
@@ -44,7 +43,7 @@ module Kafka
 
       group_assignment
     rescue Kafka::LeaderNotAvailable
-      sleep 1
+      sleep Kafka::DEFAULT_BACKOFFS[:leader_not_available]
       retry
     end
   end

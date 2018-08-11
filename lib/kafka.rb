@@ -3,6 +3,23 @@
 require "kafka/version"
 
 module Kafka
+  # Set of default backoff values
+  DEFAULT_BACKOFFS = {
+    connection_error: 1,
+    coordinator_not_available: 1,
+    leader_not_available: 1,
+    loop_max_reached: 1,
+    loop_not_running: 0.1,
+    message_delivery_error: 1,
+    no_batches_to_process: 2,
+    no_partitions_to_fetch_from: 1,
+    not_coordinator_for_group: 1,
+    offset_commit_error: 0.1,
+    unexpected_error: 10,
+    unknown_member_id: 1,
+    unknown_topic_or_partition: 1
+  }.freeze
+
   class Error < StandardError
   end
 
