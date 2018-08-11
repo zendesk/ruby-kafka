@@ -23,6 +23,7 @@ describe Kafka::FetchedBatchGenerator do
       batch = generator.generate
       expect(batch.topic).to eql('Hello')
       expect(batch.partition).to eql(0)
+      expect(batch.last_offset).to eql(nil)
       expect(batch.highwater_mark_offset).to eql(1)
       expect(batch.messages).to eql([])
     end
@@ -81,11 +82,15 @@ describe Kafka::FetchedBatchGenerator do
           aborted_transactions: [],
           messages: [
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 9,
+              last_offset_delta: 1,
               records: [
                 record_1, record_2
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 11,
+              last_offset_delta: 1,
               records: [
                 record_3
               ]
@@ -98,6 +103,7 @@ describe Kafka::FetchedBatchGenerator do
         batch = generator.generate
         expect(batch.topic).to eql('Hello')
         expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(12)
         expect(batch.highwater_mark_offset).to eql(1)
 
         expect(batch.messages.length).to eql(3)
@@ -118,6 +124,8 @@ describe Kafka::FetchedBatchGenerator do
           aborted_transactions: [],
           messages: [
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 7,
+              last_offset_delta: 2,
               records: [
                 record_1,
                 Kafka::Protocol::Record.new(
@@ -129,6 +137,8 @@ describe Kafka::FetchedBatchGenerator do
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 10,
+              last_offset_delta: 2,
               records: [
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
@@ -151,6 +161,7 @@ describe Kafka::FetchedBatchGenerator do
         batch = generator.generate
         expect(batch.topic).to eql('Hello')
         expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(12)
         expect(batch.highwater_mark_offset).to eql(1)
 
         expect(batch.messages.length).to eql(3)
@@ -171,6 +182,8 @@ describe Kafka::FetchedBatchGenerator do
           aborted_transactions: [],
           messages: [
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 7,
+              last_offset_delta: 0,
               records: [
                 record_1,
                 Kafka::Protocol::Record.new(
@@ -182,6 +195,8 @@ describe Kafka::FetchedBatchGenerator do
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 8,
+              last_offset_delta: 0,
               is_control_batch: true,
               records: [
                 Kafka::Protocol::Record.new(
@@ -192,6 +207,8 @@ describe Kafka::FetchedBatchGenerator do
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
+              first_offset: 9,
+              last_offset_delta: 0,
               records: [
                 record_3,
                 Kafka::Protocol::Record.new(
@@ -209,6 +226,7 @@ describe Kafka::FetchedBatchGenerator do
         batch = generator.generate
         expect(batch.topic).to eql('Hello')
         expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(9)
         expect(batch.highwater_mark_offset).to eql(1)
 
         expect(batch.messages.length).to eql(3)
@@ -334,6 +352,7 @@ describe Kafka::FetchedBatchGenerator do
         batch = generator.generate
         expect(batch.topic).to eql('Hello')
         expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(16)
         expect(batch.highwater_mark_offset).to eql(1)
 
         expect(batch.messages.length).to eql(3)

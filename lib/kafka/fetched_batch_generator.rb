@@ -14,30 +14,32 @@ module Kafka
     end
 
     def generate
-      messages =
-        if @fetched_partition.messages.empty?
-          []
-        elsif @fetched_partition.messages.first.is_a?(Kafka::Protocol::MessageSet)
-          extract_messages
-        else
-          extract_records
-        end
-
-      FetchedBatch.new(
-        topic: @topic,
-        partition: @fetched_partition.partition,
-        last_offset: @last_offset,
-        highwater_mark_offset: @fetched_partition.highwater_mark_offset,
-        messages: messages
-      )
+      if @fetched_partition.messages.empty?
+        empty_fetched_batch
+      elsif @fetched_partition.messages.first.is_a?(Kafka::Protocol::MessageSet)
+        extract_messages
+      else
+        extract_records
+      end
     end
 
     private
 
+    def empty_fetched_batch
+      FetchedBatch.new(
+        topic: @topic,
+        partition: @fetched_partition.partition,
+        last_offset: nil,
+        highwater_mark_offset: @fetched_partition.highwater_mark_offset,
+        messages: []
+      )
+    end
+
     def extract_messages
-      @fetched_partition.messages.flat_map do |message_set|
+      last_offset = nil
+      messages = @fetched_partition.messages.flat_map do |message_set|
         message_set.messages.map do |message|
-          @last_offset = message.offset if @last_offset.nil? || @last_offset < message.offset
+          last_offset = message.offset if last_offset.nil? || last_offset < message.offset
           FetchedMessage.new(
             message: message,
             topic: @topic,
@@ -45,14 +47,23 @@ module Kafka
           )
         end
       end
+      FetchedBatch.new(
+        topic: @topic,
+        partition: @fetched_partition.partition,
+        last_offset: last_offset,
+        highwater_mark_offset: @fetched_partition.highwater_mark_offset,
+        messages: messages
+      )
     end
 
     def extract_records
       records = []
+      last_offset = nil
       aborted_transactions = @fetched_partition.aborted_transactions.sort_by(&:first_offset)
       aborted_producer_ids = {}
 
       @fetched_partition.messages.each do |record_batch|
+        last_offset = record_batch.last_offset if last_offset.nil? || last_offset < record_batch.last_offset
         # Find the list of aborted producer IDs less than current offset
         unless aborted_transactions.empty?
           if aborted_transactions.first.first_offset <= record_batch.last_offset
@@ -71,7 +82,6 @@ module Kafka
         end
 
         record_batch.records.each do |record|
-          @last_offset = record.offset if @last_offset.nil? || @last_offset < record.offset
           unless record.is_control_record
             records << FetchedMessage.new(
               message: record,
@@ -81,7 +91,14 @@ module Kafka
           end
         end
       end
-      records
+
+      FetchedBatch.new(
+        topic: @topic,
+        partition: @fetched_partition.partition,
+        last_offset: last_offset,
+        highwater_mark_offset: @fetched_partition.highwater_mark_offset,
+        messages: records
+      )
     end
 
     def abort_marker?(record_batch)
