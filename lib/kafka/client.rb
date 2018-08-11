@@ -3,6 +3,7 @@
 require "kafka/ssl_context"
 require "kafka/cluster"
 require "kafka/transaction_manager"
+require "kafka/broker_info"
 require "kafka/producer"
 require "kafka/consumer"
 require "kafka/heartbeat"
@@ -683,6 +684,20 @@ module Kafka
 
     def apis
       @cluster.apis
+    end
+
+    # List all brokers in the cluster.
+    #
+    # @return [Array<Kafka::BrokerInfo>] the list of brokers.
+    def brokers
+      @cluster.cluster_info.brokers
+    end
+
+    # The current controller broker in the cluster.
+    #
+    # @return [Kafka::BrokerInfo] information on the controller broker.
+    def controller_broker
+      brokers.find {|broker| broker.node_id == @cluster.cluster_info.controller_id }
     end
 
     # Closes all connections to the Kafka brokers and frees up used resources.

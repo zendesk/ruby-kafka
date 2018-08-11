@@ -346,14 +346,14 @@ module Kafka
       @broker_pool.close
     end
 
+    def cluster_info
+      @cluster_info ||= fetch_cluster_info
+    end
+
     private
 
     def get_leader_id(topic, partition)
       cluster_info.find_leader_id(topic, partition)
-    end
-
-    def cluster_info
-      @cluster_info ||= fetch_cluster_info
     end
 
     # Fetches the cluster metadata.

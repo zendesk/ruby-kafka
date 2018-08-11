@@ -10,6 +10,8 @@ Changes and additions to the library will be listed here.
 - Upgrade and rename GroupCoordinator API to FindCoordinator API (#606).
 - Refresh cluster metadata after topic re-assignment (#609).
 - Disable SASL over SSL with a new config (#613).
+- Allow listing brokers in a cluster (#626).
+- Fix Fetcher's message skipping (#625).
 
 ## 0.6.7
 
