@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.0
+
 - Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
 - Support record headers (#604).
 - Add instrumenter and logger when async message delivery fails (#603).
