@@ -2,7 +2,7 @@ version: 2
 jobs:
   unit:
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: circleci/ruby:2.5.1-node
         environment:
           LOG_LEVEL: DEBUG
     steps:
@@ -13,23 +13,23 @@ jobs:
 
   kafka-0.11:
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: circleci/ruby:2.5.1-node
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:0.11.0.1
+      - image: wurstmeister/kafka:2.11-0.11.0.3
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.11.0.1
+      - image: wurstmeister/kafka:2.11-0.11.0.3
         environment:
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.11.0.1
+      - image: wurstmeister/kafka:2.11-0.11.0.3
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
@@ -43,25 +43,25 @@ jobs:
 
   kafka-1.0.0:
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: circleci/ruby:2.5.1-node
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:1.0.0
+      - image: wurstmeister/kafka:2.11-1.0.2
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.0.0
+      - image: wurstmeister/kafka:2.11-1.0.2
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.0.0
+      - image: wurstmeister/kafka:2.11-1.0.2
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
@@ -73,27 +73,27 @@ jobs:
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec --profile --tag functional spec/functional
 
-  kafka-1.1.0:
+  kafka-1.1:
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: circleci/ruby:2.5.1-node
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:1.1.0
+      - image: wurstmeister/kafka:2.11-1.1.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.1.0
+      - image: wurstmeister/kafka:2.11-1.1.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.1.0
+      - image: wurstmeister/kafka:2.11-1.1.1
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
@@ -112,4 +112,4 @@ workflows:
       - unit
       - kafka-0.11
       - kafka-1.0.0
-      - kafka-1.1.0
+      - kafka-1.1
