@@ -110,6 +110,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @group.leave rescue nil
       @cluster.disconnect
     end
 
@@ -414,10 +415,7 @@ module Kafka
     ensure
       @fetcher.stop
 
-      # In order to quickly have the consumer group re-balance itself, it's
-      # important that members explicitly tell Kafka when they're leaving.
       make_final_offsets_commit!
-      @group.leave rescue nil
       @running = false
     end
 
