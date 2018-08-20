@@ -4,21 +4,35 @@ require "openssl"
 
 module Kafka
   module SslContext
+    CLIENT_CERT_DELIMITER = "\n-----END CERTIFICATE-----\n"
 
-    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, ca_certs_from_system: nil)
-      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || ca_certs_from_system
+    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, client_cert_chain: nil, ca_certs_from_system: nil)
+      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || client_cert_chain || ca_certs_from_system
 
       ssl_context = OpenSSL::SSL::SSLContext.new
 
       if client_cert && client_cert_key
-        ssl_context.set_params(
+        context_params = {
           cert: OpenSSL::X509::Certificate.new(client_cert),
-          key: OpenSSL::PKey.read(client_cert_key)
-        )
+          key: OpenSSL::PKey.read(client_cert_key),
+        }
+        if client_cert_chain
+          certs = []
+          client_cert_chain.split(CLIENT_CERT_DELIMITER).each do |cert|
+            cert += CLIENT_CERT_DELIMITER
+            certs << OpenSSL::X509::Certificate.new(cert)
+          end
+          context_params[:extra_chain_cert] = certs
+        end
+        ssl_context.set_params(context_params)
       elsif client_cert && !client_cert_key
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert` but no `ssl_client_cert_key`. Please provide both."
       elsif !client_cert && client_cert_key
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert_key`, but no `ssl_client_cert`. Please provide both."
+      elsif client_cert_chain && !client_cert
+        raise ArgumentError, "Kafka client initialized with `ssl_client_cert_chain`, but no `ssl_client_cert`. Please provide cert, key and chain."
+      elsif client_cert_chain && !client_cert_key
+        raise ArgumentError, "Kafka client initialized with `ssl_client_cert_chain`, but no `ssl_client_cert_key`. Please provide cert, key and chain."
       end
 
       if ca_cert || ca_cert_file_path || ca_certs_from_system
