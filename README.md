@@ -323,7 +323,7 @@ Note that there's a maximum buffer size; by default, it's set to 1,000 messages 
 
 ```ruby
 producer = kafka.producer(
-  max_buffer_size: 5_000,           # Allow at most 5K messages to be buffered.
+  max_queue_size: 5_000,           # Allow at most 5K messages to be buffered.
   max_buffer_bytesize: 100_000_000, # Allow at most 100MB to be buffered.
   ...
 )
