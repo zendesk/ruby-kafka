@@ -7,6 +7,7 @@ Changes and additions to the library will be listed here.
 ## 0.7.1
 
 - Exactly Once Delivery and Transactional Messaging Support (#608).
+- Support extra client certificates in the SSL Context when authenticating with Kafka (#633).
 
 ## 0.7.0
 
