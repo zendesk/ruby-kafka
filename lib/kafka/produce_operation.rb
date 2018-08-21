@@ -30,8 +30,9 @@ module Kafka
   # * `:sent_message_count` – the number of messages that were successfully sent.
   #
   class ProduceOperation
-    def initialize(cluster:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
+    def initialize(cluster:, transaction_manager:, buffer:, compressor:, required_acks:, ack_timeout:, logger:, instrumenter:)
       @cluster = cluster
+      @transaction_manager = transaction_manager
       @buffer = buffer
       @required_acks = required_acks
       @ack_timeout = ack_timeout
@@ -41,12 +42,23 @@ module Kafka
     end
 
     def execute
+      if (@transaction_manager.idempotent? || @transaction_manager.transactional?) && @required_acks != -1
+        raise 'You must set required_acks option to :all to use idempotent / transactional production'
+      end
+
+      if @transaction_manager.transactional? && !@transaction_manager.in_transaction?
+        raise "Produce operation can only be executed in a pending transaction"
+      end
+
       @instrumenter.instrument("send_messages.producer") do |notification|
         message_count = @buffer.size
 
         notification[:message_count] = message_count
 
         begin
+          if @transaction_manager.idempotent? || @transaction_manager.transactional?
+            @transaction_manager.init_producer_id
+          end
           send_buffered_messages
         ensure
           notification[:sent_message_count] = message_count - @buffer.size
@@ -58,12 +70,16 @@ module Kafka
 
     def send_buffered_messages
       messages_for_broker = {}
+      topic_partitions = {}
 
       @buffer.each do |topic, partition, messages|
         begin
           broker = @cluster.get_leader(topic, partition)
 
           @logger.debug "Current leader for #{topic}/#{partition} is node #{broker}"
+
+          topic_partitions[topic] ||= Set.new
+          topic_partitions[topic].add(partition)
 
           messages_for_broker[broker] ||= MessageBuffer.new
           messages_for_broker[broker].concat(messages, topic: topic, partition: partition)
@@ -81,25 +97,40 @@ module Kafka
         end
       end
 
+      # Add topic and partition to transaction
+      if @transaction_manager.transactional?
+        @transaction_manager.add_partitions_to_transaction(topic_partitions)
+      end
+
       messages_for_broker.each do |broker, message_buffer|
         begin
           @logger.info "Sending #{message_buffer.size} messages to #{broker}"
 
-          messages_for_topics = {}
+          records_for_topics = {}
 
           message_buffer.each do |topic, partition, records|
-            record_batch = Protocol::RecordBatch.new(records: records)
-            messages_for_topics[topic] ||= {}
-            messages_for_topics[topic][partition] = record_batch
+            record_batch = Protocol::RecordBatch.new(
+              records: records,
+              first_sequence: @transaction_manager.next_sequence_for(
+                topic, partition
+              ),
+              in_transaction: @transaction_manager.transactional?,
+              producer_id: @transaction_manager.producer_id,
+              producer_epoch: @transaction_manager.producer_epoch
+            )
+            records_for_topics[topic] ||= {}
+            records_for_topics[topic][partition] = record_batch
           end
 
           response = broker.produce(
-            messages_for_topics: messages_for_topics,
+            messages_for_topics: records_for_topics,
+            compressor: @compressor,
             required_acks: @required_acks,
             timeout: @ack_timeout * 1000, # Kafka expects the timeout in milliseconds.
+            transactional_id: @transaction_manager.transactional_id
           )
 
-          handle_response(broker, response) if response
+          handle_response(broker, response, records_for_topics) if response
         rescue ConnectionError => e
           @logger.error "Could not connect to broker #{broker}: #{e}"
 
@@ -109,11 +140,12 @@ module Kafka
       end
     end
 
-    def handle_response(broker, response)
+    def handle_response(broker, response, records_for_topics)
       response.each_partition do |topic_info, partition_info|
         topic = topic_info.topic
         partition = partition_info.partition
-        messages = @buffer.messages_for(topic: topic, partition: partition)
+        record_batch = records_for_topics[topic][partition]
+        records = record_batch.records
         ack_time = Time.now
 
         begin
@@ -128,14 +160,20 @@ module Kafka
             raise e
           end
 
-          messages.each_with_index do |message, index|
+          if @transaction_manager.idempotent? || @transaction_manager.transactional?
+            @transaction_manager.update_sequence_for(
+              topic, partition, record_batch.first_sequence + record_batch.size
+            )
+          end
+
+          records.each_with_index do |record, index|
             @instrumenter.instrument("ack_message.producer", {
-              key: message.key,
-              value: message.value,
+              key: record.key,
+              value: record.value,
               topic: topic,
               partition: partition,
               offset: partition_info.offset + index,
-              delay: ack_time - message.create_time,
+              delay: ack_time - record.create_time,
             })
           end
         rescue Kafka::CorruptMessage
@@ -156,7 +194,7 @@ module Kafka
         rescue Kafka::NotEnoughReplicasAfterAppend
           @logger.error "Messages written, but to fewer in-sync replicas than required for #{topic}/#{partition}"
         else
-          @logger.debug "Successfully appended #{messages.count} messages to #{topic}/#{partition} on #{broker}"
+          @logger.debug "Successfully appended #{records.count} messages to #{topic}/#{partition} on #{broker}"
 
           # The messages were successfully written; clear them from the buffer.
           @buffer.clear_messages(topic: topic, partition: partition)

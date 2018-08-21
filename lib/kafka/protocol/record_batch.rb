@@ -30,7 +30,7 @@ module Kafka
           first_sequence: 0,
           max_timestamp: Time.now
       )
-        @records = records
+        @records = Array(records)
         @first_offset = first_offset
         @first_timestamp = first_timestamp
         @codec_id = codec_id
@@ -53,6 +53,10 @@ module Kafka
 
       def size
         @records.size
+      end
+
+      def last_offset
+        @first_offset + @last_offset_delta
       end
 
       def attributes
@@ -129,6 +133,18 @@ module Kafka
           record.timestamp_delta = (record.create_time - first_timestamp).to_i
         end
         @last_offset_delta = records.length - 1
+      end
+
+      def ==(other)
+        records == other.records &&
+          first_offset == other.first_offset &&
+          partition_leader_epoch == other.partition_leader_epoch &&
+          in_transaction == other.in_transaction &&
+          is_control_batch == other.is_control_batch &&
+          last_offset_delta == other.last_offset_delta &&
+          producer_id == other.producer_id &&
+          producer_epoch == other.producer_epoch &&
+          first_sequence == other.first_sequence
       end
 
       def self.decode(decoder)

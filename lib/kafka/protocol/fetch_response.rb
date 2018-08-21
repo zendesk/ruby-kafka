@@ -10,12 +10,18 @@ module Kafka
     #
     # ## API Specification
     #
-    #     FetchResponse => [TopicName [Partition ErrorCode HighwaterMarkOffset MessageSetSize MessageSet]]
+    #     FetchResponse => ThrottleTimeMS [TopicName [Partition ErrorCode HighwaterMarkOffset LastStableOffset [AbortedTransaction] Records]]
+    #       ThrottleTimeMS => int32
     #       TopicName => string
     #       Partition => int32
     #       ErrorCode => int16
     #       HighwaterMarkOffset => int64
+    #       LastStableOffset => int64
     #       MessageSetSize => int32
+    #       AbortedTransaction => [
+    #             ProducerId => int64
+    #             FirstOffset => int64
+    #       ]
     #
     class FetchResponse
       MAGIC_BYTE_OFFSET = 16
@@ -44,6 +50,15 @@ module Kafka
         end
       end
 
+      class AbortedTransaction
+        attr_reader :producer_id, :first_offset
+
+        def initialize(producer_id:, first_offset:)
+          @producer_id = producer_id
+          @first_offset = first_offset
+        end
+      end
+
       attr_reader :topics
 
       def initialize(topics: [], throttle_time_ms: 0)
@@ -66,32 +81,36 @@ module Kafka
             aborted_transactions = decoder.array do
               producer_id = decoder.int64
               first_offset = decoder.int64
-              {
+              AbortedTransaction.new(
                 producer_id: producer_id,
                 first_offset: first_offset
-              }
+              )
             end
 
-            messages_decoder = Decoder.from_string(decoder.bytes)
+            messages_raw = decoder.bytes
             messages = []
 
-            magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
-            if magic_byte == RecordBatch::MAGIC_BYTE
-              until messages_decoder.eof?
-                begin
-                  record_batch = RecordBatch.decode(messages_decoder)
-                  messages += record_batch.records
-                rescue InsufficientDataMessage
-                  if messages.length > 0
-                    break
-                  else
-                    raise
+            if !messages_raw.nil? && !messages_raw.empty?
+              messages_decoder = Decoder.from_string(messages_raw)
+
+              magic_byte = messages_decoder.peek(MAGIC_BYTE_OFFSET, MAGIC_BYTE_LENGTH)[0].to_i
+              if magic_byte == RecordBatch::MAGIC_BYTE
+                until messages_decoder.eof?
+                  begin
+                    record_batch = RecordBatch.decode(messages_decoder)
+                    messages << record_batch
+                  rescue InsufficientDataMessage
+                    if messages.length > 0
+                      break
+                    else
+                      raise
+                    end
                   end
                 end
+              else
+                message_set = MessageSet.decode(messages_decoder)
+                messages << message_set
               end
-            else
-              message_set = MessageSet.decode(messages_decoder)
-              messages = message_set.messages
             end
 
             FetchedPartition.new(

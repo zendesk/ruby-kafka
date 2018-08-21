@@ -46,6 +46,7 @@ describe Kafka::Consumer do
       Kafka::FetchedBatch.new(
         topic: "greetings",
         partition: 0,
+        last_offset: 13,
         highwater_mark_offset: 42,
         messages: messages,
       )
@@ -71,6 +72,7 @@ describe Kafka::Consumer do
         Kafka::FetchedBatch.new(
           topic: "greetings",
           partition: 1,
+          last_offset: 10,
           highwater_mark_offset: 42,
           messages: unassigned_messages,
         )
@@ -111,6 +113,7 @@ describe Kafka::Consumer do
         Kafka::FetchedBatch.new(
           topic: "greetings",
           partition: 1,
+          last_offset: 10,
           highwater_mark_offset: 42,
           messages: messages_after_partition_reassignment,
         )
@@ -178,6 +181,7 @@ describe Kafka::Consumer do
         Kafka::FetchedBatch.new(
           topic: "greetings",
           partition: 0,
+          last_offset: 13,
           highwater_mark_offset: 42,
           messages: messages,
         )
@@ -400,6 +404,7 @@ describe Kafka::Consumer do
         Kafka::FetchedBatch.new(
           topic: "greetings",
           partition: 0,
+          last_offset: 13,
           highwater_mark_offset: 42,
           messages: messages,
         )

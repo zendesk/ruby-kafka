@@ -20,6 +20,7 @@ describe Kafka::FetchedBatch do
         fetched_batch = described_class.new(
           topic: 'foo',
           partition: 0,
+          last_offset: 9,
           highwater_mark_offset: 10, # offset of *next* message
           messages: [message]
         )
@@ -33,6 +34,7 @@ describe Kafka::FetchedBatch do
         fetched_batch = described_class.new(
           topic: 'foo',
           partition: 0,
+          last_offset: 9,
           highwater_mark_offset: 12, # offset of *next* message
           messages: [message]
         )

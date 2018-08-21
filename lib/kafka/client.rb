@@ -2,6 +2,7 @@
 
 require "kafka/ssl_context"
 require "kafka/cluster"
+require "kafka/transaction_manager"
 require "kafka/broker_info"
 require "kafka/producer"
 require "kafka/consumer"
@@ -158,8 +159,16 @@ module Kafka
         instrumenter: @instrumenter,
       )
 
+      transaction_manager = TransactionManager.new(
+        cluster: @cluster,
+        logger: @logger,
+        idempotent: false,
+        transactional: false
+      )
+
       operation = ProduceOperation.new(
         cluster: @cluster,
+        transaction_manager: transaction_manager,
         buffer: buffer,
         required_acks: 1,
         ack_timeout: 10,
@@ -222,15 +231,39 @@ module Kafka
     #   are per-partition rather than per-topic or per-producer.
     #
     # @return [Kafka::Producer] the Kafka producer.
-    def producer(compression_codec: nil, compression_threshold: 1, ack_timeout: 5, required_acks: :all, max_retries: 2, retry_backoff: 1, max_buffer_size: 1000, max_buffer_bytesize: 10_000_000)
+    def producer(
+      compression_codec: nil,
+      compression_threshold: 1,
+      ack_timeout: 5,
+      required_acks: :all,
+      max_retries: 2,
+      retry_backoff: 1,
+      max_buffer_size: 1000,
+      max_buffer_bytesize: 10_000_000,
+      idempotent: false,
+      transactional: false,
+      transactional_id: nil,
+      transactional_timeout: 60
+    )
+      cluster = initialize_cluster
       compressor = Compressor.new(
         codec_name: compression_codec,
         threshold: compression_threshold,
         instrumenter: @instrumenter,
       )
 
+      transaction_manager = TransactionManager.new(
+        cluster: cluster,
+        logger: @logger,
+        idempotent: idempotent,
+        transactional: transactional,
+        transactional_id: transactional_id,
+        transactional_timeout: transactional_timeout,
+      )
+
       Producer.new(
-        cluster: initialize_cluster,
+        cluster: cluster,
+        transaction_manager: transaction_manager,
         logger: @logger,
         instrumenter: @instrumenter,
         compressor: compressor,
@@ -478,7 +511,7 @@ module Kafka
 
         batches.each do |batch|
           batch.messages.each(&block)
-          offsets[batch.partition] = batch.last_offset + 1 unless batch.empty?
+          offsets[batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
         end
       end
     end

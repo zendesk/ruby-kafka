@@ -41,7 +41,7 @@ jobs:
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec --profile --tag functional spec/functional
 
-  kafka-1.0:
+  kafka-1.0.0:
     docker:
       - image: circleci/ruby:2.5.1-node
         environment:
@@ -111,5 +111,5 @@ workflows:
     jobs:
       - unit
       - kafka-0.11
-      - kafka-1.0
+      - kafka-1.0.0
       - kafka-1.1

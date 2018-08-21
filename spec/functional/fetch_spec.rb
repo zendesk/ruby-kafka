@@ -2,7 +2,7 @@
 
 describe "Fetch API", functional: true do
   example "fetching from a non-existing topic when auto-create is enabled" do
-    topic = "rand#{rand(1000)}"
+    topic = "rand#{SecureRandom.uuid}"
     attempt = 1
     messages = nil
 

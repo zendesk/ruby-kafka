@@ -7,8 +7,6 @@ module Kafka
     # An encoder wraps an IO object, making it easy to write specific data types
     # to it.
     class Encoder
-      VARINT_MASK = 0b10000000
-
       # Initializes a new encoder.
       #
       # @param io [IO] an object that acts as an IO.
@@ -134,16 +132,13 @@ module Kafka
         int = int << 1
         int = ~int | 1 if int < 0
 
-        loop do
-          chunk = int & (~VARINT_MASK)
-          int = int >> 7
-          if int == 0
-            write_int8(chunk)
-            return
-          else
-            write_int8(chunk | VARINT_MASK)
-          end
+        chunks = []
+        while int & 0xff80 != 0
+          chunks << (int & 0x7f | 0x80)
+          int >>= 7
         end
+        chunks << int
+        write(chunks.pack("C*"))
       end
 
       # Writes a byte string to the IO object.

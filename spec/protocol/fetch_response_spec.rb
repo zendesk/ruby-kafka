@@ -167,8 +167,10 @@ describe Kafka::Protocol::FetchResponse do
           expect(partition.aborted_transactions).to eql([])
           expect(partition.messages.length).to eql(1)
 
-          expect(partition.messages.first.key).to eql('hello')
-          expect(partition.messages.first.value).to eql('world')
+          record_batch = partition.messages.first
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records.first.key).to eql('hello')
+          expect(record_batch.records.first.value).to eql('world')
         end
       end
 
@@ -201,11 +203,15 @@ describe Kafka::Protocol::FetchResponse do
           expect(partition.aborted_transactions).to eql([])
           expect(partition.messages.length).to eql(2)
 
-          expect(partition.messages[0].key).to eql('hello')
-          expect(partition.messages[0].value).to eql('world')
+          record_batch = partition.messages.first
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hello')
+          expect(record_batch.records[0].value).to eql('world')
 
-          expect(partition.messages[1].key).to eql('hiiii')
-          expect(partition.messages[1].value).to eql('byeee')
+          record_batch = partition.messages.last
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hiiii')
+          expect(record_batch.records[0].value).to eql('byeee')
         end
       end
 
@@ -240,11 +246,15 @@ describe Kafka::Protocol::FetchResponse do
           expect(partition.aborted_transactions).to eql([])
           expect(partition.messages.length).to eql(2)
 
-          expect(partition.messages[0].key).to eql('hello')
-          expect(partition.messages[0].value).to eql('world')
+          record_batch = partition.messages.first
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hello')
+          expect(record_batch.records[0].value).to eql('world')
 
-          expect(partition.messages[1].key).to eql('hiiii')
-          expect(partition.messages[1].value).to eql('byeee')
+          record_batch = partition.messages.last
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hiiii')
+          expect(record_batch.records[0].value).to eql('byeee')
         end
       end
 
@@ -313,8 +323,10 @@ describe Kafka::Protocol::FetchResponse do
           expect(partition.aborted_transactions).to eql([])
           expect(partition.messages.length).to eql(1)
 
-          expect(partition.messages[0].key).to eql('hello')
-          expect(partition.messages[0].value).to eql('world')
+          record_batch = partition.messages.first
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hello')
+          expect(record_batch.records[0].value).to eql('world')
 
           partition = topic.partitions[1]
 
@@ -323,8 +335,10 @@ describe Kafka::Protocol::FetchResponse do
           expect(partition.aborted_transactions).to eql([])
           expect(partition.messages.length).to eql(1)
 
-          expect(partition.messages[0].key).to eql('hiiii')
-          expect(partition.messages[0].value).to eql('byeee')
+          record_batch = partition.messages.first
+          expect(record_batch.records.length).to eql(1)
+          expect(record_batch.records[0].key).to eql('hiiii')
+          expect(record_batch.records[0].value).to eql('byeee')
         end
       end
     end
@@ -356,8 +370,12 @@ describe Kafka::Protocol::FetchResponse do
         expect(partition.error_code).to eql(0)
         expect(partition.aborted_transactions).to eql([])
         expect(partition.messages.length).to eql(1)
-        expect(partition.messages.first).to be_a(::Kafka::Protocol::Message)
-        expect(partition.messages[0].value).to eql('hello')
+
+        expect(partition.messages.first).to be_a(::Kafka::Protocol::MessageSet)
+
+        message_set = partition.messages.first
+        expect(message_set.messages[0]).to be_a(::Kafka::Protocol::Message)
+        expect(message_set.messages[0].value).to eql('hello')
       end
     end
   end

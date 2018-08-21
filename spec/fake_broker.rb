@@ -20,7 +20,7 @@ class FakeBroker
     messages
   end
 
-  def produce(messages_for_topics:, required_acks:, timeout:)
+  def produce(messages_for_topics:, required_acks:, timeout:, transactional_id: nil, compressor: nil)
     messages_for_topics.each do |topic, messages_for_topic|
       messages_for_topic.each do |partition, record_batch|
         @messages[topic] ||= {}

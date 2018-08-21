@@ -10,6 +10,7 @@ module Kafka
         headers: {},
         attributes: 0,
         offset_delta: 0,
+        offset: 0,
         timestamp_delta: 0,
         create_time: Time.now,
         is_control_record: false
@@ -20,6 +21,7 @@ module Kafka
         @attributes = attributes
 
         @offset_delta = offset_delta
+        @offset = offset
         @timestamp_delta = timestamp_delta
         @create_time = create_time
         @is_control_record = is_control_record
@@ -45,6 +47,13 @@ module Kafka
         end
 
         encoder.write_varint_bytes(record_buffer.string)
+      end
+
+      def ==(other)
+        offset_delta == other.offset_delta &&
+          timestamp_delta == other.timestamp_delta &&
+          offset == other.offset &&
+          is_control_record == other.is_control_record
       end
 
       def self.decode(decoder)

@@ -7,10 +7,12 @@ module Kafka
     #
     # ## API Specification
     #
-    #     FetchRequest => ReplicaId MaxWaitTime MinBytes [TopicName [Partition FetchOffset MaxBytes]]
+    #     FetchRequest => ReplicaId MaxWaitTime MinBytes MaxBytes IsolationLevel [TopicName [Partition FetchOffset MaxBytes]]
     #       ReplicaId => int32
     #       MaxWaitTime => int32
     #       MinBytes => int32
+    #       MaxBytes => int32
+    #       IsolationLevel => int8
     #       TopicName => string
     #       Partition => int32
     #       FetchOffset => int64

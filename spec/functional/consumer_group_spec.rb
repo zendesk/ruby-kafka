@@ -182,7 +182,6 @@ describe "Consumer API", functional: true do
     threads = consumers.map do |consumer|
       t = Thread.new do
         received_messages[Thread.current] = []
-        puts received_messages
         consumer.each_message do |message|
           received_messages[Thread.current] << message
 
