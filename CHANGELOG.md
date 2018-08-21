@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.1
+
+- Exactly Once Delivery and Transactional Messaging Support (#608).
+
 ## 0.7.0
 
 - Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
