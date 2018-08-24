@@ -4,6 +4,28 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Compatibility with dogstatsd-ruby v4.0.0.
+
+## 0.7.1
+
+- Exactly Once Delivery and Transactional Messaging Support (#608).
+- Support extra client certificates in the SSL Context when authenticating with Kafka (#633).
+
+## 0.7.0
+
+- Drop support for Kafka 0.10 in favor of native support for Kafka 0.11.
+- Support record headers (#604).
+- Add instrumenter and logger when async message delivery fails (#603).
+- Upgrade and rename GroupCoordinator API to FindCoordinator API (#606).
+- Refresh cluster metadata after topic re-assignment (#609).
+- Disable SASL over SSL with a new config (#613).
+- Allow listing brokers in a cluster (#626).
+- Fix Fetcher's message skipping (#625).
+
+## 0.6.7
+
+- Handle case where consumer doesn't know about the topic (#597 + 0e302cbd0f31315bf81c1d1645520413ad6b58f0)
+
 ## v0.6.5
 
 - Fix bug related to partition assignment.

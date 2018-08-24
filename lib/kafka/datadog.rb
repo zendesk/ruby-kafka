@@ -1,3 +1,4 @@
+# coding: utf-8
 # frozen_string_literal: true
 
 begin
@@ -40,7 +41,7 @@ module Kafka
       end
 
       def host
-        @host ||= ::Datadog::Statsd::DEFAULT_HOST
+        @host ||= default_host
       end
 
       def host=(host)
@@ -49,7 +50,7 @@ module Kafka
       end
 
       def port
-        @port ||= ::Datadog::Statsd::DEFAULT_PORT
+        @port ||= default_port
       end
 
       def port=(port)
@@ -76,6 +77,14 @@ module Kafka
       end
 
       private
+
+      def default_host
+        ::Datadog::Statsd.const_defined?(:Connection) ? ::Datadog::Statsd::Connection::DEFAULT_HOST : ::Datadog::Statsd::DEFAULT_HOST
+      end
+
+      def default_port
+        ::Datadog::Statsd.const_defined?(:Connection) ? ::Datadog::Statsd::Connection::DEFAULT_PORT : ::Datadog::Statsd::DEFAULT_PORT
+      end
 
       def clear
         @statsd && @statsd.close
