@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Fix consuming duplication due to redundant messages returned from Kafka (#636).
+
 ## 0.7.1
 
 - Exactly Once Delivery and Transactional Messaging Support (#608).
