@@ -7,10 +7,11 @@ module Kafka
     COMMITTED_TRANSACTION_SIGNAL = "\x00\x00\x00\x01".freeze
     ABORTED_TRANSACTION_SIGNAL = "\x00\x00\x00\x00".freeze
 
-    def initialize(topic, fetched_partition, logger:)
+    def initialize(topic, fetched_partition, offset, logger:)
       @topic = topic
       @fetched_partition = fetched_partition
       @logger = logger
+      @offset = offset
     end
 
     def generate
