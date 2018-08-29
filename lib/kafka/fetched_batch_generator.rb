@@ -41,11 +41,13 @@ module Kafka
       messages = @fetched_partition.messages.flat_map do |message_set|
         message_set.messages.map do |message|
           last_offset = message.offset if last_offset.nil? || last_offset < message.offset
-          FetchedMessage.new(
-            message: message,
-            topic: @topic,
-            partition: @fetched_partition.partition
-          )
+          if message.offset >= @offset
+            FetchedMessage.new(
+              message: message,
+              topic: @topic,
+              partition: @fetched_partition.partition
+            )
+          end
         end
       end
       FetchedBatch.new(
@@ -83,7 +85,7 @@ module Kafka
         end
 
         record_batch.records.each do |record|
-          unless record.is_control_record
+          if !record.is_control_record && record.offset >= @offset
             records << FetchedMessage.new(
               message: record,
               topic: @topic,

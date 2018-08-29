@@ -53,6 +53,6 @@ describe "Compression", functional: true do
 
   def fetch_last_offset
     last_message = kafka.fetch_messages(topic: topic, partition: 0, offset: 0).last
-    last_message ? last_message.offset : 0
+    last_message ? last_message.offset : -1
   end
 end
