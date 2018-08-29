@@ -100,6 +100,7 @@ module Kafka
             Kafka::FetchedBatchGenerator.new(
               fetched_topic.name,
               fetched_partition,
+              topics.fetch(fetched_topic.name).fetch(fetched_partition.partition).fetch(:fetch_offset),
               logger: @logger
             ).generate
           end

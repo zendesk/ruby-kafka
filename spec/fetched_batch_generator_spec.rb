@@ -2,10 +2,7 @@
 
 describe Kafka::FetchedBatchGenerator do
   let(:logger) { LOGGER }
-  let(:generator) { described_class.new('Hello', fetched_partition, logger: logger) }
-  let(:message_1) { Kafka::Protocol::Message.new(value: 'Hello') }
-  let(:message_2) { Kafka::Protocol::Message.new(value: 'World') }
-  let(:message_3) { Kafka::Protocol::Message.new(value: 'Bye') }
+  let(:generator) { described_class.new('Hello', fetched_partition, 0, logger: logger) }
 
   context 'empty partition' do
     let(:fetched_partition) do
@@ -40,13 +37,22 @@ describe Kafka::FetchedBatchGenerator do
         messages: [
           Kafka::Protocol::MessageSet.new(
             messages: [
-              message_1,
-              message_2
+              Kafka::Protocol::Message.new(
+                value: 'Hello',
+                offset: 0
+              ),
+              Kafka::Protocol::Message.new(
+                value: 'World',
+                offset: 1
+              )
             ]
           ),
           Kafka::Protocol::MessageSet.new(
             messages: [
-              message_3
+              Kafka::Protocol::Message.new(
+                value: 'Bye',
+                offset: 2
+              )
             ]
           )
         ]
@@ -61,9 +67,27 @@ describe Kafka::FetchedBatchGenerator do
 
       expect(batch.messages.length).to eql(3)
 
-      expect_fetched_message_eql(batch.messages[0], 'Hello', 0, message_1)
-      expect_fetched_message_eql(batch.messages[1], 'Hello', 0, message_2)
-      expect_fetched_message_eql(batch.messages[2], 'Hello', 0, message_3)
+      expect_fetched_message_eql(
+        batch.messages[0], 'Hello', 0,
+        Kafka::Protocol::Message.new(
+          value: 'Hello',
+          offset: 0
+        )
+      )
+      expect_fetched_message_eql(
+        batch.messages[1], 'Hello', 0,
+        Kafka::Protocol::Message.new(
+          value: 'World',
+          offset: 1
+        )
+      )
+      expect_fetched_message_eql(
+        batch.messages[2], 'Hello', 0,
+        Kafka::Protocol::Message.new(
+          value: 'Bye',
+          offset: 2
+        )
+      )
     end
   end
 
@@ -362,6 +386,73 @@ describe Kafka::FetchedBatchGenerator do
         expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
       end
     end
+
+    context 'record batch contains records with offsets smaller than required offset' do
+      let(:generator) { described_class.new('Hello', fetched_partition, 10, logger: logger) }
+      let(:fetched_partition) do
+        Kafka::Protocol::FetchResponse::FetchedPartition.new(
+          partition: 0,
+          error_code: 0,
+          highwater_mark_offset: 1,
+          last_stable_offset: 1,
+          aborted_transactions: [],
+          messages: [
+            Kafka::Protocol::RecordBatch.new(
+              first_offset: 7,
+              last_offset_delta: 0,
+              records: [
+                Kafka::Protocol::Record.new(
+                  offset: 7,
+                  value: '1234'
+                ),
+                Kafka::Protocol::Record.new(
+                  offset: 8,
+                  value: '1234'
+                )
+              ]
+            ),
+            Kafka::Protocol::RecordBatch.new(
+              first_offset: 9,
+              last_offset_delta: 0,
+              is_control_batch: true,
+              records: [
+                Kafka::Protocol::Record.new(
+                  offset: 9,
+                  value: '1234'
+                ),
+                Kafka::Protocol::Record.new(
+                  offset: 10,
+                  value: '1234'
+                )
+              ]
+            ),
+            Kafka::Protocol::RecordBatch.new(
+              first_offset: 11,
+              last_offset_delta: 0,
+              records: [
+                Kafka::Protocol::Record.new(
+                  offset: 11,
+                  value: '1234'
+                )
+              ]
+            )
+          ]
+        )
+      end
+
+      it 'ignores records less than required offset' do
+        batch = generator.generate
+        expect(batch.topic).to eql('Hello')
+        expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(11)
+        expect(batch.highwater_mark_offset).to eql(1)
+
+        expect(batch.messages.length).to eql(2)
+
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, Kafka::Protocol::Record.new(offset: 10, value: '1234'))
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, Kafka::Protocol::Record.new(offset: 11, value: '1234'))
+      end
+    end
   end
 end
 
@@ -372,7 +463,6 @@ def expect_fetched_message_eql(fetched_message, topic, partition, message)
   expect(fetched_message.value).to eql(message.value)
   expect(fetched_message.key).to eql(message.key)
   expect(fetched_message.offset).to eql(message.offset)
-  expect(fetched_message.create_time).to eql(message.create_time)
 
   if message.is_a?(Kafka::Protocol::Record)
     expect(fetched_message.headers).to eql(message.headers)

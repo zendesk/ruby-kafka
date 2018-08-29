@@ -233,4 +233,42 @@ describe "Consumer API", functional: true do
       ]
     )
   end
+
+  example 'consumer ignored consumed records of a record batch' do
+    topic = create_random_topic(num_partitions: 1)
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    group_id = SecureRandom.uuid
+
+    (1..4).each do |index|
+      producer.produce(index.to_s, topic: topic)
+    end
+    producer.deliver_messages
+
+    count = 0
+    data = []
+
+    consumer = kafka.consumer(group_id: group_id)
+    consumer.subscribe(topic)
+
+    consumer.each_message(automatically_mark_as_processed: false) do |message|
+      count += 1
+      consumer.mark_message_as_processed(message)
+      consumer.commit_offsets
+      data << message.value
+      break if count == 3
+    end
+
+    consumer_2 = kafka.consumer(group_id: group_id)
+    consumer_2.subscribe(topic)
+
+    consumer_2.each_message(automatically_mark_as_processed: false) do |message|
+      consumer_2.mark_message_as_processed(message)
+      consumer_2.commit_offsets
+      data << message.value
+      break
+    end
+
+    expect(data).to eql(%w(1 2 3 4))
+  end
 end
