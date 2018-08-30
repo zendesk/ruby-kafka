@@ -223,7 +223,7 @@ module Kafka
 
             @instrumenter.instrument("process_message.consumer", notification) do
               begin
-                yield message unless message.is_control_record
+                yield(message, batch) unless message.is_control_record
                 @current_offsets[message.topic][message.partition] = message.offset
               rescue => e
                 location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
