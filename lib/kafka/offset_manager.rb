@@ -120,7 +120,7 @@ module Kafka
     def commit_offsets(recommit = false)
       offsets = offsets_to_commit(recommit)
       unless offsets.empty?
-        @logger.info "Committing offsets#{recommit ? ' with recommit' : ''}: #{prettify_offsets(offsets)}"
+        @logger.debug "Committing offsets#{recommit ? ' with recommit' : ''}: #{prettify_offsets(offsets)}"
 
         @group.commit_offsets(offsets)
 
