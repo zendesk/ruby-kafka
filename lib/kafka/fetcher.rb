@@ -172,6 +172,16 @@ module Kafka
       end
 
       operation.execute
+    rescue UnknownTopicOrPartition
+      @logger.error "Failed to fetch from some partitions. Maybe a rebalance has happened? Refreshing cluster info."
+
+      # Our cluster information has become stale, we need to refresh it.
+      @cluster.refresh_metadata!
+
+      # Don't overwhelm the brokers in case this keeps happening.
+      sleep 10
+
+      retry
     rescue NoPartitionsToFetchFrom
       backoff = @max_wait_time > 0 ? @max_wait_time : 1
 
