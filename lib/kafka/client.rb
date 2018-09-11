@@ -576,7 +576,15 @@ module Kafka
     #
     # @return [Array<String>] the list of topic names.
     def topics
-      @cluster.list_topics
+      attempts = 0
+      begin
+        attempts += 1
+        @cluster.list_topics
+      rescue Kafka::ConnectionError
+        @cluster.mark_as_stale!
+        retry unless attempts > 1
+        raise
+      end
     end
 
     # Lists all consumer groups in the cluster
