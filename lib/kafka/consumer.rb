@@ -399,6 +399,7 @@ module Kafka
           join_group
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
+          join_group
         rescue LeaderNotAvailable => e
           @logger.error "Leader not available; waiting 1s before retrying"
           @cluster.mark_as_stale!
