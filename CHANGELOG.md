@@ -4,6 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Compatibility with dogstatsd-ruby v4.0.0.
 - Fix consuming duplication due to redundant messages returned from Kafka (#636).
 - Fresh cluster info on fetch error (#641).
 
