@@ -4,12 +4,11 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.1
+
 - Compatibility with dogstatsd-ruby v4.0.0.
 - Fix consuming duplication due to redundant messages returned from Kafka (#636).
 - Fresh cluster info on fetch error (#641).
-
-## 0.7.1
-
 - Exactly Once Delivery and Transactional Messaging Support (#608).
 - Support extra client certificates in the SSL Context when authenticating with Kafka (#633).
 
