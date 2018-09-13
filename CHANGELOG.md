@@ -4,6 +4,21 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Refresh cluster info on fetch error.
+
+## v0.6.8
+
+- Fix Fetcher's message skipping.
+- Refresh cluster metadata after topic re-assignment.
+
+## v0.6.7
+
+- Fix bug in `ConsumerGroup#assigned_to?`.
+
+## v0.6.6
+
+- Handle case where consumer doesn't know about the topic (#597).
+
 ## v0.6.5
 
 - Fix bug related to partition assignment.
