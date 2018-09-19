@@ -71,8 +71,6 @@ describe "Producer API", functional: true do
   end
 
   example 'support record headers' do
-    topic = create_random_topic(num_partitions: 1)
-
     producer = kafka.async_producer(delivery_threshold: 1)
     producer.produce(
       "hello", topic: topic,
