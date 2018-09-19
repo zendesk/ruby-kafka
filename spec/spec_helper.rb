@@ -51,10 +51,7 @@ end
 
 module SpecHelpers
   def generate_topic_name
-    @@topic_number ||= 0
-    @@topic_number += 1
-
-    "#{RUN_ID}-topic-#{@@topic_number}"
+    "#{RUN_ID}-topic-#{SecureRandom.uuid}"
   end
 
   def create_random_topic(*args)
