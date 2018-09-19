@@ -145,3 +145,4 @@ workflows:
       - kafka-0.11
       - kafka-1.0.0
       - kafka-1.1
+      - kafka-2.0
