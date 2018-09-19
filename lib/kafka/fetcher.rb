@@ -43,7 +43,7 @@ module Kafka
     end
 
     def start
-      return if @running
+      raise "already started" if @running
 
       @thread = Thread.new do
         while @running
@@ -59,6 +59,8 @@ module Kafka
     def stop
       return unless @running
       @commands << [:stop, []]
+      sleep 1
+      puts @thread
     end
 
     def reset
