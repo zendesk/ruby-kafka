@@ -55,6 +55,7 @@ describe "Topic management API", functional: true do
     end
 
     topic = generate_topic_name
+    kafka.create_topic(topic, num_partitions: 3)
     configs = kafka.describe_topic(topic, %w(retention.ms retention.bytes non_exists))
 
     expect(configs.keys).to eql(%w(retention.ms retention.bytes))
