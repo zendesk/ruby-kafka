@@ -26,6 +26,8 @@ jobs:
           KAFKA_DELETE_TOPIC_ENABLE: true
       - image: wurstmeister/kafka:2.11-0.11.0.3
         environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
