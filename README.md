@@ -90,7 +90,7 @@ Or install it yourself as:
   </tr>
   <tr>
     <th>Kafka 0.11</th>
-    <td>Limited support</td>
+    <td>Full support in v0.7.x</td>
     <td>Limited support</td>
   </tr>
   <tr>
@@ -105,8 +105,8 @@ This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with t
 - **Kafka 0.8:** Full support for the Producer API in ruby-kafka v0.4.x, but no support for consumer groups. Simple message fetching works.
 - **Kafka 0.9:** Full support for the Producer and Consumer API in ruby-kafka v0.4.x.
 - **Kafka 0.10:** Full support for the Producer and Consumer API in ruby-kafka v0.5.x. Note that you _must_ run version 0.10.1 or higher of Kafka due to limitations in 0.10.0.
-- **Kafka 0.11:** Everything that works with Kafka 0.10 should still work, but so far no features specific to Kafka 0.11 have been added.
-- **Kafka 1.0:** Everything that works with Kafka 0.10 should still work, but so far no features specific to Kafka 1.0 have been added.
+- **Kafka 0.11:** Full support for Producer API, limited support for Consumer API in ruby-kafka v0.7.x. New features in 0.11.x includes new Record Batch format, idempotent and transactional production. The missing feature is dirty reading of Consumer API.
+- **Kafka 1.0:** Everything that works with Kafka 0.11 should still work, but so far no features specific to Kafka 1.0 have been added.
 
 This library requires Ruby 2.1 or higher.
 
@@ -749,7 +749,7 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `key` is the message key.
   * `topic` is the topic that the message was consumed from.
   * `partition` is the topic partition that the message was consumed from.
-  * `offset` is the message's offset within the topic partition. 
+  * `offset` is the message's offset within the topic partition.
   * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
 
 * `start_process_message.consumer.kafka` is sent before `process_message.consumer.kafka`, and contains the same payload. It is delivered _before_ the message is processed, rather than _after_.
@@ -758,7 +758,7 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `message_count` is the number of messages in the batch.
   * `topic` is the topic that the message batch was consumed from.
   * `partition` is the topic partition that the message batch was consumed from.
-  * `highwater_mark_offset` is the message batch's highest offset within the topic partition. 
+  * `highwater_mark_offset` is the message batch's highest offset within the topic partition.
   * `offset_lag` is the number of messages within the topic partition that have not yet been consumed.
 
 * `start_process_batch.consumer.kafka` is sent before `process_batch.consumer.kafka`, and contains the same payload. It is delivered _before_ the batch is processed, rather than _after_.
@@ -767,21 +767,21 @@ All notifications have `group_id` in the payload, referring to the Kafka consume
   * `group_id` is the consumer group id.
 
 * `sync_group.consumer.kafka` is sent whenever a consumer is assigned topic partitions within a consumer group. It includes the following payload:
-  * `group_id` is the consumer group id.  
-  
+  * `group_id` is the consumer group id.
+
 * `leave_group.consumer.kafka` is sent whenever a consumer leaves a consumer group. It includes the following payload:
   * `group_id` is the consumer group id.
-  
+
 * `seek.consumer.kafka` is sent when a consumer first seeks to an offset. It includes the following payload:
   * `group_id` is the consumer group id.
   * `topic` is the topic we are seeking in.
   * `partition` is the partition we are seeking in.
   * `offset` is the offset we have seeked to.
-  
+
 * `heartbeat.consumer.kafka` is sent when a consumer group completes a heartbeat. It includes the following payload:
   * `group_id` is the consumer group id.
   * `topic_partitions` is a hash of { topic_name => array of assigned partition IDs }
-  
+
 #### Connection Notifications
 
 * `request.connection.kafka` is sent whenever a network request is sent to a Kafka broker. It includes the following payload:
@@ -908,7 +908,7 @@ can use:
 kafka = Kafka.new(["kafka1:9092"], ssl_ca_certs_from_system: true)
 ```
 
-This configures the store to look up CA certificates from the system default certificate store on an as needed basis. The location of the store can usually be determined by: 
+This configures the store to look up CA certificates from the system default certificate store on an as needed basis. The location of the store can usually be determined by:
 `OpenSSL::X509::DEFAULT_CERT_FILE`
 
 ##### Client Authentication
@@ -963,7 +963,7 @@ kafka = Kafka.new(
 ```
 
 ##### SCRAM
-Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram). 
+Since 0.11 kafka supports [SCRAM](https://kafka.apache.org/documentation.html#security_sasl_scram).
 
 ```ruby
 kafka = Kafka.new(

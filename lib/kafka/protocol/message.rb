@@ -102,6 +102,15 @@ module Kafka
         new(key: key, value: value, codec_id: codec_id, offset: offset, create_time: create_time)
       end
 
+      # Ensure the backward compatibility of Message format from Kafka 0.11.x
+      def is_control_record
+        false
+      end
+
+      def headers
+        {}
+      end
+
       private
 
       # Offsets may be relative with regards to wrapped message offset, but there are special cases.
