@@ -446,6 +446,7 @@ module Kafka
         # We've been out of the group for at least an entire generation, no
         # sense in trying to hold on to offset data
         clear_current_offsets
+        clear_pauses
         @offset_manager.clear_offsets
       else
         # After rejoining the group we may have been assigned a new set of
@@ -454,6 +455,7 @@ module Kafka
         # a partition it used to be assigned to way back. For that reason, we
         # only keep commits for the partitions that we're still assigned.
         clear_current_offsets(excluding: @group.assigned_partitions)
+        clear_pauses(excluding: @group.assigned_partitions)
         @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
       end
 
@@ -542,7 +544,15 @@ module Kafka
     end
 
     def clear_current_offsets(excluding: {})
-      @current_offsets.each do |topic, partitions|
+      clear_topic_partitions(@current_offsets, excluding)
+    end
+
+    def clear_pauses(excluding: {})
+      clear_topic_partitions(@pauses, excluding)
+    end
+
+    def clear_topic_partitions(topic_partitions_hash, excluding)
+      topic_partitions_hash.each do |topic, partitions|
         partitions.keep_if do |partition, _|
           excluding.fetch(topic, []).include?(partition)
         end
