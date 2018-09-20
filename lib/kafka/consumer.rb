@@ -153,7 +153,8 @@ module Kafka
     def resume(topic, partition)
       pause_for(topic, partition).resume!
 
-      seek_to_next(topic, partition)
+      # During re-balancing we might have lost the paused partition. Check if partition is still in group before seek.
+      seek_to_next(topic, partition) if @group.assigned_to?(topic, partition)
     end
 
     # Whether the topic partition is currently paused.

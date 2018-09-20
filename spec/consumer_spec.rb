@@ -247,6 +247,8 @@ describe Kafka::Consumer do
     end
 
     it "does not fetch messages from paused partitions" do
+      allow(group).to receive(:assigned_to?).with('greetings', 42) { true }
+
       assigned_partitions["greetings"] << 42
 
       consumer.pause("greetings", 42)
