@@ -247,6 +247,8 @@ describe Kafka::Consumer do
     end
 
     it "does not fetch messages from paused partitions" do
+      allow(group).to receive(:assigned_to?).with('greetings', 42) { true }
+
       assigned_partitions["greetings"] << 42
 
       consumer.pause("greetings", 42)
@@ -264,6 +266,21 @@ describe Kafka::Consumer do
       end
 
       expect(fetcher).to have_received(:seek).with("greetings", 42, anything)
+    end
+
+    it "does not seek (previously) paused partition when not in group" do
+      allow(group).to receive(:assigned_to?).with('greetings', 42) { false }
+
+      assigned_partitions["greetings"] << 42
+
+      consumer.pause("greetings", 42)
+      consumer.resume("greetings", 42)
+
+      consumer.each_message do |message|
+        consumer.stop
+      end
+
+      expect(fetcher).to_not have_received(:seek).with("greetings", 42, anything)
     end
 
     it "automatically resumes partitions if a timeout is set" do
