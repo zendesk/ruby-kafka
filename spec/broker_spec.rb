@@ -69,6 +69,31 @@ describe Kafka::Broker do
   describe "#produce" do
     let(:message) { Kafka::Protocol::Message.new(key: "yo", value: "lo") }
 
+    # This spec's only function is to exercise the error handling code path
+    it "gives me a console if a partition is in error" do
+      response = Kafka::Protocol::ProduceResponse.new
+      errored_partition_info = Kafka::Protocol::ProduceResponse::PartitionInfo.new(
+        partition: 3, error_code: 2, offset: 0, timestamp: Time.now.to_s
+      )
+      topic_info = Kafka::Protocol::ProduceResponse::TopicInfo.new(
+        topic: "articles", partitions: [errored_partition_info]
+      )
+      allow(response).to receive(:topics) { [topic_info] }
+      connection.mock_response(response)
+
+      actual_response = broker.produce(
+        required_acks: -1, # -1 means all replicas must ack
+        timeout: 1,
+        messages_for_topics: {
+          "yolos" => {
+            3 => [message],
+          }
+        }
+      )
+
+      expect(actual_response).to eq response
+
+    end
     it "waits for a response if acknowledgements are required" do
       response = Kafka::Protocol::ProduceResponse.new
       connection.mock_response(response)
