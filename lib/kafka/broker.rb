@@ -71,7 +71,31 @@ module Kafka
     def produce(**options)
       request = Protocol::ProduceRequest.new(**options)
 
-      send_request(request)
+      resp = send_request(request)
+
+      return if resp.nil?
+
+      errored_partitions = []
+      resp.topics.each do |topic_info|
+        errored = topic_info.partitions.find {|part_info| part_info.error_code == 2 }
+        errored_partitions << errored unless errored.nil?
+      end
+
+      errored_partitions.each do |partition_info|
+
+        @logger.error "Corrupt message code received for #{request} to partition #{partition_info.partition}"
+
+        #{"topic" => {"partition" => [message, message] }}
+        request.messages_for_topics.each do |topic, messages_for_partition|
+          messages_for_partition.fetch(partition_info.partition, []).each do |message|
+            @logger.error "Message key: #{message.key}"
+            @logger.error "Message value: #{message.value}"
+          end
+        end
+
+      end
+
+      resp
     end
 
     def fetch_offsets(**options)
