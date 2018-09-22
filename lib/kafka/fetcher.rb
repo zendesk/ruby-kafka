@@ -42,7 +42,7 @@ module Kafka
     end
 
     def start
-      raise "already started" if @running
+      return if @running
 
       @thread = Thread.new do
         while @running
