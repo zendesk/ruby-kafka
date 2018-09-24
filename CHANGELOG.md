@@ -4,6 +4,13 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.2
+
+- Handle case when paused partition does not belong to group on resume (#656).
+- Fix compatibility version in documentation (#651).
+- Fix message set backward compatible (#648).
+- Refresh metadata on connection error when listing topics (#644).
+
 ## 0.7.1
 
 - Compatibility with dogstatsd-ruby v4.0.0.
