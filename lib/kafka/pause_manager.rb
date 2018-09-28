@@ -20,7 +20,7 @@ module Kafka
       )
     end
 
-    def pause?(topic, partition)
+    def paused?(topic, partition)
       pause = pause_for(topic, partition)
       pause.paused? && !pause.expired?
     end

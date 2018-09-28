@@ -5,12 +5,16 @@ describe Kafka::Fetcher do
   let(:instrumenter) { double(:instrumenter) }
   let(:logger) { Logger.new(StringIO.new) }
   let(:cluster) { double(:cluster) }
+  let(:pause_manager) { double(:pause_manager) }
   let(:fetcher) do
-    described_class.new(group: group,
-                        instrumenter: instrumenter,
-                        logger: logger,
-                        cluster: cluster,
-                        max_queue_size: 1)
+    described_class.new(
+      group: group,
+      instrumenter: instrumenter,
+      logger: logger,
+      cluster: cluster,
+      max_queue_size: 1,
+      pause_manager: pause_manager,
+    )
   end
 
   before do

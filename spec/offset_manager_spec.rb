@@ -5,14 +5,12 @@ require 'timecop'
 describe Kafka::OffsetManager do
   let(:cluster) { double(:cluster) }
   let(:group) { double(:group) }
-  let(:fetcher) { double(:fetcher) }
   let(:logger) { LOGGER }
 
   let(:offset_manager) {
     Kafka::OffsetManager.new(
       cluster: cluster,
       group: group,
-      fetcher: fetcher,
       logger: logger,
       commit_interval: commit_interval,
       commit_threshold: 0,
@@ -24,7 +22,6 @@ describe Kafka::OffsetManager do
 
   before do
     allow(group).to receive(:commit_offsets)
-    allow(fetcher).to receive(:seek)
   end
 
   describe "#commit_offsets" do
@@ -220,16 +217,6 @@ describe Kafka::OffsetManager do
       offset = offset_manager.next_offset_for(topic, partition)
 
       expect(offset).to eq seek_offset
-    end
-
-    it "propagates the seek to the fetcher" do
-      topic = "greetings"
-      partition = 0
-      offset = 14
-
-      offset_manager.seek_to(topic, partition, offset)
-
-      expect(fetcher).to have_received(:seek).with(topic, partition, offset)
     end
   end
 
