@@ -6,12 +6,13 @@ module Kafka
   class Fetcher
     attr_reader :queue
 
-    def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
+    def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:, pause_manager:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
       @max_queue_size = max_queue_size
       @group = group
+      @pause_manager = pause_manager
 
       @queue = Queue.new
       @commands = Queue.new
