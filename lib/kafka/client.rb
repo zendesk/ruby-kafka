@@ -360,7 +360,6 @@ module Kafka
       offset_manager = OffsetManager.new(
         cluster: cluster,
         group: group,
-        fetcher: fetcher,
         logger: @logger,
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,

@@ -541,7 +541,8 @@ module Kafka
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset #{e.offset} for #{e.topic}/#{e.partition}, resetting to default offset"
 
-      @offset_manager.seek_to_default(e.topic, e.partition)
+      offset = @offset_manager.seek_to_default(e.topic, e.partition)
+      @fetcher.seek(topic, partition, offset)
 
       retry
     rescue ConnectionError => e
