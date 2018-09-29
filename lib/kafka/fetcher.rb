@@ -28,12 +28,6 @@ module Kafka
 
       # The maximum number of bytes to fetch per partition, by topic.
       @max_bytes_per_partition = {}
-
-      @thread = Thread.new do
-        loop while true
-      end
-
-      @thread.abort_on_exception = true
     end
 
     def subscribe(topic, max_bytes_per_partition:)
@@ -49,16 +43,21 @@ module Kafka
     end
 
     def start
-      @commands << [:start, []]
-    end
+      return if @running
 
-    def handle_start
-      raise "already started" if @running
+      @thread = Thread.new do
+        while @running
+          loop
+        end
+        @logger.info "Fetcher thread exited."
+      end
+      @thread.abort_on_exception = true
 
       @running = true
     end
 
     def stop
+      return unless @running
       @commands << [:stop, []]
     end
 
@@ -81,14 +80,14 @@ module Kafka
         queue_size: @queue.size,
       })
 
+      return unless @running
+
       if !@commands.empty?
         cmd, args = @commands.deq
 
         @logger.debug "Handling fetcher command: #{cmd}"
 
         send("handle_#{cmd}", *args)
-      elsif !@running
-        sleep 0.1
       elsif @queue.size < @max_queue_size
         step
       else
@@ -110,6 +109,7 @@ module Kafka
 
     def handle_stop(*)
       @running = false
+      @commands.clear
 
       # After stopping, we need to reconfigure the topics and partitions to fetch
       # from. Otherwise we'd keep fetching from a bunch of partitions we may no
