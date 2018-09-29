@@ -106,6 +106,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @fetcher.stop
       @cluster.disconnect
     end
 

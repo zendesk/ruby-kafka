@@ -59,6 +59,7 @@ describe "Producer API", functional: true do
 
   example "writing to a an explicit partition of a topic that doesn't yet exist" do
     topic = "topic#{SecureRandom.uuid}"
+    create_topic(topic)
 
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic, partition: 0)
@@ -73,6 +74,7 @@ describe "Producer API", functional: true do
 
   example "writing to a an unspecified partition of a topic that doesn't yet exist" do
     topic = "topic#{SecureRandom.uuid}"
+    create_topic(topic)
 
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce("hello", topic: topic)
@@ -87,6 +89,7 @@ describe "Producer API", functional: true do
 
   example 'support record headers' do
     topic = "topic#{SecureRandom.uuid}"
+    create_topic(topic)
 
     producer = kafka.producer(max_retries: 10, retry_backoff: 1)
     producer.produce(

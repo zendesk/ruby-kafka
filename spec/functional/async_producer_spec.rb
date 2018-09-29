@@ -2,7 +2,7 @@
 
 describe "Producer API", functional: true do
   let(:producer) { kafka.async_producer(max_retries: 1, retry_backoff: 0) }
-  let(:topic) { create_random_topic(num_partitions: 3) }
+  let!(:topic) { create_random_topic(num_partitions: 3) }
 
   after do
     producer.shutdown
@@ -71,7 +71,7 @@ describe "Producer API", functional: true do
   end
 
   example 'support record headers' do
-    topic = "topic#{SecureRandom.uuid}"
+    topic = create_random_topic(num_partitions: 1)
 
     producer = kafka.async_producer(delivery_threshold: 1)
     producer.produce(
