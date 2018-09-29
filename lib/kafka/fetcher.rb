@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "kafka/fetch_operation"
+require "kafka/locked_queue"
 
 module Kafka
   class Fetcher
@@ -14,7 +15,7 @@ module Kafka
       @group = group
       @pause_manager = pause_manager
 
-      @queue = Queue.new
+      @queue = LockedQueue.new
       @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
 
