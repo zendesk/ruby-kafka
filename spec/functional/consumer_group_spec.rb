@@ -372,9 +372,11 @@ describe "Consumer API", functional: true do
     )
 
     consumer.resume(topic, 0)
-    sleep 5
+    sleep 10
     expect(records).to match_array(
       ['hello', 'hello2', 'hi', 'bye']
     )
+
+    t.kill
   end
 end
