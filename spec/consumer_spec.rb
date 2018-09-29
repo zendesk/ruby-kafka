@@ -11,7 +11,7 @@ describe Kafka::Consumer do
   let(:offset_manager) { double(:offset_manager) }
   let(:heartbeat) { double(:heartbeat) }
   let(:pause_manager) { Kafka::PauseManager.new }
-  let(:fetcher) { double(:fetcher, configure: nil, subscribe: nil, seek: nil, start: nil, stop: nil) }
+  let(:fetcher) { double(:fetcher, configure: nil, subscribe: nil, seek: nil, start: nil, stop: nil, clean: nil) }
   let(:session_timeout) { 30 }
   let(:assigned_partitions) { { "greetings" => [0] } }
 

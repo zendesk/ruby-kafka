@@ -54,6 +54,10 @@ module Kafka
       @commands << [:start, []]
     end
 
+    def clean(topic, partition)
+      @commands << [:clean, [topic, partition]]
+    end
+
     def handle_start
       raise "already started" if @running
 
@@ -134,6 +138,19 @@ module Kafka
       @next_offsets[topic][partition] = offset
     end
 
+    def handle_clean(topic, partition)
+      @queue.map! do |queue|
+        if queue[0] == :batches
+          new_batches = queue[1].delete_if do |batch|
+            batch.topic == topic && batch.partition == partition
+          end
+          [:batches, new_batches]
+        else
+          queue
+        end
+      end
+    end
+
     def step
       batches = fetch_batches
 
@@ -150,6 +167,7 @@ module Kafka
 
         @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
       end
+
 
       @queue << [:batches, batches]
     rescue Kafka::NoPartitionsToFetchFrom
@@ -175,6 +193,7 @@ module Kafka
         max_bytes = @max_bytes_per_partition[topic]
 
         partitions.each do |partition, offset|
+          next if @pause_manager.paused?(topic, partition)
           operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
         end
       end
