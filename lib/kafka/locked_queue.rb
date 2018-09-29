@@ -1,4 +1,9 @@
+# frozen_string_literal: true
+
 module Kafka
+  # This is a pre-implementation of Ruby's built-in Queue data structure, with
+  # simpler interface and usage, while adding the support for data modification.
+  # The best use case applies for 1 producer thread and multi consumer thread.
   class LockedQueue
     def initialize
       @array = []
