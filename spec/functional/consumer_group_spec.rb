@@ -271,4 +271,110 @@ describe "Consumer API", functional: true do
 
     expect(data).to eql(%w(1 2 3 4))
   end
+
+  example 'pause permanently a partition' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic)
+
+    records = []
+    t = Thread.new do
+      consumer.each_message do |message|
+        if message.partition == 0
+          consumer.pause(topic, 0)
+        end
+        records << message.value
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 5
+    t.kill
+
+    expect(records).to match_array(
+      ['hello', 'hi', 'bye']
+    )
+  end
+
+  example 'pause with timeout' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic)
+
+    records = []
+    t = Thread.new do
+      consumer.each_message do |message|
+        if message.partition == 0
+          consumer.pause(topic, 0, timeout: 4)
+        end
+        records << message.value
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 3
+    expect(records).to match_array(
+      ['hello', 'hi', 'bye']
+    )
+    sleep 10
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hi', 'bye']
+    )
+  end
+
+  example 'pause then resume' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic)
+
+    records = []
+    t = Thread.new do
+      consumer.pause(topic, 0)
+      consumer.each_message do |message|
+        records << message.value
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 3
+    expect(records).to match_array(
+      ['hi', 'bye']
+    )
+
+    consumer.resume(topic, 0)
+    sleep 2
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hi', 'bye']
+    )
+  end
 end
