@@ -3,6 +3,8 @@
 require "kafka/pause"
 
 module Kafka
+  # PauseManager acts as an abstract layer to manage the pause states of
+  # multiple partitions.
   class PauseManager
     def initialize
       @pauses = Hash.new {|h, k|
@@ -12,7 +14,7 @@ module Kafka
       }
     end
 
-    def pause!(topic, partition, timeout:, max_timeout:, exponential_backoff:)
+    def pause!(topic, partition, timeout: nil, max_timeout: nil, exponential_backoff: nil)
       pause_for(topic, partition).pause!(
         timeout: timeout,
         max_timeout: max_timeout,
