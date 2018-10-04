@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Synchronize access to @worker_thread and @timer_thread in AsyncProducer to prevent creating multiple threads (#661).
+
 ## 0.7.2
 
 - Handle case when paused partition does not belong to group on resume (#656).
