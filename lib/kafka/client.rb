@@ -340,6 +340,8 @@ module Kafka
       # The Kafka protocol expects the retention time to be in ms.
       retention_time = (offset_retention_time && offset_retention_time * 1_000) || -1
 
+      pause_manager = PauseManager.new
+
       group = ConsumerGroup.new(
         cluster: cluster,
         logger: @logger,
@@ -354,13 +356,13 @@ module Kafka
         group: group,
         logger: @logger,
         instrumenter: instrumenter,
-        max_queue_size: fetcher_max_queue_size
+        max_queue_size: fetcher_max_queue_size,
+        pause_manager: pause_manager,
       )
 
       offset_manager = OffsetManager.new(
         cluster: cluster,
         group: group,
-        fetcher: fetcher,
         logger: @logger,
         commit_interval: offset_commit_interval,
         commit_threshold: offset_commit_threshold,
@@ -381,6 +383,7 @@ module Kafka
         fetcher: fetcher,
         session_timeout: session_timeout,
         heartbeat: heartbeat,
+        pause_manager: pause_manager,
       )
     end
 

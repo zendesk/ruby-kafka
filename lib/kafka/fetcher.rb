@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
 require "kafka/fetch_operation"
+require "kafka/locked_queue"
 
 module Kafka
   class Fetcher
     attr_reader :queue
 
-    def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
+    def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:, pause_manager:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
       @max_queue_size = max_queue_size
       @group = group
+      @pause_manager = pause_manager
 
-      @queue = Queue.new
+      @queue = LockedQueue.new
       @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
 
@@ -54,6 +56,10 @@ module Kafka
       @thread.abort_on_exception = true
 
       @running = true
+    end
+
+    def clean(topic, partition)
+      @commands << [:clean, [topic, partition]]
     end
 
     def stop
@@ -132,6 +138,19 @@ module Kafka
       @next_offsets[topic][partition] = offset
     end
 
+    def handle_clean(topic, partition)
+      @queue.map! do |queue|
+        if queue[0] == :batches
+          new_batches = queue[1].delete_if do |batch|
+            batch.topic == topic && batch.partition == partition
+          end
+          [:batches, new_batches]
+        else
+          queue
+        end
+      end
+    end
+
     def step
       batches = fetch_batches
 
@@ -173,6 +192,7 @@ module Kafka
         max_bytes = @max_bytes_per_partition[topic]
 
         partitions.each do |partition, offset|
+          next if @pause_manager.paused?(topic, partition)
           operation.fetch_from_partition(topic, partition, offset: offset, max_bytes: max_bytes)
         end
       end

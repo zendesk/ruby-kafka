@@ -3,7 +3,7 @@
 require "kafka/consumer_group"
 require "kafka/offset_manager"
 require "kafka/fetcher"
-require "kafka/pause"
+require "kafka/pause_manager"
 
 module Kafka
 
@@ -44,7 +44,7 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, pause_manager:)
       @cluster = cluster
       @logger = logger
       @instrumenter = instrumenter
@@ -54,11 +54,7 @@ module Kafka
       @fetcher = fetcher
       @heartbeat = heartbeat
 
-      @pauses = Hash.new {|h, k|
-        h[k] = Hash.new {|h2, k2|
-          h2[k2] = Pause.new
-        }
-      }
+      @pause_manager = pause_manager
 
       # Whether or not the consumer is currently consuming messages.
       @running = false
@@ -138,11 +134,13 @@ module Kafka
         raise ArgumentError, "`max_timeout` only makes sense when `exponential_backoff` is enabled"
       end
 
-      pause_for(topic, partition).pause!(
+      @pause_manager.pause!(
+        topic, partition,
         timeout: timeout,
         max_timeout: max_timeout,
         exponential_backoff: exponential_backoff,
       )
+      @fetcher.clean(topic, partition)
     end
 
     # Resume processing of a topic partition.
@@ -152,7 +150,7 @@ module Kafka
     # @param partition [Integer]
     # @return [nil]
     def resume(topic, partition)
-      pause_for(topic, partition).resume!
+      @pause_manager.resume!(topic, partition)
 
       # During re-balancing we might have lost the paused partition. Check if partition is still in group before seek.
       seek_to_next(topic, partition) if @group.assigned_to?(topic, partition)
@@ -165,8 +163,7 @@ module Kafka
     # @param partition [Integer]
     # @return [Boolean] true if the partition is paused, false otherwise.
     def paused?(topic, partition)
-      pause = pause_for(topic, partition)
-      pause.paused? && !pause.expired?
+      @pause_manager.paused?(topic, partition)
     end
 
     # Fetches and enumerates the messages in the topics that the consumer group
@@ -208,35 +205,42 @@ module Kafka
 
         batches.each do |batch|
           batch.messages.each do |message|
-            notification = {
-              topic: message.topic,
-              partition: message.partition,
-              offset: message.offset,
-              offset_lag: batch.highwater_mark_offset - message.offset - 1,
-              create_time: message.create_time,
-              key: message.key,
-              value: message.value,
-              headers: message.headers
-            }
+            # Break out of the loop if the partition has been paused, e.g. when
+            # processing the previous message in the batch.
+            if @pause_manager.paused?(batch.topic, batch.partition)
+              @logger.info("Skipped messages in paused partition #{batch.topic}/#{batch.partition}")
+            else
+              notification = {
+                topic: message.topic,
+                partition: message.partition,
+                offset: message.offset,
+                offset_lag: batch.highwater_mark_offset - message.offset - 1,
+                create_time: message.create_time,
+                key: message.key,
+                value: message.value,
+                headers: message.headers
+              }
 
-            # Instrument an event immediately so that subscribers don't have to wait until
-            # the block is completed.
-            @instrumenter.instrument("start_process_message.consumer", notification)
+              # Instrument an event immediately so that subscribers don't have to wait until
+              # the block is completed.
+              @instrumenter.instrument("start_process_message.consumer", notification)
 
-            @instrumenter.instrument("process_message.consumer", notification) do
-              begin
-                yield message unless message.is_control_record
-                @current_offsets[message.topic][message.partition] = message.offset
-              rescue => e
-                location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
-                backtrace = e.backtrace.join("\n")
-                @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
+              @instrumenter.instrument("process_message.consumer", notification) do
+                begin
+                  yield message unless message.is_control_record
+                  @current_offsets[message.topic][message.partition] = message.offset
+                rescue => e
+                  location = "#{message.topic}/#{message.partition} at offset #{message.offset}"
+                  backtrace = e.backtrace.join("\n")
+                  @logger.error "Exception raised when processing #{location} -- #{e.class}: #{e}\n#{backtrace}"
 
-                raise ProcessingError.new(message.topic, message.partition, message.offset)
+                  raise ProcessingError.new(message.topic, message.partition, message.offset)
+                end
               end
+
+              mark_message_as_processed(message) if automatically_mark_as_processed
             end
 
-            mark_message_as_processed(message) if automatically_mark_as_processed
             @offset_manager.commit_offsets_if_necessary
 
             trigger_heartbeat
@@ -244,9 +248,16 @@ module Kafka
             return if !@running
           end
 
-          # We've successfully processed a batch from the partition, so we can clear
-          # the pause.
-          pause_for(batch.topic, batch.partition).reset!
+          if @pause_manager.paused?(batch.topic, batch.partition)
+            # If a parititon is paused *inside* the consumer loop, we need to
+            # reset the partition offset in the fetcher to prevent message loss
+            # when the consumer is resumed.
+            seek_to_next(batch.topic, batch.partition)
+          else
+            # We've successfully processed a batch from the partition, so we can clear
+            # the pause state.
+            @pause_manager.reset!(batch.topic, batch.partition)
+          end
         end
 
         # We may not have received any messages, but it's still a good idea to
@@ -292,7 +303,9 @@ module Kafka
         batches = fetch_batches
 
         batches.each do |batch|
-          unless batch.empty?
+          if @pause_manager.paused?(batch.topic, batch.partition)
+            @logger.info("Skipped messages in paused partition #{batch.topic}/#{batch.partition}")
+          elsif !batch.empty?
             raw_messages = batch.messages
             batch.messages = raw_messages.reject(&:is_control_record)
 
@@ -327,9 +340,16 @@ module Kafka
             end
             mark_message_as_processed(batch.messages.last) if automatically_mark_as_processed
 
-            # We've successfully processed a batch from the partition, so we can clear
-            # the pause.
-            pause_for(batch.topic, batch.partition).reset!
+            if @pause_manager.paused?(batch.topic, batch.partition)
+              # If a parititon is paused *inside* the consumer loop, we need to
+              # reset the partition offset in the fetcher to prevent message loss
+              # when the consumer is resumed.
+              seek_to_next(batch.topic, batch.partition)
+            else
+              # We've successfully processed a batch from the partition, so we can clear
+              # the pause state.
+              @pause_manager.reset!(batch.topic, batch.partition)
+            end
           end
 
           @offset_manager.commit_offsets_if_necessary
@@ -360,6 +380,7 @@ module Kafka
     # @return [nil]
     def seek(topic, partition, offset)
       @offset_manager.seek_to(topic, partition, offset)
+      @fetcher.seek(topic, partition, offset)
     end
 
     def commit_offsets
@@ -462,7 +483,7 @@ module Kafka
 
       @group.assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
-          if paused?(topic, partition)
+          if @pause_manager.paused?(topic, partition)
             @logger.warn "Not fetching from #{topic}/#{partition} due to pause"
           else
             seek_to_next(topic, partition)
@@ -483,23 +504,6 @@ module Kafka
       @fetcher.seek(topic, partition, offset)
     end
 
-    def resume_paused_partitions!
-      @pauses.each do |topic, partitions|
-        partitions.each do |partition, pause|
-          @instrumenter.instrument("pause_status.consumer", {
-            topic: topic,
-            partition: partition,
-            duration: pause.pause_duration,
-          })
-
-          if pause.paused? && pause.expired?
-            @logger.info "Automatically resuming partition #{topic}/#{partition}, pause timeout expired"
-            resume(topic, partition)
-          end
-        end
-      end
-    end
-
     def fetch_batches
       # Return early if the consumer has been stopped.
       return [] if !@running
@@ -507,8 +511,6 @@ module Kafka
       join_group unless @group.member?
 
       trigger_heartbeat
-
-      resume_paused_partitions!
 
       if !@fetcher.data?
         @logger.debug "No batches to process"
@@ -521,7 +523,11 @@ module Kafka
         when :batches
           # make sure any old batches, fetched prior to the completion of a consumer group sync,
           # are only processed if the batches are from brokers for which this broker is still responsible.
-          message.select { |batch| @group.assigned_to?(batch.topic, batch.partition) }
+          # batches from paused partition are ignore too.
+          message.select do |batch|
+            @group.assigned_to?(batch.topic, batch.partition) &&
+              !@pause_manager.paused?(batch.topic, batch.partition)
+          end
         when :exception
           raise message
         end
@@ -529,17 +535,14 @@ module Kafka
     rescue OffsetOutOfRange => e
       @logger.error "Invalid offset #{e.offset} for #{e.topic}/#{e.partition}, resetting to default offset"
 
-      @offset_manager.seek_to_default(e.topic, e.partition)
+      offset = @offset_manager.seek_to_default(e.topic, e.partition)
+      @fetcher.seek(e.topic, e.partition, offset)
 
       retry
     rescue ConnectionError => e
       @logger.error "Connection error while fetching messages: #{e}"
 
       raise FetchError, e
-    end
-
-    def pause_for(topic, partition)
-      @pauses[topic][partition]
     end
 
     def clear_current_offsets(excluding: {})

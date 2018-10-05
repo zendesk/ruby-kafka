@@ -89,4 +89,122 @@ describe "Batch Consumer API", functional: true do
       ]
     )
   end
+
+  example 'pause permanently a partition' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+    producer.deliver_messages
+
+    producer.produce('hello3', topic: topic, partition: 0)
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic, max_bytes_per_partition: 50)
+
+    records = []
+    t = Thread.new do
+      consumer.each_batch do |batch|
+        batch.messages.each do |message|
+          if message.partition == 0
+            consumer.pause(topic, 0)
+          end
+          records << message.value
+        end
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 5
+    t.kill
+
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hi', 'bye']
+    )
+  end
+
+  example 'pause with timeout' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+    producer.deliver_messages
+    producer.produce('hello3', topic: topic, partition: 0)
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic, max_bytes_per_partition: 50)
+
+    records = []
+    t = Thread.new do
+      consumer.each_batch do |batch|
+        batch.messages.each do |message|
+          if message.partition == 0
+            consumer.pause(topic, 0, timeout: 4)
+          end
+          records << message.value
+        end
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 3
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hi', 'bye']
+    )
+    sleep 10
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hello3', 'hi', 'bye']
+    )
+    t.kill
+  end
+
+  example 'pause then resume' do
+    topic = create_random_topic(num_partitions: 3)
+
+    kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+    producer = kafka.producer
+    producer.produce('hello', topic: topic, partition: 0)
+    producer.produce('hello2', topic: topic, partition: 0)
+    producer.produce('hi', topic: topic, partition: 1)
+    producer.produce('bye', topic: topic, partition: 2)
+    producer.deliver_messages
+    producer.produce('hello3', topic: topic, partition: 0)
+    producer.deliver_messages
+
+    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer.subscribe(topic, max_bytes_per_partition: 50)
+
+    records = []
+    t = Thread.new do
+      consumer.pause(topic, 0)
+      consumer.each_batch do |batch|
+        batch.messages.each do |message|
+          records << message.value
+        end
+      end
+    end
+    t.abort_on_exception = true
+
+    sleep 3
+    expect(records).to match_array(
+      ['hi', 'bye']
+    )
+
+    consumer.resume(topic, 0)
+    sleep 10
+    expect(records).to match_array(
+      ['hello', 'hello2', 'hello3', 'hi', 'bye']
+    )
+    t.kill
+  end
 end
