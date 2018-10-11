@@ -302,7 +302,11 @@ describe "Consumer API", functional: true do
       end.tap(&:abort_on_exception)
 
       # Ensure consumer 1 started processing
-      wait_until(timeout: 10) { @consumer_1_messages.size >= 5 }
+      begin
+        wait_until(timeout: 20) { @consumer_1_messages.size >= 5 }
+      rescue TimeoutError
+        fail "consumer #1 didn't consumer 5 messages within 20 seconds"
+      end
 
       # A single consumer joins the consumer group, forcing all consumers to
       # rejoin.
@@ -317,7 +321,11 @@ describe "Consumer API", functional: true do
       end.tap(&:abort_on_exception)
 
       # Ensure consumer 2 has joined the group and been assigned partitions
-      wait_until(timeout: 10) { @consumer_2_messages.size >= 5 }
+      begin
+        wait_until(timeout: 20) { @consumer_2_messages.size >= 5 }
+      rescue TimeoutError
+        fail "consumer #2 didn't consumer 5 messages within 20 seconds"
+      end
 
       expect(@consumer_1_messages).to_not contain_duplicate_messages
       expect(@consumer_2_messages).to_not contain_duplicate_messages
