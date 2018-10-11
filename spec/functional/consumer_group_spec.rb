@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 describe "Consumer API", functional: true do
   let(:offset_retention_time) { 30 }
 
@@ -270,5 +272,83 @@ describe "Consumer API", functional: true do
     end
 
     expect(data).to eql(%w(1 2 3 4))
+  end
+
+  example "joining a consumer group doesn't reprocess messages" do
+    topic = create_random_topic(num_partitions: 4)
+    group_id = SecureRandom.uuid
+
+    begin
+      # Continuously publish messages in a background thread
+      producer_thread = Thread.new do
+        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+        producer = kafka.producer
+        loop do |i|
+          producer.produce("message-#{i}", topic: topic)
+          producer.deliver_messages
+          sleep 0.1
+        end
+      end.tap(&:abort_on_exception)
+
+      # A single consumer joins the consumer group and starts consuming
+      @consumer_1_messages = []
+      consumer_1_thread = Thread.new do
+        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+        consumer = kafka.consumer(group_id: group_id)
+        consumer.subscribe(topic)
+        consumer.each_message do |message|
+          @consumer_1_messages << message
+        end
+      end.tap(&:abort_on_exception)
+
+      # Ensure consumer 1 started processing
+      wait_until(timeout: 10) { @consumer_1_messages.size >= 5 }
+
+      # A single consumer joins the consumer group, forcing all consumers to
+      # rejoin.
+      @consumer_2_messages = []
+      consumer_2_thread = Thread.new do
+        kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
+        consumer = kafka.consumer(group_id: group_id)
+        consumer.subscribe(topic)
+        consumer.each_message do |message|
+          @consumer_2_messages << message
+        end
+      end.tap(&:abort_on_exception)
+
+      # Ensure consumer 2 has joined the group and been assigned partitions
+      wait_until(timeout: 10) { @consumer_2_messages.size >= 5 }
+
+      expect(@consumer_1_messages).to_not contain_duplicate_messages
+      expect(@consumer_2_messages).to_not contain_duplicate_messages
+    ensure
+      producer_thread&.kill
+      consumer_1_thread&.kill
+      consumer_2_thread&.kill
+    end
+  end
+
+  def wait_until(timeout:)
+    Timeout.timeout(timeout) do
+      sleep 0.5 until yield
+    end
+  end
+
+  RSpec::Matchers.define :contain_duplicate_messages do |first|
+    match do |actual|
+      @dups = actual
+        .group_by { |message| [message.partition, message.offset] }
+        .select { |offset, messages| messages.size > 1 }
+
+      @dups.size > 0
+    end
+
+    failure_message_when_negated do |actual|
+      dup_description = @dups.sort.map do |(partition, offset), messages|
+        "#{partition}-#{offset} was processed #{messages.size} times"
+      end.join(", ")
+
+      "Expected no duplicate messages, but #{dup_description}"
+    end
   end
 end
