@@ -322,9 +322,9 @@ describe "Consumer API", functional: true do
       expect(@consumer_1_messages).to_not contain_duplicate_messages
       expect(@consumer_2_messages).to_not contain_duplicate_messages
     ensure
-      producer_thread&.kill
-      consumer_1_thread&.kill
-      consumer_2_thread&.kill
+      producer_thread && producer_thread.kill
+      consumer_1_thread && consumer_1_thread.kill
+      consumer_2_thread && consumer_2_thread.kill
     end
   end
 
