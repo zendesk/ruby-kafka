@@ -61,8 +61,8 @@ module Kafka
       @commands << [:stop, []]
     end
 
-    def reset
-      @commands << [:reset, []]
+    def reset(new_generation_id)
+      @commands << [:reset, [new_generation_id]]
     end
 
     def data?
@@ -102,9 +102,10 @@ module Kafka
       @max_wait_time = max_wait_time
     end
 
-    def handle_reset
+    def handle_reset(new_generation_id = nil)
       @next_offsets.clear
       @queue.clear
+      @generation_id = new_generation_id
     end
 
     def handle_stop(*)
@@ -149,7 +150,7 @@ module Kafka
         @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
       end
 
-      @queue << [:batches, batches]
+      @queue << [:batches, batches, @generation_id]
     rescue Kafka::NoPartitionsToFetchFrom
       @logger.warn "No partitions to fetch from, sleeping for 1s"
       sleep 1

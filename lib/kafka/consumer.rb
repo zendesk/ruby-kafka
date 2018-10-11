@@ -458,7 +458,7 @@ module Kafka
         @offset_manager.clear_offsets_excluding(@group.assigned_partitions)
       end
 
-      @fetcher.reset
+      @fetcher.reset(@group.generation_id)
 
       @group.assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
@@ -515,10 +515,18 @@ module Kafka
         sleep 2
         []
       else
-        tag, message = @fetcher.poll
+        tag, message, generation_id = @fetcher.poll
 
         case tag
         when :batches
+          # Message batches are tagged with the current consumer group generation id, so we filter
+          # out messages from older consumer group generations that might be lingering in the
+          # fetcher queue.
+          if message.any? && generation_id && @group.generation_id > generation_id
+            @logger.warn "Skipping stale buffered messages from previous consumer group generation #{generation_id}"
+            return []
+          end
+
           # make sure any old batches, fetched prior to the completion of a consumer group sync,
           # are only processed if the batches are from brokers for which this broker is still responsible.
           message.select { |batch| @group.assigned_to?(batch.topic, batch.partition) }
