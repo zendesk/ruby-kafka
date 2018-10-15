@@ -100,7 +100,7 @@ module Kafka
 
   # 13
   # The server disconnected before a response was received.
-  class NetworkEexception < ProtocolError
+  class NetworkException < ProtocolError
   end
 
   # 14

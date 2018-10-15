@@ -77,7 +77,7 @@ module Kafka
       10 => MessageSizeTooLarge,
       11 => StaleControllerEpoch,
       12 => OffsetMetadataTooLarge,
-      13 => NetworkEexception,
+      13 => NetworkException,
       14 => CoordinatorLoadInProgress,
       15 => CoordinatorNotAvailable,
       16 => NotCoordinatorForGroup,
