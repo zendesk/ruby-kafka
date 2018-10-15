@@ -40,7 +40,7 @@ module Kafka
       end
 
       def host
-        @host ||= ::Datadog::Statsd::DEFAULT_HOST
+        @host ||= ::Kafka::Statsd::DEFAULT_HOST
       end
 
       def host=(host)
@@ -49,7 +49,7 @@ module Kafka
       end
 
       def port
-        @port ||= ::Datadog::Statsd::DEFAULT_PORT
+        @port ||= ::Kafka::Statsd::DEFAULT_PORT
       end
 
       def port=(port)
