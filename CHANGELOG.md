@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.3
+
 - Synchronize access to @worker_thread and @timer_thread in AsyncProducer to prevent creating multiple threads (#661).
 
 ## 0.7.2
