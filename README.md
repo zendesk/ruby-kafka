@@ -921,7 +921,7 @@ kafka = Kafka.new(
   ssl_ca_cert: File.read('my_ca_cert.pem'),
   ssl_client_cert: File.read('my_client_cert.pem'),
   ssl_client_cert_key: File.read('my_client_cert_key.pem'),
-  ssl_client_cert_key_password: 'my_client_cert_key_passphrase',
+  ssl_client_cert_key_password: 'my_client_cert_key_password',
   # ...
 )
 ```
