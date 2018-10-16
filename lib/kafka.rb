@@ -19,81 +19,102 @@ module Kafka
     end
   end
 
-  # A fetch operation was executed with no partitions specified.
-  class NoPartitionsToFetchFrom < Error
-  end
-
-  # A message in a partition is larger than the maximum we've asked for.
-  class MessageTooLargeToRead < Error
-  end
-
-  # A connection has been unused for too long, we assume the server has killed it.
-  class IdleConnection < Error
-  end
-
   # Subclasses of this exception class map to an error code described in the
   # Kafka protocol specification.
-  #
-  # See https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
+  # https://kafka.apache.org/protocol#protocol_error_codes
   class ProtocolError < Error
   end
 
-  # This indicates that a message contents does not match its CRC.
-  class CorruptMessage < ProtocolError
-  end
-
-  # When the record array length doesn't match real number of received records
-  class InsufficientDataMessage < Error
-  end
-
+  # -1
+  # The server experienced an unexpected error when processing the request
   class UnknownError < ProtocolError
   end
 
+  # 1
+  # The requested offset is not within the range of offsets maintained by the server.
   class OffsetOutOfRange < ProtocolError
     attr_accessor :topic, :partition, :offset
   end
 
+  # 2
+  # This indicates that a message contents does not match its CRC.
+  class CorruptMessage < ProtocolError
+  end
+
+  # 3
   # The request is for a topic or partition that does not exist on the broker.
   class UnknownTopicOrPartition < ProtocolError
   end
 
+  # 4
   # The message has a negative size.
   class InvalidMessageSize < ProtocolError
   end
 
+  # 5
   # This error is thrown if we are in the middle of a leadership election and
   # there is currently no leader for this partition and hence it is unavailable
   # for writes.
   class LeaderNotAvailable < ProtocolError
   end
 
+  # 6
   # This error is thrown if the client attempts to send messages to a replica
   # that is not the leader for some partition. It indicates that the client's
   # metadata is out of date.
   class NotLeaderForPartition < ProtocolError
   end
 
+  # 7
   # This error is thrown if the request exceeds the user-specified time limit
   # in the request.
   class RequestTimedOut < ProtocolError
   end
 
+  # 8
+  # The broker is not available.
   class BrokerNotAvailable < ProtocolError
   end
 
+  # 9
+  # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
+  class ReplicaNotAvailable < ProtocolError
+  end
+
+  # 10
   # The server has a configurable maximum message size to avoid unbounded memory
   # allocation. This error is thrown if the client attempt to produce a message
   # larger than this maximum.
   class MessageSizeTooLarge < ProtocolError
   end
 
+  # 11
+  # The controller moved to another broker.
+  class StaleControllerEpoch < ProtocolError
+  end
+
+  # 12
   # If you specify a string larger than configured maximum for offset metadata.
   class OffsetMetadataTooLarge < ProtocolError
   end
 
+  # 13
+  # The server disconnected before a response was received.
+  class NetworkException < ProtocolError
+  end
+
+  # 14
+  # The coordinator is loading and hence can't process requests.
+  class CoordinatorLoadInProgress < ProtocolError
+  end
+
+  # 15
+  # The coordinator is not available.
   class CoordinatorNotAvailable < ProtocolError
   end
 
+  # 16
+  # This is not the correct coordinator.
   class NotCoordinatorForGroup < ProtocolError
   end
 
@@ -104,6 +125,7 @@ module Kafka
   class InvalidTopic < ProtocolError
   end
 
+  # 18
   # If a message batch in a produce request exceeds the maximum configured
   # segment size.
   class RecordListTooLarge < ProtocolError
@@ -127,28 +149,38 @@ module Kafka
   class InvalidRequiredAcks < ProtocolError
   end
 
-  # 9
-  # Raised if a replica is expected on a broker, but is not. Can be safely ignored.
-  class ReplicaNotAvailable < ProtocolError
-  end
-
-  # 25
-  class UnknownMemberId < ProtocolError
-  end
-
-  # 27
-  class RebalanceInProgress < ProtocolError
-  end
-
   # 22
+  # Specified group generation id is not valid.
   class IllegalGeneration < ProtocolError
   end
 
+  # 23
+  # The group member's supported protocols are incompatible with those of existing members or first group member tried to join with empty protocol type or empty protocol list.
+  class InconsistentGroupProtocol < ProtocolError
+  end
+
+  # 24
+  # The configured groupId is invalid
+  class InvalidGroupId < ProtocolError
+  end
+
+  # 25
+  # The coordinator is not aware of this member.
+  class UnknownMemberId < ProtocolError
+  end
+
   # 26
+  # The session timeout is not within the range allowed by the broker
   class InvalidSessionTimeout < ProtocolError
   end
 
+  # 27
+  # The group is rebalancing, so a rejoin is needed.
+  class RebalanceInProgress < ProtocolError
+  end
+
   # 28
+  # The committing offset data size is not valid
   class InvalidCommitOffsetSize < ProtocolError
   end
 
@@ -165,10 +197,12 @@ module Kafka
   end
 
   # 32
+  # The timestamp of the message is out of acceptable range.
   class InvalidTimestamp < ProtocolError
   end
 
   # 33
+  # The broker does not support the requested SASL mechanism.
   class UnsupportedSaslMechanism < ProtocolError
   end
 
@@ -185,10 +219,12 @@ module Kafka
   end
 
   # 37
+  # Number of partitions is below 1.
   class InvalidPartitions < ProtocolError
   end
 
   # 38
+  # Replication factor is below 1 or larger than the number of available brokers.
   class InvalidReplicationFactor < ProtocolError
   end
 
@@ -201,6 +237,7 @@ module Kafka
   end
 
   # 41
+  # This is not the correct controller for this cluster.
   class NotController < ProtocolError
   end
 
@@ -208,6 +245,75 @@ module Kafka
   class InvalidRequest < ProtocolError
   end
 
+  # 43
+  # The message format version on the broker does not support the request.
+  class UnsupportedForMessageFormat < ProtocolError
+  end
+
+  # 44
+  # Request parameters do not satisfy the configured policy.
+  class PolicyViolation < ProtocolError
+  end
+
+  # 45
+  # The broker received an out of order sequence number
+  class OutOfOrderSequenceNumberError < Error
+  end
+
+  # 46
+  # The broker received a duplicate sequence number
+  class DuplicateSequenceNumberError < Error
+  end
+
+  # 47
+  # Producer attempted an operation with an old epoch. Either there is a newer producer with the same transactionalId, or the producer's transaction has been expired by the broker.
+  class InvalidProducerEpochError < Error
+  end
+
+  # 48
+  # The producer attempted a transactional operation in an invalid state
+  class InvalidTxnStateError < Error
+  end
+
+  # 49
+  # The producer attempted to use a producer id which is not currently assigned to its transactional id
+  class InvalidProducerIDMappingError < Error
+  end
+
+  # 50
+  # The transaction timeout is larger than the maximum value allowed by the broker (as configured by transaction.max.timeout.ms).
+  class InvalidTransactionTimeoutError < Error
+  end
+
+  # 51
+  # The producer attempted to update a transaction while another concurrent operation on the same transaction was ongoing
+  class ConcurrentTransactionError < Error
+  end
+
+  # 52
+  # Indicates that the transaction coordinator sending a WriteTxnMarker is no longer the current coordinator for a given producer
+  class TransactionCoordinatorFencedError < Error
+  end
+
+  ###
+  # ruby-kafka errors
+  ###
+
+  # A fetch operation was executed with no partitions specified.
+  class NoPartitionsToFetchFrom < Error
+  end
+
+  # A message in a partition is larger than the maximum we've asked for.
+  class MessageTooLargeToRead < Error
+  end
+
+  # A connection has been unused for too long, we assume the server has killed it.
+  class IdleConnection < Error
+  end
+
+  # When the record array length doesn't match real number of received records
+  class InsufficientDataMessage < Error
+  end
   # Raised when there's a network connection error.
   class ConnectionError < Error
   end
@@ -243,38 +349,6 @@ module Kafka
   end
 
   class FailedScramAuthentication < SaslScramError
-  end
-
-  # The broker received an out of order sequence number
-  class OutOfOrderSequenceNumberError < Error
-  end
-
-  # The broker received a duplicate sequence number
-  class DuplicateSequenceNumberError < Error
-  end
-
-  # Producer attempted an operation with an old epoch. Either there is a newer producer with the same transactionalId, or the producer's transaction has been expired by the broker.
-  class InvalidProducerEpochError < Error
-  end
-
-  # The producer attempted a transactional operation in an invalid state
-  class InvalidTxnStateError < Error
-  end
-
-  # The producer attempted to use a producer id which is not currently assigned to its transactional id
-  class InvalidProducerIDMappingError < Error
-  end
-
-  # The transaction timeout is larger than the maximum value allowed by the broker (as configured by transaction.max.timeout.ms).
-  class InvalidTransactionTimeoutError < Error
-  end
-
-  # The producer attempted to update a transaction while another concurrent operation on the same transaction was ongoing
-  class ConcurrentTransactionError < Error
-  end
-
-  # Indicates that the transaction coordinator sending a WriteTxnMarker is no longer the current coordinator for a given producer
-  class TransactionCoordinatorFencedError < Error
   end
 
   # Initializes a new Kafka client.
