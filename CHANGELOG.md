@@ -4,7 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-- Compatibility with dogstatsd-ruby v4.0.0.
+- Compatibility with dogstatsd-ruby v4.0.0 (#634).
 
 ## 0.7.1
 
@@ -22,7 +22,18 @@ Changes and additions to the library will be listed here.
 - Allow listing brokers in a cluster (#626).
 - Fix Fetcher's message skipping (#625).
 
-## 0.6.7
+## v0.6.9 (unreleased)
+
+- Refresh cluster info on fetch error (#641).
+- Compatibility with dogstatsd-ruby v4.0.0 (#634).
+- Refresh metadata on connection error when listing topics (#644).
+- Create thread when starting fetcher (#654).
+
+## v0.6.8
+- Fix Fetcher's message skipping (#625).
+- Refresh cluster metadata after topic re-assignment (#609).
+
+## v0.6.7
 
 - Handle case where consumer doesn't know about the topic (#597 + 0e302cbd0f31315bf81c1d1645520413ad6b58f0)
 
