@@ -61,8 +61,9 @@ module Kafka
       @commands << [:stop, []]
     end
 
-    def reset(new_generation_id)
-      @commands << [:reset, [new_generation_id]]
+    def reset
+      @current_reset_counter = current_reset_counter + 1
+      @commands << [:reset]
     end
 
     def data?
@@ -70,7 +71,17 @@ module Kafka
     end
 
     def poll
-      @queue.deq
+      tag, message, reset_counter = @queue.deq
+
+      # Batches are tagged with the current reset counter value. If the batch
+      # has a reset_counter < current_reset_counter, we know it was fetched
+      # prior to the most recent reset and should be discarded.
+      if message.any? && current_reset_counter > reset_counter
+        @logger.warn "Skipping stale messages buffered prior to reset"
+        return tag, []
+      end
+
+      return [tag, message]
     end
 
     private
@@ -102,10 +113,9 @@ module Kafka
       @max_wait_time = max_wait_time
     end
 
-    def handle_reset(new_generation_id = nil)
+    def handle_reset
       @next_offsets.clear
       @queue.clear
-      @generation_id = new_generation_id
     end
 
     def handle_stop(*)
@@ -150,7 +160,7 @@ module Kafka
         @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
       end
 
-      @queue << [:batches, batches, @generation_id]
+      @queue << [:batches, batches, current_reset_counter]
     rescue Kafka::NoPartitionsToFetchFrom
       @logger.warn "No partitions to fetch from, sleeping for 1s"
       sleep 1
@@ -196,6 +206,12 @@ module Kafka
       sleep backoff
 
       []
+    end
+
+    # An incrementing counter used to synchronize resets between the
+    # foreground and background thread.
+    def current_reset_counter
+      @current_reset_counter ||= 0
     end
   end
 end
