@@ -49,10 +49,7 @@ end
 
 module SpecHelpers
   def generate_topic_name
-    @@topic_number ||= 0
-    @@topic_number += 1
-
-    "#{RUN_ID}-topic-#{@@topic_number}"
+    "#{RUN_ID}-topic-#{SecureRandom.uuid}"
   end
 
   def create_random_topic(*args)
@@ -63,6 +60,7 @@ module SpecHelpers
 
   def create_topic(name, num_partitions: 1, num_replicas: 1)
     kafka.create_topic(name, num_partitions: num_partitions, replication_factor: num_replicas)
+    sleep 0.5
   end
 end
 

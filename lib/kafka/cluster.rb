@@ -408,6 +408,7 @@ module Kafka
     end
 
     def random_broker
+      refresh_metadata_if_necessary!
       node_id = cluster_info.brokers.sample.node_id
       connect_to_broker(node_id)
     end
