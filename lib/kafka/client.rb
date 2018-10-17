@@ -46,7 +46,7 @@ module Kafka
     # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
-    # @param ssl_client_cert_key_password [String, nil] the passphrase required to read the
+    # @param ssl_client_cert_key_password [String, nil] the password required to read the
     #   ssl_client_cert_key. Must be used in combination with ssl_client_cert_key.
     #
     # @param sasl_gssapi_principal [String, nil] a KRB5 principal
