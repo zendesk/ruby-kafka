@@ -76,7 +76,7 @@ module Kafka
       # Batches are tagged with the current reset counter value. If the batch
       # has a reset_counter < current_reset_counter, we know it was fetched
       # prior to the most recent reset and should be discarded.
-      if message.any? && current_reset_counter > reset_counter
+      if tag == :batches && message.any? && current_reset_counter > reset_counter
         @logger.warn "Skipping stale messages buffered prior to reset"
         return tag, []
       end
