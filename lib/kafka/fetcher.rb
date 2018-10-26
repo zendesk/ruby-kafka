@@ -28,6 +28,10 @@ module Kafka
 
       # The maximum number of bytes to fetch per partition, by topic.
       @max_bytes_per_partition = {}
+
+      # An incrementing counter used to synchronize resets between the
+      # foreground and background thread.
+      @current_reset_counter = 0
     end
 
     def subscribe(topic, max_bytes_per_partition:)
@@ -85,6 +89,8 @@ module Kafka
     end
 
     private
+
+    attr_reader :current_reset_counter
 
     def loop
       @instrumenter.instrument("loop.fetcher", {
@@ -206,12 +212,6 @@ module Kafka
       sleep backoff
 
       []
-    end
-
-    # An incrementing counter used to synchronize resets between the
-    # foreground and background thread.
-    def current_reset_counter
-      @current_reset_counter ||= 0
     end
   end
 end
