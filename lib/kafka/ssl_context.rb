@@ -6,15 +6,20 @@ module Kafka
   module SslContext
     CLIENT_CERT_DELIMITER = "\n-----END CERTIFICATE-----\n"
 
-    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, client_cert_chain: nil, ca_certs_from_system: nil)
-      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || client_cert_chain || ca_certs_from_system
+    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, client_cert_key_password: nil, client_cert_chain: nil, ca_certs_from_system: nil)
+      return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || client_cert_key_password || client_cert_chain || ca_certs_from_system
 
       ssl_context = OpenSSL::SSL::SSLContext.new
 
       if client_cert && client_cert_key
+        if client_cert_key_password
+          cert_key = OpenSSL::PKey.read(client_cert_key, client_cert_key_password)
+        else
+          cert_key = OpenSSL::PKey.read(client_cert_key)
+        end
         context_params = {
           cert: OpenSSL::X509::Certificate.new(client_cert),
-          key: OpenSSL::PKey.read(client_cert_key),
+          key: cert_key
         }
         if client_cert_chain
           certs = []
@@ -33,6 +38,8 @@ module Kafka
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert_chain`, but no `ssl_client_cert`. Please provide cert, key and chain."
       elsif client_cert_chain && !client_cert_key
         raise ArgumentError, "Kafka client initialized with `ssl_client_cert_chain`, but no `ssl_client_cert_key`. Please provide cert, key and chain."
+      elsif client_cert_key_password && !client_cert_key
+        raise ArgumentError, "Kafka client initialized with `ssl_client_cert_key_password`, but no `ssl_client_cert_key`. Please provide both."
       end
 
       if ca_cert || ca_cert_file_path || ca_certs_from_system

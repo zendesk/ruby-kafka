@@ -46,6 +46,9 @@ module Kafka
     # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
+    # @param ssl_client_cert_key_password [String, nil] the password required to read the
+    #   ssl_client_cert_key. Must be used in combination with ssl_client_cert_key.
+    #
     # @param sasl_gssapi_principal [String, nil] a KRB5 principal
     #
     # @param sasl_gssapi_keytab [String, nil] a KRB5 keytab filepath
@@ -61,8 +64,8 @@ module Kafka
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
-                   ssl_client_cert_chain: nil, sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
-                   sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
+                   ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
+                   sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
                    sasl_over_ssl: true, ssl_ca_certs_from_system: false)
       @logger = logger || Logger.new(nil)
@@ -74,6 +77,7 @@ module Kafka
         ca_cert: ssl_ca_cert,
         client_cert: ssl_client_cert,
         client_cert_key: ssl_client_cert_key,
+        client_cert_key_password: ssl_client_cert_key_password,
         client_cert_chain: ssl_client_cert_chain,
         ca_certs_from_system: ssl_ca_certs_from_system,
       )
