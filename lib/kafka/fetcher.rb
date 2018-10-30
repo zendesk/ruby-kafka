@@ -28,6 +28,10 @@ module Kafka
 
       # The maximum number of bytes to fetch per partition, by topic.
       @max_bytes_per_partition = {}
+
+      # An incrementing counter used to synchronize resets between the
+      # foreground and background thread.
+      @current_reset_counter = 0
     end
 
     def subscribe(topic, max_bytes_per_partition:)
@@ -62,7 +66,8 @@ module Kafka
     end
 
     def reset
-      @commands << [:reset, []]
+      @current_reset_counter = current_reset_counter + 1
+      @commands << [:reset]
     end
 
     def data?
@@ -70,10 +75,22 @@ module Kafka
     end
 
     def poll
-      @queue.deq
+      tag, message, reset_counter = @queue.deq
+
+      # Batches are tagged with the current reset counter value. If the batch
+      # has a reset_counter < current_reset_counter, we know it was fetched
+      # prior to the most recent reset and should be discarded.
+      if tag == :batches && message.any? && current_reset_counter > reset_counter
+        @logger.warn "Skipping stale messages buffered prior to reset"
+        return tag, []
+      end
+
+      return [tag, message]
     end
 
     private
+
+    attr_reader :current_reset_counter
 
     def loop
       @instrumenter.instrument("loop.fetcher", {
@@ -149,7 +166,7 @@ module Kafka
         @next_offsets[batch.topic][batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
       end
 
-      @queue << [:batches, batches]
+      @queue << [:batches, batches, current_reset_counter]
     rescue Kafka::NoPartitionsToFetchFrom
       @logger.warn "No partitions to fetch from, sleeping for 1s"
       sleep 1
