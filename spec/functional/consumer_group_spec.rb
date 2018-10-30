@@ -327,8 +327,8 @@ describe "Consumer API", functional: true do
         fail "consumer #2 didn't consumer 5 messages within 20 seconds"
       end
 
-      expect(@consumer_1_messages).to_not contain_duplicate_messages
-      expect(@consumer_2_messages).to_not contain_duplicate_messages
+      expect(@consumer_1_messages + @consumer_2_messages)
+        .to_not contain_duplicate_messages
     ensure
       producer_thread && producer_thread.kill
       consumer_1_thread && consumer_1_thread.kill
