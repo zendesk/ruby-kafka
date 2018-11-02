@@ -203,7 +203,7 @@ module Kafka
         max_wait_time: max_wait_time,
       )
 
-      consumer_loop(automatically_mark_as_processed: automatically_mark_as_processed) do
+      consumer_loop do
         batches = fetch_batches
 
         batches.each do |batch|
@@ -288,7 +288,7 @@ module Kafka
         max_wait_time: max_wait_time,
       )
 
-      consumer_loop(automatically_mark_as_processed: automatically_mark_as_processed) do
+      consumer_loop do
         batches = fetch_batches
 
         batches.each do |batch|
@@ -384,7 +384,7 @@ module Kafka
 
     private
 
-    def consumer_loop(automatically_mark_as_processed:)
+    def consumer_loop
       @running = true
 
       @fetcher.start
@@ -395,12 +395,7 @@ module Kafka
             yield
           end
         rescue HeartbeatError
-          begin
-            commit_offsets if automatically_mark_as_processed
-          rescue OffsetCommitError => e
-            @logger.warn "Failed to commit offsets before re-joining: #{e.message}"
-          end
-
+          make_final_offsets_commit!
           join_group
         rescue OffsetCommitError
           join_group
