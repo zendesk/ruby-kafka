@@ -45,7 +45,7 @@ module Kafka
             member_id = decoder.string
             client_id = decoder.string
             client_host = decoder.string
-            metadata = decoder.bytes
+            _metadata = decoder.bytes
             assignment = MemberAssignment.decode(Decoder.from_string(decoder.bytes))
 
             Member.new(
