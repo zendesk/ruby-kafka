@@ -67,7 +67,7 @@ module Kafka
         offset = decoder.int64
         message_decoder = Decoder.from_string(decoder.bytes)
 
-        crc = message_decoder.int32
+        _crc = message_decoder.int32
         magic_byte = message_decoder.int8
         attributes = message_decoder.int8
 

@@ -113,7 +113,7 @@ module Kafka
       # @param node_id [Integer] the node id of the broker.
       # @return [Kafka::BrokerInfo] information about the broker.
       def find_broker(node_id)
-        broker = @brokers.find {|broker| broker.node_id == node_id }
+        broker = @brokers.find {|b| b.node_id == node_id }
 
         raise Kafka::NoSuchBroker, "No broker with id #{node_id}" if broker.nil?
 
@@ -145,7 +145,7 @@ module Kafka
           node_id = decoder.int32
           host = decoder.string
           port = decoder.int32
-          rack = decoder.string
+          _rack = decoder.string
 
           BrokerInfo.new(
             node_id: node_id,
@@ -159,7 +159,7 @@ module Kafka
         topics = decoder.array do
           topic_error_code = decoder.int16
           topic_name = decoder.string
-          is_internal = decoder.boolean
+          _is_internal = decoder.boolean
 
           partitions = decoder.array do
             PartitionMetadata.new(
