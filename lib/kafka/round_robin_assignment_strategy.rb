@@ -33,7 +33,7 @@ module Kafka
         Array.new(partitions.count) { topic }.zip(partitions)
       end
 
-      partitions_per_member = [1, topic_partitions.count / members.count].max
+      partitions_per_member = [1, (topic_partitions.count.to_f / members.count).ceil].max
       partitions_for_each_member = topic_partitions.sort.each_slice(partitions_per_member)
 
       members.zip(partitions_for_each_member).each do |member_id, member_partitions|

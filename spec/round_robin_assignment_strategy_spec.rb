@@ -73,6 +73,11 @@ describe Kafka::RoundRobinAssignmentStrategy do
       name: "lots of members",
       topics: { "topic1" => (0..10).to_a, "topic2" => (0..10).to_a },
       members: (0..50).map { |i| "member#{i}" }
+    },
+    {
+      name: "odd number of partitions",
+      topics: { "topic1" => (0..14).to_a },
+      members: ["member1", "member2"]
     }
   ].each do |name:, topics:, members:|
       it name do
