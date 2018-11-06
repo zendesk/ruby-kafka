@@ -24,20 +24,22 @@ module Kafka
         group_assignment[member_id] = Protocol::MemberAssignment.new
       end
 
-      topics.each do |topic|
+      topic_partitions = topics.flat_map do |topic|
         begin
           partitions = @cluster.partitions_for(topic).map(&:partition_id)
         rescue UnknownTopicOrPartition
           raise UnknownTopicOrPartition, "unknown topic #{topic}"
         end
+        Array.new(partitions.count) { topic }.zip(partitions)
+      end
 
-        partitions_per_member = partitions.group_by {|partition_id|
-          partition_id % members.count
-        }.values
+      partitions_for_each_member = topic_partitions.sort.each_slice(topic_partitions.count / members.count)
 
-        members.zip(partitions_per_member).each do |member_id, member_partitions|
-          unless member_partitions.nil?
-            group_assignment[member_id].assign(topic, member_partitions)
+      members.zip(partitions_for_each_member).each do |member_id, member_partitions|
+        unless member_partitions.nil?
+          member_partitions.group_by(&:first).each do |topic, values|
+            partition_ids = values.map { |(topic, partition_id)| partition_id }
+            group_assignment[member_id].assign(topic, partition_ids)
           end
         end
       end
