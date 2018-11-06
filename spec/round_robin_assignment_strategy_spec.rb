@@ -5,7 +5,6 @@ describe Kafka::RoundRobinAssignmentStrategy do
   let(:strategy) { described_class.new(cluster: cluster) }
 
   it "assigns all partitions" do
-
     members = (0...10).map {|i| "member#{i}" }
     topics = ["greetings"]
     partitions = (0...30).map {|i| double(:"partition#{i}", partition_id: i) }
