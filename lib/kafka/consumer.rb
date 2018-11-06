@@ -394,7 +394,10 @@ module Kafka
           @instrumenter.instrument("loop.consumer") do
             yield
           end
-        rescue HeartbeatError, OffsetCommitError
+        rescue HeartbeatError
+          make_final_offsets_commit!
+          join_group
+        rescue OffsetCommitError
           join_group
         rescue RebalanceInProgress
           @logger.warn "Group rebalance in progress, re-joining..."
