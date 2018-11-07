@@ -33,8 +33,13 @@ module Kafka
         Array.new(partitions.count) { topic }.zip(partitions)
       end
 
-      partitions_per_member = [1, (topic_partitions.count.to_f / members.count).ceil].max
-      partitions_for_each_member = topic_partitions.sort.each_slice(partitions_per_member)
+      partitions_per_member = [1, (topic_partitions.count / members.count)].max
+      partitions_for_each_member = topic_partitions.sort.each_slice(partitions_per_member).to_a
+
+      if partitions_for_each_member.count > members.count
+        leftovers = partitions_for_each_member.pop
+        partitions_for_each_member[0] = partitions_for_each_member[0] + leftovers
+      end
 
       members.zip(partitions_for_each_member).each do |member_id, member_partitions|
         unless member_partitions.nil?
