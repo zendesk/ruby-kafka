@@ -3,6 +3,7 @@
 Changes and additions to the library will be listed here.
 
 ## Unreleased
+- Fix wrong encoding calculation that leads to message corruption (#682, #680)
 
 ## 0.7.3
 

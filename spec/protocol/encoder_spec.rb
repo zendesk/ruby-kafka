@@ -42,6 +42,28 @@ describe Kafka::Protocol::Encoder do
           expect(binaries_in_io(io)).to eq ["10000010", "10100011", "00011010"]
         end
       end
+
+      context 'data is max positive int 64' do
+        it do
+          encoder = Kafka::Protocol::Encoder.new(io)
+          encoder.write_varint(2**63 - 1)
+          expect(binaries_in_io(io)).to eq [
+            "11111110", "11111111", "11111111", "11111111", "11111111",
+            "11111111", "11111111", "11111111", "11111111", "00000001"
+          ]
+        end
+      end
+
+      context 'data contains all trailing zero' do
+        it do
+          encoder = Kafka::Protocol::Encoder.new(io)
+          encoder.write_varint(2**62)
+          expect(binaries_in_io(io)).to eq [
+            "10000000", "10000000", "10000000", "10000000", "10000000",
+            "10000000", "10000000", "10000000", "10000000", "00000001"
+          ]
+        end
+      end
     end
 
     context 'data is negative' do
@@ -74,6 +96,17 @@ describe Kafka::Protocol::Encoder do
           encoder = Kafka::Protocol::Encoder.new(io)
           encoder.write_varint(-215233)
           expect(binaries_in_io(io)).to eq ["10000001", "10100011", "00011010"]
+        end
+      end
+
+      context 'data is min negative int 64' do
+        it do
+          encoder = Kafka::Protocol::Encoder.new(io)
+          encoder.write_varint(-2**63)
+          expect(binaries_in_io(io)).to eq [
+            "11111111", "11111111", "11111111", "11111111", "11111111",
+            "11111111", "11111111", "11111111", "11111111", "00000001"
+          ]
         end
       end
     end
