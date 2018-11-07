@@ -56,6 +56,6 @@ describe "Fetch API", functional: true do
       break if message_count == total_messages
     end
 
-    expect(batch_count).to eql(3)
+    expect(batch_count).to be <= 4
   end
 end
