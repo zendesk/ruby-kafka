@@ -133,7 +133,7 @@ module Kafka
         int = ~int | 1 if int < 0
 
         chunks = []
-        while int & 0xff80 != 0
+        while int >> 7 != 0
           chunks << (int & 0x7f | 0x80)
           int >>= 7
         end
