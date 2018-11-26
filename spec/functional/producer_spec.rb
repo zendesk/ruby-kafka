@@ -128,4 +128,49 @@ describe "Producer API", functional: true do
     expect(messages[3].value).to eq "hello4"
     expect(messages[3].headers).to eql({})
   end
+
+  example 'failing a message with metadata' do
+    cluster = instance_double(Kafka::Cluster)
+    expect(cluster).to receive(:add_target_topics)
+    expect(cluster).to receive(:refresh_metadata_if_necessary!).and_raise(Kafka::ConnectionError)
+
+    instrumenter = Kafka::Instrumenter.new
+
+    transman = instance_double(Kafka::TransactionManager)
+    allow(transman).to receive(:transactional?).and_return(false)
+
+    producer = Kafka::Producer.new(
+                                cluster: cluster,
+                                transaction_manager: transman,
+                                logger: double('logger'),
+                                instrumenter: instrumenter,
+                                compressor: double('compressor'),
+                                ack_timeout: 5,
+                                required_acks: 1,
+                                max_retries: 0,
+                                retry_backoff: 0,
+                                max_buffer_size: 1000,
+                                max_buffer_bytesize: 1024
+    )
+
+    callback = lambda do |*args|
+      event = ActiveSupport::Notifications::Event.new(*args)
+      expect(event.payload.fetch(:exception_object)).to be
+      messages = event.payload[:exception_object].failed_messages
+      expect(messages.size).to eq(2)
+      expect(messages[0].metadata[:publisher_name]).to eq('MyPublisher')
+      expect(messages[0].value).to eq('MyValue')
+      expect(messages[1].metadata[:publisher_name]).to eq('MyPublisher2')
+      expect(messages[1].value).to eq('MyValue2')
+    end
+
+    ActiveSupport::Notifications.subscribed(callback, 'deliver_messages.producer.kafka') do
+      expect {
+        producer.produce('MyValue', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher'})
+        producer.produce('MyValue2', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher2'})
+        producer.deliver_messages
+      }.to raise_error(Kafka::DeliveryFailed)
+    end
+  end
+
 end

@@ -734,11 +734,14 @@ All notification events have the `client_id` key in the payload, referring to th
   * `topic` is the topic that the message was produced to.
   * `buffer_size` is the size of the producer buffer after adding the message.
   * `max_buffer_size` is the maximum size of the producer buffer.
+  * `metadata` is any additional metadata that was passed into the `produce` method.
 
 * `deliver_messages.producer.kafka` is sent whenever a producer attempts to deliver its buffered messages to the Kafka brokers. It includes the following payload:
   * `attempts` is the number of times delivery was attempted.
   * `message_count` is the number of messages for which delivery was attempted.
   * `delivered_message_count` is the number of messages that were acknowledged by the brokers - if this number is smaller than `message_count` not all messages were successfully delivered.
+  * You can also access failed messages if the `exception_object` is set
+    and refers to a `Kafka::DeliveryFailed` exception via `payload[:exception_object].failed_messages`.
 
 #### Consumer Notifications
 

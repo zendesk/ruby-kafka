@@ -178,10 +178,13 @@ module Kafka
     # @param partition [Integer] the partition that the message should be written to.
     # @param partition_key [String] the key that should be used to assign a partition.
     # @param create_time [Time] the timestamp that should be set on the message.
+    # @param metadata [Object] any additional data that should be attached
+    # to the message to be retrieved later (e.g. for failure cases).
     #
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
-    def produce(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, create_time: Time.now)
+    def produce(value, key: nil, headers: {}, topic:, partition: nil,
+                partition_key: nil, create_time: Time.now, metadata: nil)
       message = PendingMessage.new(
         value: value && value.to_s,
         key: key && key.to_s,
@@ -189,7 +192,8 @@ module Kafka
         topic: topic.to_s,
         partition: partition && Integer(partition),
         partition_key: partition_key && partition_key.to_s,
-        create_time: create_time
+        create_time: create_time,
+        metadata: metadata
       )
 
       if buffer_size >= @max_buffer_size
@@ -219,6 +223,7 @@ module Kafka
         message_size: message.bytesize,
         buffer_size: buffer_size,
         max_buffer_size: @max_buffer_size,
+        metadata: metadata
       })
 
       nil
@@ -440,6 +445,7 @@ module Kafka
             topic: message.topic,
             partition: partition,
             create_time: message.create_time,
+            metadata: message.metadata
           )
         rescue Kafka::Error => e
           @instrumenter.instrument("topic_error.producer", {
@@ -479,7 +485,8 @@ module Kafka
             topic: topic,
             partition: partition,
             partition_key: nil,
-            create_time: message.create_time
+            create_time: message.create_time,
+            metadata: message.metadata
           )
         end
       end

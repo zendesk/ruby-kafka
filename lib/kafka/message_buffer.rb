@@ -16,8 +16,9 @@ module Kafka
       @bytesize = 0
     end
 
-    def write(value:, key:, topic:, partition:, create_time: Time.now, headers: {})
-      message = Protocol::Record.new(key: key, value: value, create_time: create_time, headers: headers)
+    def write(value:, key:, topic:, partition:, create_time: Time.now, headers: {}, metadata: nil)
+      message = Protocol::Record.new(key: key, value: value, create_time: create_time, headers: headers,
+                                     metadata: metadata)
 
       buffer_for(topic, partition) << message
 
