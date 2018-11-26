@@ -134,7 +134,7 @@ describe "Producer API", functional: true do
     expect(cluster).to receive(:add_target_topics)
     expect(cluster).to receive(:refresh_metadata_if_necessary!).and_raise(Kafka::ConnectionError)
 
-    instrumenter = Kafka::Instrumenter.new
+    instrumenter = Kafka::Instrumenter.new(client_id: 'abc')
 
     transman = instance_double(Kafka::TransactionManager)
     allow(transman).to receive(:transactional?).and_return(false)
