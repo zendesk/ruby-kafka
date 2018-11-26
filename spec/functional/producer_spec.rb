@@ -140,17 +140,17 @@ describe "Producer API", functional: true do
     allow(transman).to receive(:transactional?).and_return(false)
 
     producer = Kafka::Producer.new(
-                                cluster: cluster,
-                                transaction_manager: transman,
-                                logger: double('logger'),
-                                instrumenter: instrumenter,
-                                compressor: double('compressor'),
-                                ack_timeout: 5,
-                                required_acks: 1,
-                                max_retries: 0,
-                                retry_backoff: 0,
-                                max_buffer_size: 1000,
-                                max_buffer_bytesize: 1024
+      cluster: cluster,
+      transaction_manager: transman,
+      logger: double('logger'),
+      instrumenter: instrumenter,
+      compressor: double('compressor'),
+      ack_timeout: 5,
+      required_acks: 1,
+      max_retries: 0,
+      retry_backoff: 0,
+      max_buffer_size: 1000,
+      max_buffer_bytesize: 1024
     )
 
     callback = lambda do |*args|
@@ -166,11 +166,10 @@ describe "Producer API", functional: true do
 
     ActiveSupport::Notifications.subscribed(callback, 'deliver_messages.producer.kafka') do
       expect {
-        producer.produce('MyValue', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher'})
-        producer.produce('MyValue2', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher2'})
+        producer.produce('MyValue', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher' })
+        producer.produce('MyValue2', topic: 'my-topic', metadata: { publisher_name: 'MyPublisher2' })
         producer.deliver_messages
       }.to raise_error(Kafka::DeliveryFailed)
     end
   end
-
 end
