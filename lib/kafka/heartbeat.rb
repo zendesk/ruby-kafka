@@ -11,10 +11,10 @@ module Kafka
 
     def trigger!
       @instrumenter.instrument('heartbeat.consumer',
-        group_id: @group.group_id,
-        topic_partitions: @group.assigned_partitions) do
-           @group.heartbeat
-           @last_heartbeat = Time.now
+                               group_id: @group.group_id,
+                               topic_partitions: @group.assigned_partitions) do
+        @group.heartbeat
+        @last_heartbeat = Time.now
       end
     end
 
