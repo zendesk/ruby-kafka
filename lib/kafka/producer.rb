@@ -129,7 +129,7 @@ module Kafka
   class Producer
     class AbortTransaction < StandardError; end
 
-    def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
+    def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:, partitioner:)
       @cluster = cluster
       @transaction_manager = transaction_manager
       @logger = TaggedLogger.new(logger)
@@ -141,6 +141,7 @@ module Kafka
       @max_buffer_size = max_buffer_size
       @max_buffer_bytesize = max_buffer_bytesize
       @compressor = compressor
+      @partitioner = partitioner
 
       # The set of topics that are produced to.
       @target_topics = Set.new
@@ -452,7 +453,7 @@ module Kafka
 
           if partition.nil?
             partition_count = @cluster.partitions_for(message.topic).count
-            partition = Partitioner.partition_for_key(partition_count, message)
+            partition = @partitioner.partition_for_key(partition_count, message)
           end
 
           @buffer.write(

@@ -2,6 +2,7 @@
 
 require "fake_broker"
 require "timecop"
+require "kafka/partitioner"
 
 describe Kafka::Producer do
   let(:logger) { LOGGER }
@@ -12,6 +13,7 @@ describe Kafka::Producer do
   let(:cluster) { double(:cluster) }
   let(:transaction_manager) { double(:transaction_manager) }
   let(:producer) { initialize_producer }
+  let(:partitioner) { Kafka::Partitioner.new }
 
   before do
     allow(cluster).to receive(:mark_as_stale!)
@@ -367,6 +369,7 @@ describe Kafka::Producer do
       required_acks: 1,
       max_buffer_size: 1000,
       max_buffer_bytesize: 10_000_000,
+      partitioner: partitioner,
     }
 
     Kafka::Producer.new(**default_options.merge(options))
