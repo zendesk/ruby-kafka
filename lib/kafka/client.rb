@@ -374,6 +374,7 @@ module Kafka
       heartbeat = Heartbeat.new(
         group: group,
         interval: heartbeat_interval,
+        instrumenter: instrumenter
       )
 
       Consumer.new(
