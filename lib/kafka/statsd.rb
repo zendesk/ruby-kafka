@@ -124,6 +124,17 @@ module Kafka
         gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.lag", lag)
       end
 
+      def fetch_batch(event)
+        lag = event.payload.fetch(:offset_lag)
+        batch_size = event.payload.fetch(:message_count)
+        client = event.payload.fetch(:client_id)
+        group_id = event.payload.fetch(:group_id)
+        topic = event.payload.fetch(:topic)
+        partition = event.payload.fetch(:partition)
+
+        histogram("consumer.#{client}.#{group_id}.#{topic}.#{partition}.batch_size", batch_size)
+      end
+
       def join_group(event)
         client = event.payload.fetch(:client_id)
         group_id = event.payload.fetch(:group_id)
