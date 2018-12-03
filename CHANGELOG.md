@@ -3,6 +3,8 @@
 Changes and additions to the library will be listed here.
 
 ## Unreleased
+- Distribute partitions across consumer groups when there are few partitions per topic (#681)
+- Fix an issue where a consumer would fail to fetch any messages (#689)
 
 ## 0.7.4
 - Fix wrong encoding calculation that leads to message corruption (#682, #680).
