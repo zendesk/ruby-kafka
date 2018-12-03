@@ -167,7 +167,6 @@ module Kafka
 
       def process_batch(event)
         offset = event.payload.fetch(:last_offset)
-        lag = event.payload.fetch(:offset_lag)
         messages = event.payload.fetch(:message_count)
 
         tags = {
@@ -185,7 +184,6 @@ module Kafka
         end
 
         gauge("consumer.offset", offset, tags: tags)
-        gauge("consumer.lag", lag, tags: tags)
       end
 
       def fetch_batch(event)
@@ -200,6 +198,7 @@ module Kafka
         }
 
         histogram("consumer.batch_size", batch_size, tags: tags)
+        gauge("consumer.lag", lag, tags: tags)
       end
 
       def join_group(event)
