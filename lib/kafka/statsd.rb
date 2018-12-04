@@ -107,7 +107,6 @@ module Kafka
       end
 
       def process_batch(event)
-        lag = event.payload.fetch(:offset_lag)
         messages = event.payload.fetch(:message_count)
         client = event.payload.fetch(:client_id)
         group_id = event.payload.fetch(:group_id)
@@ -120,7 +119,17 @@ module Kafka
           timing("consumer.#{client}.#{group_id}.#{topic}.#{partition}.process_batch.latency", event.duration)
           count("consumer.#{client}.#{group_id}.#{topic}.#{partition}.messages", messages)
         end
+      end
 
+      def fetch_batch(event)
+        lag = event.payload.fetch(:offset_lag)
+        batch_size = event.payload.fetch(:message_count)
+        client = event.payload.fetch(:client_id)
+        group_id = event.payload.fetch(:group_id)
+        topic = event.payload.fetch(:topic)
+        partition = event.payload.fetch(:partition)
+
+        count("consumer.#{client}.#{group_id}.#{topic}.#{partition}.batch_size", batch_size)
         gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.lag", lag)
       end
 
