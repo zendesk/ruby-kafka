@@ -129,7 +129,7 @@ module Kafka
         topic = event.payload.fetch(:topic)
         partition = event.payload.fetch(:partition)
 
-        histogram("consumer.#{client}.#{group_id}.#{topic}.#{partition}.batch_size", batch_size)
+        count("consumer.#{client}.#{group_id}.#{topic}.#{partition}.batch_size", batch_size)
         gauge("consumer.#{client}.#{group_id}.#{topic}.#{partition}.lag", lag)
       end
 
