@@ -7,6 +7,7 @@ Changes and additions to the library will be listed here.
 - Fix an issue where a consumer would fail to fetch any messages (#689)
 - Instrumentation for heartbeat event
 - Synchronously stop the fetcher to prevent race condition when processing commands
+- Instrument batch fetching (#694)
 
 ## 0.7.4
 - Fix wrong encoding calculation that leads to message corruption (#682, #680).
