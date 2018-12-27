@@ -8,7 +8,7 @@ module Kafka
 
     def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
       @max_queue_size = max_queue_size
       @group = group
@@ -55,7 +55,7 @@ module Kafka
         while @running
           loop
         end
-        @logger.info "Fetcher thread exited."
+        @logger.info "#{@group} Fetcher thread exited."
       end
       @thread.abort_on_exception = true
     end
@@ -94,6 +94,7 @@ module Kafka
     attr_reader :current_reset_counter
 
     def loop
+      @logger.push_tags(@group.to_s)
       @instrumenter.instrument("loop.fetcher", {
         queue_size: @queue.size,
       })
@@ -112,6 +113,8 @@ module Kafka
         @logger.warn "Reached max fetcher queue size (#{@max_queue_size}), sleeping 1s"
         sleep 1
       end
+    ensure
+      @logger.pop_tags
     end
 
     def handle_configure(min_bytes, max_bytes, max_wait_time)

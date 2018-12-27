@@ -9,7 +9,7 @@ module Kafka
 
     def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @group_id = group_id
       @session_timeout = session_timeout
       @instrumenter = instrumenter
@@ -184,6 +184,12 @@ module Kafka
 
         @assigned_partitions.replace(response.member_assignment.topics)
       end
+    end
+
+    def to_s
+      "[#{@group_id}] {" + assigned_partitions.map { |topic, partitions|
+        "#{topic}: #{partitions[0..4].join(', ')}"
+      }.join('; ') + '}:'
     end
 
     def coordinator

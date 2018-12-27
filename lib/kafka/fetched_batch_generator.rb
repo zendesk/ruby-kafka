@@ -10,7 +10,7 @@ module Kafka
     def initialize(topic, fetched_partition, offset, logger:)
       @topic = topic
       @fetched_partition = fetched_partition
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @offset = offset
     end
 

@@ -4,7 +4,7 @@ module Kafka
   class ConnectionBuilder
     def initialize(client_id:, logger:, instrumenter:, connect_timeout:, socket_timeout:, ssl_context:, sasl_authenticator:)
       @client_id = client_id
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
       @connect_timeout = connect_timeout
       @socket_timeout = socket_timeout

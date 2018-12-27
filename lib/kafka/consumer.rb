@@ -46,7 +46,7 @@ module Kafka
 
     def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
       @group = group
       @offset_manager = offset_manager
@@ -391,6 +391,7 @@ module Kafka
 
     def consumer_loop
       @running = true
+      @logger.push_tags(@group.to_s)
 
       @fetcher.start
 
@@ -429,6 +430,7 @@ module Kafka
       make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
+      @logger.pop_tags
     end
 
     def make_final_offsets_commit!(attempts = 3)
