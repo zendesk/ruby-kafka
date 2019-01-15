@@ -3,6 +3,8 @@
 Changes and additions to the library will be listed here.
 
 ## Unreleased
+
+## 0.7.5
 - Distribute partitions across consumer groups when there are few partitions per topic (#681)
 - Fix an issue where a consumer would fail to fetch any messages (#689)
 - Instrumentation for heartbeat event
