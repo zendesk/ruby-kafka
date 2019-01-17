@@ -103,6 +103,21 @@ module Kafka
       nil
     end
 
+    def subscribe_by_regex(topic_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
+      cluster_topics.each do |topic|
+        next unless topic =~ topic_regex
+
+        subscribe(
+          topic,
+          default_offset: default_offset,
+          start_from_beginning: start_from_beginning,
+          max_bytes_per_partition: max_bytes_per_partition,
+        )
+      end
+
+      nil
+    end
+
     # Stop the consumer.
     #
     # The consumer will finish any in-progress work and shut down.
@@ -550,6 +565,19 @@ module Kafka
         partitions.keep_if do |partition, _|
           excluding.fetch(topic, []).include?(partition)
         end
+      end
+    end
+
+    # unfortunate copypasta from the client class
+    def cluster_topics
+      attempts = 0
+      begin
+        attempts += 1
+        @cluster.list_topics
+      rescue Kafka::ConnectionError
+        @cluster.mark_as_stale!
+        retry unless attempts > 1
+        raise
       end
     end
   end
