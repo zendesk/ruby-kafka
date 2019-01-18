@@ -93,26 +93,15 @@ module Kafka
     # @param max_bytes_per_partition [Integer] the maximum amount of data fetched
     #   from a single partition at a time.
     # @return [nil]
-    def subscribe(topic, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
+    def subscribe(topic_or_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
       default_offset ||= start_from_beginning ? :earliest : :latest
 
-      @group.subscribe(topic)
-      @offset_manager.set_default_offset(topic, default_offset)
-      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
-
-      nil
-    end
-
-    def subscribe_by_regex(topic_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
-      cluster_topics.each do |topic|
-        next unless topic =~ topic_regex
-
-        subscribe(
-          topic,
-          default_offset: default_offset,
-          start_from_beginning: start_from_beginning,
-          max_bytes_per_partition: max_bytes_per_partition,
-        )
+      if topic_or_regex.is_a?(Regexp)
+        cluster_topics.select { |topic| topic =~ topic_or_regex }.each do |topic|
+          subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+        end
+      else
+        subscribe_to_topic(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
       end
 
       nil
@@ -566,6 +555,12 @@ module Kafka
           excluding.fetch(topic, []).include?(partition)
         end
       end
+    end
+
+    def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+      @group.subscribe(topic)
+      @offset_manager.set_default_offset(topic, default_offset)
+      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
     end
 
     # unfortunate copypasta from the client class
