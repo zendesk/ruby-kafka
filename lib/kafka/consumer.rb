@@ -82,7 +82,8 @@ module Kafka
     # messages to be written. In the former case, set `start_from_beginning`
     # to true (the default); in the latter, set it to false.
     #
-    # @param topic [String] the name of the topic to subscribe to.
+    # @param topic_or_regex [String, Regexp] subscribe to single topic with a string
+    #   or multiple topics matching a regex.
     # @param default_offset [Symbol] whether to start from the beginning or the
     #   end of the topic's partitions. Deprecated.
     # @param start_from_beginning [Boolean] whether to start from the beginning
@@ -563,7 +564,6 @@ module Kafka
       @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
     end
 
-    # unfortunate copypasta from the client class
     def cluster_topics
       attempts = 0
       begin
