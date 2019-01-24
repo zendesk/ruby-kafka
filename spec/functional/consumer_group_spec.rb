@@ -55,6 +55,64 @@ describe "Consumer API", functional: true do
     expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
   end
 
+  example "subscribing to multiple topics using regex" do
+    topic_a = create_random_topic(num_partitions: 1)
+    topic_b = create_random_topic(num_partitions: 1)
+
+    messages_a = (1..500).to_a
+    messages_b = (501..1000).to_a
+    messages = messages_a + messages_b
+
+    begin
+      kafka = Kafka.new(kafka_brokers, client_id: "test")
+      producer = kafka.producer
+
+      messages_a.each do |i|
+        producer.produce(i.to_s, topic: topic_a, partition: 0)
+      end
+
+      messages_b.each do |i|
+        producer.produce(i.to_s, topic: topic_b, partition: 0)
+      end
+
+      producer.deliver_messages
+    end
+
+    group_id = "test#{rand(1000)}"
+
+    mutex = Mutex.new
+    received_messages = []
+
+    consumers = 2.times.map do
+      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer.subscribe(/#{topic_a}|#{topic_b}/)
+      consumer
+    end
+
+    threads = consumers.map do |consumer|
+      t = Thread.new do
+        consumer.each_message do |message|
+          mutex.synchronize do
+            received_messages << message
+
+            if received_messages.count == messages.count
+              consumers.each(&:stop)
+            end
+          end
+        end
+      end
+
+      t.abort_on_exception = true
+
+      t
+    end
+
+    threads.each(&:join)
+
+    expect(received_messages.map(&:value).map(&:to_i).sort).to match_array messages
+  end
+
   example "consuming messages from a topic that's being written to" do
     num_partitions = 3
     topic = create_random_topic(num_partitions: num_partitions)

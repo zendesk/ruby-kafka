@@ -82,7 +82,8 @@ module Kafka
     # messages to be written. In the former case, set `start_from_beginning`
     # to true (the default); in the latter, set it to false.
     #
-    # @param topic [String] the name of the topic to subscribe to.
+    # @param topic_or_regex [String, Regexp] subscribe to single topic with a string
+    #   or multiple topics matching a regex.
     # @param default_offset [Symbol] whether to start from the beginning or the
     #   end of the topic's partitions. Deprecated.
     # @param start_from_beginning [Boolean] whether to start from the beginning
@@ -93,12 +94,16 @@ module Kafka
     # @param max_bytes_per_partition [Integer] the maximum amount of data fetched
     #   from a single partition at a time.
     # @return [nil]
-    def subscribe(topic, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
+    def subscribe(topic_or_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
       default_offset ||= start_from_beginning ? :earliest : :latest
 
-      @group.subscribe(topic)
-      @offset_manager.set_default_offset(topic, default_offset)
-      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
+      if topic_or_regex.is_a?(Regexp)
+        cluster_topics.select { |topic| topic =~ topic_or_regex }.each do |topic|
+          subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+        end
+      else
+        subscribe_to_topic(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
+      end
 
       nil
     end
@@ -550,6 +555,24 @@ module Kafka
         partitions.keep_if do |partition, _|
           excluding.fetch(topic, []).include?(partition)
         end
+      end
+    end
+
+    def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+      @group.subscribe(topic)
+      @offset_manager.set_default_offset(topic, default_offset)
+      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
+    end
+
+    def cluster_topics
+      attempts = 0
+      begin
+        attempts += 1
+        @cluster.list_topics
+      rescue Kafka::ConnectionError
+        @cluster.mark_as_stale!
+        retry unless attempts > 1
+        raise
       end
     end
   end
