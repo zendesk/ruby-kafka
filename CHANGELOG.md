@@ -3,6 +3,7 @@
 Changes and additions to the library will be listed here.
 
 ## Unreleased
+- Introduce regex matching in `Consumer#subscribe` (#700)
 
 ## 0.7.5
 - Distribute partitions across consumer groups when there are few partitions per topic (#681)
