@@ -98,16 +98,18 @@ module Kafka
 
         @correlation_id += 1
 
-        @logger.debug "Sending #{api_name} API request #{@correlation_id} to #{to_s}"
+        @logger.with_tags(api_name, @correlation_id) do
+          @logger.debug "Sending #{api_name} API request #{@correlation_id} to #{to_s}"
 
-        write_request(request, notification)
+          write_request(request, notification)
 
-        response_class = request.response_class
-        response = wait_for_response(response_class, notification) unless response_class.nil?
+          response_class = request.response_class
+          response = wait_for_response(response_class, notification) unless response_class.nil?
 
-        @last_request = Time.now
+          @last_request = Time.now
 
-        response
+          response
+        end
       end
     rescue SystemCallError, EOFError, IOError => e
       close
