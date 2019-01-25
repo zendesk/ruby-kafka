@@ -8,7 +8,7 @@ module Kafka
 
     def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
       @cluster = cluster
-      @logger = logger
+      @logger = PrefixedLogger.new("#{group.group_id}/fetcher", logger)
       @instrumenter = instrumenter
       @max_queue_size = max_queue_size
       @group = group

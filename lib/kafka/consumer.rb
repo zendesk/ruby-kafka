@@ -46,7 +46,7 @@ module Kafka
 
     def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
-      @logger = logger
+      @logger = PrefixedLogger.new(group.group_id, logger)
       @instrumenter = instrumenter
       @group = group
       @offset_manager = offset_manager

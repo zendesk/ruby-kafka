@@ -52,7 +52,7 @@ module Kafka
     # @return [Connection] a new connection.
     def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
-      @logger = logger
+      @logger = PrefixedLogger.new("#{host}:#{port}", logger)
       @instrumenter = instrumenter
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT

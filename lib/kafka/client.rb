@@ -14,6 +14,7 @@ require "kafka/fetch_operation"
 require "kafka/connection_builder"
 require "kafka/instrumenter"
 require "kafka/sasl_authenticator"
+require "kafka/prefixed_logger"
 
 module Kafka
   class Client

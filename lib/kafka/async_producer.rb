@@ -80,7 +80,7 @@ module Kafka
       @queue = Queue.new
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
-      @logger = logger
+      @logger = PrefixedLogger.new("producer", logger)
 
       @worker = Worker.new(
         queue: @queue,
@@ -189,7 +189,7 @@ module Kafka
         @producer = producer
         @delivery_threshold = delivery_threshold
         @instrumenter = instrumenter
-        @logger = logger
+        @logger = PrefixedLogger.new("worker", logger)
       end
 
       def run
