@@ -122,6 +122,15 @@ module Kafka
       retry
     end
 
+    def to_s
+      "[#{@group_id}] {" + assigned_partitions.map { |topic, partitions|
+        partition_str = partitions.size > 5 ?
+                          "#{partitions[0..4].join(', ')}..." :
+                          partitions.join(', ')
+        "#{topic}: #{partition_str}"
+      }.join('; ') + '}:'
+    end
+
     private
 
     def join_group
@@ -184,15 +193,6 @@ module Kafka
 
         @assigned_partitions.replace(response.member_assignment.topics)
       end
-    end
-
-    def to_s
-      "[#{@group_id}] {" + assigned_partitions.map { |topic, partitions|
-        partition_str = partitions.size > 5 ?
-                          "#{partitions[0..4].join(', ')}..." :
-                          partitions.join(', ')
-        "#{topic}: #{partition_str}"
-      }.join('; ') + '}:'
     end
 
     def coordinator
