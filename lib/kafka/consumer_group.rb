@@ -188,7 +188,10 @@ module Kafka
 
     def to_s
       "[#{@group_id}] {" + assigned_partitions.map { |topic, partitions|
-        "#{topic}: #{partitions[0..4].join(', ')}"
+        partition_str = partitions.size > 5 ?
+                          "#{partitions[0..4].join(', ')}..." :
+                          partitions.join(', ')
+        "#{topic}: #{partition_str}"
       }.join('; ') + '}:'
     end
 
