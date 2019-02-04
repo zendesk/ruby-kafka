@@ -14,7 +14,7 @@ module Kafka
       def initialize(username:, password:, mechanism: 'sha256', logger:)
         @username = username
         @password = password
-        @logger = logger
+        @logger = TaggedLogger.new(logger)
 
         if mechanism
           @mechanism = MECHANISMS.fetch(mechanism) do

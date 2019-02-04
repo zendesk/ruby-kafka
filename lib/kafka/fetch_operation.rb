@@ -23,7 +23,7 @@ module Kafka
   class FetchOperation
     def initialize(cluster:, logger:, min_bytes: 1, max_bytes: 10485760, max_wait_time: 5)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @min_bytes = min_bytes
       @max_bytes = max_bytes
       @max_wait_time = max_wait_time

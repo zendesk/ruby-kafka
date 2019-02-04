@@ -5,7 +5,7 @@ require "kafka/broker"
 module Kafka
   class BrokerPool
     def initialize(connection_builder:, logger:)
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @connection_builder = connection_builder
       @brokers = {}
     end

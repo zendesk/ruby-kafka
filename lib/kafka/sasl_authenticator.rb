@@ -9,7 +9,7 @@ module Kafka
     def initialize(logger:, sasl_gssapi_principal:, sasl_gssapi_keytab:,
                    sasl_plain_authzid:, sasl_plain_username:, sasl_plain_password:,
                    sasl_scram_username:, sasl_scram_password:, sasl_scram_mechanism:)
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
 
       @plain = Sasl::Plain.new(
         authzid: sasl_plain_authzid,
