@@ -428,6 +428,66 @@ describe Kafka::Consumer do
       ]
     }
 
+    context "when no messages in the Kafka log" do
+      let(:messages) { [] }
+      let(:thread_timeout) { 3 }
+
+      it "runs forever if exit_if is not passed" do
+        allow(fetcher).to receive(:poll) {
+          th = Thread.new do
+            consumer.each_batch do |message|
+              fail "this block is never called"
+            end
+          end
+
+          expect(th.join(thread_timeout)).to be_nil # join returning nil is a sign of thread not completing within timeout
+          th.kill
+        }
+      end
+
+      it "aborts earlier if exit_if is passed" do
+        th = Thread.new do
+          started_at = Time.now
+          consumer.each_batch(exit_if: -> { Time.now > (started_at + 2) } ) do |message|
+            fail "this block is never called"
+          end
+        end
+
+        expect(th.join(thread_timeout)).to eq th # join returning itself means that thread it's done
+      end
+    end
+
+    context "when fetch_batches returns FetchError" do
+      let(:thread_timeout) { 3 }
+      before do
+        allow(cluster).to receive(:mark_as_stale!)
+        allow(consumer).to receive(:fetch_batches).and_raise(Kafka::FetchError)
+      end
+
+      it "runs forever if exit_if is not passed" do
+        allow(fetcher).to receive(:poll) {
+          th = Thread.new do
+            consumer.each_batch do |message|
+              fail "this block is never called"
+            end
+          end
+
+          expect(th.join(thread_timeout)).to be_nil # join returning nil is a sign of thread not completing within timeout
+          th.kill
+        }
+      end
+
+      it "aborts earlier if exit_if is passed" do
+        th = Thread.new do
+          consumer.each_batch(exit_if: -> { true } ) do |message|
+            fail "this block is never called"
+          end
+        end
+
+        expect(th.join(thread_timeout)).to eq th # join returning itself means that thread is done
+      end
+    end
+
     it "does not mark as processed when automatically_mark_as_processed is false" do
       expect(offset_manager).not_to receive(:mark_as_processed)
 
