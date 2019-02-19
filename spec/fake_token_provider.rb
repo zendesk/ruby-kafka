@@ -5,7 +5,7 @@ class FakeTokenProvider
   end
 
   def token
-     "SASLOAUTHBEARER.TEST_ID_TOKEN"
+    "SASLOAUTHBEARER.TEST_ID_TOKEN"
   end
 
   def extensions
