@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fake_server'
+require 'fake_token_provider'
 
 describe Kafka::SaslAuthenticator do
   let(:logger) { LOGGER }
@@ -38,7 +39,8 @@ describe Kafka::SaslAuthenticator do
       sasl_plain_password: nil,
       sasl_scram_username: nil,
       sasl_scram_password: nil,
-      sasl_scram_mechanism: nil
+      sasl_scram_mechanism: nil,
+      sasl_oauth_token_provider: nil,
     }
   }
 
@@ -89,6 +91,18 @@ describe Kafka::SaslAuthenticator do
       expect {
         sasl_authenticator.authenticate!(connection)
       }.to raise_error(Kafka::FailedScramAuthentication)
+    end
+  end
+
+  context "when SASL OAuthBearer has been configured" do
+    before do
+      auth_options.update(
+        sasl_oauth_token_provider: FakeTokenProvider.new
+      )
+
+      it "authenticates" do
+        sasl_authenticator.authenticate!(connection)
+      end
     end
   end
 end

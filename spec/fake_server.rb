@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class FakeServer
-  SUPPORTED_MECHANISMS = ['PLAIN', 'SCRAM-SHA-256', 'SCRAM-SHA-512']
+  SUPPORTED_MECHANISMS = ['PLAIN', 'SCRAM-SHA-256', 'SCRAM-SHA-512', 'OAUTHBEARER']
 
   def self.start(server)
     thread = Thread.new { new(server).start }
@@ -77,6 +77,10 @@ class FakeServer
       end
     when 'SCRAM-SHA-256', 'SCRAM-SHA-512'
       scram_sasl_authenticate(auth_mechanism[6..-1], encoder, decoder)
+    when 'OAUTHBEARER'
+      message = decoder.bytes
+      puts 'OAUTHBEARER: ', message
+      encoder.write_bytes('')
     else
       puts "UNKNOWN AUTH MECHANISM"
     end

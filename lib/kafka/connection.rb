@@ -107,7 +107,6 @@ module Kafka
         response = wait_for_response(response_class, notification) unless response_class.nil?
 
         @last_request = Time.now
-        @logger.debug response
         response
       end
     rescue SystemCallError, EOFError, IOError => e
