@@ -258,7 +258,7 @@ module Kafka
             retry
           else
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
-            @instrumenter.instrument("error.async_producer", {error: e})
+            @instrumenter.instrument("error.async_producer", { error: e })
           end
         end
       end
