@@ -76,7 +76,6 @@ describe Kafka::AsyncProducer do
       sleep 0.2 # wait for worker to call produce
 
       expect(sync_producer).to have_received(:produce)
-
     end
 
     it "retries until configured max_retries" do
@@ -90,7 +89,6 @@ describe Kafka::AsyncProducer do
       metric = instrumenter.metrics_for("error.async_producer").first
       expect(metric.payload[:error]).to be_a(Kafka::BufferOverflow)
       expect(sync_producer).to have_received(:produce).exactly(3).times
-
     end
   end
 end
