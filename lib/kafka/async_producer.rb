@@ -254,7 +254,7 @@ module Kafka
           end
           if retries < @max_retries
             retries += 1
-            sleep @retry_backoff ** retries
+            sleep @retry_backoff**retries
             retry
           else
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
