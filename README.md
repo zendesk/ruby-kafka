@@ -991,7 +991,7 @@ kafka = Kafka.new(
 ##### OAUTHBEARER
 This mechanism is supported in kafka >= 2.0.0 as of [KIP-255](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=75968876)
 
-In order to authenticate using OAUTHBEARER, you must set the client with an instance of a class that implements a `token` method (the interface is described in `lib/kafka/sasl/oauth.rb`) which returns an ID/Access token.
+In order to authenticate using OAUTHBEARER, you must set the client with an instance of a class that implements a `token` method (the interface is described in [Kafka::Sasl::OAuth](lib/kafka/sasl/oauth.rb)) which returns an ID/Access token.
 
 Optionally, the client may implement an `extensions` method that returns a map of key-value pairs. These can be sent with the SASL/OAUTHBEARER initial client response. This is only supported in kafka >= 2.1.0.
 
