@@ -79,8 +79,9 @@ class FakeServer
       scram_sasl_authenticate(auth_mechanism[6..-1], encoder, decoder)
     when 'OAUTHBEARER'
       message = decoder.bytes
-      puts 'OAUTHBEARER: ', message
-      encoder.write_bytes('')
+      if message == "n,,\x01auth=Bearer SASLOAUTHBEARER.TEST_ID_TOKEN\x01test_key=test_value\x01test_key_2=test_value_2\x01\x01"
+        encoder.write_bytes('')
+      end
     else
       puts "UNKNOWN AUTH MECHANISM"
     end

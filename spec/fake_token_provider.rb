@@ -5,10 +5,15 @@ class FakeTokenProvider
   end
 
   def token
-     "SASLOauthbearerMessageTest"
+     "SASLOAUTHBEARER.TEST_ID_TOKEN"
   end
 
   def extensions
     { test_key: "test_value", test_key_2: "test_value_2" }
+  end
+end
+
+class FakeBrokenTokenProvider
+  def initialize
   end
 end

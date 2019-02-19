@@ -99,10 +99,18 @@ describe Kafka::SaslAuthenticator do
       auth_options.update(
         sasl_oauth_token_provider: FakeTokenProvider.new
       )
+    end
 
-      it "authenticates" do
+    it "authenticates" do
+      sasl_authenticator.authenticate!(connection)
+    end
+
+    it "raises error when the token provider does not generate a token" do
+      auth_options[:sasl_oauth_token_provider] = FakeBrokenTokenProvider.new
+
+      expect {
         sasl_authenticator.authenticate!(connection)
-      end
+      }.to raise_error(Kafka::NoTokenMethodError)
     end
   end
 end
