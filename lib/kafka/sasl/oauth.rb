@@ -51,7 +51,7 @@ module Kafka
       private
 
       def initial_client_response
-        raise Kafka::NoTokenMethodError, "Token provider doesn't define 'token'" unless @token_provider.respond_to? :token
+        raise Kafka::TokenMethodNotImplementedError, "Token provider doesn't define 'token'" unless @token_provider.respond_to? :token
         "n,,\x01auth=Bearer #{@token_provider.token}#{token_extensions}\x01\x01"
       end
 
