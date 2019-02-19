@@ -163,7 +163,6 @@ module Kafka
         return "" if number_of_bytes == 0
 
         data = @io.read(number_of_bytes) or raise EOFError
-
         # If the `read` call returned less data than expected we should not
         # proceed.
         raise EOFError if data.size != number_of_bytes

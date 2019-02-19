@@ -62,13 +62,16 @@ module Kafka
     #
     # @param sasl_over_ssl [Boolean] whether to enforce SSL with SASL
     #
+    # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider class that
+    #   implements method token. See {Sasl::OAuth#initialize}
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -92,6 +95,7 @@ module Kafka
         sasl_scram_username: sasl_scram_username,
         sasl_scram_password: sasl_scram_password,
         sasl_scram_mechanism: sasl_scram_mechanism,
+        sasl_oauth_token_provider: sasl_oauth_token_provider,
         logger: @logger
       )
 
