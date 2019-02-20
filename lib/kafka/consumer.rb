@@ -402,12 +402,12 @@ module Kafka
           end
         rescue HeartbeatError
           make_final_offsets_commit!
-          join_group
+          join_group if @running
         rescue OffsetCommitError
-          join_group
+          join_group if @running
         rescue RebalanceInProgress
           @logger.warn "Group rebalance in progress, re-joining..."
-          join_group
+          join_group if @running
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
