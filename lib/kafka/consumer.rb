@@ -246,7 +246,7 @@ module Kafka
 
             trigger_heartbeat
 
-            return if !@running
+            return if shutting_down?
           end
 
           # We've successfully processed a batch from the partition, so we can clear
@@ -341,7 +341,7 @@ module Kafka
 
           trigger_heartbeat
 
-          return if !@running
+          return if shutting_down?
         end
 
         # We may not have received any messages, but it's still a good idea to
@@ -395,19 +395,19 @@ module Kafka
 
       @fetcher.start
 
-      while @running
+      while running?
         begin
           @instrumenter.instrument("loop.consumer") do
             yield
           end
         rescue HeartbeatError
           make_final_offsets_commit!
-          join_group
+          join_group if running?
         rescue OffsetCommitError
-          join_group
+          join_group if running?
         rescue RebalanceInProgress
           @logger.warn "Group rebalance in progress, re-joining..."
-          join_group
+          join_group if running?
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
@@ -512,7 +512,7 @@ module Kafka
 
     def fetch_batches
       # Return early if the consumer has been stopped.
-      return [] if !@running
+      return [] if shutting_down?
 
       join_group unless @group.member?
 
@@ -550,6 +550,14 @@ module Kafka
 
     def pause_for(topic, partition)
       @pauses[topic][partition]
+    end
+
+    def running?
+      @running
+    end
+
+    def shutting_down?
+      !running?
     end
 
     def clear_current_offsets(excluding: {})
