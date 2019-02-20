@@ -114,6 +114,7 @@ module Kafka
     #
     # @return [nil]
     def stop
+      @logger.info "Stopping consumer..."
       @running = false
       @fetcher.stop
       @cluster.disconnect
