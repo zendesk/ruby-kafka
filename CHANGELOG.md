@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 - Introduce regex matching in `Consumer#subscribe` (#700)
+- Only rejoin group on error if we're not in shutdown mode (#711)
+- Use `maxTimestamp` for `logAppendTime` timestamps (#706)
 
 ## 0.7.5
 - Distribute partitions across consumer groups when there are few partitions per topic (#681)
