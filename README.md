@@ -997,14 +997,14 @@ Optionally, the client may implement an `extensions` method that returns a map o
 
 ```ruby
 class TokenProvider
-    def token
-        "some_id_token"
-    end
+  def token
+    "some_id_token"
+  end
 end
 # ...
 client = Kafka.new(
-    ["kafka1:9092"],
-    sasl_oauth_token_provider: TokenProvider.new
+  ["kafka1:9092"],
+  sasl_oauth_token_provider: TokenProvider.new
 )
 ```
 
