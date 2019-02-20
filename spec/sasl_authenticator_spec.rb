@@ -105,6 +105,12 @@ describe Kafka::SaslAuthenticator do
       sasl_authenticator.authenticate!(connection)
     end
 
+    it "authenticates without extensions implemented" do
+      auth_options[:sasl_oauth_token_provider] = FakeTokenProviderNoExtensions.new
+
+      sasl_authenticator.authenticate!(connection)
+    end
+
     it "raises error when the token provider does not generate a token" do
       auth_options[:sasl_oauth_token_provider] = FakeBrokenTokenProvider.new
 

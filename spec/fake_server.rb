@@ -79,7 +79,9 @@ class FakeServer
       scram_sasl_authenticate(auth_mechanism[6..-1], encoder, decoder)
     when 'OAUTHBEARER'
       message = decoder.bytes
-      if message == "n,,\x01auth=Bearer SASLOAUTHBEARER.TEST_ID_TOKEN\x01test_key=test_value\x01test_key_2=test_value_2\x01\x01"
+      msg_with_extension = "n,,\x01auth=Bearer SASLOAUTHBEARER.TEST_ID_TOKEN\x01test_key=test_value\x01test_key_2=test_value_2\x01\x01"
+      msg_without_extension = "n,,\x01auth=Bearer SASLOAUTHBEARER.TEST_ID_TOKEN\x01\x01"
+      if message == msg_without_extension or message == msg_with_extension
         encoder.write_bytes('')
       end
     else

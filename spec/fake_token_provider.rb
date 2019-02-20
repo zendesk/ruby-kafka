@@ -10,5 +10,11 @@ class FakeTokenProvider
   end
 end
 
+class FakeTokenProviderNoExtensions
+  def token
+    "SASLOAUTHBEARER.TEST_ID_TOKEN"
+  end
+end
+
 class FakeBrokenTokenProvider
 end
