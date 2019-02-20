@@ -3,6 +3,8 @@
 Changes and additions to the library will be listed here.
 
 ## Unreleased
+
+## 0.7.6
 - Introduce regex matching in `Consumer#subscribe` (#700)
 - Only rejoin group on error if we're not in shutdown mode (#711)
 - Use `maxTimestamp` for `logAppendTime` timestamps (#706)
