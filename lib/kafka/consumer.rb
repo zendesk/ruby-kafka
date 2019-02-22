@@ -285,6 +285,9 @@ module Kafka
     #   without an exception. Once marked successful, the offsets of processed
     #   messages can be committed to Kafka.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
+    # @raise [Kafka::ProcessingError] if there was an error processing a batch.
+    #   The original exception will be returned by calling `#cause` on the
+    #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
       @fetcher.configure(
