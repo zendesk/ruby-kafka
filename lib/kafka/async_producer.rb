@@ -83,13 +83,13 @@ module Kafka
       @logger = TaggedLogger.new(logger)
 
       @worker = Worker.new(
-        queue: @queue,
-        producer: sync_producer,
-        delivery_threshold: delivery_threshold,
-        max_retries: max_retries,
-        retry_backoff: retry_backoff,
-        instrumenter: instrumenter,
-        logger: logger,
+          queue: @queue,
+          producer: sync_producer,
+          delivery_threshold: delivery_threshold,
+          max_retries: max_retries,
+          retry_backoff: retry_backoff,
+          instrumenter: instrumenter,
+          logger: logger,
       )
 
       # The timer will no-op if the delivery interval is zero.
@@ -107,16 +107,16 @@ module Kafka
 
       if @queue.size >= @max_queue_size
         buffer_overflow topic,
-          "Cannot produce to #{topic}, max queue size (#{@max_queue_size} messages) reached"
+                        "Cannot produce to #{topic}, max queue size (#{@max_queue_size} messages) reached"
       end
 
       args = [value, **options.merge(topic: topic)]
       @queue << [:produce, args]
 
       @instrumenter.instrument("enqueue_message.async_producer", {
-        topic: topic,
-        queue_size: @queue.size,
-        max_queue_size: @max_queue_size,
+          topic: topic,
+          queue_size: @queue.size,
+          max_queue_size: @max_queue_size,
       })
 
       nil
@@ -151,18 +151,18 @@ module Kafka
     def ensure_threads_running!
       THREAD_MUTEX.synchronize do
         @worker_thread = nil unless @worker_thread && @worker_thread.alive?
-        @worker_thread ||= Thread.new { @worker.run }
+        @worker_thread ||= Thread.new {@worker.run}
       end
 
       THREAD_MUTEX.synchronize do
         @timer_thread = nil unless @timer_thread && @timer_thread.alive?
-        @timer_thread ||= Thread.new { @timer.run }
+        @timer_thread ||= Thread.new {@timer.run}
       end
     end
 
     def buffer_overflow(topic, message)
       @instrumenter.instrument("buffer_overflow.async_producer", {
-        topic: topic,
+          topic: topic,
       })
 
       raise BufferOverflow, message
@@ -217,7 +217,7 @@ module Kafka
               @logger.error("Failed to deliver messages during shutdown: #{e.message}")
 
               @instrumenter.instrument("drop_messages.async_producer", {
-                message_count: @producer.buffer_size + @queue.size,
+                  message_count: @producer.buffer_size + @queue.size,
               })
             end
 
@@ -251,14 +251,13 @@ module Kafka
           deliver_messages
           if @max_retries == -1
             retry
-          end
-          if retries < @max_retries
+          elsif retries < @max_retries
             retries += 1
-            sleep @retry_backoff**retries
+            sleep @retry_backoff ** retries
             retry
           else
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
-            @instrumenter.instrument("error.async_producer", { error: e })
+            @instrumenter.instrument("error.async_producer", {error: e})
           end
         end
       end
@@ -268,12 +267,12 @@ module Kafka
       rescue DeliveryFailed, ConnectionError => e
         # Failed to deliver messages -- nothing to do but log and try again later.
         @logger.error("Failed to asynchronously deliver messages: #{e.message}")
-        @instrumenter.instrument("error.async_producer", { error: e })
+        @instrumenter.instrument("error.async_producer", {error: e})
       end
 
       def threshold_reached?
         @delivery_threshold > 0 &&
-          @producer.buffer_size >= @delivery_threshold
+            @producer.buffer_size >= @delivery_threshold
       end
     end
   end
