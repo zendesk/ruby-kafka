@@ -351,6 +351,10 @@ module Kafka
   class FailedScramAuthentication < SaslScramError
   end
 
+  # The Token Provider object used for SASL OAuthBearer does not implement the method `token`
+  class TokenMethodNotImplementedError < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize

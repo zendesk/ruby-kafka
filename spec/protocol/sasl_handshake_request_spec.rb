@@ -20,6 +20,9 @@ describe Kafka::Protocol::SaslHandshakeRequest do
         it "allows SCRAM-SHA-512" do
           expect { Kafka::Protocol::SaslHandshakeRequest.new('SCRAM-SHA-512') }.not_to raise_error
         end
+        it "allows OAUTHBEARER" do
+          expect { Kafka::Protocol::SaslHandshakeRequest.new('OAUTHBEARER') }.not_to raise_error
+        end
       end
       context "#unsupported" do
         it "reject unknown handshake" do
