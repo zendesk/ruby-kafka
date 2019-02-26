@@ -296,7 +296,7 @@ module Kafka
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
-    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, max_retries: -1, retry_backoff: 0, **options)
       sync_producer = producer(**options)
 
       AsyncProducer.new(
@@ -304,6 +304,8 @@ module Kafka
         delivery_interval: delivery_interval,
         delivery_threshold: delivery_threshold,
         max_queue_size: max_queue_size,
+        max_retries: max_retries,
+        retry_backoff: retry_backoff,
         instrumenter: @instrumenter,
         logger: @logger,
       )
