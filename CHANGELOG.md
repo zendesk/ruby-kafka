@@ -8,6 +8,8 @@ Changes and additions to the library will be listed here.
 - Introduce regex matching in `Consumer#subscribe` (#700)
 - Only rejoin group on error if we're not in shutdown mode (#711)
 - Use `maxTimestamp` for `logAppendTime` timestamps (#706)
+- Async producer limit number of retries (#708)
+- Support SASL OAuthBearer Authentication (#710)
 
 ## 0.7.5
 - Distribute partitions across consumer groups when there are few partitions per topic (#681)
