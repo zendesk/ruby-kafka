@@ -14,8 +14,9 @@ require 'extlz4'
 
 Dotenv.load
 
-LOGGER = Kafka::TaggedLogger.new(Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log"))
-LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
+LOGGER = Kafka::TaggedLogger.new(Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log").tap do |logger|
+  logger.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
+end)
 
 KAFKA_BROKERS = ENV.fetch("KAFKA_BROKERS", "localhost:9092").split(",")
 
