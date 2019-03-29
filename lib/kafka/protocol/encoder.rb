@@ -126,7 +126,7 @@ module Kafka
       # Writes an integer under varints serializing to the IO object.
       # https://developers.google.com/protocol-buffers/docs/encoding#varints
       #
-      # @param string [Integer]
+      # @param int [Integer]
       # @return [nil]
       def write_varint(int)
         int = int << 1
