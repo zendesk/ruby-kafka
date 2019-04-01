@@ -217,6 +217,31 @@ module Kafka
       raise
     end
 
+    def send_offsets_to_txn(offsets:, group_id:)
+      force_transactional!
+
+      unless @transaction_state.in_transaction?
+        raise 'Transaction is not valid to send offsets'
+      end
+
+      add_response = transaction_coordinator.add_offsets_to_txn(
+        transactional_id: @transactional_id,
+        producer_id: @producer_id,
+        producer_epoch: @producer_epoch,
+        group_id: group_id
+      )
+      Protocol.handle_error(add_response.error_code)
+
+      send_response = transaction_coordinator.txn_offset_commit(
+        transactional_id: @transactional_id,
+        group_id: @group_id,
+        producer_id: @producer_id,
+        producer_epoch: @producer_epoch,
+        offsets: offsets
+      )
+      Protocol.handle_error(send_response.error_code)
+    end
+
     def in_transaction?
       @transaction_state.in_transaction?
     end

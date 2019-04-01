@@ -182,6 +182,18 @@ module Kafka
       send_request(request)
     end
 
+    def add_offsets_to_txn(**options)
+      request = Protocol::AddOffsetsToTxnRequest.new(**options)
+
+      send_request(request)
+    end
+
+    def txn_offset_commit(**options)
+      request = Protocol::TxnOffsetCommitRequest.new(**options)
+
+      send_request(request)
+    end
+
     private
 
     def send_request(request)

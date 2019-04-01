@@ -328,6 +328,19 @@ module Kafka
       @transaction_manager.abort_transaction
     end
 
+    # Sends a list of specified offsets to the consumer group coordinator, and also marks
+    # those offsets as part of the current transaction. These offsets will be considered
+    # committed only if the transaction is committed successfully. The committed offset should
+    # be the next message your application will consume, i.e. lastProcessedMessageOffset + 1.
+    #
+    # This method should be used when you need to batch consumed and produced messages
+    # together, typically in a consume-transform-produce pattern. Thus, the specified
+    #
+    # @return [nil]
+    def send_offsets_to_transaction(offsets:, group_id:)
+      @transaction_manager.send_offsets_to_txn(offsets: offsets, group_id: group_id)
+    end
+
     # Syntactic sugar to enable easier transaction usage. Do the following steps
     #
     # - Start the transaction (with Producer#begin_transaction)
