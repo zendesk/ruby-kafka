@@ -61,6 +61,7 @@ module Kafka
       ADD_PARTITIONS_TO_TXN_API => :add_partitions_to_txn_api,
       ADD_OFFSETS_TO_TXN_API    => :add_offsets_to_txn_api,
       END_TXN_API               => :end_txn_api,
+      TXN_OFFSET_COMMIT_API     => :txn_offset_commit_api
       DESCRIBE_CONFIGS_API      => :describe_configs_api,
       CREATE_PARTITIONS_API     => :create_partitions
     }
