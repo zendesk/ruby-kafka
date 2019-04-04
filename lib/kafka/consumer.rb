@@ -44,7 +44,7 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, sleep_time_when_no_message:)
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
@@ -53,6 +53,7 @@ module Kafka
       @session_timeout = session_timeout
       @fetcher = fetcher
       @heartbeat = heartbeat
+      @sleep_time_when_no_message = sleep_time_when_no_message
 
       @pauses = Hash.new {|h, k|
         h[k] = Hash.new {|h2, k2|
@@ -525,7 +526,7 @@ module Kafka
 
       if !@fetcher.data?
         @logger.debug "No batches to process"
-        sleep 2
+        sleep @sleep_time_when_no_message
         []
       else
         tag, message = @fetcher.poll

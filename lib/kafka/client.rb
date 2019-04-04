@@ -340,7 +340,8 @@ module Kafka
         offset_commit_threshold: 0,
         heartbeat_interval: 10,
         offset_retention_time: nil,
-        fetcher_max_queue_size: 100
+        fetcher_max_queue_size: 100,
+        sleep_time_when_no_message: 2
     )
       cluster = initialize_cluster
 
@@ -393,6 +394,7 @@ module Kafka
         fetcher: fetcher,
         session_timeout: session_timeout,
         heartbeat: heartbeat,
+        sleep_time_when_no_message: sleep_time_when_no_message
       )
     end
 
