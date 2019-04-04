@@ -44,7 +44,7 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, sleep_time_when_no_message:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, sleep_time_when_no_message: 2)
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
