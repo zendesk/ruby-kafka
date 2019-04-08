@@ -11,3 +11,4 @@
 *.log
 *.swp
 .byebug_history
+.DS_Store

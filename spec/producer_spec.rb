@@ -29,6 +29,7 @@ describe Kafka::Producer do
     allow(transaction_manager).to receive(:producer_id).and_return(-1)
     allow(transaction_manager).to receive(:producer_epoch).and_return(0)
     allow(transaction_manager).to receive(:transactional_id).and_return(nil)
+    allow(transaction_manager).to receive(:send_offsets_to_txn).and_return(nil)
   end
 
   describe "#produce" do
@@ -320,6 +321,36 @@ describe Kafka::Producer do
       expect(producer.buffer_size).to eq 1
       producer.clear_buffer
       expect(producer.buffer_size).to eq 0
+    end
+  end
+
+  describe "#send_offsets_to_transaction" do
+    let(:topic) { 'some_topic' }
+    let(:partition) { rand(2**31) }
+    let(:last_offset) { rand(2**31) }
+    let(:leader_epoch) { Time.now.to_i }
+    let(:group_id) { SecureRandom.uuid }
+    let(:batch) do
+      double(
+        topic: topic,
+        partition: partition,
+        last_offset: last_offset,
+        leader_epoch: leader_epoch
+      )
+    end
+    it 'sends offsets to transaction manager' do
+      producer.send_offsets_to_transaction(batch: batch, group_id: group_id)
+      expect(transaction_manager).to have_received(:send_offsets_to_txn).with(
+        offsets: {
+          topic => {
+            partition => {
+              leader_epoch: leader_epoch,
+              offset: last_offset + 1
+            }
+          }
+        },
+        group_id: group_id
+      )
     end
   end
 

@@ -43,5 +43,6 @@ module Kafka
     def is_control_record
       @message.is_control_record
     end
+
   end
 end

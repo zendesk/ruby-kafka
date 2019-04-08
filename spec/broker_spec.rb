@@ -134,4 +134,29 @@ describe Kafka::Broker do
       broker.disconnect
     end
   end
+
+  describe "#add_offsets_to_txn" do
+    it 'sends offsets to the transaction' do
+      allow(connection).to receive(:send_request)
+      broker.add_offsets_to_txn(
+        transactional_id: 1, producer_id: 2, producer_epoch: 3, group_id: 4
+      )
+      expect(connection).to have_received(:send_request)
+
+      broker.disconnect
+    end
+  end
+
+  describe "#txn_offset_commit" do
+    before do
+      allow(connection).to receive(:send_request)
+    end
+    it 'commits transaction' do
+      broker.txn_offset_commit(
+        transactional_id: 1, producer_id: 2, producer_epoch: 3, group_id: 4, offsets: []
+      )
+      expect(connection).to have_received(:send_request)
+      broker.disconnect
+    end
+  end
 end

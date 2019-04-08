@@ -62,11 +62,13 @@ module Kafka
     def extract_records
       records = []
       last_offset = nil
+      leader_epoch = nil
       aborted_transactions = @fetched_partition.aborted_transactions.sort_by(&:first_offset)
       aborted_producer_ids = {}
 
       @fetched_partition.messages.each do |record_batch|
         last_offset = record_batch.last_offset if last_offset.nil? || last_offset < record_batch.last_offset
+        leader_epoch = record_batch.partition_leader_epoch if leader_epoch.nil? || leader_epoch < record_batch.partition_leader_epoch
         # Find the list of aborted producer IDs less than current offset
         unless aborted_transactions.empty?
           if aborted_transactions.first.first_offset <= record_batch.last_offset
@@ -99,6 +101,7 @@ module Kafka
         topic: @topic,
         partition: @fetched_partition.partition,
         last_offset: last_offset,
+        leader_epoch: leader_epoch,
         highwater_mark_offset: @fetched_partition.highwater_mark_offset,
         messages: records
       )

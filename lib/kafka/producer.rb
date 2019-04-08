@@ -328,6 +328,20 @@ module Kafka
       @transaction_manager.abort_transaction
     end
 
+    # Sends batch last offset to the consumer group coordinator, and also marks
+    # this offset as part of the current transaction. This offset will be considered
+    # committed only if the transaction is committed successfully.
+    #
+    # This method should be used when you need to batch consumed and produced messages
+    # together, typically in a consume-transform-produce pattern. Thus, the specified
+    # group_id should be the same as config parameter group_id of the used
+    # consumer.
+    #
+    # @return [nil]
+    def send_offsets_to_transaction(batch:, group_id:)
+      @transaction_manager.send_offsets_to_txn(offsets: { batch.topic => { batch.partition => { offset: batch.last_offset + 1, leader_epoch: batch.leader_epoch } } }, group_id: group_id)
+    end
+
     # Syntactic sugar to enable easier transaction usage. Do the following steps
     #
     # - Start the transaction (with Producer#begin_transaction)
