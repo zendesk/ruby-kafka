@@ -6,24 +6,22 @@ require "kafka/lz4_codec"
 
 module Kafka
   module Compression
-    CODEC_NAMES = {
-      1 => :gzip,
-      2 => :snappy,
-      3 => :lz4,
-    }.freeze
-
-    CODECS = {
+    CODECS_BY_NAME = {
       :gzip => GzipCodec.new,
       :snappy => SnappyCodec.new,
       :lz4 => LZ4Codec.new,
     }.freeze
 
+    CODECS_BY_ID = CODECS_BY_NAME.each_with_object({}) do |(_, codec), hash|
+      hash[codec.codec_id] = codec
+    end.freeze
+
     def self.codecs
-      CODECS.keys
+      CODECS_BY_NAME.keys
     end
 
     def self.find_codec(name)
-      codec = CODECS.fetch(name) do
+      codec = CODECS_BY_NAME.fetch(name) do
         raise "Unknown compression codec #{name}"
       end
 
@@ -33,11 +31,13 @@ module Kafka
     end
 
     def self.find_codec_by_id(codec_id)
-      codec_name = CODEC_NAMES.fetch(codec_id) do
+      codec = CODECS_BY_ID.fetch(codec_id) do
         raise "Unknown codec id #{codec_id}"
       end
 
-      find_codec(codec_name)
+      codec.load
+
+      codec
     end
   end
 end
