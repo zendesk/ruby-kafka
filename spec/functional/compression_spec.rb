@@ -5,6 +5,11 @@ describe "Compression", functional: true do
 
   Kafka::Compression.codecs.each do |codec_name|
     example "producing and consuming #{codec_name}-compressed messages" do
+      codec = Kafka::Compression.find_codec(codec_name)
+      unless kafka.supports_api?(Kafka::Protocol::PRODUCE_API, codec.produce_api_min_version)
+        skip("This Kafka version does not support #{codec_name}")
+      end
+
       producer = kafka.producer(
         compression_codec: codec_name,
         max_retries: 0,

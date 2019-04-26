@@ -6,6 +6,10 @@ module Kafka
       3
     end
 
+    def produce_api_min_version
+      0
+    end
+
     def load
       require "extlz4"
     rescue LoadError

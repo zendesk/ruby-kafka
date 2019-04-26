@@ -3,6 +3,7 @@
 require "kafka/snappy_codec"
 require "kafka/gzip_codec"
 require "kafka/lz4_codec"
+require "kafka/zstd_codec"
 
 module Kafka
   module Compression
@@ -10,6 +11,7 @@ module Kafka
       :gzip => GzipCodec.new,
       :snappy => SnappyCodec.new,
       :lz4 => LZ4Codec.new,
+      :zstd => ZstdCodec.new,
     }.freeze
 
     CODECS_BY_ID = CODECS_BY_NAME.each_with_object({}) do |(_, codec), hash|

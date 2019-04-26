@@ -27,6 +27,8 @@ module Kafka
     #         Value => bytes
     #
     class ProduceRequest
+      API_MIN_VERSION = 3
+
       attr_reader :transactional_id, :required_acks, :timeout, :messages_for_topics, :compressor
 
       # @param required_acks [Integer]
@@ -45,7 +47,7 @@ module Kafka
       end
 
       def api_version
-        3
+        compressor.codec.nil? ? API_MIN_VERSION : [compressor.codec.produce_api_min_version, API_MIN_VERSION].max
       end
 
       def response_class

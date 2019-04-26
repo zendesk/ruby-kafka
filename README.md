@@ -424,6 +424,7 @@ Compression is enabled by passing the `compression_codec` parameter to `#produce
 * `:snappy` for [Snappy](http://google.github.io/snappy/) compression.
 * `:gzip` for [gzip](https://en.wikipedia.org/wiki/Gzip) compression.
 * `:lz4` for [LZ4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) compression.
+* `:zstd` for [zstd](https://facebook.github.io/zstd/) compression.
 
 By default, all message sets will be compressed if you specify a compression codec. To increase the compression threshold, set `compression_threshold` to an integer value higher than one.
 
