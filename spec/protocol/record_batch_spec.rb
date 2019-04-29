@@ -218,6 +218,27 @@ describe Kafka::Protocol::RecordBatch do
     ].flatten
   end
 
+  let(:sample_record_batch_zstd_bytes) do
+    [
+      # First offset
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
+      # Record Batch Length
+      0x0, 0x0, 0x0, 0x67,
+      # Partition Leader Epoch
+      0x0, 0x0, 0x0, 0x2,
+      # Magic byte
+      0x2,
+      # CRC
+      0x0, 0x0, 0x0, 0x0,
+      # Attributes
+      0x0, 0b00110100,
+      sample_record_batch_metadata_bytes,
+      Kafka::ZstdCodec.new.compress(
+        (record_1_bytes + record_2_bytes).pack("C*")
+      ).bytes
+    ].flatten
+  end
+
   context '#encode' do
     let(:buffer) { StringIO.new }
     let(:encoder) { Kafka::Protocol::Encoder.new(buffer) }
@@ -269,6 +290,15 @@ describe Kafka::Protocol::RecordBatch do
       it 'encodes the record batch using snappy compressor' do
         sample_record_batch.encode(encoder)
         expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_lz4_bytes
+      end
+    end
+
+    context 'Compress with Zstd' do
+      let(:codec_id) { 4 }
+
+      it 'encodes the record batch using zstd compressor' do
+        sample_record_batch.encode(encoder)
+        expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_zstd_bytes
       end
     end
   end
@@ -338,6 +368,18 @@ describe Kafka::Protocol::RecordBatch do
       end
 
       it 'decodes records with LZ4 decompressor' do
+        record_batch = Kafka::Protocol::RecordBatch.decode(decoder)
+        expect_matched_batch_metadata(record_batch)
+        expect_matched_records(record_batch.records)
+      end
+    end
+
+    context 'Compress with Zstd' do
+      let(:decoder) do
+        Kafka::Protocol::Decoder.new(byte_array_to_io(sample_record_batch_zstd_bytes))
+      end
+
+      it 'decodes records with Zstd decompressor' do
         record_batch = Kafka::Protocol::RecordBatch.decode(decoder)
         expect_matched_batch_metadata(record_batch)
         expect_matched_records(record_batch.records)

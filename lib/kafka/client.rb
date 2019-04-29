@@ -233,8 +233,8 @@ module Kafka
     #   result in {BufferOverflow} being raised.
     #
     # @param compression_codec [Symbol, nil] the name of the compression codec to
-    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
-    #   and `:gzip`.
+    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`,
+    #   `:gzip`, `:lz4`, `:zstd`
     #
     # @param compression_threshold [Integer] the number of messages that needs to
     #   be in a message set before it should be compressed. Note that message sets
