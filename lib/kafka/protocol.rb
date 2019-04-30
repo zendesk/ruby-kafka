@@ -33,7 +33,9 @@ module Kafka
     DELETE_TOPICS_API         = 20
     INIT_PRODUCER_ID_API      = 22
     ADD_PARTITIONS_TO_TXN_API = 24
+    ADD_OFFSETS_TO_TXN_API    = 25
     END_TXN_API               = 26
+    TXN_OFFSET_COMMIT_API     = 28
     DESCRIBE_CONFIGS_API      = 32
     ALTER_CONFIGS_API         = 33
     CREATE_PARTITIONS_API     = 37
@@ -57,7 +59,9 @@ module Kafka
       DELETE_TOPICS_API         => :delete_topics,
       INIT_PRODUCER_ID_API      => :init_producer_id_api,
       ADD_PARTITIONS_TO_TXN_API => :add_partitions_to_txn_api,
+      ADD_OFFSETS_TO_TXN_API    => :add_offsets_to_txn_api,
       END_TXN_API               => :end_txn_api,
+      TXN_OFFSET_COMMIT_API     => :txn_offset_commit_api,
       DESCRIBE_CONFIGS_API      => :describe_configs_api,
       CREATE_PARTITIONS_API     => :create_partitions
     }
@@ -177,6 +181,10 @@ require "kafka/protocol/fetch_request"
 require "kafka/protocol/fetch_response"
 require "kafka/protocol/list_offset_request"
 require "kafka/protocol/list_offset_response"
+require "kafka/protocol/add_offsets_to_txn_request"
+require "kafka/protocol/add_offsets_to_txn_response"
+require "kafka/protocol/txn_offset_commit_request"
+require "kafka/protocol/txn_offset_commit_response"
 require "kafka/protocol/find_coordinator_request"
 require "kafka/protocol/find_coordinator_response"
 require "kafka/protocol/join_group_request"
