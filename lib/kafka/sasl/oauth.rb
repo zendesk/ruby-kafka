@@ -19,7 +19,7 @@ module Kafka
       #   is only available in Kafka >= 2.1.0.
       #
       def initialize(logger:, token_provider:)
-        @logger = TaggedLogger.new(logger)
+        @logger = logger
         @token_provider = token_provider
       end
 
