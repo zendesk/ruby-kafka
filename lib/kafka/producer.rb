@@ -132,7 +132,7 @@ module Kafka
     def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
       @cluster = cluster
       @transaction_manager = transaction_manager
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
       @instrumenter = instrumenter
       @required_acks = required_acks == :all ? -1 : required_acks
       @ack_timeout = ack_timeout
@@ -150,10 +150,6 @@ module Kafka
 
       # Messages added by `#produce` but not yet assigned a partition.
       @pending_message_queue = PendingMessageQueue.new
-    end
-
-    def to_s
-      "Producer #{@target_topics.to_a.join(', ')}"
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
@@ -211,7 +207,7 @@ module Kafka
       # If the producer is in transactional mode, all the message production
       # must be used when the producer is currently in transaction
       if @transaction_manager.transactional? && !@transaction_manager.in_transaction?
-        raise "Cannot produce to #{topic}: You must trigger begin_transaction before producing messages"
+        raise 'You must trigger begin_transaction before producing messages'
       end
 
       @target_topics.add(topic)
@@ -411,11 +407,11 @@ module Kafka
         if buffer_size.zero?
           break
         elsif attempt <= @max_retries
-          @logger.warn "Failed to send all messages to #{pretty_partitions}; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
+          @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
 
           sleep @retry_backoff
         else
-          @logger.error "Failed to send all messages to #{pretty_partitions}; keeping remaining messages in buffer"
+          @logger.error "Failed to send all messages; keeping remaining messages in buffer"
           break
         end
       end
@@ -427,12 +423,10 @@ module Kafka
       end
 
       unless @buffer.empty?
-        raise DeliveryFailed.new("Failed to send messages to #{pretty_partitions}", buffer_messages)
-      end
-    end
+        partitions = @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
 
-    def pretty_partitions
-      @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
+        raise DeliveryFailed.new("Failed to send messages to #{partitions}", buffer_messages)
+      end
     end
 
     def assign_partitions!

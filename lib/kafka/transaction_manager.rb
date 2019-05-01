@@ -19,7 +19,7 @@ module Kafka
       transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT
     )
       @cluster = cluster
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
 
       @transactional = transactional
       @transactional_id = transactional_id

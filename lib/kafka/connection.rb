@@ -52,7 +52,7 @@ module Kafka
     # @return [Connection] a new connection.
     def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
       @host, @port, @client_id = host, port, client_id
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
       @instrumenter = instrumenter
 
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
@@ -93,7 +93,6 @@ module Kafka
 
       raise IdleConnection if idle?
 
-      @logger.push_tags(api_name)
       @instrumenter.instrument("request.connection", notification) do
         open unless open?
 
@@ -114,8 +113,6 @@ module Kafka
       close
 
       raise ConnectionError, "Connection error #{e.class}: #{e}"
-    ensure
-      @logger.pop_tags
     end
 
     private

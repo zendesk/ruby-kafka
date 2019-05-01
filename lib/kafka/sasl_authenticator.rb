@@ -11,7 +11,7 @@ module Kafka
                    sasl_plain_authzid:, sasl_plain_username:, sasl_plain_password:,
                    sasl_scram_username:, sasl_scram_password:, sasl_scram_mechanism:,
                    sasl_oauth_token_provider:)
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
 
       @plain = Sasl::Plain.new(
         authzid: sasl_plain_authzid,

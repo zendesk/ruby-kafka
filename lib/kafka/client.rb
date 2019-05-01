@@ -14,7 +14,6 @@ require "kafka/fetch_operation"
 require "kafka/connection_builder"
 require "kafka/instrumenter"
 require "kafka/sasl_authenticator"
-require "kafka/tagged_logger"
 
 module Kafka
   class Client
@@ -72,7 +71,7 @@ module Kafka
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
                    sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil)
-      @logger = TaggedLogger.new(logger)
+      @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 

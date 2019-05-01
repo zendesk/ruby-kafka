@@ -80,7 +80,7 @@ module Kafka
       @queue = Queue.new
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
 
       @worker = Worker.new(
         queue: @queue,
@@ -193,11 +193,10 @@ module Kafka
         @max_retries = max_retries
         @retry_backoff = retry_backoff
         @instrumenter = instrumenter
-        @logger = TaggedLogger.new(logger)
+        @logger = logger
       end
 
       def run
-        @logger.push_tags(@producer.to_s)
         @logger.info "Starting async producer in the background..."
 
         loop do
@@ -238,7 +237,6 @@ module Kafka
         @logger.error "Async producer crashed!"
       ensure
         @producer.shutdown
-        @logger.pop_tags
       end
 
       private

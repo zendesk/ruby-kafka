@@ -12,7 +12,7 @@ module Kafka
       @host = host
       @port = port
       @node_id = node_id
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
     end
 
     def address_match?(host, port)

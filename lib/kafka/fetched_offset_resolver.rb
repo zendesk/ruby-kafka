@@ -3,7 +3,7 @@
 module Kafka
   class FetchedOffsetResolver
     def initialize(logger:)
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
     end
 
     def resolve!(broker, topics)

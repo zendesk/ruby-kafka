@@ -7,7 +7,7 @@ module Kafka
       GSSAPI_CONFIDENTIALITY = false
 
       def initialize(logger:, principal:, keytab:)
-        @logger = TaggedLogger.new(logger)
+        @logger = logger
         @principal = principal
         @keytab = keytab
       end

@@ -6,7 +6,7 @@ module Kafka
       PLAIN_IDENT = "PLAIN"
 
       def initialize(logger:, authzid:, username:, password:)
-        @logger = TaggedLogger.new(logger)
+        @logger = logger
         @authzid = authzid
         @username = username
         @password = password

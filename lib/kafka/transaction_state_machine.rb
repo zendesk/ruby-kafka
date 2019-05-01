@@ -27,7 +27,7 @@ module Kafka
     def initialize(logger:)
       @state = UNINITIALIZED
       @mutex = Mutex.new
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
     end
 
     def transition_to!(next_state)

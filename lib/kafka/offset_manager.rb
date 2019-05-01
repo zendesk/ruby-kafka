@@ -13,7 +13,7 @@ module Kafka
       @cluster = cluster
       @group = group
       @fetcher = fetcher
-      @logger = TaggedLogger.new(logger)
+      @logger = logger
       @commit_interval = commit_interval
       @commit_threshold = commit_threshold
 
