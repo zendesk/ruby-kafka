@@ -54,6 +54,8 @@ module Kafka
           store.set_default_paths
         end
         ssl_context.cert_store = store
+        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        ssl_context.verify_hostname = true
       end
 
       ssl_context
