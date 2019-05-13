@@ -61,25 +61,25 @@ module Kafka
 
     def formatter=(formatter)
       @logger.formatter = if formatter.is_a?(TaggedFormatter)
-                         formatter
-                        else
-                          TaggedFormatter.new(formatter || Logger::Formatter.new)
+        formatter
+      else
+        TaggedFormatter.new(formatter || Logger::Formatter.new)
                        end
     end
 
-    def self.new(logger_or_stream=nil)
+    def self.new(logger_or_stream = nil)
       # don't keep wrapping the same logger over and over again
       return logger_or_stream if logger_or_stream.is_a?(TaggedLogger)
       super
     end
 
-    def initialize(logger_or_stream=nil)
+    def initialize(logger_or_stream = nil)
       @logger = if logger_or_stream.is_a?(Logger)
-                  logger_or_stream.clone
-                elsif logger_or_stream
-                  Logger.new(logger_or_stream)
-                else
-                  Logger.new(nil)
+        logger_or_stream.clone
+      elsif logger_or_stream
+        Logger.new(logger_or_stream)
+      else
+        Logger.new(nil)
                 end
       self.formatter = @logger.formatter
     end
