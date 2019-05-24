@@ -1,17 +1,19 @@
-require 'forwardable'
-
 # Basic implementation of a tagged logger that matches the API of
 # ActiveSupport::TaggedLogging.
 
+require 'logger'
+
 module Kafka
-  class TaggedFormatter
+  class TaggedLogger < SimpleDelegator
 
-    def initialize(formatter)
-      @formatter = formatter
-    end
-
-    def call(severity, timestamp, progname, msg)
-      @formatter.call(severity, timestamp, progname, "#{tags_text}#{msg}")
+    %i(debug info warn error fatal).each do |method|
+      define_method method do |msg_or_progname, &block|
+        if block_given?
+          super(msg_or_progname, &block)
+        else
+          super("#{tags_text}#{msg_or_progname}")
+        end
+      end
     end
 
     def tagged(*tags)
@@ -48,25 +50,6 @@ module Kafka
       end
     end
 
-  end
-
-  class TaggedLogger
-    extend Forwardable
-    delegate [:push_tags, :pop_tags, :clear_tags!] => :formatter
-    delegate [:info, :error, :warn, :fatal, :debug, :level, :level=, :progname,
-              :datetime_format=, :datetime_format, :sev_threshold,
-              :sev_threshold=, :formatter, :debug?, :info?,
-              :warn?, :error?, :fatal?, :reopen, :add, :log, :<<,
-              :unknown, :close] => :@logger
-
-    def formatter=(formatter)
-      @logger.formatter = if formatter.is_a?(TaggedFormatter)
-        formatter
-      else
-        TaggedFormatter.new(formatter || Logger::Formatter.new)
-                       end
-    end
-
     def self.new(logger_or_stream = nil)
       # don't keep wrapping the same logger over and over again
       return logger_or_stream if logger_or_stream.is_a?(TaggedLogger)
@@ -74,18 +57,14 @@ module Kafka
     end
 
     def initialize(logger_or_stream = nil)
-      @logger = if logger_or_stream.is_a?(Logger)
-        logger_or_stream.clone
+      logger = if logger_or_stream.is_a?(::Logger)
+        logger_or_stream
       elsif logger_or_stream
-        Logger.new(logger_or_stream)
+        ::Logger.new(logger_or_stream)
       else
-        Logger.new(nil)
-                end
-      self.formatter = @logger.formatter
-    end
-
-    def tagged(*tags)
-      formatter.tagged(*tags) { yield self }
+        ::Logger.new(nil)
+      end
+      super(logger)
     end
 
     def flush
