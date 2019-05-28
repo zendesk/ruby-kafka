@@ -136,6 +136,7 @@ module Kafka
       # from. Otherwise we'd keep fetching from a bunch of partitions we may no
       # longer be assigned.
       handle_reset
+      @queue.close
     end
 
     def handle_subscribe(topic, max_bytes_per_partition)
