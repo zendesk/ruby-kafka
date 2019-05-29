@@ -9,7 +9,7 @@
 #  Once the file has been required, no further configuration is needed, all operational
 #  metrics are automatically emitted.
 #
-#  By Peter Mustel, T2Data AB
+#  By Peter Mustel, T2 Data AB
 #
 begin
   require 'prometheus/client'
@@ -197,6 +197,7 @@ module Kafka
         @deliver_attempts = @prometheus.histogram(:producer_deliver_attempts, 'Delivery attempts')
         @ack_messages = @prometheus.counter(:producer_ack_messages, 'Ack')
         @ack_delay = @prometheus.histogram(:producer_ack_delay, 'Ack delay', {}, LATENCY_BUCKETS)
+        @ack_errors = @prometheus.counter(:producer_ack_errors, 'Ack errors')
       end
 
       def produce_message(event)
