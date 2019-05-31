@@ -4,6 +4,9 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 0.7.8
+- Optionally verify hostname on SSL certs (#733)
+
 ## 0.7.7
 - Producer send offsets in transaction (#723)
 - Support zstd compression (#724)
