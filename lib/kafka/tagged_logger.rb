@@ -1,13 +1,19 @@
-require 'forwardable'
-
 # Basic implementation of a tagged logger that matches the API of
 # ActiveSupport::TaggedLogging.
 
-module Kafka
-  module TaggedFormatter
+require 'logger'
 
-    def call(severity, timestamp, progname, msg)
-      super(severity, timestamp, progname, "#{tags_text}#{msg}")
+module Kafka
+  class TaggedLogger < SimpleDelegator
+
+    %i(debug info warn error fatal).each do |method|
+      define_method method do |msg_or_progname, &block|
+        if block_given?
+          super(msg_or_progname, &block)
+        else
+          super("#{tags_text}#{msg_or_progname}")
+        end
+      end
     end
 
     def tagged(*tags)
@@ -44,23 +50,21 @@ module Kafka
       end
     end
 
-  end
-
-  module TaggedLogger
-    extend Forwardable
-    delegate [:push_tags, :pop_tags, :clear_tags!] => :formatter
-
-    def self.new(logger)
-      logger ||= Logger.new(nil)
-      return logger if logger.respond_to?(:push_tags) # already included
-      # Ensure we set a default formatter so we aren't extending nil!
-      logger.formatter ||= Logger::Formatter.new
-      logger.formatter.extend TaggedFormatter
-      logger.extend(self)
+    def self.new(logger_or_stream = nil)
+      # don't keep wrapping the same logger over and over again
+      return logger_or_stream if logger_or_stream.is_a?(TaggedLogger)
+      super
     end
 
-    def tagged(*tags)
-      formatter.tagged(*tags) { yield self }
+    def initialize(logger_or_stream = nil)
+      logger = if logger_or_stream.is_a?(::Logger)
+        logger_or_stream
+      elsif logger_or_stream
+        ::Logger.new(logger_or_stream)
+      else
+        ::Logger.new(nil)
+      end
+      super(logger)
     end
 
     def flush
