@@ -1172,6 +1172,9 @@ We needed a robust client that could be used from our existing Ruby apps, allowe
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/zendesk/ruby-kafka.
 
+## Issue triage [![Open Source Helpers](https://www.codetriage.com/zendesk/ruby-kafka/badges/users.svg)](https://www.codetriage.com/zendesk/ruby-kafka)
+
+You can triage issues which may include reproducing bug reports or asking for vital information, such as version numbers or reproduction instructions. If you would like to start triaging issues, one easy way to get started is to [subscribe to rack-mini-profiler on CodeTriage](https://www.codetriage.com/zendesk/ruby-kafka).
 
 ## Copyright and license
 
