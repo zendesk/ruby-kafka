@@ -12,9 +12,9 @@ describe Kafka::Prometheus do
     Kafka::Prometheus.start(@registry)
 
     instrumenter = if exception
-                     Kafka::Instrumenter.new(client_id: 'test', exception: exception)
-                   else
-                     Kafka::Instrumenter.new(client_id: 'test')
+      Kafka::Instrumenter.new(client_id: 'test', exception: exception)
+    else
+      Kafka::Instrumenter.new(client_id: 'test')
                    end
     instrumenter.instrument(hook, payload)
   end
@@ -38,13 +38,13 @@ describe Kafka::Prometheus do
     it 'emits metrics to api_request_size' do
       metric = @registry.get(:api_request_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 10=>0.0, 100=>0.0, 1000=>1.0, 10000=>1.0, 100000=>1.0, 1000000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
     end
 
     it 'emits metrics to api_response_size' do
       metric = @registry.get(:api_response_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 10=>0.0, 100=>0.0, 1000=>0.0, 10000=>1.0, 100000=>1.0, 1000000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 0.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
     end
 
     context 'with expection' do
@@ -98,8 +98,8 @@ describe Kafka::Prometheus do
     it 'emits metrics to consumer_time_lag' do
       metric = @registry.get(:consumer_time_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 3=>0.0, 10=>0.0, 30=>0.0, 100=>0.0, 300=>0.0,
-                                     1000=>0.0, 3000=>0.0, 10000=>1.0, 30000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 3 => 0.0, 10 => 0.0, 30 => 0.0, 100 => 0.0, 300 => 0.0,
+                                     1000 => 0.0, 3000 => 0.0, 10000 => 1.0, 30000 => 1.0 })
     end
 
     context 'with expection' do
@@ -165,7 +165,7 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_batch_size' do
       metric = @registry.get(:consumer_batch_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 10=>0.0, 100=>0.0, 1000=>1.0, 10000=>1.0, 100000=>1.0, 1000000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
     end
   end
 
@@ -177,8 +177,8 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_join_group' do
       metric = @registry.get(:consumer_join_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>1.0, 3=>1.0, 10=>1.0, 30=>1.0, 100=>1.0,
-                                     300=>1.0, 1000=>1.0, 3000=>1.0, 10000=>1.0, 30000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
+                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
     end
 
     context 'with expection' do
@@ -200,8 +200,8 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_sync_group' do
       metric = @registry.get(:consumer_sync_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>1.0, 3=>1.0, 10=>1.0, 30=>1.0, 100=>1.0,
-                                     300=>1.0, 1000=>1.0, 3000=>1.0, 10000=>1.0, 30000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
+                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
     end
 
     context 'with expection' do
@@ -223,9 +223,8 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_leave_group' do
       metric = @registry.get(:consumer_leave_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>1.0, 3=>1.0, 10=>1.0, 30=>1.0, 100=>1.0,
-                                     300=>1.0, 1000=>1.0, 3000=>1.0, 10000=>1.0, 30000=>1.0})
-
+      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
+                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
     end
 
     context 'with expection' do
@@ -241,7 +240,7 @@ describe Kafka::Prometheus do
 
   context 'when a consumer pauses status' do
     let(:key) { { client: 'test', group_id: 'group1', topic: 'AAA', partition: 4 } }
-    let(:payload) { { group_id: 'group1', topic: 'AAA', partition: 4,  duration: 111 } }
+    let(:payload) { { group_id: 'group1', topic: 'AAA', partition: 4, duration: 111 } }
     let(:hook) { 'pause_status.consumer' }
 
     it 'emits metrics to consumer_pause_duration' do
@@ -274,14 +273,14 @@ describe Kafka::Prometheus do
     it 'emits metric producer_message_size' do
       metric = @registry.get(:producer_message_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 10=>0.0, 100=>0.0, 1000=>1.0, 10000=>1.0, 100000=>1.0, 1000000=>1.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
     end
 
     it 'emits metric buffer_fill_ratio' do
       metric = @registry.get(:producer_buffer_fill_ratio)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({0.005=>0.0, 0.01=>0.0, 0.025=>0.0, 0.05=>0.0, 0.1=>0.0,
-                                     0.25=>0.0, 0.5=>0.0, 1=>0.0, 2.5=>0.0, 5=>0.0, 10=>0.0})
+      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
+                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 0.0, 5 => 0.0, 10 => 0.0 })
     end
   end
 
@@ -311,7 +310,7 @@ describe Kafka::Prometheus do
 
   context 'when a producer deliver_messages' do
     let(:key) { { client: 'test' } }
-    let(:payload) { { delivered_message_count: 123,  attempts: 2 } }
+    let(:payload) { { delivered_message_count: 123, attempts: 2 } }
     let(:hook) { 'deliver_messages.producer' }
 
     it 'emits metrics producer_deliver_messages' do
@@ -323,8 +322,8 @@ describe Kafka::Prometheus do
     it 'emits metrics producer_deliver_attempts' do
       metric = @registry.get(:producer_deliver_attempts)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({0.005=>0.0, 0.01=>0.0, 0.025=>0.0, 0.05=>0.0, 0.1=>0.0,
-                                     0.25=>0.0, 0.5=>0.0, 1=>0.0, 2.5=>1.0, 5=>1.0, 10=>1.0})
+      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
+                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 1.0, 5 => 1.0, 10 => 1.0 })
     end
   end
 
@@ -336,14 +335,14 @@ describe Kafka::Prometheus do
     it 'emits metrics async_producer_queue_size' do
       metric = @registry.get(:async_producer_queue_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({1=>0.0, 10=>0.0, 100=>0.0, 1000=>0.0, 10000=>0.0, 100000=>0.0, 1000000=>0.0})
+      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 0.0, 10000 => 0.0, 100000 => 0.0, 1000000 => 0.0 })
     end
 
     it 'emits metrics async_producer_queue fill_ratio' do
       metric = @registry.get(:async_producer_queue_fill_ratio)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({0.005=>0.0, 0.01=>0.0, 0.025=>0.0, 0.05=>0.0, 0.1=>0.0,
-                                     0.25=>0.0, 0.5=>0.0, 1=>0.0, 2.5=>0.0, 5=>0.0, 10=>0.0})
+      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
+                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 0.0, 5 => 0.0, 10 => 0.0 })
     end
   end
 
