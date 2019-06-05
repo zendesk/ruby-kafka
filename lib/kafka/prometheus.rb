@@ -7,7 +7,7 @@
 #     require "kafka/prometheus"
 #
 #  Once the file has been required, no further configuration is needed, all operational
-#  metrics are automatically emitted.
+#  metrics are automatically emitted (Unless PROMETHEUS_NO_AUTO_START is set).
 #
 #  By Peter Mustel, T2 Data AB
 #
@@ -23,23 +23,30 @@ require 'active_support/subscriber'
 module Kafka
   module Prometheus
     SIZE_BUCKETS = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000].freeze
-    LATENCY_BUCKETS = [1, 3, 10, 30, 100, 300, 1000, 3000, 10_000, 30_000].freeze
+    LATENCY_BUCKETS = [0.0001, 0.001, 0.01, 0.1, 1.0, 10, 100, 1000].freeze
+    DELAY_BUCKETS = [1, 3, 10, 30, 100, 300, 1000, 3000, 10_000, 30_000].freeze
 
-    class PrometheusSubscriber < ActiveSupport::Subscriber
-      def initialize
-        super
-        @prometheus = ::Prometheus::Client.registry
+    class << self
+      attr_accessor :registry
+
+      def start(registry = ::Prometheus::Client.registry)
+        @registry = registry
+        ConnectionSubscriber.attach_to 'connection.kafka'
+        ConsumerSubscriber.attach_to 'consumer.kafka'
+        ProducerSubscriber.attach_to 'producer.kafka'
+        AsyncProducerSubscriber.attach_to 'async_producer.kafka'
+        FetcherSubscriber.attach_to 'fetcher.kafka'
       end
     end
 
-    class ConnectionSubscriber < PrometheusSubscriber
+    class ConnectionSubscriber < ActiveSupport::Subscriber
       def initialize
         super
-        @api_calls = @prometheus.counter(:api_calls, 'Total calls')
-        @api_latency = @prometheus.histogram(:api_latency, 'Latency', {}, LATENCY_BUCKETS)
-        @api_request_size = @prometheus.histogram(:api_request_size, 'Request size', {}, SIZE_BUCKETS)
-        @api_response_size = @prometheus.histogram(:api_response_size, 'Response size', {}, SIZE_BUCKETS)
-        @api_errors = @prometheus.counter(:api_errors, 'Errors')
+        @api_calls = Prometheus.registry.counter(:api_calls, 'Total calls')
+        @api_latency = Prometheus.registry.histogram(:api_latency, 'Latency', {}, LATENCY_BUCKETS)
+        @api_request_size = Prometheus.registry.histogram(:api_request_size, 'Request size', {}, SIZE_BUCKETS)
+        @api_response_size = Prometheus.registry.histogram(:api_response_size, 'Response size', {}, SIZE_BUCKETS)
+        @api_errors = Prometheus.registry.counter(:api_errors, 'Errors')
       end
 
       def request(event)
@@ -57,31 +64,29 @@ module Kafka
         @api_response_size.observe(key, response_size)
         @api_errors.increment(key) if event.payload.key?(:exception)
       end
-
-      attach_to 'connection.kafka'
     end
 
-    class ConsumerSubscriber < PrometheusSubscriber
+    class ConsumerSubscriber < ActiveSupport::Subscriber
       def initialize
         super
-        @process_messages = @prometheus.counter(:consumer_process_messages, 'Total messages')
-        @process_message_errors = @prometheus.counter(:consumer_process_message_errors, 'Total errors')
+        @process_messages = Prometheus.registry.counter(:consumer_process_messages, 'Total messages')
+        @process_message_errors = Prometheus.registry.counter(:consumer_process_message_errors, 'Total errors')
         @process_message_latency =
-          @prometheus.histogram(:consumer_process_message_latency, 'Latency', {}, LATENCY_BUCKETS)
-        @offset_lag = @prometheus.gauge(:consumer_offset_lag, 'Offset lag')
-        @time_lag_now = @prometheus.gauge(:consumer_time_lag_now, 'Time lag of message')
-        @time_lag = @prometheus.histogram(:consumer_time_lag, 'Time lag of message', {}, LATENCY_BUCKETS)
-        @process_batch_errors = @prometheus.counter(:consumer_process_batch_errors, 'Total errors in batch')
+          Prometheus.registry.histogram(:consumer_process_message_latency, 'Latency', {}, LATENCY_BUCKETS)
+        @offset_lag = Prometheus.registry.gauge(:consumer_offset_lag, 'Offset lag')
+        @time_lag_now = Prometheus.registry.gauge(:consumer_time_lag_now, 'Time lag of message')
+        @time_lag = Prometheus.registry.histogram(:consumer_time_lag, 'Time lag of message', {}, DELAY_BUCKETS)
+        @process_batch_errors = Prometheus.registry.counter(:consumer_process_batch_errors, 'Total errors in batch')
         @process_batch_latency =
-          @prometheus.histogram(:consumer_process_batch_latency, 'Latency in batch', {}, LATENCY_BUCKETS)
-        @batch_size = @prometheus.histogram(:consumer_batch_size, 'Size of batch', {}, SIZE_BUCKETS)
-        @join_group = @prometheus.histogram(:consumer_join_group, 'Time to join group', {}, LATENCY_BUCKETS)
-        @join_group_errors = @prometheus.counter(:consumer_join_group_error, 'Total error in joining group')
-        @sync_group = @prometheus.histogram(:consumer_sync_group, 'Time to sync group', {}, LATENCY_BUCKETS)
-        @sync_group_errors = @prometheus.counter(:consumer_sync_group_error, 'Total error in syncing group')
-        @leave_group = @prometheus.histogram(:consumer_leave_group, 'Time to leave group', {}, LATENCY_BUCKETS)
-        @leave_group_errors = @prometheus.counter(:consumer_leave_group_error, 'Total error in leaving group')
-        @pause_duration = @prometheus.gauge(:consumer_pause_duration, 'Pause duration')
+          Prometheus.registry.histogram(:consumer_process_batch_latency, 'Latency in batch', {}, LATENCY_BUCKETS)
+        @batch_size = Prometheus.registry.histogram(:consumer_batch_size, 'Size of batch', {}, SIZE_BUCKETS)
+        @join_group = Prometheus.registry.histogram(:consumer_join_group, 'Time to join group', {}, DELAY_BUCKETS)
+        @join_group_errors = Prometheus.registry.counter(:consumer_join_group_errors, 'Total error in joining group')
+        @sync_group = Prometheus.registry.histogram(:consumer_sync_group, 'Time to sync group', {}, DELAY_BUCKETS)
+        @sync_group_errors = Prometheus.registry.counter(:consumer_sync_group_errors, 'Total error in syncing group')
+        @leave_group = Prometheus.registry.histogram(:consumer_leave_group, 'Time to leave group', {}, DELAY_BUCKETS)
+        @leave_group_errors = Prometheus.registry.counter(:consumer_leave_group_errors, 'Total error in leaving group')
+        @pause_duration = Prometheus.registry.gauge(:consumer_pause_duration, 'Pause duration')
       end
 
       def process_message(event)
@@ -176,28 +181,26 @@ module Kafka
         duration = event.payload.fetch(:duration)
         @pause_duration.set(key, duration)
       end
-
-      attach_to 'consumer.kafka'
     end
 
-    class ProducerSubscriber < PrometheusSubscriber
+    class ProducerSubscriber < ActiveSupport::Subscriber
       def initialize
         super
-        @produce_messages = @prometheus.counter(:producer_produced_messages, 'Produced messages total')
+        @produce_messages = Prometheus.registry.counter(:producer_produced_messages, 'Produced messages total')
         @produce_message_size =
-          @prometheus.histogram(:producer_produce_message_size, 'Message size', {}, SIZE_BUCKETS)
-        @buffer_size = @prometheus.histogram(:producer_buffer_size, 'Buffer size', {}, SIZE_BUCKETS)
-        @buffer_fill_ratio = @prometheus.histogram(:producer_buffer_fill_ratio, 'Buffer fill ratio')
-        @buffer_fill_percentage = @prometheus.histogram(:producer_buffer_fill_percentage, 'Buffer fill percentage')
-        @produce_errors = @prometheus.counter(:producer_produce_errors, 'Produce errors')
-        @deliver_errors = @prometheus.counter(:producer_deliver_errors, 'Deliver error')
+          Prometheus.registry.histogram(:producer_message_size, 'Message size', {}, SIZE_BUCKETS)
+        @buffer_size = Prometheus.registry.histogram(:producer_buffer_size, 'Buffer size', {}, SIZE_BUCKETS)
+        @buffer_fill_ratio = Prometheus.registry.histogram(:producer_buffer_fill_ratio, 'Buffer fill ratio')
+        @buffer_fill_percentage = Prometheus.registry.histogram(:producer_buffer_fill_percentage, 'Buffer fill percentage')
+        @produce_errors = Prometheus.registry.counter(:producer_produce_errors, 'Produce errors')
+        @deliver_errors = Prometheus.registry.counter(:producer_deliver_errors, 'Deliver error')
         @deliver_latency =
-          @prometheus.histogram(:producer_deliver_latency, 'Delivery latency', {}, LATENCY_BUCKETS)
-        @deliver_messages = @prometheus.counter(:producer_deliver_messages, 'Total count of delivered messages')
-        @deliver_attempts = @prometheus.histogram(:producer_deliver_attempts, 'Delivery attempts')
-        @ack_messages = @prometheus.counter(:producer_ack_messages, 'Ack')
-        @ack_delay = @prometheus.histogram(:producer_ack_delay, 'Ack delay', {}, LATENCY_BUCKETS)
-        @ack_errors = @prometheus.counter(:producer_ack_errors, 'Ack errors')
+          Prometheus.registry.histogram(:producer_deliver_latency, 'Delivery latency', {}, LATENCY_BUCKETS)
+        @deliver_messages = Prometheus.registry.counter(:producer_deliver_messages, 'Total count of delivered messages')
+        @deliver_attempts = Prometheus.registry.histogram(:producer_deliver_attempts, 'Delivery attempts')
+        @ack_messages = Prometheus.registry.counter(:producer_ack_messages, 'Ack')
+        @ack_delay = Prometheus.registry.histogram(:producer_ack_delay, 'Ack delay', {}, LATENCY_BUCKETS)
+        @ack_errors = Prometheus.registry.counter(:producer_ack_errors, 'Ack errors')
       end
 
       def produce_message(event)
@@ -257,17 +260,15 @@ module Kafka
 
         @ack_errors.increment(key)
       end
-
-      attach_to 'producer.kafka'
     end
 
-    class AsyncProducerSubscriber < PrometheusSubscriber
+    class AsyncProducerSubscriber < ActiveSupport::Subscriber
       def initialize
         super
-        @queue_size = @prometheus.histogram(:async_producer_queue_time, 'Queue time', {}, LATENCY_BUCKETS)
-        @queue_fill_ratio = @prometheus.histogram(:async_producer_queue_fill_ratio, 'Queue fill ratio')
-        @produce_errors = @prometheus.counter(:async_producer_produce_errors, 'Producer errors')
-        @dropped_messages = @prometheus.counter(:async_producer_dropped_messages, 'Dropped messages')
+        @queue_size = Prometheus.registry.histogram(:async_producer_queue_size, 'Queue size', {}, SIZE_BUCKETS)
+        @queue_fill_ratio = Prometheus.registry.histogram(:async_producer_queue_fill_ratio, 'Queue fill ratio')
+        @produce_errors = Prometheus.registry.counter(:async_producer_produce_errors, 'Producer errors')
+        @dropped_messages = Prometheus.registry.counter(:async_producer_dropped_messages, 'Dropped messages')
       end
 
       def enqueue_message(event)
@@ -286,7 +287,7 @@ module Kafka
 
       def buffer_overflow(event)
         key = { client: event.payload.fetch(:client_id), topic: event.payload.fetch(:topic) }
-        @procude_error.increment(key)
+        @produce_errors.increment(key)
       end
 
       def drop_messages(event)
@@ -295,14 +296,12 @@ module Kafka
 
         @dropped_messages.increment(key, message_count)
       end
-
-      attach_to 'async_producer.kafka'
     end
 
-    class FetcherSubscriber < PrometheusSubscriber
+    class FetcherSubscriber < ActiveSupport::Subscriber
       def initialize
         super
-        @queue_size = @prometheus.gauge(:fetcher_queue_size, 'Queue size')
+        @queue_size = Prometheus.registry.gauge(:fetcher_queue_size, 'Queue size')
       end
 
       def loop(event)
@@ -312,8 +311,9 @@ module Kafka
 
         @queue_size.set({ client: client, group_id: group_id }, queue_size)
       end
-
-      attach_to 'fetcher.kafka'
     end
   end
 end
+
+# To enable testability, it is possible to skip the start until test time
+Kafka::Prometheus.start unless defined?(PROMETHEUS_NO_AUTO_START)
