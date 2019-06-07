@@ -74,8 +74,7 @@ module Kafka
         @process_message_latency =
           Prometheus.registry.histogram(:consumer_process_message_latency, 'Latency', {}, LATENCY_BUCKETS)
         @offset_lag = Prometheus.registry.gauge(:consumer_offset_lag, 'Offset lag')
-        @time_lag_now = Prometheus.registry.gauge(:consumer_time_lag_now, 'Time lag of message')
-        @time_lag = Prometheus.registry.histogram(:consumer_time_lag, 'Time lag of message', {}, DELAY_BUCKETS)
+        @time_lag = Prometheus.registry.gauge(:consumer_time_lag, 'Time lag of message')
         @process_batch_errors = Prometheus.registry.counter(:consumer_process_batch_errors, 'Total errors in batch')
         @process_batch_latency =
           Prometheus.registry.histogram(:consumer_process_batch_latency, 'Latency in batch', {}, LATENCY_BUCKETS)
@@ -114,8 +113,7 @@ module Kafka
         # Not all messages have timestamps.
         return unless time_lag
 
-        @time_lag_now.set(key, time_lag)
-        @time_lag.observe(key, time_lag)
+        @time_lag.set(key, time_lag)
       end
 
       def process_batch(event)

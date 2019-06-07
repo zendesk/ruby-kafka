@@ -89,17 +89,10 @@ describe Kafka::Prometheus do
       expect(metric).not_to be_nil
     end
 
-    it 'emits metrics to consumer_time_lag_now' do
-      metric = @registry.get(:consumer_time_lag_now)
-      expect(metric).not_to be_nil
-      expect(metric.get(key)).to be_within(1).of(5000)
-    end
-
     it 'emits metrics to consumer_time_lag' do
       metric = @registry.get(:consumer_time_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 3 => 0.0, 10 => 0.0, 30 => 0.0, 100 => 0.0, 300 => 0.0,
-                                     1000 => 0.0, 3000 => 0.0, 10000 => 1.0, 30000 => 1.0 })
+      expect(metric.get(key)).to eq 5000
     end
 
     context 'with expection' do
