@@ -12,6 +12,7 @@ module Kafka
       }.freeze
 
       def initialize(username:, password:, mechanism: 'sha256', logger:)
+        @semaphore = Mutex.new
         @username = username
         @password = password
         @logger = TaggedLogger.new(logger)
@@ -34,7 +35,7 @@ module Kafka
       def authenticate!(host, encoder, decoder)
         @logger.debug "Authenticating #{@username} with SASL #{@mechanism}"
 
-        begin
+        @semaphore.synchronize do
           msg = first_message
           @logger.debug "Sending first client SASL SCRAM message: #{msg}"
           encoder.write_bytes(msg)
