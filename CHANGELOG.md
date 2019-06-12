@@ -66,7 +66,7 @@ Changes and additions to the library will be listed here.
 
 ## 0.6.7
 
-- Handle case where consumer doesn't know about the topic ([#597](https://github.com/zendesk/ruby-kafka/pull/597) + 0e302cbd0f31315bf81c1d1645520413ad6b58f0)
+- Handle case where consumer doesn't know about the topic ([#597](https://github.com/zendesk/ruby-kafka/pull/597) + [0e302cbd0f31315bf81c1d1645520413ad6b58f0](https://github.com/zendesk/ruby-kafka/commit/0e302cbd0f31315bf81c1d1645520413ad6b58f0))
 
 ## v0.6.5
 
