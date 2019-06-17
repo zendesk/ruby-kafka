@@ -48,7 +48,7 @@ module Kafka
               partition: @fetched_partition.partition
             )
           end
-        end
+        end.compact
       end
       FetchedBatch.new(
         topic: @topic,
