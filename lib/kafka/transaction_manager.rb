@@ -112,25 +112,30 @@ module Kafka
         end
       end
 
-      unless new_topic_partitions.empty?
-        response = transaction_coordinator.add_partitions_to_txn(
-          transactional_id: @transactional_id,
-          producer_id: @producer_id,
-          producer_epoch: @producer_epoch,
-          topics: new_topic_partitions
-        )
+      begin 
+        unless new_topic_partitions.empty?
+          response = transaction_coordinator.add_partitions_to_txn(
+            transactional_id: @transactional_id,
+            producer_id: @producer_id,
+            producer_epoch: @producer_epoch,
+            topics: new_topic_partitions
+          )
 
-        # Update added topic partitions
-        response.errors.each do |tp|
-          tp.partitions.each do |p|
-            Protocol.handle_error(p.error_code)
-            @transaction_partitions[tp.topic] ||= {}
-            @transaction_partitions[tp.topic][p.partition] = true
+          # Update added topic partitions
+          response.errors.each do |tp|
+            tp.partitions.each do |p|
+              Protocol.handle_error(p.error_code)
+              @transaction_partitions[tp.topic] ||= {}
+              @transaction_partitions[tp.topic][p.partition] = true
+            end
           end
         end
+      rescue ConcurrentTransactionError => e
+        @logger.warn("Concurrent Transaction Error, retriing...")
+        retry
       end
 
-      nil
+      nil        
     rescue
       @transaction_state.transition_to!(TransactionStateMachine::ERROR)
       raise
