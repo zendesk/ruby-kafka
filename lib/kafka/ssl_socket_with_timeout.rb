@@ -57,6 +57,7 @@ module Kafka
 
       # once that's connected, we can start initiating the ssl socket
       @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, ssl_context)
+      @ssl_socket.hostname = host
 
       begin
         # Initiate the socket connection in the background. If it doesn't fail

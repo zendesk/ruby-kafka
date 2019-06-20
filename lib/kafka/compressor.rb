@@ -18,6 +18,7 @@ module Kafka
   # * `compressed_bytesize` – the byte size of the compressed data.
   #
   class Compressor
+    attr_reader :codec
 
     # @param codec_name [Symbol, nil]
     # @param threshold [Integer] the minimum number of messages in a message set

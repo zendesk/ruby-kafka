@@ -27,67 +27,129 @@ describe Kafka::FetchedBatchGenerator do
   end
 
   context 'legacy message set' do
-    let(:fetched_partition) do
-      Kafka::Protocol::FetchResponse::FetchedPartition.new(
-        partition: 0,
-        error_code: 0,
-        highwater_mark_offset: 1,
-        last_stable_offset: 1,
-        aborted_transactions: [],
-        messages: [
-          Kafka::Protocol::MessageSet.new(
-            messages: [
-              Kafka::Protocol::Message.new(
-                value: 'Hello',
-                offset: 0
-              ),
-              Kafka::Protocol::Message.new(
-                value: 'World',
-                offset: 1
-              )
-            ]
-          ),
-          Kafka::Protocol::MessageSet.new(
-            messages: [
-              Kafka::Protocol::Message.new(
-                value: 'Bye',
-                offset: 2
-              )
-            ]
+    context 'message set contains messages only after the required offset' do
+      let(:fetched_partition) do
+        Kafka::Protocol::FetchResponse::FetchedPartition.new(
+          partition: 0,
+          error_code: 0,
+          highwater_mark_offset: 1,
+          last_stable_offset: 1,
+          aborted_transactions: [],
+          messages: [
+            Kafka::Protocol::MessageSet.new(
+              messages: [
+                Kafka::Protocol::Message.new(
+                  value: 'Hello',
+                  offset: 0
+                ),
+                Kafka::Protocol::Message.new(
+                  value: 'World',
+                  offset: 1
+                )
+              ]
+            ),
+            Kafka::Protocol::MessageSet.new(
+              messages: [
+                Kafka::Protocol::Message.new(
+                  value: 'Bye',
+                  offset: 2
+                )
+              ]
+            )
+          ]
+        )
+      end
+
+      it 'returns flatten messages' do
+        batch = generator.generate
+        expect(batch.topic).to eql('Hello')
+        expect(batch.partition).to eql(0)
+        expect(batch.highwater_mark_offset).to eql(1)
+
+        expect(batch.messages.length).to eql(3)
+
+        expect_fetched_message_eql(
+          batch.messages[0], 'Hello', 0,
+          Kafka::Protocol::Message.new(
+            value: 'Hello',
+            offset: 0
           )
-        ]
-      )
+        )
+        expect_fetched_message_eql(
+          batch.messages[1], 'Hello', 0,
+          Kafka::Protocol::Message.new(
+            value: 'World',
+            offset: 1
+          )
+        )
+        expect_fetched_message_eql(
+          batch.messages[2], 'Hello', 0,
+          Kafka::Protocol::Message.new(
+            value: 'Bye',
+            offset: 2
+          )
+        )
+      end
     end
 
-    it 'returns flatten messages' do
-      batch = generator.generate
-      expect(batch.topic).to eql('Hello')
-      expect(batch.partition).to eql(0)
-      expect(batch.highwater_mark_offset).to eql(1)
+    context 'message set contains messages with offsets before the required offset' do
+      let(:generator) { described_class.new('Hello', fetched_partition, 10, logger: logger) }
+      let(:fetched_partition) do
+        Kafka::Protocol::FetchResponse::FetchedPartition.new(
+          partition: 0,
+          error_code: 0,
+          highwater_mark_offset: 1,
+          last_stable_offset: 1,
+          aborted_transactions: [],
+          messages: [
+            Kafka::Protocol::MessageSet.new(
+              messages: [
+                Kafka::Protocol::Record.new(
+                  offset: 7,
+                  value: '1234'
+                ),
+                Kafka::Protocol::Record.new(
+                  offset: 8,
+                  value: '1234'
+                )
+              ]
+            ),
+            Kafka::Protocol::MessageSet.new(
+              messages: [
+                Kafka::Protocol::Record.new(
+                  offset: 9,
+                  value: '1234'
+                ),
+                Kafka::Protocol::Record.new(
+                  offset: 10,
+                  value: '1234'
+                )
+              ]
+            ),
+            Kafka::Protocol::MessageSet.new(
+              messages: [
+                Kafka::Protocol::Record.new(
+                  offset: 11,
+                  value: '1234'
+                )
+              ]
+            )
+          ]
+        )
+      end
 
-      expect(batch.messages.length).to eql(3)
+      it 'ignores messages less than required offset' do
+        batch = generator.generate
+        expect(batch.topic).to eql('Hello')
+        expect(batch.partition).to eql(0)
+        expect(batch.last_offset).to eql(11)
+        expect(batch.highwater_mark_offset).to eql(1)
 
-      expect_fetched_message_eql(
-        batch.messages[0], 'Hello', 0,
-        Kafka::Protocol::Message.new(
-          value: 'Hello',
-          offset: 0
-        )
-      )
-      expect_fetched_message_eql(
-        batch.messages[1], 'Hello', 0,
-        Kafka::Protocol::Message.new(
-          value: 'World',
-          offset: 1
-        )
-      )
-      expect_fetched_message_eql(
-        batch.messages[2], 'Hello', 0,
-        Kafka::Protocol::Message.new(
-          value: 'Bye',
-          offset: 2
-        )
-      )
+        expect(batch.messages.length).to eql(2)
+
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, Kafka::Protocol::Record.new(offset: 10, value: '1234'))
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, Kafka::Protocol::Record.new(offset: 11, value: '1234'))
+      end
     end
   end
 

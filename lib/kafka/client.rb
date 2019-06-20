@@ -71,7 +71,7 @@ module Kafka
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -84,6 +84,7 @@ module Kafka
         client_cert_key_password: ssl_client_cert_key_password,
         client_cert_chain: ssl_client_cert_chain,
         ca_certs_from_system: ssl_ca_certs_from_system,
+        verify_hostname: ssl_verify_hostname
       )
 
       sasl_authenticator = SaslAuthenticator.new(
@@ -233,8 +234,8 @@ module Kafka
     #   result in {BufferOverflow} being raised.
     #
     # @param compression_codec [Symbol, nil] the name of the compression codec to
-    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
-    #   and `:gzip`.
+    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`,
+    #   `:gzip`, `:lz4`, `:zstd`
     #
     # @param compression_threshold [Integer] the number of messages that needs to
     #   be in a message set before it should be compressed. Note that message sets
