@@ -16,7 +16,9 @@ module Kafka
       idempotent: false,
       transactional: false,
       transactional_id: nil,
-      transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT
+      transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT,
+      retry_backoff: 100,
+      max_retries: 5
     )
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
@@ -32,8 +34,11 @@ module Kafka
 
       @producer_id = -1
       @producer_epoch = 0
+      @retry_backoff = retry_backoff
 
       @sequences = {}
+      @retry_counter = 0
+      @max_retries = max_retries
     end
 
     def idempotent?
@@ -47,20 +52,22 @@ module Kafka
     def init_producer_id(force = false)
       return if @producer_id >= 0 && !force
 
-      response = transaction_coordinator.init_producer_id(
-        transactional_id: @transactional_id,
-        transactional_timeout: @transactional_timeout
-      )
-      Protocol.handle_error(response.error_code)
+      retry_error_handler do
+        response = transaction_coordinator.init_producer_id(
+          transactional_id: @transactional_id,
+          transactional_timeout: @transactional_timeout
+        )
+        Protocol.handle_error(response.error_code)
 
-      # Reset producer id
-      @producer_id = response.producer_id
-      @producer_epoch = response.producer_epoch
+        # Reset producer id
+        @producer_id = response.producer_id
+        @producer_epoch = response.producer_epoch
 
-      # Reset sequence
-      @sequences = {}
+        # Reset sequence
+        @sequences = {}
 
-      @logger.debug "Current Producer ID is #{@producer_id} and Producer Epoch is #{@producer_epoch}"
+        @logger.debug "Current Producer ID is #{@producer_id} and Producer Epoch is #{@producer_epoch}"
+      end
     end
 
     def next_sequence_for(topic, partition)
@@ -112,20 +119,22 @@ module Kafka
         end
       end
 
-      unless new_topic_partitions.empty?
-        response = transaction_coordinator.add_partitions_to_txn(
-          transactional_id: @transactional_id,
-          producer_id: @producer_id,
-          producer_epoch: @producer_epoch,
-          topics: new_topic_partitions
-        )
+      retry_error_handler do
+        unless new_topic_partitions.empty?
+          response = transaction_coordinator.add_partitions_to_txn(
+            transactional_id: @transactional_id,
+            producer_id: @producer_id,
+            producer_epoch: @producer_epoch,
+            topics: new_topic_partitions
+          )
 
-        # Update added topic partitions
-        response.errors.each do |tp|
-          tp.partitions.each do |p|
-            Protocol.handle_error(p.error_code)
-            @transaction_partitions[tp.topic] ||= {}
-            @transaction_partitions[tp.topic][p.partition] = true
+          # Update added topic partitions
+          response.errors.each do |tp|
+            tp.partitions.each do |p|
+              Protocol.handle_error(p.error_code)
+              @transaction_partitions[tp.topic] ||= {}
+              @transaction_partitions[tp.topic][p.partition] = true
+            end
           end
         end
       end
@@ -166,15 +175,17 @@ module Kafka
 
       @logger.info "Commiting transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
 
-      response = transaction_coordinator.end_txn(
-        transactional_id: @transactional_id,
-        producer_id: @producer_id,
-        producer_epoch: @producer_epoch,
-        transaction_result: TRANSACTION_RESULT_COMMIT
-      )
-      Protocol.handle_error(response.error_code)
+      retry_error_handler do
+        response = transaction_coordinator.end_txn(
+          transactional_id: @transactional_id,
+          producer_id: @producer_id,
+          producer_epoch: @producer_epoch,
+          transaction_result: TRANSACTION_RESULT_COMMIT
+        )
+        Protocol.handle_error(response.error_code)
+        @logger.info "Transaction #{@transactional_id} is committed, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+      end
 
-      @logger.info "Transaction #{@transactional_id} is committed, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
       complete_transaction
 
       nil
@@ -199,15 +210,16 @@ module Kafka
 
       @logger.info "Aborting transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
 
-      response = transaction_coordinator.end_txn(
-        transactional_id: @transactional_id,
-        producer_id: @producer_id,
-        producer_epoch: @producer_epoch,
-        transaction_result: TRANSACTION_RESULT_ABORT
-      )
-      Protocol.handle_error(response.error_code)
-
-      @logger.info "Transaction #{@transactional_id} is aborted, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+      retry_error_handler do
+        response = transaction_coordinator.end_txn(
+          transactional_id: @transactional_id,
+          producer_id: @producer_id,
+          producer_epoch: @producer_epoch,
+          transaction_result: TRANSACTION_RESULT_ABORT
+        )
+        Protocol.handle_error(response.error_code)
+        @logger.info "Transaction #{@transactional_id} is aborted, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
+      end
 
       complete_transaction
 
@@ -224,22 +236,26 @@ module Kafka
         raise 'Transaction is not valid to send offsets'
       end
 
-      add_response = transaction_coordinator.add_offsets_to_txn(
-        transactional_id: @transactional_id,
-        producer_id: @producer_id,
-        producer_epoch: @producer_epoch,
-        group_id: group_id
-      )
-      Protocol.handle_error(add_response.error_code)
+      retry_error_handler do
+        add_response = transaction_coordinator.add_offsets_to_txn(
+          transactional_id: @transactional_id,
+          producer_id: @producer_id,
+          producer_epoch: @producer_epoch,
+          group_id: group_id
+        )
+        Protocol.handle_error(add_response.error_code)
+      end
 
-      send_response = transaction_coordinator.txn_offset_commit(
-        transactional_id: @transactional_id,
-        group_id: group_id,
-        producer_id: @producer_id,
-        producer_epoch: @producer_epoch,
-        offsets: offsets
-      )
-      Protocol.handle_error(send_response.error_code)
+      retry_error_handler do
+        send_response = transaction_coordinator.txn_offset_commit(
+          transactional_id: @transactional_id,
+          group_id: group_id,
+          producer_id: @producer_id,
+          producer_epoch: @producer_epoch,
+          offsets: offsets
+        )
+        Protocol.handle_error(send_response.error_code)
+      end
     end
 
     def in_transaction?
@@ -261,6 +277,19 @@ module Kafka
     end
 
     private
+
+    def retry_error_handler
+      yield
+      @retry_counter = 0
+    rescue ConcurrentTransactionError, CoordinatorLoadInProgress, NotCoordinatorForGroup, CoordinatorNotAvailable => e
+      @retry_counter += 1
+      if @retry_counter > @max_retries
+        raise e
+      end
+      @logger.info("#{e.class.name}, sleeping #{@retry_backoff} , retrying...")
+      sleep @retry_backoff
+      retry
+    end
 
     def force_transactional!
       unless transactional?

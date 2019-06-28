@@ -35,8 +35,8 @@ module Kafka
           encoder.write_array(partitions) do |partition, offset|
             encoder.write_int32(partition)
             encoder.write_int64(offset[:offset])
-            encoder.write_string(nil) # metadata
             encoder.write_int32(offset[:leader_epoch])
+            encoder.write_string(nil) # metadata
           end
         end
       end
