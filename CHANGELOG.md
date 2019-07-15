@@ -2,7 +2,7 @@
 
 Changes and additions to the library will be listed here.
 
-## Unreleased
+## 0.7.9
 
 - Fix SSL authentication for ruby < 2.4.0 (#742)
 - Add metrics for prometheus/client (#739)
