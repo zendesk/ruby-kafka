@@ -4,6 +4,11 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Fix SSL authentication for ruby < 2.4.0 (#742)
+- Add metrics for prometheus/client (#739)
+- Do not add nil message entries when ignoring old messages (#746)
+- Scram authentication thread save (#743)
+
 ## 0.7.8
 - Optionally verify hostname on SSL certs (#733)
 
