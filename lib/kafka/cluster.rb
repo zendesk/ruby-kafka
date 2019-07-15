@@ -139,6 +139,40 @@ module Kafka
       end
     end
 
+    def describe_configs(broker_id, configs = [])
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_CLUSTER, broker_id.to_s, configs]]
+      }
+
+      info = cluster_info.brokers.find {|broker| broker.node_id == broker_id }
+      broker = @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+
+      response = broker.describe_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      response.resources.first.configs
+    end
+
+    def alter_configs(broker_id, configs = [])
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_CLUSTER, broker_id.to_s, configs]]
+      }
+
+      info = cluster_info.brokers.find {|broker| broker.node_id == broker_id }
+      broker = @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+
+      response = broker.alter_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      nil
+    end
+
     def partitions_for(topic)
       add_target_topics([topic])
       refresh_metadata_if_necessary!
