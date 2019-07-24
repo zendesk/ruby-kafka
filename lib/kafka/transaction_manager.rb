@@ -17,7 +17,8 @@ module Kafka
       transactional: false,
       transactional_id: nil,
       transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT,
-      retry_backoff_ms: 100
+      retry_backoff_ms: 100,
+      max_retries: 5
     )
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
@@ -36,6 +37,8 @@ module Kafka
       @retry_backoff_ms = retry_backoff_ms
 
       @sequences = {}
+      @retry_counter = 0
+      @max_retries = max_retries
     end
 
     def idempotent?
@@ -277,7 +280,12 @@ module Kafka
 
     def retry_error_handler
       yield
+      @retry_counter = 0
     rescue ConcurrentTransactionError, CoordinatorLoadInProgress, NotCoordinatorForGroup, CoordinatorNotAvailable => e
+      @retry_counter += 1
+      if @retry_counter > @max_retries
+        raise e
+      end
       @logger.info("#{e.class.name}, sleeping #{@retry_backoff_ms}ms, retrying...")
       sleep @retry_backoff_ms / 1000.0
       retry
