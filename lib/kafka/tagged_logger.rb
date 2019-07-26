@@ -6,7 +6,7 @@ require 'logger'
 module Kafka
   class TaggedLogger < SimpleDelegator
 
-    %i(debug info warn error fatal).each do |method|
+    %i(debug info warn error).each do |method|
       define_method method do |msg_or_progname, &block|
         if block_given?
           super(msg_or_progname, &block)
@@ -57,7 +57,7 @@ module Kafka
     end
 
     def initialize(logger_or_stream = nil)
-      logger = if logger_or_stream.is_a?(::Logger)
+      logger = if %w(info debug warn error).all? { |s| logger_or_stream.respond_to?(s) }
         logger_or_stream
       elsif logger_or_stream
         ::Logger.new(logger_or_stream)
