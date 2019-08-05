@@ -34,7 +34,7 @@ module Kafka
 
       @producer_id = -1
       @producer_epoch = 0
-      @retry_backoff_ms = retry_backoff_ms
+      @retry_backoff = retry_backoff
 
       @sequences = {}
       @retry_counter = 0
