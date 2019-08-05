@@ -270,6 +270,8 @@ module Kafka
         transactional: transactional,
         transactional_id: transactional_id,
         transactional_timeout: transactional_timeout,
+        max_retries: max_retries,
+        retry_backoff: retry_backoff
       )
 
       Producer.new(

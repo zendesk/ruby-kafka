@@ -17,7 +17,7 @@ module Kafka
       transactional: false,
       transactional_id: nil,
       transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT,
-      retry_backoff_ms: 100,
+      retry_backoff: 100,
       max_retries: 5
     )
       @cluster = cluster
@@ -286,8 +286,8 @@ module Kafka
       if @retry_counter > @max_retries
         raise e
       end
-      @logger.info("#{e.class.name}, sleeping #{@retry_backoff_ms}ms, retrying...")
-      sleep @retry_backoff_ms / 1000.0
+      @logger.info("#{e.class.name}, sleeping #{@retry_backoff } , retrying...")
+      sleep @retry_backoff
       retry
     end
 
