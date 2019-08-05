@@ -283,17 +283,30 @@ describe "Transactional producer", functional: true do
     producer_1.produce('Test 3', topic: topic, partition: 2)
     producer_1.deliver_messages
 
+    # Producer 2 starts with the same transactional id to cause the concurrent transactions error
     producer_2 = kafka.producer(
       transactional: true,
       transactional_id: transactional_id
     )
-    expect do
-      producer_2.init_transactions
-    end.to raise_error(Kafka::ConcurrentTransactionError)
+
+    producer_2.init_transactions
+    producer_2.begin_transaction
+    producer_2.produce('Test 3', topic: topic, partition: 2)
+    producer_2.deliver_messages
+    producer_2.commit_transaction    
 
     begin
       producer_1.shutdown
       producer_2.shutdown
+
+      records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest, max_wait_time: 1)
+      expect(records.length).to eql(0)
+
+      records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest, max_wait_time: 1)
+      expect(records.length).to eql(0)      
+
+      records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest, max_wait_time: 1)
+      expect(records.length).to eql(1)
     rescue; end
   end
 
