@@ -293,7 +293,7 @@ describe "Transactional producer", functional: true do
     producer_2.begin_transaction
     producer_2.produce('Test 3', topic: topic, partition: 2)
     producer_2.deliver_messages
-    producer_2.commit_transaction    
+    producer_2.commit_transaction
 
     begin
       producer_1.shutdown
@@ -303,7 +303,7 @@ describe "Transactional producer", functional: true do
       expect(records.length).to eql(0)
 
       records = kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest, max_wait_time: 1)
-      expect(records.length).to eql(0)      
+      expect(records.length).to eql(0)
 
       records = kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest, max_wait_time: 1)
       expect(records.length).to eql(1)
