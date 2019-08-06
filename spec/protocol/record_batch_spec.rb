@@ -48,7 +48,7 @@ describe Kafka::Protocol::RecordBatch do
       records: [
         Kafka::Protocol::Record.new(
           attributes:     1,
-          timestamp_delta: 1000,
+          timestamp_delta: 1000000,
           offset_delta:    1,
           key: 'hello',
           value: 'world',
@@ -58,7 +58,7 @@ describe Kafka::Protocol::RecordBatch do
         ),
         Kafka::Protocol::Record.new(
           attributes: 2,
-          timestamp_delta: 2000,
+          timestamp_delta: 2000000,
           offset_delta: 2,
           key: 'ruby',
           value: 'kafka',
@@ -92,11 +92,11 @@ describe Kafka::Protocol::RecordBatch do
   let(:record_1_bytes) {
     [
       # Size
-      0x2c,
+      0x2e,
       # Attributes
       0x1,
       # Timestamp delta
-      0xd0, 0xf,
+      0x80, 0x89, 0x7a,
       # Offset delta
       0x2,
       # Key
@@ -115,11 +115,11 @@ describe Kafka::Protocol::RecordBatch do
   let(:record_2_bytes) {
     [
       # Size
-      0x2a,
+      0x2e,
       # Attributes
       0x2,
       # Timestamp delta
-      0xa0, 0x1f,
+      0x80, 0x92, 0xf4, 0x1,
       # Offset delta
       0x4,
       # Key
@@ -140,7 +140,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x5e,
+      0x0, 0x0, 0x0, 0x61,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -160,7 +160,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x72,
+      0x0, 0x0, 0x0, 0x75,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -181,7 +181,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x60,
+      0x0, 0x0, 0x0, 0x63,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -202,7 +202,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x71,
+      0x0, 0x0, 0x0, 0x74,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -223,7 +223,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x67,
+      0x0, 0x0, 0x0, 0x6a,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -416,7 +416,7 @@ def expect_matched_records(records)
   record_1 = records.first
   expect(record_1.attributes).to eql(1)
 
-  expect(record_1.timestamp_delta).to eql(1000)
+  expect(record_1.timestamp_delta).to eql(1000000)
   expect(record_1.create_time.to_i).to eql(1521657000)
 
   expect(record_1.offset_delta).to eql(1)
@@ -430,7 +430,7 @@ def expect_matched_records(records)
 
   record_2 = records.last
   expect(record_2.attributes).to eql(2)
-  expect(record_2.timestamp_delta).to eql(2000)
+  expect(record_2.timestamp_delta).to eql(2000000)
   expect(record_2.create_time.to_i).to eql(1521658000)
   expect(record_2.offset_delta).to eql(2)
   expect(record_2.offset).to eql(3)
