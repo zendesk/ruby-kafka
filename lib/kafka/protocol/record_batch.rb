@@ -1,3 +1,4 @@
+require 'bigdecimal'
 require 'digest/crc32'
 require 'kafka/protocol/record'
 
@@ -131,7 +132,7 @@ module Kafka
 
         records.each_with_index do |record, index|
           record.offset_delta = index
-          record.timestamp_delta = (record.create_time - first_timestamp).to_i
+          record.timestamp_delta = ((record.create_time - first_timestamp) * 1000).to_i
         end
         @last_offset_delta = records.length - 1
       end
@@ -167,8 +168,8 @@ module Kafka
         log_append_time = (attributes & TIMESTAMP_TYPE_MASK) != 0
 
         last_offset_delta = record_batch_decoder.int32
-        first_timestamp = Time.at(record_batch_decoder.int64 / 1000)
-        max_timestamp = Time.at(record_batch_decoder.int64 / 1000)
+        first_timestamp = Time.at(record_batch_decoder.int64 / BigDecimal(1000))
+        max_timestamp = Time.at(record_batch_decoder.int64 / BigDecimal(1000))
 
         producer_id = record_batch_decoder.int64
         producer_epoch = record_batch_decoder.int16
@@ -188,7 +189,7 @@ module Kafka
         until records_array_decoder.eof?
           record = Record.decode(records_array_decoder)
           record.offset = first_offset + record.offset_delta
-          record.create_time = log_append_time && max_timestamp ? max_timestamp : first_timestamp + record.timestamp_delta
+          record.create_time = log_append_time && max_timestamp ? max_timestamp : first_timestamp + record.timestamp_delta / BigDecimal(1000)
           records_array << record
         end
 
