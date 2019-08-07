@@ -2,6 +2,10 @@
 
 Changes and additions to the library will be listed here.
 
+## 0.7.10
+
+- Fix logger again (#762)
+
 ## 0.7.9
 
 - Fix SSL authentication for ruby < 2.4.0 (#742)
