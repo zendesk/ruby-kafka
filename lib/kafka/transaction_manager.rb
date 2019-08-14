@@ -286,7 +286,7 @@ module Kafka
       if @retry_counter > @max_retries
         raise e
       end
-      @logger.info("#{e.class.name}, sleeping #{@retry_backoff } , retrying...")
+      @logger.info("#{e.class.name}, sleeping #{@retry_backoff} , retrying...")
       sleep @retry_backoff
       retry
     end
