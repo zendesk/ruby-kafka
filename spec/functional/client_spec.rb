@@ -100,7 +100,7 @@ describe "Client API", functional: true do
 
     # Eventually the call should succeed.
     expect {
-      10.times { kafka.partitions_for(topic) rescue nil }
+      20.times { kafka.partitions_for(topic) rescue nil }
     }.not_to raise_exception
 
     expect(kafka.partitions_for(topic)).to be > 0
