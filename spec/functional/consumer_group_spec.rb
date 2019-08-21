@@ -117,6 +117,10 @@ describe "Consumer API", functional: true do
     num_partitions = 3
     topic = create_random_topic(num_partitions: num_partitions)
     messages = (1..100).to_a
+    expected_messages = []
+    messages.each do |i|
+      expected_messages << { :value => i.to_s, :partition => i % 3 }
+    end
 
     mutex = Mutex.new
     var = ConditionVariable.new
@@ -147,6 +151,7 @@ describe "Consumer API", functional: true do
 
     group_id = "test#{rand(1000)}"
     received_messages = []
+    received_events = []
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
@@ -160,6 +165,7 @@ describe "Consumer API", functional: true do
           else
             mutex.synchronize do
               received_messages << Integer(message.value)
+              received_events << {:value => message.value, :partition => message.partition}
               var.signal
             end
           end
@@ -173,7 +179,8 @@ describe "Consumer API", functional: true do
 
     threads.each(&:join)
 
-    expect(received_messages).to match_array messages
+    # expect(received_messages).to match_array messages
+    expect(received_events).to match_array expected_messages
   end
 
   example "stopping and restarting a consumer group" do
