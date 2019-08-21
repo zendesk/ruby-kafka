@@ -1,6 +1,7 @@
 # Basic implementation of a tagged logger that matches the API of
 # ActiveSupport::TaggedLogging.
 
+require 'delegate'
 require 'logger'
 
 module Kafka
