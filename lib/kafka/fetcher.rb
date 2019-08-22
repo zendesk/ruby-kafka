@@ -110,7 +110,7 @@ module Kafka
       elsif @queue.size < @max_queue_size
         step
       else
-        @logger.warn "Reached max fetcher queue size (#{@max_queue_size}), sleeping 1s"
+        @logger.info "Reached max fetcher queue size (#{@max_queue_size}), sleeping 1s"
         sleep 1
       end
     ensure
