@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "dotenv"
   spec.add_development_dependency "docker-api"
   spec.add_development_dependency "rspec-benchmark"
-  spec.add_development_dependency "activesupport", ">= 4.0", "< 6.0.0"
+  spec.add_development_dependency "activesupport", ">= 4.0", "< 6.1"
   spec.add_development_dependency "snappy"
   spec.add_development_dependency "extlz4"
   spec.add_development_dependency "zstd-ruby"
