@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require "concurrent/utility/monotonic_time"
+require "active_support/core_ext/object/try"
 require "active_support/notifications"
 require "kafka"
 require "kafka/tagged_logger"
