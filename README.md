@@ -136,7 +136,7 @@ Please see the [documentation site](http://www.rubydoc.info/gems/ruby-kafka) for
 A client must be initialized with at least one Kafka broker, from which the entire Kafka cluster will be discovered. Each client keeps a separate pool of broker connections. Don't use the same client from more than one thread.
 
 ```ruby
-require "kafka"
+require "ruby-kafka"
 
 # The first argument is a list of "seed brokers" that will be queried for the full
 # cluster topology. At least one of these *must* be available. `client_id` is
