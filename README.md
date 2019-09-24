@@ -448,7 +448,7 @@ In this example, a producer is configured in a Rails initializer:
 
 ```ruby
 # config/initializers/kafka_producer.rb
-require "kafka"
+require "ruby-kafka"
 
 # Configure the Kafka client with the broker hosts and the Rails
 # logger.
@@ -490,7 +490,7 @@ end
 Consuming messages from a Kafka topic with ruby-kafka is simple:
 
 ```ruby
-require "kafka"
+require "ruby-kafka"
 
 kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
 
@@ -513,7 +513,7 @@ The Consumer API solves all of the above issues, and more. It uses the Consumer 
 Using the API is simple:
 
 ```ruby
-require "kafka"
+require "ruby-kafka"
 
 kafka = Kafka.new(["kafka1:9092", "kafka2:9092"])
 
@@ -728,7 +728,7 @@ Most operations are instrumented using [Active Support Notifications](http://api
 
 ```ruby
 require "active_support/notifications"
-require "kafka"
+require "ruby-kafka"
 ```
 
 The notifications are namespaced based on their origin, with separate namespaces for the producer and the consumer.
