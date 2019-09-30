@@ -44,7 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec_junit_formatter", "0.2.2"
   spec.add_development_dependency "dogstatsd-ruby", ">= 3.0.0", "< 5.0.0"
   spec.add_development_dependency "statsd-ruby"
-  spec.add_development_dependency "prometheus-client"
+  spec.add_development_dependency "prometheus-client", "0.10.0.pre.alpha2"
   spec.add_development_dependency "ruby-prof"
   spec.add_development_dependency "timecop"
   spec.add_development_dependency "rubocop", "~> 0.49.1"

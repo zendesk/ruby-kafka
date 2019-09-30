@@ -129,7 +129,7 @@ module Kafka
           @process_batch_errors.increment(labels: key)
         else
           @process_batch_latency.observe(event.duration, labels: key)
-          @process_messages.increment(message_count, labels: key)
+          @process_messages.increment(by: message_count, labels: key)
         end
       end
 
@@ -291,7 +291,7 @@ module Kafka
       def drop_messages(event)
         key = { client: event.payload.fetch(:client_id) }
         message_count = event.payload.fetch(:message_count)
-        @dropped_messages.increment(message_count, labels: key)
+        @dropped_messages.increment(by: message_count, labels: key)
       end
     end
 
