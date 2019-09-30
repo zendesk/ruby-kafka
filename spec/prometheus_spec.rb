@@ -2,7 +2,6 @@
 
 PROMETHEUS_NO_AUTO_START = true
 require "kafka/prometheus"
-require 'pry'
 
 describe Kafka::Prometheus do
   let(:exception) { false }

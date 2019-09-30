@@ -237,7 +237,6 @@ module Kafka
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
       ensure
-        binding.pry
         @producer.shutdown
         @logger.pop_tags
       end
