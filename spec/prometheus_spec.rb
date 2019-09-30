@@ -92,7 +92,7 @@ describe Kafka::Prometheus do
     it 'emits metrics to consumer_time_lag' do
       metric = @registry.get(:consumer_time_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(labels: key)).to eq 5001
+      expect(metric.get(labels: key)).to be > 0
     end
 
     context 'with expection' do
@@ -269,7 +269,7 @@ describe Kafka::Prometheus do
     it 'emits metric buffer_fill_ratio' do
       metric = @registry.get(:producer_buffer_fill_ratio)
       expect(metric).not_to be_nil
-      expect(metric.get(labels: {client: 'test'})['sum']).to be > 0
+      expect(metric.get(labels: { client: 'test' })['sum']).to be > 0
     end
   end
 
