@@ -669,7 +669,6 @@ module Kafka
 
     def has_topic?(topic)
       @cluster.clear_target_topics
-      @cluster.add_target_topics([topic])
       @cluster.topics.include?(topic)
     end
 
