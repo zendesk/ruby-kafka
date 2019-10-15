@@ -337,6 +337,7 @@ module Kafka
     def consumer(
         group_id:,
         session_timeout: 30,
+        rebalance_timeout: 60,
         offset_commit_interval: 10,
         offset_commit_threshold: 0,
         heartbeat_interval: 10,
@@ -357,6 +358,7 @@ module Kafka
         logger: @logger,
         group_id: group_id,
         session_timeout: session_timeout,
+        rebalance_timeout: rebalance_timeout,
         retention_time: retention_time,
         instrumenter: instrumenter,
       )
