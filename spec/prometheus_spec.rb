@@ -27,7 +27,7 @@ describe Kafka::Prometheus do
     it 'emits metrics to the api_calls' do
       metric = @registry.get(:api_calls)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
 
     it 'emits metrics to api_latency' do
@@ -38,13 +38,13 @@ describe Kafka::Prometheus do
     it 'emits metrics to api_request_size' do
       metric = @registry.get(:api_request_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     it 'emits metrics to api_response_size' do
       metric = @registry.get(:api_response_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 0.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     context 'with expection' do
@@ -53,7 +53,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to api_errors' do
         metric = @registry.get(:api_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -75,13 +75,13 @@ describe Kafka::Prometheus do
     it 'emits metrics to consumer_offset_lag' do
       metric = @registry.get(:consumer_offset_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 500
+      expect(metric.get(labels: key)).to eq 500
     end
 
     it 'emits metrics to consumer_process_messages' do
       metric = @registry.get(:consumer_process_messages)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
 
     it 'emits metrics to consumer_process_message_latency' do
@@ -92,7 +92,7 @@ describe Kafka::Prometheus do
     it 'emits metrics to consumer_time_lag' do
       metric = @registry.get(:consumer_time_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 5000
+      expect(metric.get(labels: key)).to be > 0
     end
 
     context 'with expection' do
@@ -101,7 +101,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to consumer_process_message_errors' do
         metric = @registry.get(:consumer_process_message_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -122,7 +122,7 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_process_messages' do
       metric = @registry.get(:consumer_process_messages)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 7
+      expect(metric.get(labels: key)).to eq 7
     end
 
     context 'with expection' do
@@ -131,7 +131,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to consumer_process_batch_errors' do
         metric = @registry.get(:consumer_process_batch_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -152,13 +152,13 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_offset_lag' do
       metric = @registry.get(:consumer_offset_lag)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 7
+      expect(metric.get(labels: key)).to eq 7
     end
 
     it 'emits metrics consumer_batch_size' do
       metric = @registry.get(:consumer_batch_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
   end
 
@@ -170,8 +170,7 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_join_group' do
       metric = @registry.get(:consumer_join_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
-                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     context 'with expection' do
@@ -180,7 +179,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to consumer_join_group_errors' do
         metric = @registry.get(:consumer_join_group_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -193,8 +192,7 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_sync_group' do
       metric = @registry.get(:consumer_sync_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
-                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     context 'with expection' do
@@ -203,7 +201,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to consumer_sync_group_errors' do
         metric = @registry.get(:consumer_sync_group_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -216,8 +214,7 @@ describe Kafka::Prometheus do
     it 'emits metrics consumer_leave_group' do
       metric = @registry.get(:consumer_leave_group)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 1.0, 3 => 1.0, 10 => 1.0, 30 => 1.0, 100 => 1.0,
-                                     300 => 1.0, 1000 => 1.0, 3000 => 1.0, 10000 => 1.0, 30000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     context 'with expection' do
@@ -226,7 +223,7 @@ describe Kafka::Prometheus do
       it 'emits metrics to consumer_leave_group_errors' do
         metric = @registry.get(:consumer_leave_group_errors)
         expect(metric).not_to be_nil
-        expect(metric.get(key)).to eq 1
+        expect(metric.get(labels: key)).to eq 1
       end
     end
   end
@@ -239,7 +236,7 @@ describe Kafka::Prometheus do
     it 'emits metrics to consumer_pause_duration' do
       metric = @registry.get(:consumer_pause_duration)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 111
+      expect(metric.get(labels: key)).to eq 111
     end
   end
 
@@ -260,20 +257,19 @@ describe Kafka::Prometheus do
     it 'emits metrics producer_produced_messages' do
       metric = @registry.get(:producer_produced_messages)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
 
     it 'emits metric producer_message_size' do
       metric = @registry.get(:producer_message_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 1.0, 10000 => 1.0, 100000 => 1.0, 1000000 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
 
     it 'emits metric buffer_fill_ratio' do
       metric = @registry.get(:producer_buffer_fill_ratio)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
-                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 0.0, 5 => 0.0, 10 => 0.0 })
+      expect(metric.get(labels: { client: 'test' })['sum']).to be > 0
     end
   end
 
@@ -285,7 +281,7 @@ describe Kafka::Prometheus do
     it 'emits metrics ack_error' do
       metric = @registry.get(:producer_ack_errors)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
   end
 
@@ -297,7 +293,7 @@ describe Kafka::Prometheus do
     it 'emits metrics producer_produce_errors' do
       metric = @registry.get(:producer_produce_errors)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
   end
 
@@ -309,14 +305,13 @@ describe Kafka::Prometheus do
     it 'emits metrics producer_deliver_messages' do
       metric = @registry.get(:producer_deliver_messages)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 123
+      expect(metric.get(labels: key)).to eq 123
     end
 
     it 'emits metrics producer_deliver_attempts' do
       metric = @registry.get(:producer_deliver_attempts)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
-                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 1.0, 5 => 1.0, 10 => 1.0 })
+      expect(metric.get(labels: key)['sum']).to be > 0
     end
   end
 
@@ -328,14 +323,11 @@ describe Kafka::Prometheus do
     it 'emits metrics async_producer_queue_size' do
       metric = @registry.get(:async_producer_queue_size)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 1 => 0.0, 10 => 0.0, 100 => 0.0, 1000 => 0.0, 10000 => 0.0, 100000 => 0.0, 1000000 => 0.0 })
     end
 
     it 'emits metrics async_producer_queue fill_ratio' do
       metric = @registry.get(:async_producer_queue_fill_ratio)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq({ 0.005 => 0.0, 0.01 => 0.0, 0.025 => 0.0, 0.05 => 0.0, 0.1 => 0.0,
-                                     0.25 => 0.0, 0.5 => 0.0, 1 => 0.0, 2.5 => 0.0, 5 => 0.0, 10 => 0.0 })
     end
   end
 
@@ -347,7 +339,7 @@ describe Kafka::Prometheus do
     it 'emits metrics async_producer_produce_errors' do
       metric = @registry.get(:async_producer_produce_errors)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 1
+      expect(metric.get(labels: key)).to eq 1
     end
   end
 
@@ -359,7 +351,7 @@ describe Kafka::Prometheus do
     it 'emits metrics async_producer_dropped_messages' do
       metric = @registry.get(:async_producer_dropped_messages)
       expect(metric).not_to be_nil
-      expect(metric.get(key)).to eq 4
+      expect(metric.get(labels: key)).to eq 4
     end
   end
 end
