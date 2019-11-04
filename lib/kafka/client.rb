@@ -14,6 +14,7 @@ require "kafka/fetch_operation"
 require "kafka/connection_builder"
 require "kafka/instrumenter"
 require "kafka/sasl_authenticator"
+require "kafka/tagged_logger"
 
 module Kafka
   class Client
@@ -46,6 +47,9 @@ module Kafka
     # @param ssl_client_cert_key [String, nil] a PEM encoded client cert key to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
+    # @param ssl_client_cert_key_password [String, nil] the password required to read the
+    #   ssl_client_cert_key. Must be used in combination with ssl_client_cert_key.
+    #
     # @param sasl_gssapi_principal [String, nil] a KRB5 principal
     #
     # @param sasl_gssapi_keytab [String, nil] a KRB5 keytab filepath
@@ -58,14 +62,17 @@ module Kafka
     #
     # @param sasl_over_ssl [Boolean] whether to enforce SSL with SASL
     #
+    # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider instance that
+    #   implements method token. See {Sasl::OAuth#initialize}
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
-                   ssl_client_cert_chain: nil, sasl_gssapi_principal: nil, sasl_gssapi_keytab: nil,
-                   sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
+                   ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
+                   sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false)
-      @logger = logger || Logger.new(nil)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
+      @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
 
@@ -74,8 +81,10 @@ module Kafka
         ca_cert: ssl_ca_cert,
         client_cert: ssl_client_cert,
         client_cert_key: ssl_client_cert_key,
+        client_cert_key_password: ssl_client_cert_key_password,
         client_cert_chain: ssl_client_cert_chain,
         ca_certs_from_system: ssl_ca_certs_from_system,
+        verify_hostname: ssl_verify_hostname
       )
 
       sasl_authenticator = SaslAuthenticator.new(
@@ -87,6 +96,7 @@ module Kafka
         sasl_scram_username: sasl_scram_username,
         sasl_scram_password: sasl_scram_password,
         sasl_scram_mechanism: sasl_scram_mechanism,
+        sasl_oauth_token_provider: sasl_oauth_token_provider,
         logger: @logger
       )
 
@@ -224,8 +234,8 @@ module Kafka
     #   result in {BufferOverflow} being raised.
     #
     # @param compression_codec [Symbol, nil] the name of the compression codec to
-    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`
-    #   and `:gzip`.
+    #   use, or nil if no compression should be performed. Valid codecs: `:snappy`,
+    #   `:gzip`, `:lz4`, `:zstd`
     #
     # @param compression_threshold [Integer] the number of messages that needs to
     #   be in a message set before it should be compressed. Note that message sets
@@ -291,7 +301,7 @@ module Kafka
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
-    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, **options)
+    def async_producer(delivery_interval: 0, delivery_threshold: 0, max_queue_size: 1000, max_retries: -1, retry_backoff: 0, **options)
       sync_producer = producer(**options)
 
       AsyncProducer.new(
@@ -299,6 +309,8 @@ module Kafka
         delivery_interval: delivery_interval,
         delivery_threshold: delivery_threshold,
         max_queue_size: max_queue_size,
+        max_retries: max_retries,
+        retry_backoff: retry_backoff,
         instrumenter: @instrumenter,
         logger: @logger,
       )
@@ -370,6 +382,7 @@ module Kafka
       heartbeat = Heartbeat.new(
         group: group,
         interval: heartbeat_interval,
+        instrumenter: instrumenter
       )
 
       Consumer.new(
@@ -515,6 +528,24 @@ module Kafka
           offsets[batch.partition] = batch.last_offset + 1 unless batch.unknown_last_offset?
         end
       end
+    end
+
+    # Describe broker configs
+    #
+    # @param broker_id [int] the id of the broker
+    # @param configs [Array] array of config keys.
+    # @return [Array<Kafka::Protocol::DescribeConfigsResponse::ConfigEntry>]
+    def describe_configs(broker_id, configs = [])
+      @cluster.describe_configs(broker_id, configs)
+    end
+
+    # Alter broker configs
+    #
+    # @param broker_id [int] the id of the broker
+    # @param configs [Array] array of config strings.
+    # @return [nil]
+    def alter_configs(broker_id, configs = [])
+      @cluster.alter_configs(broker_id, configs)
     end
 
     # Creates a topic in the cluster.

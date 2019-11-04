@@ -46,7 +46,7 @@ module Kafka
 
     def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
       @group = group
       @offset_manager = offset_manager
@@ -82,7 +82,8 @@ module Kafka
     # messages to be written. In the former case, set `start_from_beginning`
     # to true (the default); in the latter, set it to false.
     #
-    # @param topic [String] the name of the topic to subscribe to.
+    # @param topic_or_regex [String, Regexp] subscribe to single topic with a string
+    #   or multiple topics matching a regex.
     # @param default_offset [Symbol] whether to start from the beginning or the
     #   end of the topic's partitions. Deprecated.
     # @param start_from_beginning [Boolean] whether to start from the beginning
@@ -93,12 +94,16 @@ module Kafka
     # @param max_bytes_per_partition [Integer] the maximum amount of data fetched
     #   from a single partition at a time.
     # @return [nil]
-    def subscribe(topic, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
+    def subscribe(topic_or_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
       default_offset ||= start_from_beginning ? :earliest : :latest
 
-      @group.subscribe(topic)
-      @offset_manager.set_default_offset(topic, default_offset)
-      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
+      if topic_or_regex.is_a?(Regexp)
+        cluster_topics.select { |topic| topic =~ topic_or_regex }.each do |topic|
+          subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+        end
+      else
+        subscribe_to_topic(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
+      end
 
       nil
     end
@@ -241,7 +246,7 @@ module Kafka
 
             trigger_heartbeat
 
-            return if !@running
+            return if shutting_down?
           end
 
           # We've successfully processed a batch from the partition, so we can clear
@@ -280,6 +285,9 @@ module Kafka
     #   without an exception. Once marked successful, the offsets of processed
     #   messages can be committed to Kafka.
     # @yieldparam batch [Kafka::FetchedBatch] a message batch fetched from Kafka.
+    # @raise [Kafka::ProcessingError] if there was an error processing a batch.
+    #   The original exception will be returned by calling `#cause` on the
+    #   {Kafka::ProcessingError} instance.
     # @return [nil]
     def each_batch(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
       @fetcher.configure(
@@ -336,7 +344,7 @@ module Kafka
 
           trigger_heartbeat
 
-          return if !@running
+          return if shutting_down?
         end
 
         # We may not have received any messages, but it's still a good idea to
@@ -386,19 +394,23 @@ module Kafka
 
     def consumer_loop
       @running = true
+      @logger.push_tags(@group.to_s)
 
       @fetcher.start
 
-      while @running
+      while running?
         begin
           @instrumenter.instrument("loop.consumer") do
             yield
           end
-        rescue HeartbeatError, OffsetCommitError
-          join_group
+        rescue HeartbeatError
+          make_final_offsets_commit!
+          join_group if running?
+        rescue OffsetCommitError
+          join_group if running?
         rescue RebalanceInProgress
           @logger.warn "Group rebalance in progress, re-joining..."
-          join_group
+          join_group if running?
         rescue FetchError, NotLeaderForPartition, UnknownTopicOrPartition
           @cluster.mark_as_stale!
         rescue LeaderNotAvailable => e
@@ -421,6 +433,7 @@ module Kafka
       make_final_offsets_commit!
       @group.leave rescue nil
       @running = false
+      @logger.pop_tags
     end
 
     def make_final_offsets_commit!(attempts = 3)
@@ -502,7 +515,7 @@ module Kafka
 
     def fetch_batches
       # Return early if the consumer has been stopped.
-      return [] if !@running
+      return [] if shutting_down?
 
       join_group unless @group.member?
 
@@ -542,11 +555,37 @@ module Kafka
       @pauses[topic][partition]
     end
 
+    def running?
+      @running
+    end
+
+    def shutting_down?
+      !running?
+    end
+
     def clear_current_offsets(excluding: {})
       @current_offsets.each do |topic, partitions|
         partitions.keep_if do |partition, _|
           excluding.fetch(topic, []).include?(partition)
         end
+      end
+    end
+
+    def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
+      @group.subscribe(topic)
+      @offset_manager.set_default_offset(topic, default_offset)
+      @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
+    end
+
+    def cluster_topics
+      attempts = 0
+      begin
+        attempts += 1
+        @cluster.list_topics
+      rescue Kafka::ConnectionError
+        @cluster.mark_as_stale!
+        retry unless attempts > 1
+        raise
       end
     end
   end

@@ -8,7 +8,7 @@ module Kafka
 
     class SaslHandshakeRequest
 
-      SUPPORTED_MECHANISMS = %w(GSSAPI PLAIN SCRAM-SHA-256 SCRAM-SHA-512)
+      SUPPORTED_MECHANISMS = %w(GSSAPI PLAIN SCRAM-SHA-256 SCRAM-SHA-512 OAUTHBEARER)
 
       def initialize(mechanism)
         unless SUPPORTED_MECHANISMS.include?(mechanism)

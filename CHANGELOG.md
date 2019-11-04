@@ -4,6 +4,49 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Add client methods to manage configs (#759)
+
+## 0.7.10
+
+- Fix logger again (#762)
+
+## 0.7.9
+
+- Fix SSL authentication for ruby < 2.4.0 (#742)
+- Add metrics for prometheus/client (#739)
+- Do not add nil message entries when ignoring old messages (#746)
+- Scram authentication thread save (#743)
+
+## 0.7.8
+- Optionally verify hostname on SSL certs (#733)
+
+## 0.7.7
+- Producer send offsets in transaction (#723)
+- Support zstd compression (#724)
+- Verify SSL Certificates (#730)
+
+## 0.7.6
+- Introduce regex matching in `Consumer#subscribe` (#700)
+- Only rejoin group on error if we're not in shutdown mode (#711)
+- Use `maxTimestamp` for `logAppendTime` timestamps (#706)
+- Async producer limit number of retries (#708)
+- Support SASL OAuthBearer Authentication (#710)
+
+## 0.7.5
+- Distribute partitions across consumer groups when there are few partitions per topic (#681)
+- Fix an issue where a consumer would fail to fetch any messages (#689)
+- Instrumentation for heartbeat event
+- Synchronously stop the fetcher to prevent race condition when processing commands
+- Instrument batch fetching (#694)
+
+## 0.7.4
+- Fix wrong encoding calculation that leads to message corruption (#682, #680).
+- Change the log level of the 'Committing offsets' message to debug (#640).
+- Avoid Ruby warnings about unused vars (#679).
+- Synchronously commit offsets after HeartbeatError (#676).
+- Discard messages that were fetched under a previous consumer group generation (#665).
+- Support specifying an ssl client certificates key passphrase (#667).
+
 ## 0.7.3
 
 - Synchronize access to @worker_thread and @timer_thread in AsyncProducer to prevent creating multiple threads (#661).

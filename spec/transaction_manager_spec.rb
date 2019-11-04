@@ -567,6 +567,41 @@ describe ::Kafka::TransactionManager do
       end
     end
   end
+
+  describe '#send_offsets_to_txn' do
+    let!(:manager) do
+      described_class.new(
+        logger: logger,
+        cluster: cluster,
+        transactional: true,
+        transactional_id: 'IDID',
+        transactional_timeout: 600
+      )
+    end
+
+    context 'currently in transaction' do
+      before do
+        manager.init_transactions
+        manager.begin_transaction
+        allow(transaction_coordinator).to receive(:add_offsets_to_txn).and_return(
+          Kafka::Protocol::AddOffsetsToTxnResponse.new(
+            error_code: 0
+          )
+        )
+        allow(transaction_coordinator).to receive(:txn_offset_commit).and_return(
+          Kafka::Protocol::TxnOffsetCommitResponse.new(
+            error_code: 0
+          )
+        )
+      end
+
+      it 'notifies transaction coordinator' do
+        manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
+        expect(transaction_coordinator).to have_received(:add_offsets_to_txn)
+        expect(transaction_coordinator).to have_received(:txn_offset_commit)
+      end
+    end
+  end
 end
 
 def success_add_partitions_to_txn_response(topics)

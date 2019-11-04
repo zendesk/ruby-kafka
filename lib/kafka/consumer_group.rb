@@ -9,7 +9,7 @@ module Kafka
 
     def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @group_id = group_id
       @session_timeout = session_timeout
       @instrumenter = instrumenter
@@ -120,6 +120,15 @@ module Kafka
       sleep 1
       @coordinator = nil
       retry
+    end
+
+    def to_s
+      "[#{@group_id}] {" + assigned_partitions.map { |topic, partitions|
+        partition_str = partitions.size > 5 ?
+                          "#{partitions[0..4].join(', ')}..." :
+                          partitions.join(', ')
+        "#{topic}: #{partition_str}"
+      }.join('; ') + '}:'
     end
 
     private

@@ -68,6 +68,8 @@ module Kafka
   #
   # * `:snappy` for [Snappy](http://google.github.io/snappy/) compression.
   # * `:gzip` for [gzip](https://en.wikipedia.org/wiki/Gzip) compression.
+  # * `:lz4` for [LZ4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) compression.
+  # * `:zstd` for [zstd](https://facebook.github.io/zstd/) compression.
   #
   # By default, all message sets will be compressed if you specify a compression
   # codec. To increase the compression threshold, set `compression_threshold` to
@@ -130,7 +132,7 @@ module Kafka
     def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
       @cluster = cluster
       @transaction_manager = transaction_manager
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
       @required_acks = required_acks == :all ? -1 : required_acks
       @ack_timeout = ack_timeout
@@ -148,6 +150,10 @@ module Kafka
 
       # Messages added by `#produce` but not yet assigned a partition.
       @pending_message_queue = PendingMessageQueue.new
+    end
+
+    def to_s
+      "Producer #{@target_topics.to_a.join(', ')}"
     end
 
     # Produces a message to the specified topic. Note that messages are buffered in
@@ -205,7 +211,7 @@ module Kafka
       # If the producer is in transactional mode, all the message production
       # must be used when the producer is currently in transaction
       if @transaction_manager.transactional? && !@transaction_manager.in_transaction?
-        raise 'You must trigger begin_transaction before producing messages'
+        raise "Cannot produce to #{topic}: You must trigger begin_transaction before producing messages"
       end
 
       @target_topics.add(topic)
@@ -324,6 +330,20 @@ module Kafka
       @transaction_manager.abort_transaction
     end
 
+    # Sends batch last offset to the consumer group coordinator, and also marks
+    # this offset as part of the current transaction. This offset will be considered
+    # committed only if the transaction is committed successfully.
+    #
+    # This method should be used when you need to batch consumed and produced messages
+    # together, typically in a consume-transform-produce pattern. Thus, the specified
+    # group_id should be the same as config parameter group_id of the used
+    # consumer.
+    #
+    # @return [nil]
+    def send_offsets_to_transaction(batch:, group_id:)
+      @transaction_manager.send_offsets_to_txn(offsets: { batch.topic => { batch.partition => { offset: batch.last_offset + 1, leader_epoch: batch.leader_epoch } } }, group_id: group_id)
+    end
+
     # Syntactic sugar to enable easier transaction usage. Do the following steps
     #
     # - Start the transaction (with Producer#begin_transaction)
@@ -391,11 +411,11 @@ module Kafka
         if buffer_size.zero?
           break
         elsif attempt <= @max_retries
-          @logger.warn "Failed to send all messages; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
+          @logger.warn "Failed to send all messages to #{pretty_partitions}; attempting retry #{attempt} of #{@max_retries} after #{@retry_backoff}s"
 
           sleep @retry_backoff
         else
-          @logger.error "Failed to send all messages; keeping remaining messages in buffer"
+          @logger.error "Failed to send all messages to #{pretty_partitions}; keeping remaining messages in buffer"
           break
         end
       end
@@ -407,10 +427,12 @@ module Kafka
       end
 
       unless @buffer.empty?
-        partitions = @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
-
-        raise DeliveryFailed.new("Failed to send messages to #{partitions}", buffer_messages)
+        raise DeliveryFailed.new("Failed to send messages to #{pretty_partitions}", buffer_messages)
       end
+    end
+
+    def pretty_partitions
+      @buffer.map {|topic, partition, _| "#{topic}/#{partition}" }.join(", ")
     end
 
     def assign_partitions!

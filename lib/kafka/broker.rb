@@ -12,7 +12,7 @@ module Kafka
       @host = host
       @port = port
       @node_id = node_id
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
     end
 
     def address_match?(host, port)
@@ -178,6 +178,18 @@ module Kafka
 
     def end_txn(**options)
       request = Protocol::EndTxnRequest.new(**options)
+
+      send_request(request)
+    end
+
+    def add_offsets_to_txn(**options)
+      request = Protocol::AddOffsetsToTxnRequest.new(**options)
+
+      send_request(request)
+    end
+
+    def txn_offset_commit(**options)
+      request = Protocol::TxnOffsetCommitRequest.new(**options)
 
       send_request(request)
     end

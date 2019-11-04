@@ -2,15 +2,20 @@
 
 module Kafka
   class Heartbeat
-    def initialize(group:, interval:)
+    def initialize(group:, interval:, instrumenter:)
       @group = group
       @interval = interval
       @last_heartbeat = Time.now
+      @instrumenter = instrumenter
     end
 
     def trigger!
-      @group.heartbeat
-      @last_heartbeat = Time.now
+      @instrumenter.instrument('heartbeat.consumer',
+                               group_id: @group.group_id,
+                               topic_partitions: @group.assigned_partitions) do
+        @group.heartbeat
+        @last_heartbeat = Time.now
+      end
     end
 
     def trigger

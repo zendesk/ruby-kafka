@@ -13,7 +13,7 @@ module Kafka
       @cluster = cluster
       @group = group
       @fetcher = fetcher
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @commit_interval = commit_interval
       @commit_threshold = commit_threshold
 
@@ -120,7 +120,7 @@ module Kafka
     def commit_offsets(recommit = false)
       offsets = offsets_to_commit(recommit)
       unless offsets.empty?
-        @logger.info "Committing offsets#{recommit ? ' with recommit' : ''}: #{prettify_offsets(offsets)}"
+        @logger.debug "Committing offsets#{recommit ? ' with recommit' : ''}: #{prettify_offsets(offsets)}"
 
         @group.commit_offsets(offsets)
 

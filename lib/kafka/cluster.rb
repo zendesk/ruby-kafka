@@ -23,7 +23,7 @@ module Kafka
         raise ArgumentError, "At least one seed broker must be configured"
       end
 
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @seed_brokers = seed_brokers
       @broker_pool = broker_pool
       @cluster_info = nil
@@ -137,6 +137,40 @@ module Kafka
       else
         get_coordinator(Kafka::Protocol::COORDINATOR_TYPE_TRANSACTION, transactional_id)
       end
+    end
+
+    def describe_configs(broker_id, configs = [])
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_CLUSTER, broker_id.to_s, configs]]
+      }
+
+      info = cluster_info.brokers.find {|broker| broker.node_id == broker_id }
+      broker = @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+
+      response = broker.describe_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      response.resources.first.configs
+    end
+
+    def alter_configs(broker_id, configs = [])
+      options = {
+        resources: [[Kafka::Protocol::RESOURCE_TYPE_CLUSTER, broker_id.to_s, configs]]
+      }
+
+      info = cluster_info.brokers.find {|broker| broker.node_id == broker_id }
+      broker = @broker_pool.connect(info.host, info.port, node_id: info.node_id)
+
+      response = broker.alter_configs(**options)
+
+      response.resources.each do |resource|
+        Protocol.handle_error(resource.error_code, resource.error_message)
+      end
+
+      nil
     end
 
     def partitions_for(topic)

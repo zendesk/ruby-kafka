@@ -48,7 +48,7 @@ describe Kafka::Protocol::RecordBatch do
       records: [
         Kafka::Protocol::Record.new(
           attributes:     1,
-          timestamp_delta: 1000,
+          timestamp_delta: 1000000,
           offset_delta:    1,
           key: 'hello',
           value: 'world',
@@ -58,7 +58,7 @@ describe Kafka::Protocol::RecordBatch do
         ),
         Kafka::Protocol::Record.new(
           attributes: 2,
-          timestamp_delta: 2000,
+          timestamp_delta: 2000000,
           offset_delta: 2,
           key: 'ruby',
           value: 'kafka',
@@ -92,11 +92,11 @@ describe Kafka::Protocol::RecordBatch do
   let(:record_1_bytes) {
     [
       # Size
-      0x2c,
+      0x2e,
       # Attributes
       0x1,
       # Timestamp delta
-      0xd0, 0xf,
+      0x80, 0x89, 0x7a,
       # Offset delta
       0x2,
       # Key
@@ -115,11 +115,11 @@ describe Kafka::Protocol::RecordBatch do
   let(:record_2_bytes) {
     [
       # Size
-      0x2a,
+      0x2e,
       # Attributes
       0x2,
       # Timestamp delta
-      0xa0, 0x1f,
+      0x80, 0x92, 0xf4, 0x1,
       # Offset delta
       0x4,
       # Key
@@ -140,7 +140,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x5e,
+      0x0, 0x0, 0x0, 0x61,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -160,7 +160,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x72,
+      0x0, 0x0, 0x0, 0x75,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -181,7 +181,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x60,
+      0x0, 0x0, 0x0, 0x63,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -202,7 +202,7 @@ describe Kafka::Protocol::RecordBatch do
       # First offset
       0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
       # Record Batch Length
-      0x0, 0x0, 0x0, 0x71,
+      0x0, 0x0, 0x0, 0x74,
       # Partition Leader Epoch
       0x0, 0x0, 0x0, 0x2,
       # Magic byte
@@ -213,6 +213,27 @@ describe Kafka::Protocol::RecordBatch do
       0x0, 0b00110011,
       sample_record_batch_metadata_bytes,
       Kafka::LZ4Codec.new.compress(
+        (record_1_bytes + record_2_bytes).pack("C*")
+      ).bytes
+    ].flatten
+  end
+
+  let(:sample_record_batch_zstd_bytes) do
+    [
+      # First offset
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
+      # Record Batch Length
+      0x0, 0x0, 0x0, 0x6a,
+      # Partition Leader Epoch
+      0x0, 0x0, 0x0, 0x2,
+      # Magic byte
+      0x2,
+      # CRC
+      0x0, 0x0, 0x0, 0x0,
+      # Attributes
+      0x0, 0b00110100,
+      sample_record_batch_metadata_bytes,
+      Kafka::ZstdCodec.new.compress(
         (record_1_bytes + record_2_bytes).pack("C*")
       ).bytes
     ].flatten
@@ -269,6 +290,15 @@ describe Kafka::Protocol::RecordBatch do
       it 'encodes the record batch using snappy compressor' do
         sample_record_batch.encode(encoder)
         expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_lz4_bytes
+      end
+    end
+
+    context 'Compress with Zstd' do
+      let(:codec_id) { 4 }
+
+      it 'encodes the record batch using zstd compressor' do
+        sample_record_batch.encode(encoder)
+        expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_zstd_bytes
       end
     end
   end
@@ -343,6 +373,18 @@ describe Kafka::Protocol::RecordBatch do
         expect_matched_records(record_batch.records)
       end
     end
+
+    context 'Compress with Zstd' do
+      let(:decoder) do
+        Kafka::Protocol::Decoder.new(byte_array_to_io(sample_record_batch_zstd_bytes))
+      end
+
+      it 'decodes records with Zstd decompressor' do
+        record_batch = Kafka::Protocol::RecordBatch.decode(decoder)
+        expect_matched_batch_metadata(record_batch)
+        expect_matched_records(record_batch.records)
+      end
+    end
   end
 end
 
@@ -374,7 +416,7 @@ def expect_matched_records(records)
   record_1 = records.first
   expect(record_1.attributes).to eql(1)
 
-  expect(record_1.timestamp_delta).to eql(1000)
+  expect(record_1.timestamp_delta).to eql(1000000)
   expect(record_1.create_time.to_i).to eql(1521657000)
 
   expect(record_1.offset_delta).to eql(1)
@@ -388,7 +430,7 @@ def expect_matched_records(records)
 
   record_2 = records.last
   expect(record_2.attributes).to eql(2)
-  expect(record_2.timestamp_delta).to eql(2000)
+  expect(record_2.timestamp_delta).to eql(2000000)
   expect(record_2.create_time.to_i).to eql(1521658000)
   expect(record_2.offset_delta).to eql(2)
   expect(record_2.offset).to eql(3)

@@ -98,6 +98,21 @@ Or install it yourself as:
     <td>Limited support</td>
     <td>Limited support</td>
   </tr>
+  <tr>
+    <th>Kafka 2.0</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
+  <tr>
+    <th>Kafka 2.1</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
+  <tr>
+    <th>Kafka 2.2</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
 </table>
 
 This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with the v0.5.x series. There's limited support for Kafka 0.8, and things should work with Kafka 0.11, although there may be performance issues due to changes in the protocol.
@@ -107,6 +122,8 @@ This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with t
 - **Kafka 0.10:** Full support for the Producer and Consumer API in ruby-kafka v0.5.x. Note that you _must_ run version 0.10.1 or higher of Kafka due to limitations in 0.10.0.
 - **Kafka 0.11:** Full support for Producer API, limited support for Consumer API in ruby-kafka v0.7.x. New features in 0.11.x includes new Record Batch format, idempotent and transactional production. The missing feature is dirty reading of Consumer API.
 - **Kafka 1.0:** Everything that works with Kafka 0.11 should still work, but so far no features specific to Kafka 1.0 have been added.
+- **Kafka 2.0:** Everything that works with Kafka 1.0 should still work, but so far no features specific to Kafka 2.0 have been added.
+- **Kafka 2.1:** Everything that works with Kafka 2.0 should still work, but so far no features specific to Kafka 2.1 have been added.
 
 This library requires Ruby 2.1 or higher.
 
@@ -412,6 +429,7 @@ Compression is enabled by passing the `compression_codec` parameter to `#produce
 * `:snappy` for [Snappy](http://google.github.io/snappy/) compression.
 * `:gzip` for [gzip](https://en.wikipedia.org/wiki/Gzip) compression.
 * `:lz4` for [LZ4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) compression.
+* `:zstd` for [zstd](https://facebook.github.io/zstd/) compression.
 
 By default, all message sets will be compressed if you specify a compression codec. To increase the compression threshold, set `compression_threshold` to an integer value higher than one.
 
@@ -921,6 +939,7 @@ kafka = Kafka.new(
   ssl_ca_cert: File.read('my_ca_cert.pem'),
   ssl_client_cert: File.read('my_client_cert.pem'),
   ssl_client_cert_key: File.read('my_client_cert_key.pem'),
+  ssl_client_cert_key_password: 'my_client_cert_key_password',
   # ...
 )
 ```
@@ -972,6 +991,26 @@ kafka = Kafka.new(
   sasl_scram_password: 'password',
   sasl_scram_mechanism: 'sha256',
   # ...
+)
+```
+
+##### OAUTHBEARER
+This mechanism is supported in kafka >= 2.0.0 as of [KIP-255](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=75968876)
+
+In order to authenticate using OAUTHBEARER, you must set the client with an instance of a class that implements a `token` method (the interface is described in [Kafka::Sasl::OAuth](lib/kafka/sasl/oauth.rb)) which returns an ID/Access token.
+
+Optionally, the client may implement an `extensions` method that returns a map of key-value pairs. These can be sent with the SASL/OAUTHBEARER initial client response. This is only supported in kafka >= 2.1.0.
+
+```ruby
+class TokenProvider
+  def token
+    "some_id_token"
+  end
+end
+# ...
+client = Kafka.new(
+  ["kafka1:9092"],
+  sasl_oauth_token_provider: TokenProvider.new
 )
 ```
 

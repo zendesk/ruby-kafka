@@ -37,7 +37,7 @@ module Kafka
       @required_acks = required_acks
       @ack_timeout = ack_timeout
       @compressor = compressor
-      @logger = logger
+      @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
     end
 

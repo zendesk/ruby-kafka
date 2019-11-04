@@ -6,6 +6,10 @@ module Kafka
       1
     end
 
+    def produce_api_min_version
+      0
+    end
+
     def load
       require "zlib"
     end

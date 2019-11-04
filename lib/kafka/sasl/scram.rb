@@ -12,9 +12,10 @@ module Kafka
       }.freeze
 
       def initialize(username:, password:, mechanism: 'sha256', logger:)
+        @semaphore = Mutex.new
         @username = username
         @password = password
-        @logger = logger
+        @logger = TaggedLogger.new(logger)
 
         if mechanism
           @mechanism = MECHANISMS.fetch(mechanism) do
@@ -35,22 +36,24 @@ module Kafka
         @logger.debug "Authenticating #{@username} with SASL #{@mechanism}"
 
         begin
-          msg = first_message
-          @logger.debug "Sending first client SASL SCRAM message: #{msg}"
-          encoder.write_bytes(msg)
+          @semaphore.synchronize do
+            msg = first_message
+            @logger.debug "Sending first client SASL SCRAM message: #{msg}"
+            encoder.write_bytes(msg)
 
-          @server_first_message = decoder.bytes
-          @logger.debug "Received first server SASL SCRAM message: #{@server_first_message}"
+            @server_first_message = decoder.bytes
+            @logger.debug "Received first server SASL SCRAM message: #{@server_first_message}"
 
-          msg = final_message
-          @logger.debug "Sending final client SASL SCRAM message: #{msg}"
-          encoder.write_bytes(msg)
+            msg = final_message
+            @logger.debug "Sending final client SASL SCRAM message: #{msg}"
+            encoder.write_bytes(msg)
 
-          response = parse_response(decoder.bytes)
-          @logger.debug "Received last server SASL SCRAM message: #{response}"
+            response = parse_response(decoder.bytes)
+            @logger.debug "Received last server SASL SCRAM message: #{response}"
 
-          raise FailedScramAuthentication, response['e'] if response['e']
-          raise FailedScramAuthentication, "Invalid server signature" if response['v'] != server_signature
+            raise FailedScramAuthentication, response['e'] if response['e']
+            raise FailedScramAuthentication, "Invalid server signature" if response['v'] != server_signature
+          end
         rescue EOFError => e
           raise FailedScramAuthentication, e.message
         end

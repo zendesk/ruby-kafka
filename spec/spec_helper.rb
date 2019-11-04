@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+require "active_support"
+# A missing require for try has been added to rails master here:
+#   https://github.com/rails/rails/commit/530f7805ed5790af1d472a041bc74089dc183f47
+# The explicit require below can be removed with a future Rails release (6.1?).
+require "active_support/core_ext/object/try"
 require "active_support/notifications"
 require "kafka"
+require "kafka/tagged_logger"
 require "dotenv"
 require "logger"
 require "rspec-benchmark"
@@ -10,10 +16,11 @@ require "colored"
 require "securerandom"
 require 'snappy'
 require 'extlz4'
+require 'zstd-ruby'
 
 Dotenv.load
 
-LOGGER = Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log")
+LOGGER = Kafka::TaggedLogger.new(Logger.new(ENV.key?("LOG_TO_STDERR") ? $stderr : "test-#{Time.now.to_i}.log"))
 LOGGER.level = Logger.const_get(ENV.fetch("LOG_LEVEL", "INFO"))
 
 KAFKA_BROKERS = ENV.fetch("KAFKA_BROKERS", "localhost:9092").split(",")
