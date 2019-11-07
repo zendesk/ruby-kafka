@@ -138,6 +138,12 @@ module Kafka
     def deliver_message(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, retries: 1)
       create_time = Time.now
 
+      unless topic.is_a?(String) || topic.is_a?(Symbol)
+        raise ArgumentError, "topic must be either a String or a Symbol, not a #{topic.class.name}"
+      end
+
+      topic = topic.to_s
+
       message = PendingMessage.new(
         value: value,
         key: key,

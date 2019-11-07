@@ -119,6 +119,18 @@ describe Kafka::Producer do
 
       expect(broker1.messages.map(&:key)).to eq [nil]
     end
+
+    it "requires `topic` to be a String or a Symbol" do
+      expect {
+        producer.produce("hello", topic: 42)
+      }.to raise_exception(ArgumentError)
+    end
+
+    it "converts `topic` to a String if `topic` is a Symbol" do
+      expect {
+        producer.produce("hello", topic: :greetings)
+      }.to_not raise_exception(ArgumentError)
+    end
   end
 
   describe "#deliver_messages" do
