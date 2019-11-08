@@ -7,11 +7,12 @@ module Kafka
   class ConsumerGroup
     attr_reader :assigned_partitions, :generation_id, :group_id
 
-    def initialize(cluster:, logger:, group_id:, session_timeout:, retention_time:, instrumenter:)
+    def initialize(cluster:, logger:, group_id:, session_timeout:, rebalance_timeout:, retention_time:, instrumenter:)
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @group_id = group_id
       @session_timeout = session_timeout
+      @rebalance_timeout = rebalance_timeout
       @instrumenter = instrumenter
       @member_id = ""
       @generation_id = nil
@@ -140,7 +141,9 @@ module Kafka
         response = coordinator.join_group(
           group_id: @group_id,
           session_timeout: @session_timeout,
+          rebalance_timeout: @rebalance_timeout,
           member_id: @member_id,
+          topics: @topics,
         )
 
         Protocol.handle_error(response.error_code)

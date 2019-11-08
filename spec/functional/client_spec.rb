@@ -54,7 +54,7 @@ describe "Client API", functional: true do
     end
 
     expect(result.state).to eq('Stable')
-    expect(result.protocol).to eq('standard')
+    expect(result.protocol).to eq('roundrobin')
     expect(result.members.count).to eq(1)
 
     member = result.members.first
