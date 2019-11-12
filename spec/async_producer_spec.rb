@@ -91,17 +91,10 @@ describe Kafka::AsyncProducer do
       expect(sync_producer).to have_received(:produce).exactly(3).times
     end
 
-    it "requires `topic` to be a String or a Symbol" do
+    it "requires `topic` to be a String" do
       expect {
-        async_producer.produce("hello", topic: 42)
-      }.to raise_exception(ArgumentError)
-    end
-
-    it "converts `topic` to a String if `topic` is a Symbol" do
-      async_producer.produce("hello", topic: :greetings)
-      sleep 0.2 # wait for worker to call produce
-
-      expect(sync_producer).to have_received(:produce).with("hello", topic: "greetings")
+        async_producer.produce("hello", topic: :topic)
+      }.to raise_exception(NoMethodError, /to_str/)
     end
   end
 end

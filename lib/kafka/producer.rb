@@ -188,11 +188,8 @@ module Kafka
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
     def produce(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, create_time: Time.now)
-      unless topic.is_a?(String) || topic.is_a?(Symbol)
-        raise ArgumentError, "topic must be either a String or a Symbol, not a #{topic.class.name}"
-      end
-
-      topic = topic.to_s
+      # We want to fail fast if `topic` isn't a String
+      topic = topic.to_str
 
       message = PendingMessage.new(
         value: value && value.to_s,

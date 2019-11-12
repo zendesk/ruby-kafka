@@ -51,16 +51,10 @@ describe Kafka::Client do
   describe "#deliver_message" do
     subject(:client) { described_class.new(client_opts) }
 
-    it "requires `topic` to be a String or a Symbol" do
+    it "requires `topic` to be a String" do
       expect {
-        client.deliver_message("hello", topic: 42)
-      }.to raise_exception(ArgumentError)
-    end
-
-    it "converts `topic` to a String if `topic` is a Symbol" do
-      expect {
-        client.deliver_message("hello", topic: :greetings)
-      }.to_not raise_exception(ArgumentError)
+        client.deliver_message("hello", topic: :topic)
+      }.to raise_exception(NoMethodError, /to_str/)
     end
   end
 end

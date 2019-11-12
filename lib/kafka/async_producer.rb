@@ -103,11 +103,8 @@ module Kafka
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
     def produce(value, topic:, **options)
-      unless topic.is_a?(String) || topic.is_a?(Symbol)
-        raise ArgumentError, "topic must be either a String or a Symbol, not a #{topic.class.name}"
-      end
-
-      topic = topic.to_s
+      # We want to fail fast if `topic` isn't a String
+      topic = topic.to_str
 
       ensure_threads_running!
 
