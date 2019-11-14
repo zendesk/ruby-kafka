@@ -90,5 +90,11 @@ describe Kafka::AsyncProducer do
       expect(metric.payload[:error]).to be_a(Kafka::BufferOverflow)
       expect(sync_producer).to have_received(:produce).exactly(3).times
     end
+
+    it "requires `topic` to be a String" do
+      expect {
+        async_producer.produce("hello", topic: :topic)
+      }.to raise_exception(NoMethodError, /to_str/)
+    end
   end
 end

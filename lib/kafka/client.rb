@@ -138,6 +138,9 @@ module Kafka
     def deliver_message(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, retries: 1)
       create_time = Time.now
 
+      # We want to fail fast if `topic` isn't a String
+      topic = topic.to_str
+
       message = PendingMessage.new(
         value: value,
         key: key,

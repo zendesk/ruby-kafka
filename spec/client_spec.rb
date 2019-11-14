@@ -47,4 +47,14 @@ describe Kafka::Client do
       end
     end
   end
+
+  describe "#deliver_message" do
+    subject(:client) { described_class.new(client_opts) }
+
+    it "requires `topic` to be a String" do
+      expect {
+        client.deliver_message("hello", topic: :topic)
+      }.to raise_exception(NoMethodError, /to_str/)
+    end
+  end
 end

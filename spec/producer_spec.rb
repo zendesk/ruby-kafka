@@ -119,6 +119,12 @@ describe Kafka::Producer do
 
       expect(broker1.messages.map(&:key)).to eq [nil]
     end
+
+    it "requires `topic` to be a String" do
+      expect {
+        producer.produce("hello", topic: :topic)
+      }.to raise_exception(NoMethodError, /to_str/)
+    end
   end
 
   describe "#deliver_messages" do

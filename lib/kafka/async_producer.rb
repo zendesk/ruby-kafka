@@ -103,6 +103,9 @@ module Kafka
     # @raise [BufferOverflow] if the message queue is full.
     # @return [nil]
     def produce(value, topic:, **options)
+      # We want to fail fast if `topic` isn't a String
+      topic = topic.to_str
+
       ensure_threads_running!
 
       if @queue.size >= @max_queue_size

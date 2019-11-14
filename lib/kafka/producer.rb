@@ -188,11 +188,14 @@ module Kafka
     # @raise [BufferOverflow] if the maximum buffer size has been reached.
     # @return [nil]
     def produce(value, key: nil, headers: {}, topic:, partition: nil, partition_key: nil, create_time: Time.now)
+      # We want to fail fast if `topic` isn't a String
+      topic = topic.to_str
+
       message = PendingMessage.new(
         value: value && value.to_s,
         key: key && key.to_s,
         headers: headers,
-        topic: topic.to_s,
+        topic: topic,
         partition: partition && Integer(partition),
         partition_key: partition_key && partition_key.to_s,
         create_time: create_time
