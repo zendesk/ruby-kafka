@@ -638,6 +638,14 @@ module Kafka
       @cluster.describe_group(group_id)
     end
 
+    # Fetch all committed offsets for a consumer group
+    #
+    # @param group_id [String] the id of the consumer group
+    # @return [Hash<String, Hash<Integer, Kafka::Protocol::OffsetFetchResponse::PartitionOffsetInfo>>]
+    def fetch_group_offsets(group_id)
+      @cluster.fetch_group_offsets(group_id)
+    end
+
     # Create partitions for a topic.
     #
     # @param name [String] the name of the topic.

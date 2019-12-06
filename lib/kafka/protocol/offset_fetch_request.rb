@@ -13,7 +13,7 @@ module Kafka
       end
 
       def api_version
-        1
+        @topics.nil? ? 2 : 1
       end
 
       def response_class

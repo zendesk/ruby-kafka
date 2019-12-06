@@ -286,6 +286,20 @@ module Kafka
       group
     end
 
+    def fetch_group_offsets(group_id)
+      topics = get_group_coordinator(group_id: group_id)
+        .fetch_offsets(group_id: group_id, topics: nil)
+        .topics
+
+      topics.each do |_, partitions|
+        partitions.each do |_, response|
+          Protocol.handle_error(response.error_code)
+        end
+      end
+
+      topics
+    end
+
     def create_partitions_for(name, num_partitions:, timeout:)
       options = {
         topics: [[name, num_partitions, nil]],
