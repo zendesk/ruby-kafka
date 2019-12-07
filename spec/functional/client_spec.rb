@@ -89,6 +89,30 @@ describe "Client API", functional: true do
     expect(result.members).to be_empty
   end
 
+  example "fetching offsets for consumer group with committed offsets" do
+    group_id = "consumer-group=#{SecureRandom.uuid}"
+
+    kafka.deliver_message('test', topic: topic, partition: 0)
+    consumer = kafka.consumer(group_id: group_id)
+    consumer.subscribe(topic)
+    consumer.each_message do |msg|
+      consumer.stop
+    end
+
+    result = kafka.fetch_group_offsets(group_id)
+    expect(result).to match({
+      topic => {
+        0 => an_instance_of(Kafka::Protocol::OffsetFetchResponse::PartitionOffsetInfo)
+      }
+    })
+  end
+
+  example "fetching offsets for a non-existent consumer group" do
+    group_id = "consumer-group=#{SecureRandom.uuid}"
+    result = kafka.fetch_group_offsets(group_id)
+    expect(result).to eq({})
+  end
+
   example "fetching the partition count for a topic" do
     expect(kafka.partitions_for(topic)).to eq 3
   end
