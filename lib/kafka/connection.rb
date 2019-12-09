@@ -58,6 +58,9 @@ module Kafka
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
       @ssl_context = ssl_context
+
+      @socket = nil
+      @last_request = nil
     end
 
     def to_s
