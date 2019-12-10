@@ -1,5 +1,19 @@
 # frozen_string_literal: true
 
+def with_retry(opts = {}, &block)
+  retries = opts[:retry] || 3
+  retry_wait = opts[:retry_wait] || 1
+  tries = 0
+  begin
+    yield
+  rescue RSpec::Expectations::ExpectationNotMetError => e
+    sleep retry_wait
+    tries += 1
+    retry if tries <= retries
+    raise e
+  end
+end
+
 describe "Topic management API", functional: true do
   example "creating topics" do
     topic = generate_topic_name
@@ -46,7 +60,7 @@ describe "Topic management API", functional: true do
     expect(kafka.partitions_for(topic)).to eq 3
 
     kafka.create_partitions_for(topic, num_partitions: 10)
-    expect(kafka.partitions_for(topic)).to eq 10
+    with_retry { expect(kafka.partitions_for(topic)).to eq 10 }
   end
 
   example "describe a topic" do
