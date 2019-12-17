@@ -12,8 +12,10 @@ module Kafka
         OFFSET_FETCH_API
       end
 
+      # setting topics to nil fetches all offsets for a consumer group
+      # and that feature is only available in API version 2+
       def api_version
-        1
+        @topics.nil? ? 2 : 1
       end
 
       def response_class
