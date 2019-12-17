@@ -17,6 +17,9 @@ module Kafka
       @commands = Queue.new
       @next_offsets = Hash.new { |h, k| h[k] = {} }
 
+      # We are only running when someone calls start.
+      @running = false
+
       # Long poll until at least this many bytes can be fetched.
       @min_bytes = 1
 
