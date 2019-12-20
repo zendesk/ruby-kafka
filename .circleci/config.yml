@@ -235,6 +235,38 @@ jobs:
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec --profile --tag functional spec/functional
 
+  kafka-2.4:
+    docker:
+      - image: circleci/ruby:2.5.1-node
+        environment:
+          LOG_LEVEL: DEBUG
+      - image: wurstmeister/zookeeper
+      - image: wurstmeister/kafka:2.12-2.4.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9092
+          KAFKA_PORT: 9092
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          KAFKA_DELETE_TOPIC_ENABLE: true
+      - image: wurstmeister/kafka:2.12-2.4.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9093
+          KAFKA_PORT: 9093
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          KAFKA_DELETE_TOPIC_ENABLE: true
+      - image: wurstmeister/kafka:2.12-2.4.0
+        environment:
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9094
+          KAFKA_PORT: 9094
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          KAFKA_DELETE_TOPIC_ENABLE: true
+    steps:
+      - checkout
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec rspec --profile --tag functional spec/functional
+
 workflows:
   version: 2
   test:
@@ -247,3 +279,4 @@ workflows:
       - kafka-2.1
       - kafka-2.2
       - kafka-2.3
+      - kafka-2.4
