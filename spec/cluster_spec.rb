@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 describe Kafka::Cluster do
+  let(:broker) { double(:broker) }
+  let(:broker_pool) { double(:broker_pool) }
+
+  let(:cluster) {
+    Kafka::Cluster.new(
+      seed_brokers: [URI("kafka://test1:9092")],
+      broker_pool: broker_pool,
+      logger: LOGGER,
+    )
+  }
+
   describe "#get_leader" do
-    let(:broker) { double(:broker) }
-    let(:broker_pool) { double(:broker_pool) }
-
-    let(:cluster) {
-      Kafka::Cluster.new(
-        seed_brokers: [URI("kafka://test1:9092")],
-        broker_pool: broker_pool,
-        logger: LOGGER,
-      )
-    }
-
     before do
       allow(broker_pool).to receive(:connect) { broker }
       allow(broker).to receive(:disconnect)
@@ -87,6 +87,20 @@ describe Kafka::Cluster do
       expect {
         cluster.get_leader("greetings", 42)
       }.to raise_exception(Kafka::ConnectionError)
+    end
+  end
+
+  describe "#add_target_topics" do
+    it "raises ArgumentError if the topic is nil" do
+      expect {
+        cluster.add_target_topics([nil])
+      }.to raise_exception(ArgumentError)
+    end
+
+    it "raises ArgumentError if the topic is empty" do
+      expect {
+        cluster.add_target_topics([""])
+      }.to raise_exception(ArgumentError)
     end
   end
 end

@@ -45,6 +45,10 @@ module Kafka
         new_topics = topics - @target_topics
 
         unless new_topics.empty?
+          if new_topics.any? { |topic| topic.nil? or topic.empty? }
+            raise ArgumentError, "Topic must not be nil or empty"
+          end
+
           @logger.info "New topics added to target list: #{new_topics.to_a.join(', ')}"
 
           @target_topics.merge(new_topics)
