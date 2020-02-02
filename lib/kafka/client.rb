@@ -11,6 +11,9 @@ require "kafka/broker_uri"
 require "kafka/async_producer"
 require "kafka/fetched_message"
 require "kafka/fetch_operation"
+require "kafka/consumer_lag_operation"
+require "kafka/consumer_lag_fetcher"
+require "kafka/consumer_lag"
 require "kafka/connection_builder"
 require "kafka/instrumenter"
 require "kafka/sasl_authenticator"
@@ -402,6 +405,29 @@ module Kafka
       )
     end
 
+    def consumer_lag(group_id:)
+      cluster = initialize_cluster
+
+      instrumenter = DecoratingInstrumenter.new(@instrumenter, {
+        group_id: group_id,
+      })
+
+      fetcher = ConsumerLagFetcher.new(
+        cluster: cluster,
+        logger: @logger,
+        instrumenter: instrumenter,
+        group:group_id
+      )
+
+      ConsumeGroupLag.new(
+        cluster: cluster,
+        logger: @logger,
+        group_id: group_id,
+        fetcher: fetcher
+      )
+
+    end
+
     # Fetches a batch of messages from a single partition. Note that it's possible
     # to get back empty batches.
     #
@@ -758,6 +784,20 @@ module Kafka
     # @return [nil]
     def close
       @cluster.disconnect
+    end
+
+    def fetch_consumer_lag(group_id:, &block)
+      loop do
+        operation = ConsumerLagOperation.new(
+          cluster: @cluster,
+          logger: @logger,
+          group: group_id
+        )
+        
+        lags = operation.execute
+        # puts lags
+        lags.each(&block)
+      end
     end
 
     private
