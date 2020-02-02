@@ -24,7 +24,9 @@ module Kafka
 
             @thread = Thread.new do
                 while @running
+                    puts 'thread'
                     loop
+                    # sleep 1
                 end
                 @logger.info "#{@group} Fetcher thread exited."
             end
@@ -36,13 +38,14 @@ module Kafka
         end
 
         def poll
+            puts 'DEQUEUEING MESSAGE'
             group_lags = @queue.deq
-            puts 'polling'
             return group_lags
         end
 
         def stop
             return unless @running
+            @running = false
             @thread.join
         end
 
@@ -50,17 +53,17 @@ module Kafka
             @running = false
         end
 
+        def running?
+            @running
+        end
+
         private
 
         def loop
-            @logger.push_tags(@group.to_s)
-            @instrumenter.instrument("loop.fetcher", {
-                queue_size: @queue.size,
-            })
             return unless @running
             messages = @operation.execute
-            puts messages
             @queue << [messages]
+            puts 'QUEUEING MESSAGE'
         end
     end
 end

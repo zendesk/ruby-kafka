@@ -9,49 +9,47 @@ module Kafka
             @running = false
         end
 
-        def fetch_lags
-            lag_loop do
-                lags = fetch_consumer_lags
-                puts 'lags'
-                yield lags
+        def fetch_lags(&block)
+            start do
+                consumer_lags = fetch_consumer_lags
+                if !consumer_lags.empty?
+                    consumer_lags.each(&block)
+                end
             end
+        end
+        
+        def running?
+            @running
         end
 
         def stop
-            @running  = false
+            @running = false
             @fetcher.stop
             @cluster.disconnnect
         end
 
         private
 
-        def lag_loop
+        def start
             @running = true
-            @logger.push_tags(@group_id)
             
             @fetcher.start
+
             while running?
-                begin
-                    @instrumenter.instrument("loop.consumer_lag") do
-                        yield
-                    end
-                rescue => exception
-                    puts exception
-                ensure
-                    @fetcher.stop
-                    @running = false
-                    @logger.pop_tags
-                end
+                yield
             end
+        ensure
+            @fetcher.stop
+            @running = false
         end
 
         def fetch_consumer_lags
-            if !@fecher.data?
-                puts 'no messages'
+            if !@fetcher.data?
+                # TODO: remove this print
+                print '.'
                 []
             else
                 group_lags = @fetcher.poll
-                puts 'poll'
                 group_lags
             end
         end
