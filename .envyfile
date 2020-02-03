@@ -1,0 +1,27 @@
+environment:
+    base:
+        image: ruby:stretch
+    setup-steps:
+    - name: bundle
+      label: 'Installing Ruby Dependencies'
+      type: script
+      run:
+        - 'bundle install'
+      triggers:
+        files:
+          - Gemfile
+          - Gemfile.lock
+actions:
+    - name: bundle
+      script: 'bundle'
+      help: 'Execute ruby bundler inside environment'
+    - name: console
+      script: 'echo "Connect to kafka brokers at kafka1:9092,kafka2:9092,kafka3:9092" && bin/console'
+      help: 'Start an interactive prompt that will allow you to experiment'
+    - name: test
+      script: 'rake spec'
+      help: 'Run tests'
+services:
+  compose-file: docker-compose.yml
+network:
+  name: ruby-kafka

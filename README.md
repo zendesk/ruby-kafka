@@ -1131,6 +1131,8 @@ The Consumer API is designed for flexibility and stability. The first is accompl
 
 ## Development
 
+**Note:** This project supports [Envy](https://envy-project.github.io/index.html), a tool to isolate and manage your dev environment. Setup is as easy as `envy up`!
+
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
 **Note:** the specs require a working [Docker](https://www.docker.com/) instance, but should work out of the box if you have Docker installed. Please create an issue if that's not the case.
