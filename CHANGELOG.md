@@ -4,7 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.0.0
+
 - Add client methods to manage configs (#759)
+- Support Kafka 2.3 and 2.4.
 
 ## 0.7.10
 

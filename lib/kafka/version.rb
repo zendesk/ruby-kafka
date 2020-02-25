@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Kafka
-  VERSION = "0.7.10"
+  VERSION = "1.0.0"
 end
