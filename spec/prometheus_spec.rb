@@ -114,6 +114,7 @@ describe Kafka::Prometheus do
         topic: 'AAA',
         partition: 4,
         last_offset: 100,
+        last_create_time: Time.now,
         message_count: 7
       }
     end
