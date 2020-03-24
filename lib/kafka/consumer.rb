@@ -116,7 +116,6 @@ module Kafka
     def stop
       @running = false
       @fetcher.stop
-      @cluster.disconnect
     end
 
     # Pause processing of a specific topic partition.
@@ -433,6 +432,7 @@ module Kafka
       # important that members explicitly tell Kafka when they're leaving.
       make_final_offsets_commit!
       @group.leave rescue nil
+      @cluster.disconnect
       @running = false
       @logger.pop_tags
     end
