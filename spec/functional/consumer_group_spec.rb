@@ -117,63 +117,38 @@ describe "Consumer API", functional: true do
     topic_a = generate_topic_name
     topic_b = generate_topic_name
 
-    messages_a = (1..500).to_a
-    messages_b = (501..1000).to_a
+    messages_a = (1..5).to_a
+    messages_b = (6..10).to_a
     messages = messages_a + messages_b
 
-    begin
-      kafka = Kafka.new(kafka_brokers, client_id: "test")
-      producer = kafka.producer
+    producer = Kafka.new(kafka_brokers, client_id: "test").producer
 
-      messages_a.each do |i|
-        producer.produce(i.to_s, topic: topic_a)
-      end
-
-      producer.deliver_messages
-    end
+    messages_a.each { |i| producer.produce(i.to_s, topic: topic_a) }
+    producer.deliver_messages
 
     group_id = "test#{rand(1000)}"
 
-    mutex = Mutex.new
     received_messages = []
 
-    consumers = 2.times.map do
-      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
-      consumer.subscribe(/#{topic_a}|#{topic_b}/, refresh_topic_interval: 2)
-      consumer
-    end
+    kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+    consumer.subscribe(/#{topic_a}|#{topic_b}/, refresh_topic_interval: 2)
 
-    threads = consumers.map do |consumer|
-      t = Thread.new do
-        consumer.each_message do |message|
-          mutex.synchronize do
-            received_messages << message
+    thread = Thread.new do
+      consumer.each_message do |message|
+        received_messages << message
 
-            if received_messages.count == messages.count
-              consumers.each(&:stop)
-            end
-          end
+        if received_messages.count == messages.count
+          consumer.stop
         end
       end
-
-      t.abort_on_exception = true
-
-      t
     end
+    thread.abort_on_exception = true
 
-    begin
-      kafka = Kafka.new(kafka_brokers, client_id: "test")
-      producer = kafka.producer
+    messages_b.each { |i| producer.produce(i.to_s, topic: topic_b) }
+    producer.deliver_messages
 
-      messages_b.each do |i|
-        producer.produce(i.to_s, topic: topic_b)
-      end
-
-      producer.deliver_messages
-    end
-
-    threads.each(&:join)
+    thread.join
 
     expect(received_messages.map(&:value).map(&:to_i).sort).to match_array messages
   end
