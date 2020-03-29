@@ -77,6 +77,9 @@ module Kafka
       # Hash storing topics that are already being subscribed
       # When subcribing to a new topic, if it's already being subscribed before, skip it
       @subscribed_topics = Set.new
+
+      # Whether join_group must be executed again because new topics are added
+      @join_group_for_new_topics = false
     end
 
     # Subscribes the consumer to a topic.
@@ -489,6 +492,7 @@ module Kafka
       end
 
       @fetcher.reset
+      @join_group_for_new_topics = false
 
       @group.assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
@@ -534,7 +538,7 @@ module Kafka
       # Return early if the consumer has been stopped.
       return [] if shutting_down?
 
-      join_group unless @group.member?
+      join_group if !@group.member? || @join_group_for_new_topics
 
       trigger_heartbeat
 
@@ -597,6 +601,7 @@ module Kafka
     def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
       return if @subscribed_topics.include?(topic)
       @subscribed_topics.add(topic)
+      @join_group_for_new_topics = true
 
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)

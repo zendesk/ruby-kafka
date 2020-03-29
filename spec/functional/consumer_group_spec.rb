@@ -117,8 +117,8 @@ describe "Consumer API", functional: true do
     topic_a = generate_topic_name
     topic_b = generate_topic_name
 
-    messages_a = (1..5).to_a
-    messages_b = (6..10).to_a
+    messages_a = (1..500).to_a
+    messages_b = (501..1000).to_a
     messages = messages_a + messages_b
 
     producer = Kafka.new(kafka_brokers, client_id: "test").producer
