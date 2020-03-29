@@ -145,6 +145,7 @@ describe "Consumer API", functional: true do
     end
     thread.abort_on_exception = true
 
+    sleep 2
     messages_b.each { |i| producer.produce(i.to_s, topic: topic_b) }
     producer.deliver_messages
 
