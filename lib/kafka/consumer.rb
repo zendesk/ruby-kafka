@@ -76,7 +76,7 @@ module Kafka
 
       # Hash storing topics that are already being subscribed
       # When subcribing to a new topic, if it's already being subscribed before, skip it
-      @subscribed_topics = {}
+      @subscribed_topics = Set.new
     end
 
     # Subscribes the consumer to a topic.
@@ -595,8 +595,8 @@ module Kafka
     end
 
     def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
-      return if @subscribed_topics[topic]
-      @subscribed_topics[topic] = true
+      return if @subscribed_topics.include?(topic)
+      @subscribed_topics.add(topic)
 
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)
