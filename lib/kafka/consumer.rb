@@ -472,6 +472,7 @@ module Kafka
     end
 
     def join_group
+      @join_group_for_new_topics = false
       old_generation_id = @group.generation_id
 
       @group.join
@@ -492,7 +493,6 @@ module Kafka
       end
 
       @fetcher.reset
-      @join_group_for_new_topics = false
 
       @group.assigned_partitions.each do |topic, partitions|
         partitions.each do |partition|
