@@ -218,7 +218,6 @@ module Kafka
       )
 
       consumer_loop do
-        refresh_topic_list_if_enabled
         batches = fetch_batches
 
         batches.each do |batch|
@@ -307,7 +306,6 @@ module Kafka
       )
 
       consumer_loop do
-        refresh_topic_list_if_enabled
         batches = fetch_batches
 
         batches.each do |batch|
@@ -413,6 +411,7 @@ module Kafka
       while running?
         begin
           @instrumenter.instrument("loop.consumer") do
+            refresh_topic_list_if_enabled
             yield
           end
         rescue HeartbeatError
