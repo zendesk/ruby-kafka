@@ -336,6 +336,9 @@ module Kafka
     # @param fetcher_max_queue_size [Integer] max number of items in the fetch queue that
     #   are stored for further processing. Note, that each item in the queue represents a
     #   response from a single broker.
+    # @param refresh_topic_interval [Integer] interval of refreshing the topic list.
+    #   If it is 0, the topic list won't be refreshed (default)
+    #   If it is n (n > 0), the topic list will be refreshed every n seconds
     # @return [Consumer]
     def consumer(
         group_id:,
@@ -345,7 +348,8 @@ module Kafka
         offset_commit_threshold: 0,
         heartbeat_interval: 10,
         offset_retention_time: nil,
-        fetcher_max_queue_size: 100
+        fetcher_max_queue_size: 100,
+        refresh_topic_interval: 0
     )
       cluster = initialize_cluster
 
@@ -399,6 +403,7 @@ module Kafka
         fetcher: fetcher,
         session_timeout: session_timeout,
         heartbeat: heartbeat,
+        refresh_topic_interval: refresh_topic_interval
       )
     end
 

@@ -44,7 +44,7 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, refresh_topic_interval: 0)
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
@@ -53,6 +53,7 @@ module Kafka
       @session_timeout = session_timeout
       @fetcher = fetcher
       @heartbeat = heartbeat
+      @refresh_topic_interval = refresh_topic_interval
 
       @pauses = Hash.new {|h, k|
         h[k] = Hash.new {|h2, k2|
@@ -74,9 +75,11 @@ module Kafka
       #   some already consumed messages
       @current_offsets = Hash.new { |h, k| h[k] = {} }
 
-      # Hash storing topics that are already being subscribed
-      # When subcribing to a new topic, if it's already being subscribed before, skip it
-      @subscribed_topics = Set.new
+      # Map storing subscribed topics with their configuration
+      @subscribed_topics = Concurrent::Map.new
+
+      # Set storing topics that matched topics in @subscribed_topics
+      @matched_topics = Set.new
 
       # Whether join_group must be executed again because new topics are added
       @join_group_for_new_topics = false
@@ -100,29 +103,16 @@ module Kafka
     #   checkpoint.
     # @param max_bytes_per_partition [Integer] the maximum amount of data fetched
     #   from a single partition at a time.
-    # @param refresh_topic_interval [Integer] interval of refreshing the topic list.
-    #   Only work when topic_or_regex is a regex
-    #   If it is 0, the topic list won't be refreshed (default)
-    #   If it is n (n > 0), the topic list will be refreshed every n seconds
     # @return [nil]
-    def subscribe(topic_or_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576, refresh_topic_interval: 0)
+    def subscribe(topic_or_regex, default_offset: nil, start_from_beginning: true, max_bytes_per_partition: 1048576)
       default_offset ||= start_from_beginning ? :earliest : :latest
 
-      unless topic_or_regex.is_a?(Regexp)
-        subscribe_to_topic(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
-        return
-      end
-
-      subscribe_to_regex(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
-      if refresh_topic_interval > 0
-        @thread ||= Thread.new do
-          while true
-            subscribe_to_regex(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition) if running?
-            sleep refresh_topic_interval
-          end
-        end
-        @thread.abort_on_exception = true
-      end
+      @subscribed_topics[topic_or_regex] = {
+        default_offset: default_offset,
+        start_from_beginning: start_from_beginning,
+        max_bytes_per_partition: max_bytes_per_partition
+      }
+      scan_for_subscribing
 
       nil
     end
@@ -228,6 +218,7 @@ module Kafka
       )
 
       consumer_loop do
+        refresh_topic_list_if_enabled
         batches = fetch_batches
 
         batches.each do |batch|
@@ -316,6 +307,7 @@ module Kafka
       )
 
       consumer_loop do
+        refresh_topic_list_if_enabled
         batches = fetch_batches
 
         batches.each do |batch|
@@ -473,6 +465,7 @@ module Kafka
 
     def join_group
       @join_group_for_new_topics = false
+
       old_generation_id = @group.generation_id
 
       @group.join
@@ -534,6 +527,14 @@ module Kafka
       end
     end
 
+    def refresh_topic_list_if_enabled
+      return if @refresh_topic_interval <= 0
+      return if @refreshed_at && @refreshed_at + @refresh_topic_interval > Time.now
+
+      scan_for_subscribing
+      @refreshed_at = Time.now
+    end
+
     def fetch_batches
       # Return early if the consumer has been stopped.
       return [] if shutting_down?
@@ -592,6 +593,20 @@ module Kafka
       end
     end
 
+    def scan_for_subscribing
+      @subscribed_topics.keys.each do |topic_or_regex|
+        default_offset = @subscribed_topics[topic_or_regex][:default_offset]
+        start_from_beginning = @subscribed_topics[topic_or_regex][:start_from_beginning]
+        max_bytes_per_partition = @subscribed_topics[topic_or_regex][:max_bytes_per_partition]
+
+        if topic_or_regex.is_a?(Regexp)
+          subscribe_to_regex(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
+        else
+          subscribe_to_topic(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
+        end
+      end
+    end
+
     def subscribe_to_regex(topic_regex, default_offset, start_from_beginning, max_bytes_per_partition)
       cluster_topics.select { |topic| topic =~ topic_regex }.each do |topic|
         subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
@@ -599,13 +614,14 @@ module Kafka
     end
 
     def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
-      return if @subscribed_topics.include?(topic)
-      @subscribed_topics.add(topic)
+      return if @matched_topics.include?(topic)
+      @matched_topics.add(topic)
       @join_group_for_new_topics = true
 
       @group.subscribe(topic)
       @offset_manager.set_default_offset(topic, default_offset)
       @fetcher.subscribe(topic, max_bytes_per_partition: max_bytes_per_partition)
+      @cluster.mark_as_stale!
     end
 
     def cluster_topics

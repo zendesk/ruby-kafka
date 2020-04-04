@@ -131,8 +131,8 @@ describe "Consumer API", functional: true do
     received_messages = []
 
     kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
-    consumer.subscribe(/#{topic_a}|#{topic_b}/, refresh_topic_interval: 2)
+    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, refresh_topic_interval: 1)
+    consumer.subscribe(/#{topic_a}|#{topic_b}/)
 
     thread = Thread.new do
       consumer.each_message do |message|
@@ -145,7 +145,7 @@ describe "Consumer API", functional: true do
     end
     thread.abort_on_exception = true
 
-    sleep 2
+    sleep 1
     messages_b.each { |i| producer.produce(i.to_s, topic: topic_b) }
     producer.deliver_messages
 

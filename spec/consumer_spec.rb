@@ -137,6 +137,7 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:disconnect)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
+    allow(cluster).to receive(:mark_as_stale!)
 
     allow(offset_manager).to receive(:commit_offsets)
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
