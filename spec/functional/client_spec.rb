@@ -130,6 +130,23 @@ describe "Client API", functional: true do
     expect(kafka.partitions_for(topic)).to be > 0
   end
 
+  example "fetching the replica count for a topic" do
+    expect(kafka.replica_count_for(topic)).to eq 1
+  end
+
+  example "fetching the replica count for a topic that doesn't yet exist" do
+    topic = "unknown-topic-#{SecureRandom.uuid}"
+
+    expect { kafka.replica_count_for(topic) }.to raise_exception(Kafka::LeaderNotAvailable)
+
+    # Eventually the call should succeed.
+    expect {
+      10.times { kafka.replica_count_for(topic) rescue nil }
+    }.not_to raise_exception
+
+    expect(kafka.replica_count_for(topic)).to be > 0
+  end
+
   example "delivering a message to a topic" do
     kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0)
 
