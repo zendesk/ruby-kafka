@@ -34,7 +34,7 @@ module Kafka
     #
     class MetadataResponse
       class PartitionMetadata
-        attr_reader :partition_id, :leader
+        attr_reader :partition_id, :leader, :replicas
 
         attr_reader :partition_error_code
 
