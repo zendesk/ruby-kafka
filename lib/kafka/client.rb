@@ -698,7 +698,6 @@ module Kafka
     #
     # @param topic [String]
     # @return [Integer] the number of replica nodes for the topic's partition
-
     def replica_count_for(topic)
       @cluster.partitions_for(topic).first.replicas.count
     end
