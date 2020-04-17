@@ -593,11 +593,10 @@ module Kafka
     end
 
     def scan_for_subscribing
-      @subscribed_topics.keys.each do |topic_or_regex|
-        default_offset = @subscribed_topics[topic_or_regex][:default_offset]
-        start_from_beginning = @subscribed_topics[topic_or_regex][:start_from_beginning]
-        max_bytes_per_partition = @subscribed_topics[topic_or_regex][:max_bytes_per_partition]
-
+      @subscribed_topics.each do |topic_or_regex, config|
+        default_offset = config[:default_offset]
+        start_from_beginning = config[:start_from_beginning]
+        max_bytes_per_partition = config[:max_bytes_per_partition]
         if topic_or_regex.is_a?(Regexp)
           subscribe_to_regex(topic_or_regex, default_offset, start_from_beginning, max_bytes_per_partition)
         else
