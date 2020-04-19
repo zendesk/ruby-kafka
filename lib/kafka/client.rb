@@ -694,6 +694,14 @@ module Kafka
       @cluster.partitions_for(topic).count
     end
 
+    # Counts the number of replicas for a topic's partition
+    #
+    # @param topic [String]
+    # @return [Integer] the number of replica nodes for the topic's partition
+    def replica_count_for(topic)
+      @cluster.partitions_for(topic).first.replicas.count
+    end
+
     # Retrieve the offset of the last message in a partition. If there are no
     # messages in the partition -1 is returned.
     #
