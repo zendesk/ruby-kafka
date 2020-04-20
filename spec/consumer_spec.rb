@@ -137,12 +137,14 @@ describe Kafka::Consumer do
     allow(cluster).to receive(:add_target_topics)
     allow(cluster).to receive(:disconnect)
     allow(cluster).to receive(:refresh_metadata_if_necessary!)
+    allow(cluster).to receive(:mark_as_stale!)
 
     allow(offset_manager).to receive(:commit_offsets)
     allow(offset_manager).to receive(:commit_offsets_if_necessary)
     allow(offset_manager).to receive(:set_default_offset)
     allow(offset_manager).to receive(:mark_as_processed)
     allow(offset_manager).to receive(:next_offset_for) { 42 }
+    allow(offset_manager).to receive(:clear_offsets)
 
     allow(group).to receive(:subscribe)
     allow(group).to receive(:group_id)
@@ -151,11 +153,15 @@ describe Kafka::Consumer do
     allow(group).to receive(:subscribed_partitions) { assigned_partitions }
     allow(group).to receive(:assigned_to?) { false }
     allow(group).to receive(:assigned_to?).with('greetings', 0) { true }
+    allow(group).to receive(:generation_id) { 1 }
+    allow(group).to receive(:join)
+    allow(group).to receive(:assigned_partitions) { [] }
 
     allow(heartbeat).to receive(:trigger)
 
     allow(fetcher).to receive(:data?) { fetched_batches.any? }
     allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }
+    allow(fetcher).to receive(:reset)
 
     consumer.subscribe("greetings")
   end

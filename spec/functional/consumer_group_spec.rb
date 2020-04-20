@@ -113,6 +113,47 @@ describe "Consumer API", functional: true do
     expect(received_messages.map(&:value).map(&:to_i).sort).to match_array messages
   end
 
+  example "subscribing to multiple topics using regex and enable refreshing the topic list" do
+    topic_a = generate_topic_name
+    topic_b = generate_topic_name
+
+    messages_a = (1..500).to_a
+    messages_b = (501..1000).to_a
+    messages = messages_a + messages_b
+
+    producer = Kafka.new(kafka_brokers, client_id: "test").producer
+
+    messages_a.each { |i| producer.produce(i.to_s, topic: topic_a) }
+    producer.deliver_messages
+
+    group_id = "test#{rand(1000)}"
+
+    received_messages = []
+
+    kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, refresh_topic_interval: 1)
+    consumer.subscribe(/#{topic_a}|#{topic_b}/)
+
+    thread = Thread.new do
+      consumer.each_message do |message|
+        received_messages << message
+
+        if received_messages.count == messages.count
+          consumer.stop
+        end
+      end
+    end
+    thread.abort_on_exception = true
+
+    sleep 1
+    messages_b.each { |i| producer.produce(i.to_s, topic: topic_b) }
+    producer.deliver_messages
+
+    thread.join
+
+    expect(received_messages.map(&:value).map(&:to_i).sort).to match_array messages
+  end
+
   example "consuming messages from a topic that's being written to" do
     num_partitions = 3
     topic = create_random_topic(num_partitions: num_partitions)
