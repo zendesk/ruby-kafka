@@ -21,9 +21,13 @@ describe Kafka::OffsetManager do
   }
   let(:offset_retention_time) { nil }
   let(:commit_interval) { 0 }
+  let(:partition_assignments) { { 'greetings' => [0, 1, 2] } }
 
   before do
     allow(group).to receive(:commit_offsets)
+    allow(group).to receive(:assigned_to?) do |topic, partition|
+      (partition_assignments[topic] || []).include?(partition)
+    end
     allow(fetcher).to receive(:seek)
   end
 
@@ -42,6 +46,46 @@ describe Kafka::OffsetManager do
       }
 
       expect(group).to have_received(:commit_offsets).with(expected_offsets)
+    end
+
+    context "after calling #mark_as_processed with offsets from non-assigned partitions" do
+      it "only commits offsets from assigned partitions" do
+        offset_manager.mark_as_processed("greetings", 0, 42)
+        offset_manager.mark_as_processed("greetings", 1, 13)
+        offset_manager.mark_as_processed("greetings", 5, 75)
+        offset_manager.mark_as_processed("seasons-greetings", 3, 15)
+
+        offset_manager.commit_offsets
+
+        expected_offsets = {
+          "greetings" => {
+            0 => 43,
+            1 => 14,
+          }
+        }
+
+        expect(group).to have_received(:commit_offsets).with(expected_offsets)
+      end
+    end
+
+    context "after marking offsets as processed for the same partition but out of order" do
+      it "committs the newest offset" do
+        offset_manager.mark_as_processed("greetings", 0, 42)
+        offset_manager.mark_as_processed("greetings", 1, 579)
+        offset_manager.mark_as_processed("greetings", 0, 5)
+        offset_manager.mark_as_processed("greetings", 1, 95)
+
+        offset_manager.commit_offsets
+
+        expected_offsets = {
+          "greetings" => {
+            0 => 43,
+            1 => 580
+          }
+        }
+
+        expect(group).to have_received(:commit_offsets).with(expected_offsets)
+      end
     end
   end
 
@@ -192,6 +236,7 @@ describe Kafka::OffsetManager do
   end
 
   describe "#clear_offsets_excluding" do
+    let(:partition_assignments) { { 'x' => [0, 1] } }
     it "clears offsets except for the partitions in the exclusion list" do
       offset_manager.mark_as_processed("x", 0, 42)
       offset_manager.mark_as_processed("x", 1, 13)
