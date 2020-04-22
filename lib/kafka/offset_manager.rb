@@ -58,7 +58,7 @@ module Kafka
 
       last_processed_offset = @processed_offsets[topic][partition] || -1
       if last_processed_offset > offset + 1
-        @logger.debug "Not overwriting newer offset #{topic}/#{partition}:#{last_processed_offset-1} with older #{offset}"
+        @logger.debug "Not overwriting newer offset #{topic}/#{partition}:#{last_processed_offset - 1} with older #{offset}"
         return
       end
 
