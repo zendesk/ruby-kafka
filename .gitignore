@@ -8,7 +8,6 @@
 /spec/reports/
 /tmp/
 .env
-.idea/
 *.log
 *.swp
 .byebug_history
