@@ -4,6 +4,12 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Instrument `create_time` from last message in batch (#811).
+- Add client function for fetching topic replica count (#822).
+- Allow consumers to refresh the topic lists (#818).
+- Disconnect after leaving a group (#817).
+- Use `max_wait_time` as the sleep instead of hardcoded 2 seconds (#825).
+
 ## 1.0.0
 
 - Add client methods to manage configs (#759)
