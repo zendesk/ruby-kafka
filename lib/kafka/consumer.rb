@@ -546,7 +546,7 @@ module Kafka
 
       if !@fetcher.data?
         @logger.debug "No batches to process"
-        sleep 2
+        sleep(@fetcher.max_wait_time || 2)
         []
       else
         tag, message = @fetcher.poll

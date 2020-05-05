@@ -4,7 +4,7 @@ require "kafka/fetch_operation"
 
 module Kafka
   class Fetcher
-    attr_reader :queue
+    attr_reader :queue, :max_wait_time
 
     def initialize(cluster:, logger:, instrumenter:, max_queue_size:, group:)
       @cluster = cluster
