@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.1.0
+
 - Instrument `create_time` from last message in batch (#811).
 - Add client function for fetching topic replica count (#822).
 - Allow consumers to refresh the topic lists (#818).
