@@ -54,10 +54,11 @@ module Kafka
           store.set_default_paths
         end
         ssl_context.cert_store = store
-        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        # Verify certificate hostname if supported (ruby >= 2.4.0)
-        ssl_context.verify_hostname = verify_hostname if ssl_context.respond_to?(:verify_hostname=)
       end
+
+      ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      # Verify certificate hostname if supported (ruby >= 2.4.0)
+      ssl_context.verify_hostname = verify_hostname if ssl_context.respond_to?(:verify_hostname=)
 
       ssl_context
     end
