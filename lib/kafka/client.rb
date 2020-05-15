@@ -65,6 +65,10 @@ module Kafka
     # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider instance that
     #   implements method token. See {Sasl::OAuth#initialize}
     #
+    # @param verify_hostname [Boolean, true] whether to verify that the host serving
+    #   the SSL certificate and the signing chain of the certificate have the correct domains
+    #   based on the CA certificate
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
