@@ -31,7 +31,7 @@ module Kafka
 
     class << self
       def statsd
-        @statsd ||= ::Datadog::Statsd.new(host, port, namespace: namespace, tags: tags)
+        @statsd ||= ::Datadog::Statsd.new(host, port, namespace: namespace, tags: tags, socket_path: socket_path)
       end
 
       def statsd=(statsd)
@@ -54,6 +54,15 @@ module Kafka
 
       def port=(port)
         @port = port
+        clear
+      end
+
+      def socket_path
+        @socket_path
+      end
+
+      def socket_path=(socket_path)
+        @socket_path = socket_path
         clear
       end
 

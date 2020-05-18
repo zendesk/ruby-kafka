@@ -14,20 +14,40 @@ describe Kafka::Datadog do
     agent.stop
   end
 
-  it "emits metrics to the Datadog agent" do
-    Kafka::Datadog.host = agent.host
-    Kafka::Datadog.port = agent.port
+  context "when host and port are specified" do
+    it "emits metrics to the Datadog agent" do
+      Kafka::Datadog.host = agent.host
+      Kafka::Datadog.port = agent.port
 
-    client = Kafka::Datadog.statsd
+      client = Kafka::Datadog.statsd
 
-    client.increment("greetings")
+      client.increment("greetings")
 
-    agent.wait_for_metrics
+      agent.wait_for_metrics
 
-    expect(agent.metrics.count).to eq 1
+      expect(agent.metrics.count).to eq 1
 
-    metric = agent.metrics.first
+      metric = agent.metrics.first
 
-    expect(metric).to eq "ruby_kafka.greetings"
+      expect(metric).to eq "ruby_kafka.greetings"
+    end
+  end
+
+  context "when socket_path is specified" do
+    it "emits metrics to the Datadog agent" do
+      Kafka::Datadog.socket_path = agent.socket_path
+
+      client = Kafka::Datadog.statsd
+
+      client.increment("greetings")
+
+      agent.wait_for_metrics
+
+      expect(agent.metrics.count).to eq 1
+
+      metric = agent.metrics.first
+
+      expect(metric).to eq "ruby_kafka.greetings"
+    end
   end
 end
