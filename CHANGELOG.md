@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Make `verify_hostname` settable for SSL contexts (#828).
+
 ## 1.1.0
 
 - Instrument `create_time` from last message in batch (#811).
