@@ -50,8 +50,19 @@ module Kafka
     # @param offset [Integer] the offset of the message that should be marked as processed.
     # @return [nil]
     def mark_as_processed(topic, partition, offset)
-      @uncommitted_offsets += 1
+      unless @group.assigned_to?(topic, partition)
+        @logger.debug "Not marking #{topic}/#{partition}:#{offset} as processed for partition not assigned to this consumer."
+        return
+      end
       @processed_offsets[topic] ||= {}
+
+      last_processed_offset = @processed_offsets[topic][partition] || -1
+      if last_processed_offset > offset + 1
+        @logger.debug "Not overwriting newer offset #{topic}/#{partition}:#{last_processed_offset - 1} with older #{offset}"
+        return
+      end
+
+      @uncommitted_offsets += 1
 
       # The committed offset should always be the offset of the next message that the
       # application will read, thus adding one to the last message processed.
