@@ -4,6 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Extra sanity checking when marking offsets as processed (#824).
 - Make `verify_hostname` settable for SSL contexts (#828).
 
 ## 1.1.0
