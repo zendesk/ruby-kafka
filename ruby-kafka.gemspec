@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   DESC
 
   spec.homepage      = "https://github.com/zendesk/ruby-kafka"
-  spec.license       = "Apache License Version 2.0"
+  spec.license       = "Apache-2.0"
 
   spec.required_ruby_version = '>= 2.1.0'
 
