@@ -162,6 +162,12 @@ module Kafka
       sleep 1
 
       retry
+    rescue CoordinatorLoadInProgress
+      @logger.error "Coordinator broker still loading, retrying in 1s..."
+
+      sleep 1
+
+      retry
     end
 
     def group_leader?
