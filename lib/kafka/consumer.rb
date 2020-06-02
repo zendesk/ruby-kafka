@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "kafka/consumer_group"
+require "kafka/interceptors"
 require "kafka/offset_manager"
 require "kafka/fetcher"
 require "kafka/pause"
@@ -44,7 +45,8 @@ module Kafka
   #
   class Consumer
 
-    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:, session_timeout:, heartbeat:, refresh_topic_interval: 0)
+    def initialize(cluster:, logger:, instrumenter:, group:, fetcher:, offset_manager:,
+                   session_timeout:, heartbeat:, refresh_topic_interval: 0, interceptors: [])
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @instrumenter = instrumenter
@@ -54,6 +56,7 @@ module Kafka
       @fetcher = fetcher
       @heartbeat = heartbeat
       @refresh_topic_interval = refresh_topic_interval
+      @interceptors = Interceptors.new(interceptors: interceptors, logger: logger)
 
       @pauses = Hash.new {|h, k|
         h[k] = Hash.new {|h2, k2|
@@ -220,6 +223,7 @@ module Kafka
         batches = fetch_batches
 
         batches.each do |batch|
+          batch = @interceptors.call(batch)
           batch.messages.each do |message|
             notification = {
               topic: message.topic,
@@ -311,6 +315,7 @@ module Kafka
           unless batch.empty?
             raw_messages = batch.messages
             batch.messages = raw_messages.reject(&:is_control_record)
+            batch = @interceptors.call(batch)
 
             notification = {
               topic: batch.topic,
