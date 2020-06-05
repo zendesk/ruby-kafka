@@ -4,6 +4,7 @@ require "kafka/consumer_group"
 require "kafka/offset_manager"
 require "kafka/fetcher"
 require "kafka/pause"
+require "concurrent"
 
 module Kafka
 
