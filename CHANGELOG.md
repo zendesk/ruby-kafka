@@ -4,11 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-- Extra sanity checking when marking offsets as processed (#824).
-- Make `verify_hostname` settable for SSL contexts (#828).
-
 ## 1.1.0
 
+- Extra sanity checking when marking offsets as processed (#824).
+- Make `verify_hostname` settable for SSL contexts (#828).
 - Instrument `create_time` from last message in batch (#811).
 - Add client function for fetching topic replica count (#822).
 - Allow consumers to refresh the topic lists (#818).
