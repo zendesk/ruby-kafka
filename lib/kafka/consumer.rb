@@ -316,7 +316,7 @@ module Kafka
               topic: batch.topic,
               partition: batch.partition,
               last_offset: batch.last_offset,
-              last_create_time: batch.messages.last.try(:create_time),
+              last_create_time: batch.messages.last && batch.messages.last.create_time,
               offset_lag: batch.offset_lag,
               highwater_mark_offset: batch.highwater_mark_offset,
               message_count: batch.messages.count,
