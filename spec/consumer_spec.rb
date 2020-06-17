@@ -80,15 +80,10 @@ describe Kafka::Consumer do
     }
 
     before do
-      @count = 0
-      allow(fetcher).to receive(:poll) {
-        @count += 1
-        if @count == 1
-          [:batches, old_fetched_batches]
-        else
-          [:batches, fetched_batches]
-        end
-      }
+      allow(fetcher).to receive(:poll).and_return(
+        [:batches, old_fetched_batches], # first call
+        [:batches, fetched_batches] # any time after the first call
+      )
     end
   end
 
@@ -121,15 +116,10 @@ describe Kafka::Consumer do
     }
 
     before do
-      @count = 0
-      allow(fetcher).to receive(:poll) {
-        @count += 1
-        if @count == 1
-          [:batches, fetched_batches]
-        else
-          [:batches, batches_after_partition_reassignment]
-        end
-      }
+      allow(fetcher).to receive(:poll).and_return(
+        [:batches, fetched_batches], # first call
+        [:batches, batches_after_partition_reassignment] # any time after the first call
+      )
     end
   end
 
