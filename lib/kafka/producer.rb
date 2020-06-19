@@ -7,6 +7,7 @@ require "kafka/produce_operation"
 require "kafka/pending_message_queue"
 require "kafka/pending_message"
 require "kafka/compressor"
+require "kafka/interceptors"
 
 module Kafka
   # Allows sending messages to a Kafka cluster.
@@ -129,7 +130,8 @@ module Kafka
   class Producer
     class AbortTransaction < StandardError; end
 
-    def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:, required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:)
+    def initialize(cluster:, transaction_manager:, logger:, instrumenter:, compressor:, ack_timeout:,
+                   required_acks:, max_retries:, retry_backoff:, max_buffer_size:, max_buffer_bytesize:, interceptors: [])
       @cluster = cluster
       @transaction_manager = transaction_manager
       @logger = TaggedLogger.new(logger)
@@ -141,6 +143,7 @@ module Kafka
       @max_buffer_size = max_buffer_size
       @max_buffer_bytesize = max_buffer_bytesize
       @compressor = compressor
+      @interceptors = Interceptors.new(interceptors: interceptors, logger: logger)
 
       # The set of topics that are produced to.
       @target_topics = Set.new
@@ -191,7 +194,7 @@ module Kafka
       # We want to fail fast if `topic` isn't a String
       topic = topic.to_str
 
-      message = PendingMessage.new(
+      message = @interceptors.call(PendingMessage.new(
         value: value && value.to_s,
         key: key && key.to_s,
         headers: headers,
@@ -199,7 +202,7 @@ module Kafka
         partition: partition && Integer(partition),
         partition_key: partition_key && partition_key.to_s,
         create_time: create_time
-      )
+      ))
 
       if buffer_size >= @max_buffer_size
         buffer_overflow topic,

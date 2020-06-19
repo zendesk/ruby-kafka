@@ -248,6 +248,9 @@ module Kafka
     #   be in a message set before it should be compressed. Note that message sets
     #   are per-partition rather than per-topic or per-producer.
     #
+    # @param interceptors [Array<Object>] a list of producer interceptors the implement
+    #   `call(Kafka::PendingMessage)`.
+    #
     # @return [Kafka::Producer] the Kafka producer.
     def producer(
       compression_codec: nil,
@@ -261,7 +264,8 @@ module Kafka
       idempotent: false,
       transactional: false,
       transactional_id: nil,
-      transactional_timeout: 60
+      transactional_timeout: 60,
+      interceptors: []
     )
       cluster = initialize_cluster
       compressor = Compressor.new(
@@ -291,6 +295,7 @@ module Kafka
         retry_backoff: retry_backoff,
         max_buffer_size: max_buffer_size,
         max_buffer_bytesize: max_buffer_bytesize,
+        interceptors: interceptors
       )
     end
 
@@ -343,6 +348,8 @@ module Kafka
     # @param refresh_topic_interval [Integer] interval of refreshing the topic list.
     #   If it is 0, the topic list won't be refreshed (default)
     #   If it is n (n > 0), the topic list will be refreshed every n seconds
+    # @param interceptors [Array<Object>] a list of consumer interceptors that implement
+    #   `call(Kafka::FetchedBatch)`.
     # @return [Consumer]
     def consumer(
         group_id:,
@@ -353,7 +360,8 @@ module Kafka
         heartbeat_interval: 10,
         offset_retention_time: nil,
         fetcher_max_queue_size: 100,
-        refresh_topic_interval: 0
+        refresh_topic_interval: 0,
+        interceptors: []
     )
       cluster = initialize_cluster
 
@@ -407,7 +415,8 @@ module Kafka
         fetcher: fetcher,
         session_timeout: session_timeout,
         heartbeat: heartbeat,
-        refresh_topic_interval: refresh_topic_interval
+        refresh_topic_interval: refresh_topic_interval,
+        interceptors: interceptors
       )
     end
 

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "timecop"
+require "fake_consumer_interceptor"
+require "kafka/interceptors"
 
 describe Kafka::Consumer do
   let(:cluster) { double(:cluster) }
@@ -513,5 +515,51 @@ describe Kafka::Consumer do
     subject(:method_original_name) { consumer.method(:send_heartbeat).original_name }
 
     it { expect(method_original_name).to eq(:trigger_heartbeat!) }
+  end
+
+  describe '#interceptor' do
+    it "creates and stops a consumer with interceptor" do
+      interceptor = FakeConsumerInterceptor.new
+      consumer = Kafka::Consumer.new(
+        cluster: cluster,
+        logger: logger,
+        instrumenter: instrumenter,
+        group: group,
+        offset_manager: offset_manager,
+        fetcher: fetcher,
+        session_timeout: session_timeout,
+        heartbeat: heartbeat,
+        interceptors: [interceptor]
+      )
+
+      consumer.stop
+    end
+
+    it "chains call" do
+      interceptor1 = FakeConsumerInterceptor.new(append_s: 'hello2')
+      interceptor2 = FakeConsumerInterceptor.new(append_s: 'hello3')
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_batch = interceptors.call(fetched_batches[0])
+
+      expect(intercepted_batch.messages[0].value).to eq "hellohello2hello3"
+    end
+
+    it "does not break the call chain" do
+      interceptor1 = FakeConsumerInterceptor.new(append_s: 'hello2', on_call_error: true)
+      interceptor2 = FakeConsumerInterceptor.new(append_s: 'hello3')
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_batch = interceptors.call(fetched_batches[0])
+
+      expect(intercepted_batch.messages[0].value).to eq "hellohello3"
+    end
+
+    it "returns original batch when all interceptors fail" do
+      interceptor1 = FakeConsumerInterceptor.new(append_s: 'hello2', on_call_error: true)
+      interceptor2 = FakeConsumerInterceptor.new(append_s: 'hello3', on_call_error: true)
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_batch = interceptors.call(fetched_batches[0])
+
+      expect(intercepted_batch.messages[0].value).to eq "hello"
+    end
   end
 end

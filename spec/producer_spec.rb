@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "fake_broker"
+require "fake_producer_interceptor"
 require "timecop"
+require "kafka/interceptors"
 
 describe Kafka::Producer do
   let(:logger) { LOGGER }
@@ -20,6 +22,7 @@ describe Kafka::Producer do
 
     allow(cluster).to receive(:get_leader).with("greetings", 0) { broker1 }
     allow(cluster).to receive(:get_leader).with("greetings", 1) { broker2 }
+    allow(cluster).to receive(:disconnect).and_return(nil)
 
     allow(compressor).to receive(:compress) {|message_set| message_set }
 
@@ -30,6 +33,7 @@ describe Kafka::Producer do
     allow(transaction_manager).to receive(:producer_epoch).and_return(0)
     allow(transaction_manager).to receive(:transactional_id).and_return(nil)
     allow(transaction_manager).to receive(:send_offsets_to_txn).and_return(nil)
+    allow(transaction_manager).to receive(:close).and_return(nil)
   end
 
   describe "#produce" do
@@ -357,6 +361,81 @@ describe Kafka::Producer do
         },
         group_id: group_id
       )
+    end
+  end
+
+  describe '#interceptor' do
+    let(:now) { Time.now }
+    let(:pending_message) {
+      Kafka::PendingMessage.new(
+        value: "hello1",
+        key: nil,
+        headers: {
+          hello: 'World'
+        },
+        topic: "greetings",
+        partition: 0,
+        partition_key: nil,
+        create_time: now
+      )
+    }
+
+    it "creates and shuts down a producer with interceptor" do
+      interceptor = FakeProducerInterceptor.new
+      producer = initialize_producer(
+        interceptors: [interceptor],
+        cluster: cluster,
+        transaction_manager: transaction_manager
+      )
+
+      producer.shutdown
+    end
+
+    it "chains call" do
+      interceptor1 = FakeProducerInterceptor.new(append_s: 'hello2')
+      interceptor2 = FakeProducerInterceptor.new(append_s: 'hello3')
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_message = interceptors.call(pending_message)
+
+      expect(intercepted_message).to eq Kafka::PendingMessage.new(
+        value: "hello1hello2hello3",
+        key: nil,
+        headers: {
+          hello: 'World'
+        },
+        topic: "greetings",
+        partition: 0,
+        partition_key: nil,
+        create_time: now
+      )
+    end
+
+    it "does not break the call chain" do
+      interceptor1 = FakeProducerInterceptor.new(append_s: 'hello2', on_call_error: true)
+      interceptor2 = FakeProducerInterceptor.new(append_s: 'hello3')
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_message = interceptors.call(pending_message)
+
+      expect(intercepted_message).to eq Kafka::PendingMessage.new(
+        value: "hello1hello3",
+        key: nil,
+        headers: {
+          hello: 'World'
+        },
+        topic: "greetings",
+        partition: 0,
+        partition_key: nil,
+        create_time: now
+      )
+    end
+
+    it "returns original message when all interceptors fail" do
+      interceptor1 = FakeProducerInterceptor.new(append_s: 'hello2', on_call_error: true)
+      interceptor2 = FakeProducerInterceptor.new(append_s: 'hello3', on_call_error: true)
+      interceptors = Kafka::Interceptors.new(interceptors: [interceptor1, interceptor2], logger: logger)
+      intercepted_message = interceptors.call(pending_message)
+
+      expect(intercepted_message).to eq pending_message
     end
   end
 
