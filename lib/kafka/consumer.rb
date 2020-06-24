@@ -79,7 +79,7 @@ module Kafka
       @current_offsets = Hash.new { |h, k| h[k] = {} }
 
       # Map storing subscribed topics with their configuration
-      @subscribed_topics = Concurrent::Map.new
+      @subscribed_topics = Hash.new
 
       # Set storing topics that matched topics in @subscribed_topics
       @matched_topics = Set.new
