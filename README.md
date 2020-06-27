@@ -26,6 +26,7 @@ A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distribute
         4. [Shutting Down a Consumer](#shutting-down-a-consumer)
         5. [Consuming Messages in Batches](#consuming-messages-in-batches)
         6. [Balancing Throughput and Latency](#balancing-throughput-and-latency)
+        7. [Customizing Partition Assignment Strategy](#customizing-partition-assignment-strategy)
     4. [Thread Safety](#thread-safety)
     5. [Logging](#logging)
     6. [Instrumentation](#instrumentation)
@@ -723,6 +724,45 @@ consumer.each_message do |message|
 end
 ```
 
+#### Customizing Partition Assignment Strategy
+
+In some cases, you might want to assign more partitions to some consumers. For example, in applications inserting some records to a database, the consumers running on hosts nearby the database can process more messages than the consumers running on other hosts.
+You can implement a custom assignment strategy and use it by passing a proc object that create the strategy as the argument `assignment_strategy_builder` like below:
+
+```ruby
+class CustomAssignmentStrategy
+  def initialize(cluster, user_data)
+    @cluster = cluster
+    @user_data = user_data
+  end
+
+  # @return [String]
+  def protocol_name
+    ...
+  end
+
+  # @return [String, nil]
+  def user_data
+    @user_data
+  end
+
+  # Assign the topic partitions to the group members.
+  #
+  # @param members [Hash<String, Protocol::JoinGroupResponse::Metadata>] a hash
+  #   mapping member ids to metadata
+  # @param topics [Array<String>] topics
+  # @return [Hash<String, Protocol::MemberAssignment>] a hash mapping member
+  #   ids to assignments.
+  def assign(members:, topics:)
+    ...
+  end
+end
+
+assignment_strategy_builder = ->(cluster) do
+  CustomAssignmentStrategy.new(cluster, "some-host-information")
+end
+consumer = kafka.consumer(group_id: "some-group", assignment_strategy_builder: assignment_strategy_builder)
+```
 
 ### Thread Safety
 

@@ -7,7 +7,7 @@ module Kafka
   class ConsumerGroup
     attr_reader :assigned_partitions, :generation_id, :group_id
 
-    def initialize(cluster:, logger:, group_id:, session_timeout:, rebalance_timeout:, retention_time:, instrumenter:)
+    def initialize(cluster:, logger:, group_id:, session_timeout:, rebalance_timeout:, retention_time:, instrumenter:, assignment_strategy:)
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
       @group_id = group_id
@@ -19,7 +19,7 @@ module Kafka
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
-      @assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: @cluster)
+      @assignment_strategy = assignment_strategy
       @retention_time = retention_time
     end
 
@@ -144,6 +144,8 @@ module Kafka
           rebalance_timeout: @rebalance_timeout,
           member_id: @member_id,
           topics: @topics,
+          protocol_name: @assignment_strategy.protocol_name,
+          user_data: @assignment_strategy.user_data,
         )
 
         Protocol.handle_error(response.error_code)
@@ -181,7 +183,7 @@ module Kafka
         @logger.info "Chosen as leader of group `#{@group_id}`"
 
         group_assignment = @assignment_strategy.assign(
-          members: @members.keys,
+          members: @members,
           topics: @topics,
         )
       end

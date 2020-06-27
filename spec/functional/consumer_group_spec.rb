@@ -435,6 +435,93 @@ describe "Consumer API", functional: true do
     end
   end
 
+  example "consuming messages with a custom assignment strategy" do
+    topic = create_random_topic(num_partitions: 1)
+    messages = (1..1000).to_a
+
+    begin
+      kafka = Kafka.new(kafka_brokers, client_id: "test")
+      producer = kafka.producer
+
+      messages.each do |i|
+        producer.produce(i.to_s, topic: topic, partition: 0)
+      end
+
+      producer.deliver_messages
+    end
+
+    group_id = "test#{rand(1000)}"
+
+    mutex = Mutex.new
+    received_messages = []
+
+    assignment_strategy_class = Class.new do
+      def initialize(cluster, weight)
+        @cluster = cluster
+        @weight = weight
+      end
+
+      def protocol_name
+        "custom"
+      end
+
+      def user_data
+        @weight.to_s
+      end
+
+      def assign(members:, topics:)
+        group_assignment = members.each_key.with_object({}) do |member_id, assignment|
+          assignment[member_id] = Kafka::Protocol::MemberAssignment.new
+        end
+
+        member_ids = members.flat_map { |id, metadata| [id] * metadata.user_data.to_i }
+        partition_index = 0
+        topics.each_with_index do |topic, i|
+          @cluster.partitions_for(topic).each_with_index do |partition, j|
+            member_id = member_ids[partition_index % member_ids.size]
+            group_assignment[member_id].assign(topic, [partition.partition_id])
+            partition_index += 1
+          end
+        end
+
+        group_assignment
+      end
+    end
+
+    consumers = 2.times.map do |i|
+      assignment_strategy_builder = ->(cluster) {
+        assignment_strategy_class.new(cluster, i + 1)
+      }
+
+      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy_builder: assignment_strategy_builder)
+      consumer.subscribe(topic)
+      consumer
+    end
+
+    threads = consumers.map do |consumer|
+      t = Thread.new do
+        consumer.each_message do |message|
+          mutex.synchronize do
+            received_messages << message
+
+            if received_messages.count == messages.count
+              consumers.each(&:stop)
+            end
+          end
+        end
+      end
+
+      t.abort_on_exception = true
+
+      t
+    end
+
+    threads.each(&:join)
+
+    expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
+  end
+
   def wait_until(timeout:)
     Timeout.timeout(timeout) do
       sleep 0.5 until yield

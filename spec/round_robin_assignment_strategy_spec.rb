@@ -5,7 +5,7 @@ describe Kafka::RoundRobinAssignmentStrategy do
   let(:strategy) { described_class.new(cluster: cluster) }
 
   it "assigns all partitions" do
-    members = (0...10).map {|i| "member#{i}" }
+    members = Hash[(0...10).map {|i| ["member#{i}", nil] }]
     topics = ["greetings"]
     partitions = (0...30).map {|i| double(:"partition#{i}", partition_id: i) }
 
@@ -28,7 +28,7 @@ describe Kafka::RoundRobinAssignmentStrategy do
     cluster = double(:cluster)
     strategy = described_class.new(cluster: cluster)
 
-    members = (0...10).map {|i| "member#{i}" }
+    members = Hash[(0...10).map {|i| ["member#{i}", nil] }]
     topics = ["topic1", "topic2"]
     partitions = (0...5).map {|i| double(:"partition#{i}", partition_id: i) }
 
@@ -57,32 +57,32 @@ describe Kafka::RoundRobinAssignmentStrategy do
     {
       name: "uneven topics",
       topics: { "topic1" => [0], "topic2" => (0..50).to_a },
-      members: ["member1", "member2"],
+      members: { "member1" => nil, "member2" => nil },
     },
     {
       name: "only one partition",
       topics: { "topic1" => [0] },
-      members: ["member1", "member2"],
+      members: { "member1" => nil, "member2" => nil },
     },
     {
       name: "lots of partitions",
       topics: { "topic1" => (0..100).to_a },
-      members: ["member1"]
+      members: { "member1" => nil },
     },
     {
       name: "lots of members",
       topics: { "topic1" => (0..10).to_a, "topic2" => (0..10).to_a },
-      members: (0..50).map { |i| "member#{i}" }
+      members: Hash[(0..50).map { |i| ["member#{i}", nil] }]
     },
     {
       name: "odd number of partitions",
       topics: { "topic1" => (0..14).to_a },
-      members: ["member1", "member2"]
+      members: { "member1" => nil, "member2" => nil },
     },
     {
       name: "five topics, 10 partitions, 3 consumers",
       topics: { "topic1" => [0, 1], "topic2" => [0, 1], "topic3" => [0, 1], "topic4" => [0, 1], "topic5" => [0, 1] },
-      members: ["member1", "member2", "member3"]
+      members: { "member1" => nil, "member2" => nil, "member3" => nil },
     }
   ].each do |name:, topics:, members:|
       it name do

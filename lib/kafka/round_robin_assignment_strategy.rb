@@ -11,16 +11,25 @@ module Kafka
       @cluster = cluster
     end
 
+    def protocol_name
+      "roundrobin"
+    end
+
+    def user_data
+      nil
+    end
+
     # Assign the topic partitions to the group members.
     #
-    # @param members [Array<String>] member ids
+    # @param members [Hash<String, Protocol::JoinGroupResponse::Metadata>] a hash
+    #   mapping member ids to metadata
     # @param topics [Array<String>] topics
     # @return [Hash<String, Protocol::MemberAssignment>] a hash mapping member
     #   ids to assignments.
     def assign(members:, topics:)
       group_assignment = {}
 
-      members.each do |member_id|
+      members.each_key do |member_id|
         group_assignment[member_id] = Protocol::MemberAssignment.new
       end
 
@@ -37,7 +46,7 @@ module Kafka
         index % members.count
       end.values
 
-      members.zip(partitions_per_member).each do |member_id, member_partitions|
+      members.keys.zip(partitions_per_member).each do |member_id, member_partitions|
         unless member_partitions.nil?
           member_partitions.each do |topic, partition|
             group_assignment[member_id].assign(topic, [partition])
