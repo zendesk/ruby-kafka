@@ -350,8 +350,8 @@ module Kafka
     #   If it is n (n > 0), the topic list will be refreshed every n seconds
     # @param interceptors [Array<Object>] a list of consumer interceptors that implement
     #   `call(Kafka::FetchedBatch)`.
-    # @param assignment_strategy_builder [Proc] a procedure that implements
-    #   `call(Kafka::Cluster)` and creates a assignment strategy.
+    # @param assignment_strategy [Object] a partition assignment strategy that
+    #   implements `protocol_type()`, `user_data()`, and `assign(members:, partitions:)`
     # @return [Consumer]
     def consumer(
         group_id:,
@@ -364,7 +364,7 @@ module Kafka
         fetcher_max_queue_size: 100,
         refresh_topic_interval: 0,
         interceptors: [],
-        assignment_strategy_builder: nil
+        assignment_strategy: nil
     )
       cluster = initialize_cluster
 
@@ -375,12 +375,6 @@ module Kafka
       # The Kafka protocol expects the retention time to be in ms.
       retention_time = (offset_retention_time && offset_retention_time * 1_000) || -1
 
-      if assignment_strategy_builder
-        assignment_strategy = assignment_strategy_builder.call(cluster)
-      else
-        assignment_strategy = RoundRobinAssignmentStrategy.new(cluster: cluster)
-      end
-
       group = ConsumerGroup.new(
         cluster: cluster,
         logger: @logger,
@@ -389,7 +383,7 @@ module Kafka
         rebalance_timeout: rebalance_timeout,
         retention_time: retention_time,
         instrumenter: instrumenter,
-        assignment_strategy: assignment_strategy,
+        assignment_strategy: assignment_strategy
       )
 
       fetcher = Fetcher.new(

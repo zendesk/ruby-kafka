@@ -727,12 +727,11 @@ end
 #### Customizing Partition Assignment Strategy
 
 In some cases, you might want to assign more partitions to some consumers. For example, in applications inserting some records to a database, the consumers running on hosts nearby the database can process more messages than the consumers running on other hosts.
-You can implement a custom assignment strategy and use it by passing a proc object that create the strategy as the argument `assignment_strategy_builder` like below:
+You can implement a custom assignment strategy and use it by passing an object that implements `#protocol_name`, `#user_data`, and `#assign` as the argument `assignment_strategy` like below:
 
 ```ruby
 class CustomAssignmentStrategy
-  def initialize(cluster, user_data)
-    @cluster = cluster
+  def initialize(user_data)
     @user_data = user_data
   end
 
@@ -748,20 +747,19 @@ class CustomAssignmentStrategy
 
   # Assign the topic partitions to the group members.
   #
-  # @param members [Hash<String, Protocol::JoinGroupResponse::Metadata>] a hash
+  # @param members [Hash<String, Kafka::Protocol::JoinGroupResponse::Metadata>] a hash
   #   mapping member ids to metadata
-  # @param topics [Array<String>] topics
-  # @return [Hash<String, Protocol::MemberAssignment>] a hash mapping member
-  #   ids to assignments.
-  def assign(members:, topics:)
+  # @param partitions [Array<Kafka::ConsumerGroup::Assignor::Partition>] a list of
+  #   partitions the consumer group processes
+  # @return [Hash<String, Array<Kafka::ConsumerGroup::Assignor::Partition>] a hash
+  #   mapping member ids to partitions.
+  def assign(members:, partitions:)
     ...
   end
 end
 
-assignment_strategy_builder = ->(cluster) do
-  CustomAssignmentStrategy.new(cluster, "some-host-information")
-end
-consumer = kafka.consumer(group_id: "some-group", assignment_strategy_builder: assignment_strategy_builder)
+strategy = CustomAssignmentStrategy.new("some-host-information")
+consumer = kafka.consumer(group_id: "some-group", assignment_strategy: strategy)
 ```
 
 ### Thread Safety

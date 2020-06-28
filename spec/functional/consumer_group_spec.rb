@@ -456,8 +456,7 @@ describe "Consumer API", functional: true do
     received_messages = []
 
     assignment_strategy_class = Class.new do
-      def initialize(cluster, weight)
-        @cluster = cluster
+      def initialize(weight)
         @weight = weight
       end
 
@@ -469,32 +468,22 @@ describe "Consumer API", functional: true do
         @weight.to_s
       end
 
-      def assign(members:, topics:)
-        group_assignment = members.each_key.with_object({}) do |member_id, assignment|
-          assignment[member_id] = Kafka::Protocol::MemberAssignment.new
+      def assign(members:, partitions:)
+        member_ids = members.flat_map {|id, metadata| [id] * metadata.user_data.to_i }
+        partitions_per_member = Hash.new {|h, k| h[k] = [] }
+        partitions.each_with_index do |partition, index|
+          partitions_per_member[member_ids[index % member_ids.count]] << partition
         end
 
-        member_ids = members.flat_map { |id, metadata| [id] * metadata.user_data.to_i }
-        partition_index = 0
-        topics.each_with_index do |topic, i|
-          @cluster.partitions_for(topic).each_with_index do |partition, j|
-            member_id = member_ids[partition_index % member_ids.size]
-            group_assignment[member_id].assign(topic, [partition.partition_id])
-            partition_index += 1
-          end
-        end
-
-        group_assignment
+        partitions_per_member
       end
     end
 
     consumers = 2.times.map do |i|
-      assignment_strategy_builder = ->(cluster) {
-        assignment_strategy_class.new(cluster, i + 1)
-      }
+      assignment_strategy = assignment_strategy_class.new(i + 1)
 
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy_builder: assignment_strategy_builder)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
       consumer.subscribe(topic)
       consumer
     end

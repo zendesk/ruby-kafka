@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require "kafka/consumer_group/assignor"
 require "kafka/round_robin_assignment_strategy"
 
 module Kafka
@@ -19,7 +20,10 @@ module Kafka
       @members = {}
       @topics = Set.new
       @assigned_partitions = {}
-      @assignment_strategy = assignment_strategy
+      @assignor = Assignor.new(
+        cluster: cluster,
+        strategy: assignment_strategy || RoundRobinAssignmentStrategy.new
+      )
       @retention_time = retention_time
     end
 
@@ -144,8 +148,8 @@ module Kafka
           rebalance_timeout: @rebalance_timeout,
           member_id: @member_id,
           topics: @topics,
-          protocol_name: @assignment_strategy.protocol_name,
-          user_data: @assignment_strategy.user_data,
+          protocol_name: @assignor.protocol_name,
+          user_data: @assignor.user_data,
         )
 
         Protocol.handle_error(response.error_code)
@@ -182,7 +186,7 @@ module Kafka
       if group_leader?
         @logger.info "Chosen as leader of group `#{@group_id}`"
 
-        group_assignment = @assignment_strategy.assign(
+        group_assignment = @assignor.assign(
           members: @members,
           topics: @topics,
         )
