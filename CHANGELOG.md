@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.2.0
+
+- Add support for configuring the client partitioner (#847).
+
 ## 1.1.0
 
 - Extra sanity checking when marking offsets as processed (#824).

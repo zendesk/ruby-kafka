@@ -11,3 +11,7 @@
 *.log
 *.swp
 .byebug_history
+
+# IDEA
+*.idea
+*.iml
