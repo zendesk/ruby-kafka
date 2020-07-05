@@ -727,17 +727,12 @@ end
 #### Customizing Partition Assignment Strategy
 
 In some cases, you might want to assign more partitions to some consumers. For example, in applications inserting some records to a database, the consumers running on hosts nearby the database can process more messages than the consumers running on other hosts.
-You can implement a custom assignment strategy and use it by passing an object that implements `#protocol_name`, `#user_data`, and `#assign` as the argument `assignment_strategy` like below:
+You can implement a custom assignment strategy and use it by passing an object that implements `#user_data` and `#assign` as the argument `assignment_strategy` like below:
 
 ```ruby
 class CustomAssignmentStrategy
   def initialize(user_data)
     @user_data = user_data
-  end
-
-  # @return [String]
-  def protocol_name
-    ...
   end
 
   # @return [String, nil]
@@ -747,20 +742,32 @@ class CustomAssignmentStrategy
 
   # Assign the topic partitions to the group members.
   #
+  # @param cluster [Kafka::Cluster]
   # @param members [Hash<String, Kafka::Protocol::JoinGroupResponse::Metadata>] a hash
   #   mapping member ids to metadata
   # @param partitions [Array<Kafka::ConsumerGroup::Assignor::Partition>] a list of
   #   partitions the consumer group processes
   # @return [Hash<String, Array<Kafka::ConsumerGroup::Assignor::Partition>] a hash
   #   mapping member ids to partitions.
-  def assign(members:, partitions:)
+  def assign(cluster:, members:, partitions:)
     ...
   end
 end
+Kafka::ConsumerGroup::Assignor.register_strategy(:custom, CustomAssignmentStrategy)
 
 strategy = CustomAssignmentStrategy.new("some-host-information")
 consumer = kafka.consumer(group_id: "some-group", assignment_strategy: strategy)
 ```
+
+If the strategy doesn't need user data and constructor arguments, you don't need to define a class:
+
+```
+Kafka::ConsumerGroup::Assignor.register_strategy(:another_custom) do |cluster:, members:, partitions:|
+  # strategy goes here
+end
+consumer = kafka.consumer(group_id: "some-group", assignment_strategy: :another_custom)
+```
+
 
 ### Thread Safety
 

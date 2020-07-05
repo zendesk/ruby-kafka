@@ -5,23 +5,20 @@ module Kafka
   # A consumer group partition assignment strategy that assigns partitions to
   # consumers in a round-robin fashion.
   class RoundRobinAssignmentStrategy
-    def protocol_name
-      "roundrobin"
-    end
-
     def user_data
       nil
     end
 
     # Assign the topic partitions to the group members.
     #
+    # @param cluster [Kafka::Cluster]
     # @param members [Hash<String, Kafka::Protocol::JoinGroupResponse::Metadata>] a hash
     #   mapping member ids to metadata
     # @param partitions [Array<Kafka::ConsumerGroup::Assignor::Partition>] a list of
     #   partitions the consumer group processes
     # @return [Hash<String, Array<Kafka::ConsumerGroup::Assignor::Partition>] a hash
     #   mapping member ids to partitions.
-    def assign(members:, partitions:)
+    def assign(cluster:, members:, partitions:)
       member_ids = members.keys
       partitions_per_member = Hash.new {|h, k| h[k] = [] }
       partitions.each_with_index do |partition, index|
@@ -32,3 +29,6 @@ module Kafka
     end
   end
 end
+
+require "kafka/consumer_group/assignor"
+Kafka::ConsumerGroup::Assignor.register_strategy(:roundrobin, Kafka::RoundRobinAssignmentStrategy)

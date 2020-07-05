@@ -460,15 +460,11 @@ describe "Consumer API", functional: true do
         @weight = weight
       end
 
-      def protocol_name
-        "custom"
-      end
-
       def user_data
         @weight.to_s
       end
 
-      def assign(members:, partitions:)
+      def assign(cluster:, members:, partitions:)
         member_ids = members.flat_map {|id, metadata| [id] * metadata.user_data.to_i }
         partitions_per_member = Hash.new {|h, k| h[k] = [] }
         partitions.each_with_index do |partition, index|
@@ -479,36 +475,41 @@ describe "Consumer API", functional: true do
       end
     end
 
-    consumers = 2.times.map do |i|
-      assignment_strategy = assignment_strategy_class.new(i + 1)
+    Kafka::ConsumerGroup::Assignor.register_strategy(:custom, assignment_strategy_class)
+    begin
+      consumers = 2.times.map do |i|
+        assignment_strategy = assignment_strategy_class.new(i + 1)
 
-      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
-      consumer.subscribe(topic)
-      consumer
-    end
+        kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
+        consumer.subscribe(topic)
+        consumer
+      end
 
-    threads = consumers.map do |consumer|
-      t = Thread.new do
-        consumer.each_message do |message|
-          mutex.synchronize do
-            received_messages << message
+      threads = consumers.map do |consumer|
+        t = Thread.new do
+          consumer.each_message do |message|
+            mutex.synchronize do
+              received_messages << message
 
-            if received_messages.count == messages.count
-              consumers.each(&:stop)
+              if received_messages.count == messages.count
+                consumers.each(&:stop)
+              end
             end
           end
         end
+
+        t.abort_on_exception = true
+
+        t
       end
 
-      t.abort_on_exception = true
+      threads.each(&:join)
 
-      t
+      expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
+    ensure
+      Kafka::ConsumerGroup::Assignor.strategy_classes.delete("custom")
     end
-
-    threads.each(&:join)
-
-    expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
   end
 
   def wait_until(timeout:)
