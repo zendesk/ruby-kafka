@@ -163,7 +163,7 @@ module Kafka
 
       if partition.nil?
         partition_count = @cluster.partitions_for(topic).count
-        partition = @partitioner.partition_for_key(partition_count, message)
+        partition = @partitioner.call(partition_count, message)
       end
 
       buffer = MessageBuffer.new

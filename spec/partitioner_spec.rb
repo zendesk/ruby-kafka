@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-describe Kafka::Partitioner, "#partition_for_key" do
+describe Kafka::Partitioner, "#call" do
   let(:partitioner) { Kafka::Partitioner.new }
   let(:message) { double(:message, key: nil, partition_key: "yolo") }
 
   it "deterministically returns a partition number for a partition key and partition count" do
-    partition = partitioner.partition_for_key(3, message)
+    partition = partitioner.call(3, message)
     expect(partition).to eq 0
   end
 
@@ -13,7 +13,7 @@ describe Kafka::Partitioner, "#partition_for_key" do
     allow(message).to receive(:partition_key) { nil }
     allow(message).to receive(:key) { "hey" }
 
-    partition = partitioner.partition_for_key(3, message)
+    partition = partitioner.call(3, message)
 
     expect(partition).to eq 2
   end
@@ -22,7 +22,7 @@ describe Kafka::Partitioner, "#partition_for_key" do
     allow(message).to receive(:key) { nil }
     allow(message).to receive(:partition_key) { nil }
 
-    partitions = 30.times.map { partitioner.partition_for_key(3, message) }
+    partitions = 30.times.map { partitioner.call(3, message) }
 
     expect(partitions.uniq).to contain_exactly(0, 1, 2)
   end

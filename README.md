@@ -349,16 +349,23 @@ partition = PartitioningScheme.assign(partitions, event)
 producer.produce(event, topic: "events", partition: partition)
 ```
 
-Another option is to configure a custom client partitioner that implements `partition_for_key(partition_count, message)` and uses the same schema as the other client. For example:
+Another option is to configure a custom client partitioner that implements `call(partition_count, message)` and uses the same schema as the other client. For example:
 
 ```ruby
 class CustomPartitioner
-  def partition_for_key(partition_count, message)
+  def call(partition_count, message)
     ...
   end
 end
   
 partitioner = CustomPartitioner.new
+Kafka.new(partitioner: partitioner, ...)
+```
+
+Or, simply create a Proc handling the partitioning logic instead of having to add a new class. For example:
+
+```ruby
+partitioner = -> (partition_count, message) { ... }
 Kafka.new(partitioner: partitioner, ...)
 ```
 
