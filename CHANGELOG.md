@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Support custom assignment strategy (#846).
+
 ## 1.1.0
 
 - Extra sanity checking when marking offsets as processed (#824).
