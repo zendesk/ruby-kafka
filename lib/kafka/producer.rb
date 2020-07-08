@@ -245,7 +245,7 @@ module Kafka
     #
     # @raise [DeliveryFailed] if not all messages could be successfully sent.
     # @return [nil]
-    def deliver_messages
+    def deliver_messages(async: false)
       # There's no need to do anything if the buffer is empty.
       return if buffer_size == 0
 
@@ -256,7 +256,7 @@ module Kafka
         notification[:attempts] = 0
 
         begin
-          deliver_messages_with_retries(notification)
+          deliver_messages_with_retries(notification, async: async)
         ensure
           notification[:delivered_message_count] = message_count - buffer_size
         end
@@ -377,7 +377,7 @@ module Kafka
 
     private
 
-    def deliver_messages_with_retries(notification)
+    def deliver_messages_with_retries(notification, async:)
       attempt = 0
 
       @cluster.add_target_topics(@target_topics)
@@ -405,7 +405,22 @@ module Kafka
         end
 
         assign_partitions!
-        operation.execute
+        begin
+          operation.execute
+        rescue Kafka::MessageSizeTooLarge => e
+          # if we're attempting to deliver messages async, then we throw away the messages.  When
+          # executing this synchronously, we should never drop messages.  Therefore, we just
+          # re-raise the exception
+          raise unless async
+
+          @logger.error "Received unrecoverable error #{e.class}: #{e.message}"
+          @logger.info "Dropping largest message from buffer. Buffer size: #{@buffer.size}; bytesize: #{@buffer.bytesize}"
+          @buffer.clear_largest_message
+          @logger.info "Dropped largest message from buffer.  Buffer size: #{@buffer.size}; bytesize: #{@buffer.bytesize}"
+
+          sleep @retry_backoff
+          retry
+        end
 
         if @required_acks.zero?
           # No response is returned by the brokers, so we can't know which messages

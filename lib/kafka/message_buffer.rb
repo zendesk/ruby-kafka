@@ -48,6 +48,40 @@ module Kafka
       end
     end
 
+    def clear_largest_message
+      target = nil
+      @buffer.each do |topic, messages_for_topic|
+        messages_for_topic.each do |partition, messages_for_partition|
+          messages_for_partition.each do |message|
+            if target.nil? || target[:message].bytesize.to_i < message.bytesize.to_i
+              target = {
+                topic: topic,
+                partition: partition,
+                message: message,
+              }
+            end
+          end
+        end
+      end
+
+      clear_message(target) unless target.nil?
+    end
+
+    def clear_message(topic:, partition:, message:)
+      return if topic.nil? || partition.nil? || message.nil?
+      return unless @buffer.key?(topic) && @buffer[topic].key?(partition)
+      return unless @buffer[topic][partition].include?(message)
+
+      @size -= 1
+      @bytesize -= message.bytesize
+
+      @buffer[topic][partition].delete(message)
+      if @buffer[topic][partition].empty?
+        @buffer[topic].delete(partition)
+        @buffer.delete(topic) if @buffer[topic].empty?
+      end
+    end
+
     # Clears buffered messages for the given topic and partition.
     #
     # @param topic [String] the name of the topic.

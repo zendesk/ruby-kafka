@@ -215,7 +215,7 @@ module Kafka
           when :shutdown
             begin
               # Deliver any pending messages first.
-              @producer.deliver_messages
+              @producer.deliver_messages(async: true)
             rescue Error => e
               @logger.error("Failed to deliver messages during shutdown: #{e.message}")
 
@@ -266,7 +266,7 @@ module Kafka
       end
 
       def deliver_messages
-        @producer.deliver_messages
+        @producer.deliver_messages(async: true)
       rescue DeliveryFailed, ConnectionError => e
         # Failed to deliver messages -- nothing to do but log and try again later.
         @logger.error("Failed to asynchronously deliver messages: #{e.message}")
