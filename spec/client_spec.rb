@@ -23,7 +23,7 @@ describe Kafka::Client do
       context "when sasl_over_ssl is unspecified" do
         it "raises ArgumentError due to missing SSL config" do
           expect {
-            described_class.new(client_opts)
+            described_class.new(**client_opts)
           }.to raise_error(ArgumentError, /SASL authentication requires that SSL is configured/)
         end
       end
@@ -33,7 +33,7 @@ describe Kafka::Client do
 
         it "raises ArgumentError due to missing SSL config" do
           expect {
-            described_class.new(client_opts)
+            described_class.new(**client_opts)
           }.to raise_error(ArgumentError, /SASL authentication requires that SSL is configured/)
         end
       end
@@ -42,14 +42,14 @@ describe Kafka::Client do
         before { client_opts.update(sasl_over_ssl: false) }
 
         it "creates a new Kafka::Client object" do
-          expect { described_class.new(client_opts) }.to_not raise_exception
+          expect { described_class.new(**client_opts) }.to_not raise_exception
         end
       end
     end
   end
 
   describe "#deliver_message" do
-    subject(:client) { described_class.new(client_opts) }
+    subject(:client) { described_class.new(**client_opts) }
 
     it "requires `topic` to be a String" do
       expect {
