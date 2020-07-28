@@ -131,6 +131,8 @@ module Kafka
     # @see Kafka::Producer#deliver_messages
     # @return [nil]
     def deliver_messages
+      ensure_threads_running!
+
       @queue << [:deliver_messages, nil]
 
       nil
