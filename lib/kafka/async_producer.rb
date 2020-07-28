@@ -152,6 +152,8 @@ module Kafka
     private
 
     def ensure_threads_running!
+      return if worker_thread_alive? && timer_thread_alive?
+
       @thread_mutex.synchronize do
         @worker_thread = nil unless worker_thread_alive?
         @worker_thread ||= Thread.new { @worker.run }
