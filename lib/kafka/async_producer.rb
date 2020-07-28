@@ -155,9 +155,7 @@ module Kafka
       @thread_mutex.synchronize do
         @worker_thread = nil unless @worker_thread && @worker_thread.alive?
         @worker_thread ||= Thread.new { @worker.run }
-      end
 
-      @thread_mutex.synchronize do
         @timer_thread = nil unless @timer_thread && @timer_thread.alive?
         @timer_thread ||= Thread.new { @timer.run }
       end
