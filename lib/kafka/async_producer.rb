@@ -144,6 +144,8 @@ module Kafka
     # @see Kafka::Producer#shutdown
     # @return [nil]
     def shutdown
+      ensure_threads_running!
+
       @timer_thread && @timer_thread.exit
       @queue << [:shutdown, nil]
       @worker_thread && @worker_thread.join
