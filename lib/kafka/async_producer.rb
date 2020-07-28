@@ -59,8 +59,6 @@ module Kafka
   #     producer.shutdown
   #
   class AsyncProducer
-    THREAD_MUTEX = Mutex.new
-
     # Initializes a new AsyncProducer.
     #
     # @param sync_producer [Kafka::Producer] the synchronous producer that should
@@ -94,6 +92,8 @@ module Kafka
 
       # The timer will no-op if the delivery interval is zero.
       @timer = Timer.new(queue: @queue, interval: delivery_interval)
+
+      @thread_mutex = Mutex.new
     end
 
     # Produces a message to the specified topic.
@@ -152,12 +152,12 @@ module Kafka
     private
 
     def ensure_threads_running!
-      THREAD_MUTEX.synchronize do
+      @thread_mutex.synchronize do
         @worker_thread = nil unless @worker_thread && @worker_thread.alive?
         @worker_thread ||= Thread.new { @worker.run }
       end
 
-      THREAD_MUTEX.synchronize do
+      @thread_mutex.synchronize do
         @timer_thread = nil unless @timer_thread && @timer_thread.alive?
         @timer_thread ||= Thread.new { @timer.run }
       end
