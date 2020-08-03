@@ -84,20 +84,21 @@ describe Kafka::RoundRobinAssignmentStrategy do
       topics: { "topic1" => [0, 1], "topic2" => [0, 1], "topic3" => [0, 1], "topic4" => [0, 1], "topic5" => [0, 1] },
       members: ["member1", "member2", "member3"]
     }
-  ].each do |name:, topics:, members:|
-      it name do
-        allow(cluster).to receive(:partitions_for) do |topic|
-          topics.fetch(topic).map do |partition_id|
-            double(:"partition#{partition_id}", partition_id: partition_id)
-          end
+  ].each do |options|
+    name, topics, members = options[:name], options[:topics], options[:members]
+    it name do
+      allow(cluster).to receive(:partitions_for) do |topic|
+        topics.fetch(topic).map do |partition_id|
+          double(:"partition#{partition_id}", partition_id: partition_id)
         end
-
-        assignments = strategy.assign(members: members, topics: topics.keys)
-
-        expect_all_partitions_assigned(topics, assignments)
-        expect_even_assignments(topics, assignments)
       end
+
+      assignments = strategy.assign(members: members, topics: topics.keys)
+
+      expect_all_partitions_assigned(topics, assignments)
+      expect_even_assignments(topics, assignments)
     end
+  end
 
   def expect_all_partitions_assigned(topics, assignments)
     topics.each do |topic, partitions|
