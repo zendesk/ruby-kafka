@@ -62,10 +62,15 @@ module Kafka
     #
     # @param sasl_over_ssl [Boolean] whether to enforce SSL with SASL
     #
+    # @param ssl_ca_certs_from_system [Boolean] whether to use the CA certs from the
+    #   system's default certificate store.
+    #
+    # @param partitioner [Partitioner, nil] the partitioner that should be used by the client.
+    #
     # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider instance that
     #   implements method token. See {Sasl::OAuth#initialize}
     #
-    # @param verify_hostname [Boolean, true] whether to verify that the host serving
+    # @param ssl_verify_hostname [Boolean, true] whether to verify that the host serving
     #   the SSL certificate and the signing chain of the certificate have the correct domains
     #   based on the CA certificate
     #
@@ -75,7 +80,7 @@ module Kafka
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -119,6 +124,7 @@ module Kafka
       )
 
       @cluster = initialize_cluster
+      @partitioner = partitioner || Partitioner.new
     end
 
     # Delivers a single message to the Kafka cluster.
@@ -157,7 +163,7 @@ module Kafka
 
       if partition.nil?
         partition_count = @cluster.partitions_for(topic).count
-        partition = Partitioner.partition_for_key(partition_count, message)
+        partition = @partitioner.call(partition_count, message)
       end
 
       buffer = MessageBuffer.new
@@ -295,6 +301,7 @@ module Kafka
         retry_backoff: retry_backoff,
         max_buffer_size: max_buffer_size,
         max_buffer_bytesize: max_buffer_bytesize,
+        partitioner: @partitioner,
         interceptors: interceptors
       )
     end
