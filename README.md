@@ -972,7 +972,7 @@ This configures the store to look up CA certificates from the system default cer
 
 In order to authenticate the client to the cluster, you need to pass in a certificate and key created for the client and trusted by the brokers.
 
-**NOTE**: You can disable hostname validation by passing `verify_hostname: false`.
+**NOTE**: You can disable hostname validation by passing `ssl_verify_hostname: false`.
 
 ```ruby
 kafka = Kafka.new(
@@ -981,6 +981,7 @@ kafka = Kafka.new(
   ssl_client_cert: File.read('my_client_cert.pem'),
   ssl_client_cert_key: File.read('my_client_cert_key.pem'),
   ssl_client_cert_key_password: 'my_client_cert_key_password',
+  ssl_verify_hostname: false,
   # ...
 )
 ```
