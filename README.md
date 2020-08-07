@@ -747,47 +747,46 @@ end
 #### Customizing Partition Assignment Strategy
 
 In some cases, you might want to assign more partitions to some consumers. For example, in applications inserting some records to a database, the consumers running on hosts nearby the database can process more messages than the consumers running on other hosts.
-You can implement a custom assignment strategy and use it by passing an object that implements `#user_data` and `#assign` as the argument `assignment_strategy` like below:
+You can use a custom assignment strategy like below:
 
 ```ruby
-class CustomAssignmentStrategy
-  def initialize(user_data)
-    @user_data = user_data
-  end
-
-  # @return [String, nil]
-  def user_data
-    @user_data
-  end
-
-  # Assign the topic partitions to the group members.
-  #
-  # @param cluster [Kafka::Cluster]
-  # @param members [Hash<String, Kafka::Protocol::JoinGroupResponse::Metadata>] a hash
-  #   mapping member ids to metadata
-  # @param partitions [Array<Kafka::ConsumerGroup::Assignor::Partition>] a list of
-  #   partitions the consumer group processes
-  # @return [Hash<String, Array<Kafka::ConsumerGroup::Assignor::Partition>] a hash
-  #   mapping member ids to partitions.
-  def assign(cluster:, members:, partitions:)
-    ...
-  end
-end
-Kafka::ConsumerGroup::Assignor.register_strategy(:custom, CustomAssignmentStrategy)
-
-strategy = CustomAssignmentStrategy.new("some-host-information")
-consumer = kafka.consumer(group_id: "some-group", assignment_strategy: strategy)
-```
-
-If the strategy doesn't need user data and constructor arguments, you don't need to define a class:
-
-```
-Kafka::ConsumerGroup::Assignor.register_strategy(:another_custom) do |cluster:, members:, partitions:|
+Kafka::ConsumerGroup::Assignor.register_strategy(:custom) do |cluster:, members:, partitions:|
   # strategy goes here
 end
-consumer = kafka.consumer(group_id: "some-group", assignment_strategy: :another_custom)
+consumer = kafka.consumer(group_id: "some-group", assignment_strategy: :custom)
 ```
 
+`members` is a hash mapping member ids to metadata, and `partitions` is a list of partitions the consumer group processes. The block should return a hash mapping member ids to partitions.
+For example, the following strategy assigns partitions randomly:
+
+```ruby
+Kafka::ConsumerGroup::Assignor.register_strategy(:custom) do |cluster:, members:, partitions:|
+  member_ids = members.keys
+  partitions.each_with_object(Hash.new {|h, k| h[k] = [] }) do |partition, partitions_per_member|
+    partitions_per_member[member_ids[rand(member_ids.count)]] << partition
+  end
+end
+```
+
+If the strategy needs user data, you can pass the option `user_data`, a proc that returns user data on each consumer:
+
+```ruby
+Kafka::ConsumerGroup::Assignor.register_strategy(:custom, user_data: ->{ ... }) do |cluster:, members:, partitions:|
+  # strategy goes here
+end
+```
+
+For example, the following strategy displays the IP address of each consumer:
+
+```ruby
+user_data_proc = ->{ Socket.ip_address_list.find(&:ipv4_private?).ip_address }
+Kafka::ConsumerGroup::Assignor.register_strategy(:custom, user_data: user_data_proc) do |cluster:, members:, partitions:|
+  members.each do |id, metadata|
+    puts "#{id}: #{metadata.user_data}"
+  end
+  ...
+end
+```
 
 ### Thread Safety
 

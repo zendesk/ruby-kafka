@@ -436,15 +436,16 @@ describe "Consumer API", functional: true do
   end
 
   example "consuming messages with a custom assignment strategy" do
-    topic = create_random_topic(num_partitions: 1)
-    messages = (1..1000).to_a
+    num_partitions = 3
+    topic = create_random_topic(num_partitions: num_partitions)
+    messages = (1..100 * num_partitions).to_a
 
     begin
       kafka = Kafka.new(kafka_brokers, client_id: "test")
       producer = kafka.producer
 
       messages.each do |i|
-        producer.produce(i.to_s, topic: topic, partition: 0)
+        producer.produce(i.to_s, topic: topic, partition: i % num_partitions)
       end
 
       producer.deliver_messages
@@ -453,35 +454,25 @@ describe "Consumer API", functional: true do
     group_id = "test#{rand(1000)}"
 
     mutex = Mutex.new
-    received_messages = []
+    received_messages = Hash.new {|h, k| h[k] = [] }
 
-    assignment_strategy_class = Class.new do
-      def initialize(weight)
-        @weight = weight
-      end
-
-      def user_data
-        @weight.to_s
-      end
-
-      def assign(cluster:, members:, partitions:)
-        member_ids = members.flat_map {|id, metadata| [id] * metadata.user_data.to_i }
-        partitions_per_member = Hash.new {|h, k| h[k] = [] }
-        partitions.each_with_index do |partition, index|
-          partitions_per_member[member_ids[index % member_ids.count]] << partition
-        end
-
-        partitions_per_member
-      end
+    consumer_weights = {}
+    user_data_proc = -> do
+      consumer_weights[Thread.current.object_id] ||= (consumer_weights.size + 1).to_s
     end
+    Kafka::ConsumerGroup::Assignor.register_strategy(:custom, user_data: user_data_proc) do |cluster:, members:, partitions:|
+      member_ids = members.flat_map {|id, metadata| [id] * metadata.user_data.to_i }
+      partitions_per_member = Hash.new {|h, k| h[k] = [] }
+      partitions.each_with_index do |partition, index|
+        partitions_per_member[member_ids[index % member_ids.count]] << partition
+      end
 
-    Kafka::ConsumerGroup::Assignor.register_strategy(:custom, assignment_strategy_class)
+      partitions_per_member
+    end
     begin
-      consumers = 2.times.map do |i|
-        assignment_strategy = assignment_strategy_class.new(i + 1)
-
+      consumers = 2.times.map do
         kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
+        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: :custom)
         consumer.subscribe(topic)
         consumer
       end
@@ -490,9 +481,9 @@ describe "Consumer API", functional: true do
         t = Thread.new do
           consumer.each_message do |message|
             mutex.synchronize do
-              received_messages << message
+              received_messages[consumer] << message
 
-              if received_messages.count == messages.count
+              if received_messages.values.flatten.count == messages.count
                 consumers.each(&:stop)
               end
             end
@@ -506,9 +497,10 @@ describe "Consumer API", functional: true do
 
       threads.each(&:join)
 
-      expect(received_messages.map(&:value).map(&:to_i)).to match_array messages
+      expect(received_messages.values.flatten.map {|v| v.value.to_i }).to match_array messages
+      expect(received_messages.values.map(&:count)).to match_array [messages.count / 3, messages.count / 3 * 2]
     ensure
-      Kafka::ConsumerGroup::Assignor.strategy_classes.delete("custom")
+      Kafka::ConsumerGroup::Assignor.strategies.delete("custom")
     end
   end
 

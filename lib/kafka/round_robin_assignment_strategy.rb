@@ -5,10 +5,6 @@ module Kafka
   # A consumer group partition assignment strategy that assigns partitions to
   # consumers in a round-robin fashion.
   class RoundRobinAssignmentStrategy
-    def user_data
-      nil
-    end
-
     # Assign the topic partitions to the group members.
     #
     # @param cluster [Kafka::Cluster]
@@ -31,4 +27,7 @@ module Kafka
 end
 
 require "kafka/consumer_group/assignor"
-Kafka::ConsumerGroup::Assignor.register_strategy(:roundrobin, Kafka::RoundRobinAssignmentStrategy)
+strategy = Kafka::RoundRobinAssignmentStrategy.new
+Kafka::ConsumerGroup::Assignor.register_strategy(:roundrobin) do |cluster:, members:, partitions:|
+  strategy.assign(cluster: cluster, members: members, partitions: partitions)
+end
