@@ -59,8 +59,6 @@ module Kafka
   #     producer.shutdown
   #
   class AsyncProducer
-    THREAD_MUTEX = Mutex.new
-
     # Initializes a new AsyncProducer.
     #
     # @param sync_producer [Kafka::Producer] the synchronous producer that should
@@ -94,6 +92,8 @@ module Kafka
 
       # The timer will no-op if the delivery interval is zero.
       @timer = Timer.new(queue: @queue, interval: delivery_interval)
+
+      @thread_mutex = Mutex.new
     end
 
     # Produces a message to the specified topic.
@@ -131,6 +131,8 @@ module Kafka
     # @see Kafka::Producer#deliver_messages
     # @return [nil]
     def deliver_messages
+      ensure_threads_running!
+
       @queue << [:deliver_messages, nil]
 
       nil
@@ -142,6 +144,8 @@ module Kafka
     # @see Kafka::Producer#shutdown
     # @return [nil]
     def shutdown
+      ensure_threads_running!
+
       @timer_thread && @timer_thread.exit
       @queue << [:shutdown, nil]
       @worker_thread && @worker_thread.join
@@ -152,15 +156,20 @@ module Kafka
     private
 
     def ensure_threads_running!
-      THREAD_MUTEX.synchronize do
-        @worker_thread = nil unless @worker_thread && @worker_thread.alive?
-        @worker_thread ||= Thread.new { @worker.run }
-      end
+      return if worker_thread_alive? && timer_thread_alive?
 
-      THREAD_MUTEX.synchronize do
-        @timer_thread = nil unless @timer_thread && @timer_thread.alive?
-        @timer_thread ||= Thread.new { @timer.run }
+      @thread_mutex.synchronize do
+        @worker_thread = Thread.new { @worker.run } unless worker_thread_alive?
+        @timer_thread = Thread.new { @timer.run } unless timer_thread_alive?
       end
+    end
+
+    def worker_thread_alive?
+      !!@worker_thread && @worker_thread.alive?
+    end
+
+    def timer_thread_alive?
+      !!@timer_thread && @timer_thread.alive?
     end
 
     def buffer_overflow(topic, message)
@@ -246,10 +255,10 @@ module Kafka
 
       private
 
-      def produce(*args)
+      def produce(value, **kwargs)
         retries = 0
         begin
-          @producer.produce(*args)
+          @producer.produce(value, **kwargs)
         rescue BufferOverflow => e
           deliver_messages
           if @max_retries == -1

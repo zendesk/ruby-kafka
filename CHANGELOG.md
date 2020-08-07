@@ -6,6 +6,11 @@ Changes and additions to the library will be listed here.
 
 - Support custom assignment strategy (#846).
 
+## 1.2.0
+
+- Add producer consumer interceptors (#837).
+- Add support for configuring the client partitioner (#848).
+
 ## 1.1.0
 
 - Extra sanity checking when marking offsets as processed (#824).
