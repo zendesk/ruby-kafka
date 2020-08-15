@@ -747,46 +747,85 @@ end
 #### Customizing Partition Assignment Strategy
 
 In some cases, you might want to assign more partitions to some consumers. For example, in applications inserting some records to a database, the consumers running on hosts nearby the database can process more messages than the consumers running on other hosts.
-You can use a custom assignment strategy like below:
+You can use a custom assignment strategy by passing an object that implements `#call` as the argument `assignment_strategy` like below:
 
 ```ruby
-Kafka::ConsumerGroup::Assignor.register_strategy(:custom) do |cluster:, members:, partitions:|
-  # strategy goes here
+class CustomAssignmentStrategy
+  def initialize(user_data)
+    @user_data = user_data
+  end
+
+  # Assign the topic partitions to the group members.
+  #
+  # @param cluster [Kafka::Cluster]
+  # @param members [Hash<String, Kafka::Protocol::JoinGroupResponse::Metadata>] a hash
+  #   mapping member ids to metadata
+  # @param partitions [Array<Kafka::ConsumerGroup::Assignor::Partition>] a list of
+  #   partitions the consumer group processes
+  # @return [Hash<String, Array<Kafka::ConsumerGroup::Assignor::Partition>] a hash
+  #   mapping member ids to partitions.
+  def call(cluster:, members:, partitions:)
+    ...
+  end
 end
-consumer = kafka.consumer(group_id: "some-group", assignment_strategy: :custom)
+
+strategy = CustomAssignmentStrategy.new("some-host-information")
+consumer = kafka.consumer(group_id: "some-group", assignment_strategy: strategy)
 ```
 
-`members` is a hash mapping member ids to metadata, and `partitions` is a list of partitions the consumer group processes. The block should return a hash mapping member ids to partitions.
-For example, the following strategy assigns partitions randomly:
+`members` is a hash mapping member IDs to metadata, and partitions is a list of partitions the consumer group processes. The method `call` must return a hash mapping member IDs to partitions. For example, the following strategy assigns partitions randomly:
 
 ```ruby
-Kafka::ConsumerGroup::Assignor.register_strategy(:custom) do |cluster:, members:, partitions:|
-  member_ids = members.keys
-  partitions.each_with_object(Hash.new {|h, k| h[k] = [] }) do |partition, partitions_per_member|
-    partitions_per_member[member_ids[rand(member_ids.count)]] << partition
+class RandomAssignmentStrategy
+  def call(cluster:, members:, partitions:)
+    member_ids = members.keys
+    partitions.each_with_object(Hash.new {|h, k| h[k] = [] }) do |partition, partitions_per_member|
+      partitions_per_member[member_ids[rand(member_ids.count)]] << partition
+    end
   end
 end
 ```
 
-If the strategy needs user data, you can pass the option `user_data`, a proc that returns user data on each consumer:
+If the strategy needs user data, you should define the method `user_data` that returns user data on each consumer. For example, the following strategy uses the consumers' IP addresses as user data:
 
 ```ruby
-Kafka::ConsumerGroup::Assignor.register_strategy(:custom, user_data: ->{ ... }) do |cluster:, members:, partitions:|
-  # strategy goes here
-end
-```
-
-For example, the following strategy displays the IP address of each consumer:
-
-```ruby
-user_data_proc = ->{ Socket.ip_address_list.find(&:ipv4_private?).ip_address }
-Kafka::ConsumerGroup::Assignor.register_strategy(:custom, user_data: user_data_proc) do |cluster:, members:, partitions:|
-  members.each do |id, metadata|
-    puts "#{id}: #{metadata.user_data}"
+class NetworkTopologyAssignmentStrategy
+  def user_data
+    Socket.ip_address_list.find(&:ipv4_private?).ip_address
   end
-  ...
+
+  def call(cluster:, members:, partitions:)
+    # Display the pair of the member ID and IP address
+    members.each do |id, metadata|
+      puts "#{id}: #{metadata.user_data}"
+    end
+
+    # Assign partitions considering the network topology
+    ...
+  end
 end
 ```
+
+Note that the strategy uses the class name as the default protocol name. You can change it by defining the method `protocol_name`:
+
+```ruby
+class NetworkTopologyAssignmentStrategy
+  def protocol_name
+    "networktopology"
+  end
+
+  def user_data
+    Socket.ip_address_list.find(&:ipv4_private?).ip_address
+  end
+
+  def call(cluster:, members:, partitions:)
+    ...
+  end
+end
+```
+
+As the method `call` might receive different user data from what it expects, you should avoid using the same protocol name as another strategy that uses different user data.
+
 
 ### Thread Safety
 

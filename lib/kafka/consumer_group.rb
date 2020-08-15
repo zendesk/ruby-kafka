@@ -22,7 +22,7 @@ module Kafka
       @assigned_partitions = {}
       @assignor = Assignor.new(
         cluster: cluster,
-        strategy: assignment_strategy || :roundrobin
+        strategy: assignment_strategy || RoundRobinAssignmentStrategy.new
       )
       @retention_time = retention_time
     end

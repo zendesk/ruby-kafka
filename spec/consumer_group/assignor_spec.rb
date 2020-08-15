@@ -1,46 +1,72 @@
 # frozen_string_literal: true
 
 describe Kafka::ConsumerGroup::Assignor do
-  describe ".register_strategy" do
-    context "when another strategy is already registered with the same name" do
-      around do |example|
-        described_class.register_strategy(:custom) { |**kwargs| [] }
-        example.run
-        described_class.strategies.delete("custom")
-      end
+  let(:cluster) { double(:cluster) }
+  let(:assignor) { described_class.new(cluster: cluster, strategy: strategy) }
 
-      it do
-        expect { described_class.register_strategy(:custom) { |**kwargs| [] } }.to raise_error(ArgumentError)
+  describe "#protocol_name" do
+    subject(:protocol_name) { assignor.protocol_name }
+
+    context "when the strategy has the method" do
+      let(:strategy) { double(protocol_name: "custom") }
+
+      it "returns the return value" do
+        expect(protocol_name).to eq "custom"
+      end
+    end
+
+    context "when the strategy has the method" do
+      let(:strategy) { Class.new.new }
+
+      it "returns the return value" do
+        expect(protocol_name).to match /\A#<Class:0x[0-9a-f]+>\z/
+      end
+    end
+  end
+
+  describe "#user_data" do
+    subject(:user_data) { assignor.user_data }
+
+    context "when the strategy has the method" do
+      let(:strategy) { double(user_data: "user_data") }
+
+      it "returns the return value" do
+        expect(user_data).to eq "user_data"
+      end
+    end
+
+    context "when the strategy has the method" do
+      let(:strategy) { Class.new.new }
+
+      it "returns the return value" do
+        expect(user_data).to be_nil
       end
     end
   end
 
   describe "#assign" do
-    let(:cluster) { double(:cluster) }
-    let(:assignor) { described_class.new(cluster: cluster, strategy: :custom) }
+    let(:strategy) do
+      klass = Class.new do
+        def call(cluster:, members:, partitions:)
+          assignment = {}
+          partition_count_per_member = (partitions.count.to_f / members.count).ceil
+          partitions.each_slice(partition_count_per_member).with_index do |chunk, index|
+            assignment[members.keys[index]] = chunk
+          end
 
-    let(:members) { Hash[(0...10).map {|i| ["member#{i}", nil] }] }
-    let(:topics) { ["greetings"] }
-    let(:partitions) { (0...30).map {|i| double(:"partition#{i}", partition_id: i) } }
-
-    before do
-      allow(cluster).to receive(:partitions_for) { partitions }
-
-      described_class.register_strategy(:custom) do |cluster:, members:, partitions:|
-        assignment = {}
-        partition_count_per_member = (partitions.count.to_f / members.count).ceil
-        partitions.each_slice(partition_count_per_member).with_index do |chunk, index|
-          assignment[members.keys[index]] = chunk
+          assignment
         end
-
-        assignment
       end
-    end
-    after do
-      described_class.strategies.delete("custom")
+      klass.new
     end
 
     it "assigns all partitions" do
+      members = Hash[(0...10).map {|i| ["member#{i}", nil] }]
+      topics = ["greetings"]
+      partitions = (0...30).map {|i| double(:"partition#{i}", partition_id: i) }
+
+      allow(cluster).to receive(:partitions_for) { partitions }
+
       assignments = assignor.assign(members: members, topics: topics)
 
       partitions.each do |partition|

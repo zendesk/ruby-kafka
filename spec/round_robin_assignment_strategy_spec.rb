@@ -7,7 +7,7 @@ describe Kafka::RoundRobinAssignmentStrategy do
     members = Hash[(0...10).map {|i| ["member#{i}", nil] }]
     partitions = (0...30).map {|i| double(:"partition#{i}", topic: "greetings", partition_id: i) }
 
-    assignments = strategy.assign(cluster: nil, members: members, partitions: partitions)
+    assignments = strategy.call(cluster: nil, members: members, partitions: partitions)
 
     partitions.each do |partition|
       member = assignments.values.find {|assigned_partitions|
@@ -27,7 +27,7 @@ describe Kafka::RoundRobinAssignmentStrategy do
       double(:"partition#{i}", topic: topic, partition_id: i)
     }
 
-    assignments = strategy.assign(cluster: nil, members: members, partitions: partitions)
+    assignments = strategy.call(cluster: nil, members: members, partitions: partitions)
 
     partitions.each do |partition|
       member = assignments.values.find {|assigned_partitions|
@@ -86,7 +86,7 @@ describe Kafka::RoundRobinAssignmentStrategy do
         }
       }
 
-      assignments = strategy.assign(cluster: nil, members: members, partitions: partitions)
+      assignments = strategy.call(cluster: nil, members: members, partitions: partitions)
 
       expect_all_partitions_assigned(topics, assignments)
       expect_even_assignments(topics, assignments)
