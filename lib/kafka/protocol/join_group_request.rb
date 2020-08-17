@@ -7,14 +7,14 @@ module Kafka
     class JoinGroupRequest
       PROTOCOL_TYPE = "consumer"
 
-      def initialize(group_id:, session_timeout:, rebalance_timeout:, member_id:, topics: [])
+      def initialize(group_id:, session_timeout:, rebalance_timeout:, member_id:, topics: [], protocol_name:, user_data: nil)
         @group_id = group_id
         @session_timeout = session_timeout * 1000 # Kafka wants ms.
         @rebalance_timeout = rebalance_timeout * 1000 # Kafka wants ms.
         @member_id = member_id || ""
         @protocol_type = PROTOCOL_TYPE
         @group_protocols = {
-          "roundrobin" => ConsumerGroupProtocol.new(topics: topics),
+          protocol_name => ConsumerGroupProtocol.new(topics: topics, user_data: user_data),
         }
       end
 

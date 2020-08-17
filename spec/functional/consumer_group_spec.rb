@@ -435,6 +435,80 @@ describe "Consumer API", functional: true do
     end
   end
 
+  example "consuming messages with a custom assignment strategy" do
+    num_partitions = 3
+    topic = create_random_topic(num_partitions: num_partitions)
+    messages = (1..100 * num_partitions).to_a
+
+    begin
+      kafka = Kafka.new(kafka_brokers, client_id: "test")
+      producer = kafka.producer
+
+      messages.each do |i|
+        producer.produce(i.to_s, topic: topic, partition: i % num_partitions)
+      end
+
+      producer.deliver_messages
+    end
+
+    group_id = "test#{rand(1000)}"
+
+    mutex = Mutex.new
+    received_messages = Hash.new {|h, k| h[k] = [] }
+
+    assignment_strategy_class = Class.new do
+      def initialize(weight)
+        @weight = weight
+      end
+
+      def user_data
+        @weight.to_s
+      end
+
+      def call(cluster:, members:, partitions:)
+        member_ids = members.flat_map {|id, metadata| [id] * metadata.user_data.to_i }
+        partitions_per_member = Hash.new {|h, k| h[k] = [] }
+        partitions.each_with_index do |partition, index|
+          partitions_per_member[member_ids[index % member_ids.count]] << partition
+        end
+
+        partitions_per_member
+      end
+    end
+
+    consumers = 2.times.map do |i|
+      assignment_strategy = assignment_strategy_class.new(i + 1)
+
+      kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
+      consumer.subscribe(topic)
+      consumer
+    end
+
+    threads = consumers.map do |consumer|
+      t = Thread.new do
+        consumer.each_message do |message|
+          mutex.synchronize do
+            received_messages[consumer] << message
+
+            if received_messages.values.flatten.count == messages.count
+              consumers.each(&:stop)
+            end
+          end
+        end
+      end
+
+      t.abort_on_exception = true
+
+      t
+    end
+
+    threads.each(&:join)
+
+    expect(received_messages.values.flatten.map {|v| v.value.to_i }).to match_array messages
+    expect(received_messages.values.map(&:count)).to match_array [messages.count / 3, messages.count / 3 * 2]
+  end
+
   def wait_until(timeout:)
     Timeout.timeout(timeout) do
       sleep 0.5 until yield

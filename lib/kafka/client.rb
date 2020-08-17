@@ -357,6 +357,8 @@ module Kafka
     #   If it is n (n > 0), the topic list will be refreshed every n seconds
     # @param interceptors [Array<Object>] a list of consumer interceptors that implement
     #   `call(Kafka::FetchedBatch)`.
+    # @param assignment_strategy [Object] a partition assignment strategy that
+    #   implements `protocol_type()`, `user_data()`, and `assign(members:, partitions:)`
     # @return [Consumer]
     def consumer(
         group_id:,
@@ -368,7 +370,8 @@ module Kafka
         offset_retention_time: nil,
         fetcher_max_queue_size: 100,
         refresh_topic_interval: 0,
-        interceptors: []
+        interceptors: [],
+        assignment_strategy: nil
     )
       cluster = initialize_cluster
 
@@ -387,6 +390,7 @@ module Kafka
         rebalance_timeout: rebalance_timeout,
         retention_time: retention_time,
         instrumenter: instrumenter,
+        assignment_strategy: assignment_strategy
       )
 
       fetcher = Fetcher.new(

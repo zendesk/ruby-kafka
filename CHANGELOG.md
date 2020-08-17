@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Support custom assignment strategy (#846).
+
 ## 1.2.0
 
 - Add producer consumer interceptors (#837).

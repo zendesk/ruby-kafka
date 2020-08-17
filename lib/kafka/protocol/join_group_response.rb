@@ -3,6 +3,8 @@
 module Kafka
   module Protocol
     class JoinGroupResponse
+      Metadata = Struct.new(:version, :topics, :user_data)
+
       attr_reader :error_code
 
       attr_reader :generation_id, :group_protocol
@@ -25,7 +27,13 @@ module Kafka
           group_protocol: decoder.string,
           leader_id: decoder.string,
           member_id: decoder.string,
-          members: Hash[decoder.array { [decoder.string, decoder.bytes] }],
+          members: Hash[
+            decoder.array do
+              member_id = decoder.string
+              d = Decoder.from_string(decoder.bytes)
+              [member_id, Metadata.new(d.int16, d.array { d.string }, d.bytes)]
+            end
+          ],
         )
       end
     end
