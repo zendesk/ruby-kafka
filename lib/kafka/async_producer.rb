@@ -217,7 +217,7 @@ module Kafka
 
           case operation
           when :produce
-            produce(*payload)
+            produce(payload[0], **payload[1])
             deliver_messages if threshold_reached?
           when :deliver_messages
             deliver_messages
