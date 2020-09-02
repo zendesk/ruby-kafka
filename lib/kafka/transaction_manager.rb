@@ -95,7 +95,7 @@ module Kafka
       force_transactional!
 
       if @transaction_state.uninitialized?
-        raise 'Transaction is uninitialized'
+        raise Kafka::InvalidTxnStateError, 'Transaction is uninitialized'
       end
 
       # Extract newly created partitions
@@ -138,8 +138,8 @@ module Kafka
 
     def begin_transaction
       force_transactional!
-      raise 'Transaction has already started' if @transaction_state.in_transaction?
-      raise 'Transaction is not ready' unless @transaction_state.ready?
+      raise Kafka::InvalidTxnStateError, 'Transaction has already started' if @transaction_state.in_transaction?
+      raise Kafka::InvalidTxnStateError, 'Transaction is not ready' unless @transaction_state.ready?
       @transaction_state.transition_to!(TransactionStateMachine::IN_TRANSACTION)
 
       @logger.info "Begin transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"
@@ -159,7 +159,7 @@ module Kafka
       end
 
       unless @transaction_state.in_transaction?
-        raise 'Transaction is not valid to commit'
+        raise Kafka::InvalidTxnStateError, 'Transaction is not valid to commit'
       end
 
       @transaction_state.transition_to!(TransactionStateMachine::COMMITTING_TRANSACTION)
@@ -192,7 +192,7 @@ module Kafka
       end
 
       unless @transaction_state.in_transaction?
-        raise 'Transaction is not valid to abort'
+        raise Kafka::InvalidTxnStateError, 'Transaction is not valid to abort'
       end
 
       @transaction_state.transition_to!(TransactionStateMachine::ABORTING_TRANSACTION)
@@ -221,7 +221,7 @@ module Kafka
       force_transactional!
 
       unless @transaction_state.in_transaction?
-        raise 'Transaction is not valid to send offsets'
+        raise Kafka::InvalidTxnStateError, 'Transaction is not valid to send offsets'
       end
 
       add_response = transaction_coordinator.add_offsets_to_txn(
@@ -264,11 +264,11 @@ module Kafka
 
     def force_transactional!
       unless transactional?
-        raise 'Please turn on transactional mode to use transaction'
+        raise Kafka::InvalidTxnStateError, 'Please turn on transactional mode to use transaction'
       end
 
       if @transactional_id.nil? || @transactional_id.empty?
-        raise 'Please provide a transaction_id to use transactional mode'
+        raise Kafka::InvalidTxnStateError, 'Please provide a transaction_id to use transactional mode'
       end
     end
 
