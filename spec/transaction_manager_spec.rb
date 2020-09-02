@@ -401,17 +401,15 @@ describe ::Kafka::TransactionManager do
         manager.init_transactions
       end
 
-      it 'raises exception' do
-        expect do
-          manager.abort_transaction
-        end.to raise_error(Kafka::InvalidTxnStateError, /transaction is not valid to abort/i)
+      it 'does not raise an exception' do
+        expect { manager.abort_transaction }.not_to raise_error
       end
 
-      it 'changes state to error' do
+      it 'leaves transaction manager in ready state' do
         begin
           manager.abort_transaction
         rescue; end
-        expect(manager.error?).to eql(true)
+        expect(manager.ready?).to eql(true)
       end
     end
 

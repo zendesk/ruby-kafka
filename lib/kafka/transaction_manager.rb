@@ -192,7 +192,8 @@ module Kafka
       end
 
       unless @transaction_state.in_transaction?
-        raise Kafka::InvalidTxnStateError, 'Transaction is not valid to abort'
+        @logger.warn('Aborting transaction that was never opened on brokers')
+        return
       end
 
       @transaction_state.transition_to!(TransactionStateMachine::ABORTING_TRANSACTION)
@@ -248,6 +249,10 @@ module Kafka
 
     def error?
       @transaction_state.error?
+    end
+
+    def ready?
+      @transaction_state.ready?
     end
 
     def close
