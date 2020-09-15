@@ -210,7 +210,7 @@ describe ::Kafka::TransactionManager do
           manager.add_partitions_to_transaction(
             'hello' => [1, 2, 3]
           )
-        end.to raise_error(/please turn on transactional mode/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /please turn on transactional mode/i)
       end
     end
   end
@@ -256,7 +256,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.init_transactions
-        end.to raise_error(/please turn on transactional mode/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /please turn on transactional mode/i)
       end
 
       it 'changes state to error' do
@@ -291,7 +291,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.begin_transaction
-        end.to raise_error(/transaction has already started/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /transaction has already started/i)
       end
 
       it 'changes state to error' do
@@ -306,7 +306,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.begin_transaction
-        end.to raise_error(/transaction is not ready/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /transaction is not ready/i)
       end
 
       it 'changes state to error' do
@@ -325,7 +325,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.begin_transaction
-        end.to raise_error(/please turn on transactional mode/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /please turn on transactional mode/i)
       end
 
       it 'changes state to error' do
@@ -401,17 +401,15 @@ describe ::Kafka::TransactionManager do
         manager.init_transactions
       end
 
-      it 'raises exception' do
-        expect do
-          manager.abort_transaction
-        end.to raise_error(/transaction is not valid to abort/i)
+      it 'does not raise an exception' do
+        expect { manager.abort_transaction }.not_to raise_error
       end
 
-      it 'changes state to error' do
+      it 'leaves transaction manager in ready state' do
         begin
           manager.abort_transaction
         rescue; end
-        expect(manager.error?).to eql(true)
+        expect(manager.ready?).to eql(true)
       end
     end
 
@@ -423,7 +421,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.abort_transaction
-        end.to raise_error(/please turn on transactional mode/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /please turn on transactional mode/i)
       end
 
       it 'changes state to error' do
@@ -502,7 +500,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.commit_transaction
-        end.to raise_error(/transaction is not valid to commit/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /transaction is not valid to commit/i)
       end
 
       it 'changes state to error' do
@@ -521,7 +519,7 @@ describe ::Kafka::TransactionManager do
       it 'raises exception' do
         expect do
           manager.commit_transaction
-        end.to raise_error(/please turn on transactional mode/i)
+        end.to raise_error(Kafka::InvalidTxnStateError, /please turn on transactional mode/i)
       end
 
       it 'changes state to error' do
