@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.3.0
+
 - Support custom assignment strategy (#846).
 - Improved Exceptions in TransactionManager (#862).
 
