@@ -4,6 +4,7 @@ describe ::Kafka::TransactionManager do
   let!(:logger) { LOGGER }
   let!(:cluster) { double(:cluster) }
   let!(:transaction_coordinator) { double(:broker) }
+  let!(:group_coordinator) { double(:broker) }
 
   let!(:manager) do
     described_class.new(logger: logger, cluster: cluster)
@@ -12,6 +13,9 @@ describe ::Kafka::TransactionManager do
   before do
     allow(cluster).to receive(:get_transaction_coordinator).and_return(
       transaction_coordinator
+    )
+    allow(cluster).to receive(:get_group_coordinator).and_return(
+      group_coordinator
     )
     allow(transaction_coordinator).to receive(:init_producer_id).and_return(
       Kafka::Protocol::InitProducerIDResponse.new(
@@ -586,9 +590,10 @@ describe ::Kafka::TransactionManager do
             error_code: 0
           )
         )
-        allow(transaction_coordinator).to receive(:txn_offset_commit).and_return(
-          Kafka::Protocol::TxnOffsetCommitResponse.new(
-            error_code: 0
+        allow(group_coordinator).to receive(:txn_offset_commit).and_return(
+          txn_offset_commit_response(
+            'hello' => [1],
+            'world' => [2]
           )
         )
       end
@@ -596,7 +601,63 @@ describe ::Kafka::TransactionManager do
       it 'notifies transaction coordinator' do
         manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
         expect(transaction_coordinator).to have_received(:add_offsets_to_txn)
-        expect(transaction_coordinator).to have_received(:txn_offset_commit)
+        expect(group_coordinator).to have_received(:txn_offset_commit)
+      end
+    end
+
+    context 'transaction coordinator returns error' do
+      before do
+        manager.init_transactions
+        manager.begin_transaction
+        allow(transaction_coordinator).to receive(:add_offsets_to_txn).and_return(
+          Kafka::Protocol::AddOffsetsToTxnResponse.new(
+            error_code: 47
+          )
+        )
+      end
+
+      it 'raises exception' do
+        expect do
+          manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
+        end.to raise_error(Kafka::InvalidProducerEpochError)
+      end
+
+      it 'changes state to error' do
+        begin
+          manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
+        rescue; end
+        expect(manager.error?).to eql(true)
+      end
+    end
+
+    context 'group coordinator returns error' do
+      before do
+        manager.init_transactions
+        manager.begin_transaction
+        allow(transaction_coordinator).to receive(:add_offsets_to_txn).and_return(
+          Kafka::Protocol::AddOffsetsToTxnResponse.new(
+            error_code: 0
+          )
+        )
+        allow(group_coordinator).to receive(:txn_offset_commit).and_return(
+          txn_offset_commit_response(
+            { 'hello' => [1], 'world' => [2] },
+            error_code: 47
+          )
+        )
+      end
+
+      it 'raises exception' do
+        expect do
+          manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
+        end.to raise_error(Kafka::InvalidProducerEpochError)
+      end
+
+      it 'changes state to error' do
+        begin
+          manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
+        rescue; end
+        expect(manager.error?).to eql(true)
       end
     end
   end
@@ -611,6 +672,22 @@ def success_add_partitions_to_txn_response(topics)
           Kafka::Protocol::AddPartitionsToTxnResponse::PartitionError.new(
             partition: partition,
             error_code: 0
+          )
+        end
+      )
+    end
+  )
+end
+
+def txn_offset_commit_response(topics, error_code: 0)
+  Kafka::Protocol::TxnOffsetCommitResponse.new(
+    errors: topics.map do |topic, partitions|
+      Kafka::Protocol::TxnOffsetCommitResponse::TopicPartitionsError.new(
+        topic: topic,
+        partitions: partitions.map do |partition|
+          Kafka::Protocol::TxnOffsetCommitResponse::PartitionError.new(
+            partition: partition,
+            error_code: error_code
           )
         end
       )
