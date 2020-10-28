@@ -108,6 +108,18 @@ module Kafka
       end
     end
 
+    class CompressionSubscriber < StatsdSubscriber
+      def compress(event)
+        message_count = event.payload.fetch(:message_count)
+        compressed_bytesize = event.payload.fetch(:compressed_bytesize)
+
+        gauge("compressor.compressed_bytesize", compressed_bytesize)
+        count("compressor.message_count", message_count)
+      end
+
+      attach_to "compressor.kafka"
+    end
+
     class ConnectionSubscriber < StatsdSubscriber
       def request(event)
         client = event.payload.fetch(:client_id)
