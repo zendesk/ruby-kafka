@@ -355,4 +355,56 @@ describe Kafka::Prometheus do
       expect(metric.get(labels: key)).to eq 4
     end
   end
+
+  context 'when a compressor compresses a message' do
+    let(:payload) { { message_count: 7, compressed_bytesize: 8, uncompressed_bytesize: 16 } }
+    let(:hook) { 'compress.compressor' }
+
+    it 'emits metric compressed_message_count' do
+      metric = @registry.get(:compressed_message_count)
+      expect(metric.get).to eq 7
+    end
+
+    it 'emits metric compressed_bytesize' do
+      expected_result = {
+        "+Inf"=>1.0,
+        "0.005"=>0.0,
+        "0.01"=>0.0,
+        "0.025"=>0.0,
+        "0.05"=>0.0,
+        "0.1"=>0.0,
+        "0.25"=>0.0,
+        "0.5"=>0.0,
+        "1"=>0.0,
+        "2.5"=>0.0,
+        "5"=>0.0,
+        "10"=>1.0,
+        "sum"=>8.0
+      }
+
+      metric = @registry.get(:compressed_bytesize)
+      expect(metric.get).to eq expected_result
+    end
+
+    it 'emits metric compression_factor' do
+      expected_result = {
+        "+Inf"=>1.0,
+        "0.005"=>0.0,
+        "0.01"=>0.0,
+        "0.025"=>0.0,
+        "0.05"=>0.0,
+        "0.1"=>0.0,
+        "0.25"=>0.0,
+        "0.5"=>0.0,
+        "1"=>1.0,
+        "2.5"=>1.0,
+        "5"=>1.0,
+        "10"=>1.0,
+        "sum"=>0.5
+      }
+
+      metric = @registry.get(:compression_factor)
+      expect(metric.get).to eq expected_result
+    end
+  end
 end

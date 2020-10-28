@@ -62,9 +62,11 @@ module Kafka
       def compress(event)
         message_count = event.payload.fetch(:message_count)
         compressed_bytesize = event.payload.fetch(:compressed_bytesize)
+        uncompressed_bytesize = event.payload.fetch(:uncompressed_bytesize)
 
-        gauge("compressor.compressed_bytesize", compressed_bytesize)
+        histogram("compressor.compressed_bytesize", compressed_bytesize)
         count("compressor.message_count", message_count)
+        histogram("compressor.compression_factor", compressed_bytesize.to_f / uncompressed_bytesize.to_f)
       end
 
       attach_to "compressor.kafka"
