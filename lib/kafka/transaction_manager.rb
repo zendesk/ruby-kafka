@@ -233,14 +233,23 @@ module Kafka
       )
       Protocol.handle_error(add_response.error_code)
 
-      send_response = transaction_coordinator.txn_offset_commit(
+      send_response = group_coordinator(group_id: group_id).txn_offset_commit(
         transactional_id: @transactional_id,
         group_id: group_id,
         producer_id: @producer_id,
         producer_epoch: @producer_epoch,
         offsets: offsets
       )
-      Protocol.handle_error(send_response.error_code)
+      send_response.errors.each do |tp|
+        tp.partitions.each do |partition|
+          Protocol.handle_error(partition.error_code)
+        end
+      end
+
+      nil
+    rescue
+      @transaction_state.transition_to!(TransactionStateMachine::ERROR)
+      raise
     end
 
     def in_transaction?
@@ -280,6 +289,12 @@ module Kafka
     def transaction_coordinator
       @cluster.get_transaction_coordinator(
         transactional_id: @transactional_id
+      )
+    end
+
+    def group_coordinator(group_id:)
+      @cluster.get_group_coordinator(
+        group_id: group_id
       )
     end
 
