@@ -176,6 +176,12 @@ require "kafka"
 kafka = Kafka.new(["kafka1:9092", "kafka2:9092"], client_id: "my-application")
 ```
 
+You can also use a hostname with seed brokers' IP addresses:
+
+```ruby
+kafka = Kafka.new("seed-brokers:9092", client_id: "my-application", resolve_seed_brokers: true)
+```
+
 ### Producing Messages to Kafka
 
 The simplest way to write a message to a Kafka topic is to call `#deliver_message`:
