@@ -591,10 +591,10 @@ describe ::Kafka::TransactionManager do
           )
         )
         allow(group_coordinator).to receive(:txn_offset_commit).and_return(
-          txn_offset_commit_response(
+          txn_offset_commit_response({
             'hello' => [1],
             'world' => [2]
-          )
+          })
         )
       end
 
