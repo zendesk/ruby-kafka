@@ -476,12 +476,21 @@ describe "Consumer API", functional: true do
       end
     end
 
+    joinined_consumers = []
     consumers = 2.times.map do |i|
       assignment_strategy = assignment_strategy_class.new(i + 1)
 
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
       consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
       consumer.subscribe(topic)
+
+      allow(consumer).to receive(:trigger_heartbeat).and_wrap_original do |m, *args|
+        joinined_consumers |= [consumer]
+        # Wait until all the consumers try to join to prevent one consumer from processing all messages
+        raise Kafka::HeartbeatError if joinined_consumers.size < consumers.size
+        m.call(*args)
+      end
+
       consumer
     end
 
