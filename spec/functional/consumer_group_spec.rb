@@ -476,7 +476,7 @@ describe "Consumer API", functional: true do
       end
     end
 
-    joinined_consumers = []
+    joined_consumers = []
     consumers = 2.times.map do |i|
       assignment_strategy = assignment_strategy_class.new(i + 1)
 
@@ -485,9 +485,9 @@ describe "Consumer API", functional: true do
       consumer.subscribe(topic)
 
       allow(consumer).to receive(:trigger_heartbeat).and_wrap_original do |m, *args|
-        joinined_consumers |= [consumer]
+        joined_consumers |= [consumer]
         # Wait until all the consumers try to join to prevent one consumer from processing all messages
-        raise Kafka::HeartbeatError if joinined_consumers.size < consumers.size
+        raise Kafka::HeartbeatError if joined_consumers.size < consumers.size
         m.call(*args)
       end
 
