@@ -70,11 +70,10 @@ describe "Topic management API", functional: true do
 
     topic = generate_topic_name
     kafka.create_topic(topic, num_partitions: 3)
-    configs = kafka.describe_topic(topic, %w(retention.ms retention.bytes non_exists))
+    configs = kafka.describe_topic(topic, %w(retention.ms))
 
-    expect(configs.keys).to eql(%w(retention.ms retention.bytes))
+    expect(configs.keys).to eql(%w(retention.ms))
     expect(configs['retention.ms']).to be_a(String)
-    expect(configs['retention.bytes']).to be_a(String)
   end
 
   example "alter a topic configuration" do
@@ -90,8 +89,9 @@ describe "Topic management API", functional: true do
       'max.message.bytes' => '987654'
     )
 
-    configs = kafka.describe_topic(topic, %w(retention.ms max.message.bytes))
-    expect(configs['retention.ms']).to eql('1234567')
-    expect(configs['max.message.bytes']).to eql('987654')
+    retention_configs = kafka.describe_topic(topic, %w(retention.ms))
+    expect(retention_configs['retention.ms']).to eql('1234567')
+    max_msg_bytes_configs = kafka.describe_topic(topic, %w(max.message.bytes))
+    expect(max_msg_bytes_configs['max.message.bytes']).to eql('987654')
   end
 end
