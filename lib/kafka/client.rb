@@ -65,7 +65,7 @@ module Kafka
     # @param ssl_ca_certs_from_system [Boolean] whether to use the CA certs from the
     #   system's default certificate store.
     #
-    # @param partitioner [Partitioner, nil] the partitioner that should be used by the client.
+    # @param partitioner [String, nil] the partitioner that should be used by the client.
     #
     # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider instance that
     #   implements method token. See {Sasl::OAuth#initialize}
@@ -124,7 +124,11 @@ module Kafka
       )
 
       @cluster = initialize_cluster
-      @partitioner = partitioner || Partitioner.new
+      @partitioner = if partitioner
+                       Object.const_get(partitioner).new
+                     else
+                       Partitioner.new
+                     end
     end
 
     # Delivers a single message to the Kafka cluster.
