@@ -77,7 +77,7 @@ module Kafka
         record_batch_encoder.write_int8(MAGIC_BYTE)
 
         body = encode_record_batch_body
-        crc = Digest::CRC32c.checksum(body)
+        crc = ::Digest::CRC32c.checksum(body)
 
         record_batch_encoder.write_int32(crc)
         record_batch_encoder.write(body)

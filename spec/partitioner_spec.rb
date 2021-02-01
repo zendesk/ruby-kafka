@@ -31,7 +31,7 @@ describe Kafka::Partitioner, "#call" do
   end
 
   describe "murmur2 partitioner" do
-    let(:partitioner) { Kafka::Murmur2Partitioner.new }
+    let(:partitioner) { Kafka::Partitioner.new(hash_function: :murmur2) }
     let(:message) { double(:message, key: nil, partition_key: "yolo") }
 
     it "deterministically returns a partition number for a partition key and partition count" do

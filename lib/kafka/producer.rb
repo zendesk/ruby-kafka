@@ -2,7 +2,6 @@
 
 require "set"
 require "kafka/partitioner"
-require "kafka/murmur2_partitioner"
 require "kafka/message_buffer"
 require "kafka/produce_operation"
 require "kafka/pending_message_queue"
