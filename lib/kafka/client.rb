@@ -67,8 +67,6 @@ module Kafka
     #
     # @param partitioner [Partitioner, nil] the partitioner that should be used by the client.
     #
-    # @param partitioner_klass [String, nil] the partitioner klass that should be used by the client if no partitioner is supplied.
-    #
     # @param sasl_oauth_token_provider [Object, nil] OAuthBearer Token Provider instance that
     #   implements method token. See {Sasl::OAuth#initialize}
     #
@@ -82,7 +80,7 @@ module Kafka
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, partitioner_klass: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -126,14 +124,7 @@ module Kafka
       )
 
       @cluster = initialize_cluster
-      @partitioner =
-        if partitioner
-          partitioner
-        elsif partitioner_klass
-          Object.const_get(partitioner_klass).new
-        else
-          Partitioner.new
-        end
+      @partitioner = partitioner || Partitioner.new
     end
 
     # Delivers a single message to the Kafka cluster.
