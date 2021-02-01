@@ -10,14 +10,12 @@ module Kafka
       :murmur2 => Murmur2Hash.new
     }.freeze
 
-    # TODO: Should I just call this `hashing` or something?
     def self.find_digest(name)
       digest = FUNCTIONS_BY_NAME.fetch(name) do
         raise LoadError, "Unknown hash function #{name}"
       end
 
       digest.load
-
       digest
     end
   end
