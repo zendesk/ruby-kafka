@@ -6,6 +6,8 @@ module Kafka
 
   # Assigns partitions to messages.
   class Partitioner
+    # @param hash_function [Symbol, nil] the algorithm used to compute a messages
+    #   destination partition. Default is :crc32
     def initialize(hash_function: nil)
       @digest = Digest.find_digest(hash_function || :crc32)
     end
