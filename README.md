@@ -382,6 +382,16 @@ partitioner = -> (partition_count, message) { ... }
 Kafka.new(partitioner: partitioner, ...)
 ```
 
+##### Supported partitioning schemes
+
+In order for semantic partitioning to work a `partition_key` must map to the same partition number every time. The general approach, and the one used by this library, is to hash the key and mod it by the number of partitions. There are many different algorithms to calculate a hash. By default `crc32` is used. `murmur2` is also supported for compatibility with Java based Kafka producers.
+
+To use `murmur2` hashing pass it as an argument to `Partitioner`. For example:
+
+```ruby
+Kafka.new(partitioner: Kafka::Partitioner.new(hash_function: :murmur2))
+```
+
 #### Buffering and Error Handling
 
 The producer is designed for resilience in the face of temporary network errors, Kafka broker failovers, and other issues that prevent the client from writing messages to the destination topics. It does this by employing local, in-memory buffers. Only when messages are acknowledged by a Kafka broker will they be removed from the buffer.
