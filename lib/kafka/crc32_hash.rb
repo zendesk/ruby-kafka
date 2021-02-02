@@ -5,7 +5,7 @@ require "zlib"
 module Kafka
   class Crc32Hash
 
-    # crc32 is part of the gems dependencies
+    # crc32 is supported natively
     def load; end
 
     def hash(value)
