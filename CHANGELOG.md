@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Fix `Kafka::TransactionManager#send_offsets_to_txn` (#866).
+- Add support for `murmur2` based partitioning.
 
 ## 1.3.0
 
