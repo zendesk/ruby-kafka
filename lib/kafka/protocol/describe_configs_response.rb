@@ -22,7 +22,7 @@ module Kafka
           @name = name
           @value = value
           @read_only = read_only
-          @is_default = is_default
+          @config_source = config_source
           @is_sensitive = is_sensitive
           @synonyms = synonyms
         end
