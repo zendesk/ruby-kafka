@@ -4,8 +4,9 @@ module Kafka
   module Protocol
 
     class DescribeConfigsRequest
-      def initialize(resources:)
+      def initialize(resources:, include_synonyms: false)
         @resources = resources
+        @include_synonyms = include_synonyms
       end
 
       def api_key
@@ -13,7 +14,7 @@ module Kafka
       end
 
       def api_version
-        0
+        1
       end
 
       def response_class
@@ -28,6 +29,7 @@ module Kafka
             encoder.write_string(config)
           end
         end
+        encoder.write_boolean(@include_synonyms)
       end
     end
 

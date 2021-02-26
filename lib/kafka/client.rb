@@ -637,8 +637,8 @@ module Kafka
     # @param name [String] the name of the topic.
     # @param configs [Array<String>] array of desired config names.
     # @return [Hash<String, String>]
-    def describe_topic(name, configs = [])
-      @cluster.describe_topic(name, configs)
+    def describe_topic(name, configs: nil, config_source: nil)
+      @cluster.describe_topic(name, configs, config_source)
     end
 
     # Alter the configuration of a topic.

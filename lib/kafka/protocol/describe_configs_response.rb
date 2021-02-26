@@ -16,14 +16,25 @@ module Kafka
       end
 
       class ConfigEntry
-        attr_reader :name, :value, :read_only, :is_default, :is_sensitive
+        attr_reader :name, :value, :read_only, :config_source, :is_sensitive, :synonyms
 
-        def initialize(name:, value:, read_only:, is_default:, is_sensitive:)
+        def initialize(name:, value:, read_only:, config_source:, is_sensitive:, synonyms:)
           @name = name
           @value = value
           @read_only = read_only
           @is_default = is_default
           @is_sensitive = is_sensitive
+          @synonyms = synonyms
+        end
+      end
+
+      class SynonymEntry
+        attr_reader :name, :value, :source
+
+        def initialize(name:, value:, source:)
+          @name = name
+          @value = value
+          @source = source
         end
       end
 
@@ -51,8 +62,15 @@ module Kafka
               name: decoder.string,
               value: decoder.string,
               read_only: decoder.boolean,
-              is_default: decoder.boolean,
+              config_source: decoder.int8,
               is_sensitive: decoder.boolean,
+              synonyms: decoder.array do
+                SynonymEntry.new(
+                  name: decoder.string,
+                  value: decoder.string,
+                  source: decoder.int8
+                )
+              end
             )
           end
 
@@ -68,6 +86,5 @@ module Kafka
         new(throttle_time_ms: throttle_time_ms, resources: resources)
       end
     end
-
   end
 end

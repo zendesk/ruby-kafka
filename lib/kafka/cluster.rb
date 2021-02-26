@@ -246,7 +246,7 @@ module Kafka
       @logger.info "Topic `#{name}` was deleted"
     end
 
-    def describe_topic(name, configs = [])
+    def describe_topic(name, configs, config_source)
       options = {
         resources: [[Kafka::Protocol::RESOURCE_TYPE_TOPIC, name, configs]]
       }
@@ -261,6 +261,7 @@ module Kafka
       end
       topic_description = response.resources.first
       topic_description.configs.each_with_object({}) do |config, hash|
+        next unless config_source.nil? || config.config_source == config_source
         hash[config.name] = config.value
       end
     end
