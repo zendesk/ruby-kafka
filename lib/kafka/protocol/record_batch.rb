@@ -213,7 +213,7 @@ module Kafka
       end
 
       def mark_control_record
-        if in_transaction && is_control_batch
+        if is_control_batch
           record = @records.first
           record.is_control_record = true unless record.nil?
         end
