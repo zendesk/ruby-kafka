@@ -13,9 +13,12 @@ module Kafka
       end
 
       def self.decode(decoder)
+        error_code = decoder.int16
+        member_assignment_bytes = decoder.bytes
+
         new(
-          error_code: decoder.int16,
-          member_assignment: MemberAssignment.decode(Decoder.from_string(decoder.bytes)),
+          error_code: error_code,
+          member_assignment: member_assignment_bytes ? MemberAssignment.decode(Decoder.from_string(member_assignment_bytes)) : nil
         )
       end
     end
