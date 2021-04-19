@@ -74,16 +74,22 @@ module Kafka
     #   the SSL certificate and the signing chain of the certificate have the correct domains
     #   based on the CA certificate
     #
+    # @param resolve_seed_brokers [Boolean] whether to resolve each hostname of the seed brokers.
+    #   If a broker is resolved to multiple IP addresses, the client tries to connect to each
+    #   of the addresses until it can connect.
+    #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
                    sasl_scram_username: nil, sasl_scram_password: nil, sasl_scram_mechanism: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true)
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true,
+                   resolve_seed_brokers: false)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
+      @resolve_seed_brokers = resolve_seed_brokers
 
       ssl_context = SslContext.build(
         ca_cert_file_path: ssl_ca_cert_file_path,
@@ -809,6 +815,7 @@ module Kafka
         seed_brokers: @seed_brokers,
         broker_pool: broker_pool,
         logger: @logger,
+        resolve_seed_brokers: @resolve_seed_brokers,
       )
     end
 
