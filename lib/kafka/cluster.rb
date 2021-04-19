@@ -120,7 +120,7 @@ module Kafka
 
     # Finds the broker acting as the coordinator of the given group.
     #
-    # @param group_id: [String]
+    # @param group_id [String]
     # @return [Broker] the broker that's currently coordinator.
     def get_group_coordinator(group_id:)
       @logger.debug "Getting group coordinator for `#{group_id}`"
@@ -130,7 +130,7 @@ module Kafka
 
     # Finds the broker acting as the coordinator of the given transaction.
     #
-    # @param transactional_id: [String]
+    # @param transactional_id [String]
     # @return [Broker] the broker that's currently coordinator.
     def get_transaction_coordinator(transactional_id:)
       @logger.debug "Getting transaction coordinator for `#{transactional_id}`"
