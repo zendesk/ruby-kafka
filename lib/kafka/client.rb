@@ -210,6 +210,8 @@ module Kafka
       attempt = 1
 
       begin
+        @cluster.refresh_metadata_if_necessary!
+
         operation.execute
 
         unless buffer.empty?
