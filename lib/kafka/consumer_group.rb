@@ -189,9 +189,14 @@ module Kafka
       if group_leader?
         @logger.info "Chosen as leader of group `#{@group_id}`"
 
+        topics = Set.new
+        @members.each do |_member, metadata|
+          metadata.topics.each { |t| topics.add(t) }
+        end
+
         group_assignment = @assignor.assign(
           members: @members,
-          topics: @topics,
+          topics: topics,
         )
       end
 
