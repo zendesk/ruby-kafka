@@ -2,7 +2,7 @@
 
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
 
-
+ 
 ## Table of Contents
 
 1. [Installation](#installation)
