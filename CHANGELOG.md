@@ -9,6 +9,7 @@ Changes and additions to the library will be listed here.
 - Add support for `murmur2` based partitioning.
 - Add `resolve_seed_brokers` option to support seed brokers' hostname with multiple addresses (#877).
 - Handle SyncGroup responses with a non-zero error and no assignments (#896).
+- Add support for non-identical topic subscriptions within the same consumer group (#525 / #764).
 
 ## 1.3.0
 
