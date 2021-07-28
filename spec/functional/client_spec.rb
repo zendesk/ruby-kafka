@@ -156,31 +156,6 @@ describe "Client API", functional: true do
     expect(message.key).to eq "xoxo"
   end
 
-  example "delivering a message to a topic that doesn't yet exist" do
-    topic = "unknown-topic-#{SecureRandom.uuid}"
-    now = Time.now
-
-    expect {
-      Timecop.freeze(now) do
-        kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0, headers: { hello: 'World' })
-      end
-    }.to raise_exception(Kafka::DeliveryFailed) {|exception|
-      expect(exception.failed_messages).to eq [
-        Kafka::PendingMessage.new(
-          value: "yolo",
-          key: "xoxo",
-          headers: {
-            hello: "World",
-          },
-          topic: topic,
-          partition: 0,
-          partition_key: nil,
-          create_time: now
-        )
-      ]
-    }
-  end
-
   example "enumerating the messages in a topic" do
     values = (1..10).to_a
 
