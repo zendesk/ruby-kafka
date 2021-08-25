@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.4.0
+
 - Refresh a stale cluster's metadata if necessary on `Kafka::Client#deliver_message` (#901).
 - Fix `Kafka::TransactionManager#send_offsets_to_txn` (#866).
 - Add support for `murmur2` based partitioning.
