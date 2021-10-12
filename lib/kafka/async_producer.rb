@@ -248,7 +248,7 @@ module Kafka
                   message_count: @producer.buffer_size + @queue.size,
                 })
 
-                if (!@finally.nil?)
+                if !@finally.nil?
                   messages = @queue.map { |e| e[1] }
                   @finally.call(messages)
                 end
