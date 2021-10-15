@@ -249,7 +249,11 @@ module Kafka
                 })
 
                 if !@finally.nil?
-                  messages = @queue.map { |e| e[1] }
+                  queue.close
+                  messages = []
+                  queue.size.times do 
+                    messages << queue.pop
+                  end
                   @finally.call(messages)
                 end
               end
@@ -282,7 +286,7 @@ module Kafka
             sleep @retry_backoff**retries
             retry
           else
-            # @finally(value)
+            @finally(value)
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
             @instrumenter.instrument("error.async_producer", { error: e })
           end
