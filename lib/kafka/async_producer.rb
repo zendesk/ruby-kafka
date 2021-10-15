@@ -219,6 +219,14 @@ module Kafka
       rescue Exception => e
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
+        if !@finally.nil?
+          @queue.close
+          messages = []
+          @queue.size.times do 
+            messages << @queue.pop[1]
+          end
+          @finally.call(messages)
+        end
       ensure
         @producer.shutdown
         @logger.pop_tags
@@ -252,7 +260,7 @@ module Kafka
                   queue.close
                   messages = []
                   queue.size.times do 
-                    messages << queue.pop
+                    messages << queue.pop[1]
                   end
                   @finally.call(messages)
                 end
