@@ -78,6 +78,7 @@ module Kafka
       @instrumenter.instrument("compress.compressor") do |notification|
         notification[:message_count] = record_batch.size
         notification[:compressed_bytesize] = data.bytesize
+        notification[:uncompressed_bytesize] = record_batch.records.reduce(0) { |sum, record| record.bytesize }
       end
 
       data
