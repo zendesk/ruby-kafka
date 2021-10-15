@@ -73,15 +73,17 @@ module Kafka
       end
 
       record_batch.codec_id = @codec.codec_id
+
       data = Protocol::Encoder.encode_with(record_batch)
+      compressed_data = @codec.compress(data)
 
       @instrumenter.instrument("compress.compressor") do |notification|
         notification[:message_count] = record_batch.size
-        notification[:compressed_bytesize] = data.bytesize
-        notification[:uncompressed_bytesize] = record_batch.records.reduce(0) { |sum, record| record.bytesize }
+        notification[:uncompressed_bytesize] = data.bytesize
+        notification[:compressed_bytesize] = compressed_data.bytesize
       end
 
-      data
+      compressed_data
     end
   end
 end

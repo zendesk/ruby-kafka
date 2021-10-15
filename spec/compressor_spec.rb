@@ -49,6 +49,7 @@ describe Kafka::Compressor do
 
       it "reduces the data size" do
         compressor = Kafka::Compressor.new(codec_name: :snappy, threshold: 1, instrumenter: instrumenter)
+        codec = Kafka::SnappyCodec.new
 
         record_batch = Kafka::Protocol::RecordBatch.new(
           records: (0..10).map do |index|
@@ -57,7 +58,7 @@ describe Kafka::Compressor do
         )
         compressed_record_batch = compressor.compress(record_batch)
 
-        record_batch.codec_id = 0
+        record_batch.codec_id = codec.codec_id
         uncompressed_data = Kafka::Protocol::Encoder.encode_with(record_batch)
 
         expect(compressed_record_batch.bytesize).to be < uncompressed_data.bytesize
