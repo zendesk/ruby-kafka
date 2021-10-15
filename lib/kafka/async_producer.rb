@@ -286,7 +286,7 @@ module Kafka
             sleep @retry_backoff**retries
             retry
           else
-            @finally(value)
+            @finally.call(value)
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
             @instrumenter.instrument("error.async_producer", { error: e })
           end
