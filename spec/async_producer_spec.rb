@@ -61,13 +61,13 @@ describe Kafka::AsyncProducer do
 
     it "Calls the `finally` lambda if passed in." do
       allow(sync_producer).to receive(:buffer_size) { 42 }
-        allow(sync_producer).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
+      allow(sync_producer).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
 
-        async_producer.produce("hello", topic: "greetings")
-        async_producer.deliver_messages
-        async_producer.shutdown
-        sleep 0.2 # wait for worker to call deliver_messages
-        expect(has_been_called).to be(true)
+      async_producer.produce("hello", topic: "greetings")
+      async_producer.deliver_messages
+      async_producer.shutdown
+      sleep 0.2 # wait for worker to call deliver_messages
+      expect(has_been_called).to be(true)
     end
   end
 
