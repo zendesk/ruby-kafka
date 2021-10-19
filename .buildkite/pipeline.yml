@@ -20,7 +20,7 @@ steps:
   - docker#v3.3.0:
       image: circleci/ruby:2.5.1-node
       workdir: "/buildkite-checkout"
-- key: kafka_0.11
+- key: kafka_0_11
   label: ":circleci: kafka-0.11"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -70,7 +70,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-0.11-docker-compose.yml"
       run: primary
-- key: kafka_1.0.0
+- key: kafka_1_0_0
   label: ":circleci: kafka-1.0.0"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -120,7 +120,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-1.0.0-docker-compose.yml"
       run: primary
-- key: kafka_1.1
+- key: kafka_1_1
   label: ":circleci: kafka-1.1"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -170,7 +170,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-1.1-docker-compose.yml"
       run: primary
-- key: kafka_2.0
+- key: kafka_2_0
   label: ":circleci: kafka-2.0"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -220,7 +220,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.0-docker-compose.yml"
       run: primary
-- key: kafka_2.1
+- key: kafka_2_1
   label: ":circleci: kafka-2.1"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -270,7 +270,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.1-docker-compose.yml"
       run: primary
-- key: kafka_2.2
+- key: kafka_2_2
   label: ":circleci: kafka-2.2"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -320,7 +320,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.2-docker-compose.yml"
       run: primary
-- key: kafka_2.3
+- key: kafka_2_3
   label: ":circleci: kafka-2.3"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -370,7 +370,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.3-docker-compose.yml"
       run: primary
-- key: kafka_2.4
+- key: kafka_2_4
   label: ":circleci: kafka-2.4"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -420,7 +420,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.4-docker-compose.yml"
       run: primary
-- key: kafka_2.5
+- key: kafka_2_5
   label: ":circleci: kafka-2.5"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -470,7 +470,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.5-docker-compose.yml"
       run: primary
-- key: kafka_2.6
+- key: kafka_2_6
   label: ":circleci: kafka-2.6"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
@@ -520,7 +520,7 @@ steps:
   - docker-compose#v3.1.0:
       config: ".buildkite/1634663090-kafka-2.6-docker-compose.yml"
       run: primary
-- key: kafka_2.7
+- key: kafka_2_7
   label: ":circleci: kafka-2.7"
   commands:
   - 'echo ''~~~ :circleci: checkout'''
