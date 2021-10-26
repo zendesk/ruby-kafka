@@ -1,0 +1,297 @@
+# Generated from .circleci/config.yml using https://github.com/buildkite/compat
+---
+steps:
+- key: unit
+  label: "unit tests"
+  commands:
+  - sudo chown -R circleci:circleci /buildkite-checkout
+  - cd /buildkite-checkout
+  - sudo apt-get update && sudo apt-get install -y cmake
+  - bundle install --path vendor/bundle
+  - bundle exec rspec
+  - bundle exec rubocop
+  env:
+  plugins:
+  - docker#v3.3.0:
+      image: circleci/ruby:2.5.1-node
+      workdir: "/buildkite-checkout"
+# - key: kafka-2-4
+#   label: ":circleci: kafka-2.4"
+#   commands:
+#   - 'echo ''~~~ :circleci: checkout'''
+#   - sudo cp -R /buildkite-checkout /home/circleci/checkout
+#   - sudo chown -R circleci:circleci /home/circleci/checkout
+#   - cd /home/circleci/checkout
+#   - 'echo ''--- :circleci: run'''
+#   - sudo apt-get update && sudo apt-get install -y cmake
+#   - 'echo ''--- :circleci: run'''
+#   - bundle install --path vendor/bundle
+#   - 'echo ''--- :circleci: run'''
+#   - bundle exec rspec --profile --tag functional spec/functional
+#   env:
+#   plugins:
+#   - keithpitt/write-file#v0.2:
+#       path: ".buildkite/1634654126-kafka-2.4-docker-compose.yml"
+#       contents: |
+#         ---
+#         version: '3.6'
+#         services:
+#           network:
+#             image: ubuntu
+#             command: sleep infinity
+#           primary:
+#             image: circleci/ruby:2.5.1-node
+#             network_mode: service:network
+#             environment:
+#               - LOG_LEVEL=DEBUG
+#             volumes:
+#             - "../:/buildkite-checkout"
+#             depends_on:
+#             - network
+#             - wurstmeister_zookeeper
+#             - wurstmeister_kafka_2_12_2_4_0_9092
+#             - wurstmeister_kafka_2_12_2_4_0_9093
+#             - wurstmeister_kafka_2_12_2_4_0_9094
+#           wurstmeister_zookeeper:
+#             image: wurstmeister/zookeeper
+#             network_mode: service:network
+#           wurstmeister_kafka_2_12_2_4_0_9092:
+#             image: wurstmeister/kafka:2.12-2.4.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9092
+#               - KAFKA_PORT=9092
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_12_2_4_0_9093:
+#             image: wurstmeister/kafka:2.12-2.4.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9093
+#               - KAFKA_PORT=9093
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_12_2_4_0_9094:
+#             image: wurstmeister/kafka:2.12-2.4.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9094
+#               - KAFKA_PORT=9094
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#   - docker-compose#v3.1.0:
+#       config: ".buildkite/1634654126-kafka-2.4-docker-compose.yml"
+#       run: primary
+# - key: kafka-2-5
+#   label: ":circleci: kafka-2.5"
+#   commands:
+#   - 'echo ''~~~ :circleci: checkout'''
+#   - sudo cp -R /buildkite-checkout /home/circleci/checkout
+#   - sudo chown -R circleci:circleci /home/circleci/checkout
+#   - cd /home/circleci/checkout
+#   - 'echo ''--- :circleci: run'''
+#   - sudo apt-get update && sudo apt-get install -y cmake
+#   - 'echo ''--- :circleci: run'''
+#   - bundle install --path vendor/bundle
+#   - 'echo ''--- :circleci: run'''
+#   - bundle exec rspec --profile --tag functional spec/functional
+#   env:
+#   plugins:
+#   - keithpitt/write-file#v0.2:
+#       path: ".buildkite/1634654126-kafka-2.5-docker-compose.yml"
+#       contents: |
+#         ---
+#         version: '3.6'
+#         services:
+#           network:
+#             image: ubuntu
+#             command: sleep infinity
+#           primary:
+#             image: circleci/ruby:2.5.1-node
+#             network_mode: service:network
+#             environment:
+#               - LOG_LEVEL=DEBUG
+#             volumes:
+#             - "../:/buildkite-checkout"
+#             depends_on:
+#             - network
+#             - wurstmeister_zookeeper
+#             - wurstmeister_kafka_2_12_2_5_0_9092
+#             - wurstmeister_kafka_2_12_2_5_0_9093
+#             - wurstmeister_kafka_2_12_2_5_0_9094
+#           wurstmeister_zookeeper:
+#             image: wurstmeister/zookeeper
+#             network_mode: service:network
+#           wurstmeister_kafka_2_12_2_5_0_9092:
+#             image: wurstmeister/kafka:2.12-2.5.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9092
+#               - KAFKA_PORT=9092
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_12_2_5_0_9093:
+#             image: wurstmeister/kafka:2.12-2.5.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9093
+#               - KAFKA_PORT=9093
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_12_2_5_0_9094:
+#             image: wurstmeister/kafka:2.12-2.5.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9094
+#               - KAFKA_PORT=9094
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#   - docker-compose#v3.1.0:
+#       config: ".buildkite/1634654126-kafka-2.5-docker-compose.yml"
+#       run: primary
+# - key: kafka-2-6
+#   label: ":circleci: kafka-2.6"
+#   commands:
+#   - 'echo ''~~~ :circleci: checkout'''
+#   - sudo cp -R /buildkite-checkout /home/circleci/checkout
+#   - sudo chown -R circleci:circleci /home/circleci/checkout
+#   - cd /home/circleci/checkout
+#   - 'echo ''--- :circleci: run'''
+#   - sudo apt-get update && sudo apt-get install -y cmake
+#   - 'echo ''--- :circleci: run'''
+#   - bundle install --path vendor/bundle
+#   - 'echo ''--- :circleci: run'''
+#   - bundle exec rspec --profile --tag functional spec/functional
+#   env:
+#   plugins:
+#   - keithpitt/write-file#v0.2:
+#       path: ".buildkite/1634654126-kafka-2.6-docker-compose.yml"
+#       contents: |
+#         ---
+#         version: '3.6'
+#         services:
+#           network:
+#             image: ubuntu
+#             command: sleep infinity
+#           primary:
+#             image: circleci/ruby:2.5.1-node
+#             network_mode: service:network
+#             environment:
+#               - LOG_LEVEL=DEBUG
+#             volumes:
+#             - "../:/buildkite-checkout"
+#             depends_on:
+#             - network
+#             - wurstmeister_zookeeper
+#             - wurstmeister_kafka_2_13_2_6_0_9092
+#             - wurstmeister_kafka_2_13_2_6_0_9093
+#             - wurstmeister_kafka_2_13_2_6_0_9094
+#           wurstmeister_zookeeper:
+#             image: wurstmeister/zookeeper
+#             network_mode: service:network
+#           wurstmeister_kafka_2_13_2_6_0_9092:
+#             image: wurstmeister/kafka:2.13-2.6.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9092
+#               - KAFKA_PORT=9092
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_13_2_6_0_9093:
+#             image: wurstmeister/kafka:2.13-2.6.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9093
+#               - KAFKA_PORT=9093
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_13_2_6_0_9094:
+#             image: wurstmeister/kafka:2.13-2.6.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9094
+#               - KAFKA_PORT=9094
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#   - docker-compose#v3.1.0:
+#       config: ".buildkite/1634654126-kafka-2.6-docker-compose.yml"
+#       run: primary
+# - key: kafka-2-7
+#   label: ":circleci: kafka-2.7"
+#   commands:
+#   - 'echo ''~~~ :circleci: checkout'''
+#   - sudo cp -R /buildkite-checkout /home/circleci/checkout
+#   - sudo chown -R circleci:circleci /home/circleci/checkout
+#   - cd /home/circleci/checkout
+#   - 'echo ''--- :circleci: run'''
+#   - sudo apt-get update && sudo apt-get install -y cmake
+#   - 'echo ''--- :circleci: run'''
+#   - bundle install --path vendor/bundle
+#   - 'echo ''--- :circleci: run'''
+#   - bundle exec rspec --profile --tag functional spec/functional
+#   env:
+#   plugins:
+#   - keithpitt/write-file#v0.2:
+#       path: ".buildkite/1634654126-kafka-2.7-docker-compose.yml"
+#       contents: |
+#         ---
+#         version: '3.6'
+#         services:
+#           network:
+#             image: ubuntu
+#             command: sleep infinity
+#           primary:
+#             image: circleci/ruby:2.5.1-node
+#             network_mode: service:network
+#             environment:
+#               - LOG_LEVEL=DEBUG
+#             volumes:
+#             - "../:/buildkite-checkout"
+#             depends_on:
+#             - network
+#             - wurstmeister_zookeeper
+#             - wurstmeister_kafka_2_13_2_7_0_9092
+#             - wurstmeister_kafka_2_13_2_7_0_9093
+#             - wurstmeister_kafka_2_13_2_7_0_9094
+#           wurstmeister_zookeeper:
+#             image: wurstmeister/zookeeper
+#             network_mode: service:network
+#           wurstmeister_kafka_2_13_2_7_0_9092:
+#             image: wurstmeister/kafka:2.13-2.7.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9092
+#               - KAFKA_PORT=9092
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_13_2_7_0_9093:
+#             image: wurstmeister/kafka:2.13-2.7.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9093
+#               - KAFKA_PORT=9093
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#           wurstmeister_kafka_2_13_2_7_0_9094:
+#             image: wurstmeister/kafka:2.13-2.7.0
+#             network_mode: service:network
+#             environment:
+#               - KAFKA_ADVERTISED_HOST_NAME=localhost
+#               - KAFKA_ADVERTISED_PORT=9094
+#               - KAFKA_PORT=9094
+#               - KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+#               - KAFKA_DELETE_TOPIC_ENABLE=true
+#   - docker-compose#v3.1.0:
+#       config: ".buildkite/1634654126-kafka-2.7-docker-compose.yml"
+#       run: primary
