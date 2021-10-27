@@ -69,7 +69,8 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
-    # @param finally [Lambda] will be called on messages remaining on shutdown.
+    # @param finally [Lambda] will be called on a list of messages remaining on
+    # shutdown.
     #
     def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, max_retries: -1, retry_backoff: 0, instrumenter:, logger:, finally: nil)
       raise ArgumentError unless max_queue_size > 0
@@ -294,7 +295,8 @@ module Kafka
             sleep @retry_backoff**retries
             retry
           else
-            @finally.call(value)
+            # The message shape is [value, **kwargs] and `finally` should take a list of messages.
+            @finally.call([[value, **kwargs]])
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
             @instrumenter.instrument("error.async_producer", { error: e })
           end
