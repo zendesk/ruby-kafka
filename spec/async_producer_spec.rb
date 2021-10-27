@@ -22,7 +22,7 @@ describe Kafka::AsyncProducer do
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
   let(:instrumenter) { FakeInstrumenter.new }
-  let(:lambda_state) { {"has_been_called" => false} }
+  let(:lambda_state) { { "has_been_called" => false } }
 
   let(:async_producer) {
     Kafka::AsyncProducer.new(
@@ -31,7 +31,7 @@ describe Kafka::AsyncProducer do
       max_retries: 2,
       retry_backoff: 0.2,
       logger: logger,
-      finally: lambda { | messages | lambda_state["has_been_called"] = true }
+      finally: lambda { |messages| lambda_state["has_been_called"] = true }
     )
   }
 

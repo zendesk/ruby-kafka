@@ -223,7 +223,7 @@ module Kafka
         if !@finally.nil?
           @queue.close
           messages = []
-          @queue.size.times do 
+          @queue.size.times do
             messages << @queue.pop[1]
           end
           @finally.call(messages)
@@ -260,7 +260,7 @@ module Kafka
                 if !@finally.nil?
                   queue.close
                   messages = []
-                  queue.size.times do 
+                  queue.size.times do
                     messages << queue.pop[1]
                   end
                   @finally.call(messages)
