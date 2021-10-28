@@ -224,7 +224,10 @@ module Kafka
           @queue.close
           messages = []
           @queue.size.times do
-            messages << @queue.pop[1]
+            operation, payload = @queue.pop()
+            if !payload.nil?
+              messages << payload
+            end
           end
           @finally.call(messages)
         end
@@ -258,10 +261,13 @@ module Kafka
                 })
 
                 if !@finally.nil?
-                  queue.close
+                  @queue.close
                   messages = []
-                  queue.size.times do
-                    messages << queue.pop[1]
+                  @queue.size.times do
+                    operation, payload = @queue.pop()
+                    if !payload.nil?
+                      messages << payload
+                    end
                   end
                   @finally.call(messages)
                 end
