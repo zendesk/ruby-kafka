@@ -62,8 +62,9 @@ describe Kafka::AsyncProducer do
 
     it "Calls the `finally` lambda if passed in and it fails in worker." do
       # allow(async_producer.worker).to receive(:buffer_size) { 42 }
-      allow(async_producer.instance_variable_get("@worker").instance_variable_get("@producer")
-        ).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
+      allow(
+        async_producer.instance_variable_get("@worker").instance_variable_get("@producer")
+      ).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
 
       async_producer.produce("hello", topic: "greetings")
       async_producer.deliver_messages
