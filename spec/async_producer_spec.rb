@@ -22,6 +22,7 @@ describe Kafka::AsyncProducer do
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
   let(:instrumenter) { FakeInstrumenter.new }
+  let(:lambda_state) { { "has_been_called" => false } }
 
   let(:async_producer) {
     Kafka::AsyncProducer.new(
@@ -30,6 +31,7 @@ describe Kafka::AsyncProducer do
       max_retries: 2,
       retry_backoff: 0.2,
       logger: logger,
+      finally: lambda { |messages| lambda_state["has_been_called"] = true }
     )
   }
 
@@ -45,6 +47,30 @@ describe Kafka::AsyncProducer do
 
       metric = instrumenter.metrics_for("error.async_producer").first
       expect(metric.payload[:error]).to be_a(Kafka::DeliveryFailed)
+    end
+
+    it "Calls the `finally` lambda if passed in and sync_producer fails." do
+      allow(sync_producer).to receive(:buffer_size) { 42 }
+      allow(sync_producer).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
+
+      async_producer.produce("hello", topic: "greetings")
+      async_producer.deliver_messages
+      async_producer.shutdown
+      sleep 0.2 # wait for worker to call deliver_messages
+      expect(lambda_state["has_been_called"]).to be(true)
+    end
+
+    it "Calls the `finally` lambda if passed in and it fails in worker." do
+      # allow(async_producer.worker).to receive(:buffer_size) { 42 }
+      allow(
+        async_producer.instance_variable_get("@worker").instance_variable_get("@producer")
+      ).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
+
+      async_producer.produce("hello", topic: "greetings")
+      async_producer.deliver_messages
+      async_producer.shutdown
+      sleep 0.2 # wait for worker to call deliver_messages
+      expect(lambda_state["has_been_called"]).to be(true)
     end
   end
 

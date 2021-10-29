@@ -69,8 +69,10 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param finally [Lambda] will be called on a list of messages remaining on
+    # shutdown.
     #
-    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, max_retries: -1, retry_backoff: 0, instrumenter:, logger:)
+    def initialize(sync_producer:, max_queue_size: 1000, delivery_threshold: 0, delivery_interval: 0, max_retries: -1, retry_backoff: 0, instrumenter:, logger:, finally: nil)
       raise ArgumentError unless max_queue_size > 0
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
@@ -87,7 +89,8 @@ module Kafka
         max_retries: max_retries,
         retry_backoff: retry_backoff,
         instrumenter: instrumenter,
-        logger: logger
+        logger: logger,
+        finally: finally
       )
 
       # The timer will no-op if the delivery interval is zero.
@@ -198,7 +201,7 @@ module Kafka
     end
 
     class Worker
-      def initialize(queue:, producer:, delivery_threshold:, max_retries: -1, retry_backoff: 0, instrumenter:, logger:)
+      def initialize(queue:, producer:, delivery_threshold:, max_retries: -1, retry_backoff: 0, instrumenter:, logger:, finally: nil)
         @queue = queue
         @producer = producer
         @delivery_threshold = delivery_threshold
@@ -206,6 +209,7 @@ module Kafka
         @retry_backoff = retry_backoff
         @instrumenter = instrumenter
         @logger = TaggedLogger.new(logger)
+        @finally = finally
       end
 
       def run
@@ -216,6 +220,17 @@ module Kafka
       rescue Exception => e
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
+        if !@finally.nil?
+          @queue.close
+          messages = []
+          @queue.size.times do
+            operation, payload = @queue.pop()
+            if !payload.nil?
+              messages << payload
+            end
+          end
+          @finally.call(messages)
+        end
       ensure
         @producer.shutdown
         @logger.pop_tags
@@ -244,6 +259,18 @@ module Kafka
                 @instrumenter.instrument("drop_messages.async_producer", {
                   message_count: @producer.buffer_size + @queue.size,
                 })
+
+                if !@finally.nil?
+                  @queue.close
+                  messages = []
+                  @queue.size.times do
+                    operation, payload = @queue.pop()
+                    if !payload.nil?
+                      messages << payload
+                    end
+                  end
+                  @finally.call(messages)
+                end
               end
 
               # Stop the run loop.
@@ -274,6 +301,8 @@ module Kafka
             sleep @retry_backoff**retries
             retry
           else
+            # The message shape is [value, **kwargs] and `finally` should take a list of messages.
+            @finally.call([[value, **kwargs]])
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
             @instrumenter.instrument("error.async_producer", { error: e })
           end
