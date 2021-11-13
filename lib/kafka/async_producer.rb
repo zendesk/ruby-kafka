@@ -220,7 +220,7 @@ module Kafka
       rescue Exception => e
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
-        if !@finally.nil?
+        if @finally
           @queue.close
           messages = []
           @queue.size.times do
@@ -260,7 +260,7 @@ module Kafka
                   message_count: @producer.buffer_size + @queue.size,
                 })
 
-                if !@finally.nil?
+                if @finally
                   @queue.close
                   messages = []
                   @queue.size.times do
@@ -302,7 +302,9 @@ module Kafka
             retry
           else
             # The message shape is [value, **kwargs] and `finally` should take a list of messages.
-            @finally.call([[value, **kwargs]])
+            if @finally
+              @finally.call([[value, **kwargs]])
+            end
             @logger.error("Failed to asynchronously produce messages due to BufferOverflow")
             @instrumenter.instrument("error.async_producer", { error: e })
           end
