@@ -4,11 +4,14 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.4.0
+
 - Refresh a stale cluster's metadata if necessary on `Kafka::Client#deliver_message` (#901).
 - Fix `Kafka::TransactionManager#send_offsets_to_txn` (#866).
 - Add support for `murmur2` based partitioning.
 - Add `resolve_seed_brokers` option to support seed brokers' hostname with multiple addresses (#877).
 - Handle SyncGroup responses with a non-zero error and no assignments (#896).
+- Add support for non-identical topic subscriptions within the same consumer group (#525 / #764).
 
 ## 1.3.0
 

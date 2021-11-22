@@ -47,8 +47,8 @@ module Kafka
         Array(ca_cert).each do |cert|
           store.add_cert(OpenSSL::X509::Certificate.new(cert))
         end
-        if ca_cert_file_path
-          store.add_file(ca_cert_file_path)
+        Array(ca_cert_file_path).each do |cert_file_path|
+          store.add_file(cert_file_path)
         end
         if ca_certs_from_system
           store.set_default_paths

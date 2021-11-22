@@ -1,3 +1,4 @@
+# coding: utf-8
 # frozen_string_literal: true
 
 require "kafka/ssl_context"
@@ -38,8 +39,8 @@ module Kafka
     # @param ssl_ca_cert [String, Array<String>, nil] a PEM encoded CA cert, or an Array of
     #   PEM encoded CA certs, to use with an SSL connection.
     #
-    # @param ssl_ca_cert_file_path [String, nil] a path on the filesystem to a PEM encoded CA cert
-    #   to use with an SSL connection.
+    # @param ssl_ca_cert_file_path [String, Array<String>, nil] a path on the filesystem, or an
+    #    Array of paths, to PEM encoded CA cert(s) to use with an SSL connection.
     #
     # @param ssl_client_cert [String, nil] a PEM encoded client cert to use with an
     #   SSL connection. Must be used in combination with ssl_client_cert_key.

@@ -31,6 +31,12 @@ describe Kafka::SslContext do
     }.to raise_exception(ArgumentError)
   end
 
+  it "raises an OpenSSL::X509::StoreError if an array of non-existing files is passed for ca_cert_file_path" do
+    expect {
+      Kafka::SslContext.build(ca_cert_file_path: ["no_such_file", "no_such_file_either"])
+    }.to raise_exception(OpenSSL::X509::StoreError)
+  end
+
   context "with self signed cert fixtures" do
     # How the certificates were generated, they are not actually in a chain
     # openssl req -newkey rsa:2048 -nodes -keyout spec/fixtures/client_cert_key.pem -x509 -days 365 -out spec/fixtures/client_cert.pem

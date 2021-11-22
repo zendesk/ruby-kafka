@@ -212,39 +212,7 @@ module Kafka
         @logger.push_tags(@producer.to_s)
         @logger.info "Starting async producer in the background..."
 
-        loop do
-          operation, payload = @queue.pop
-
-          case operation
-          when :produce
-            produce(payload[0], **payload[1])
-            deliver_messages if threshold_reached?
-          when :deliver_messages
-            deliver_messages
-          when :shutdown
-            begin
-              # Deliver any pending messages first.
-              @producer.deliver_messages
-            rescue Error => e
-              @logger.error("Failed to deliver messages during shutdown: #{e.message}")
-
-              @instrumenter.instrument("drop_messages.async_producer", {
-                message_count: @producer.buffer_size + @queue.size,
-              })
-            end
-
-            # Stop the run loop.
-            break
-          else
-            raise "Unknown operation #{operation.inspect}"
-          end
-        end
-      rescue Kafka::Error => e
-        @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
-        @logger.info "Restarting in 10 seconds..."
-
-        sleep 10
-        retry
+        do_loop
       rescue Exception => e
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
@@ -254,6 +222,44 @@ module Kafka
       end
 
       private
+
+      def do_loop
+        loop do
+          begin
+            operation, payload = @queue.pop
+
+            case operation
+            when :produce
+              produce(payload[0], **payload[1])
+              deliver_messages if threshold_reached?
+            when :deliver_messages
+              deliver_messages
+            when :shutdown
+              begin
+                # Deliver any pending messages first.
+                @producer.deliver_messages
+              rescue Error => e
+                @logger.error("Failed to deliver messages during shutdown: #{e.message}")
+
+                @instrumenter.instrument("drop_messages.async_producer", {
+                  message_count: @producer.buffer_size + @queue.size,
+                })
+              end
+
+              # Stop the run loop.
+              break
+            else
+              raise "Unknown operation #{operation.inspect}"
+            end
+          end
+        end
+      rescue Kafka::Error => e
+        @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+        @logger.info "Restarting in 10 seconds..."
+
+        sleep 10
+        retry
+      end
 
       def produce(value, **kwargs)
         retries = 0
