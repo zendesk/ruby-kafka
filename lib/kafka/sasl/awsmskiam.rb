@@ -50,26 +50,6 @@ module Kafka
 
       private
 
-      def aws_uri_encode(str, encode_slash = true)
-        result = ''
-        chars = str.split('')
-        chars.each do |char|
-          if ('A'..'Z').include?(char) || ('a'..'z').include?(char) || ('0'..'9').include?(char) || char == '_' || char == '-' || char == '~' || char == '.'
-            result += char
-          elsif char == '/'
-            if encode_slash
-              result += '%2F'
-            else
-              result += char
-            end
-          else
-            result += '%' + bin_to_hex(char).upcase
-          end
-        end
-
-        result
-      end
-
       def bin_to_hex(s)
         s.each_byte.map { |b| b.to_s(16).rjust(2, '0') }.join
       end
@@ -105,12 +85,14 @@ module Kafka
 
       def canonical_query_string
         now = Time.now
-        aws_uri_encode("Action") + "=" + aws_uri_encode("kafka-cluster:Connect") + "&" +
-        aws_uri_encode("X-Amz-Algorithm") + "=" + aws_uri_encode("AWS4-HMAC-SHA256") + "&" +
-        aws_uri_encode("X-Amz-Credential") + "=" + aws_uri_encode(@access_key_id + "/" + now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request") + "&" +
-        aws_uri_encode("X-Amz-Date") + "=" + aws_uri_encode(now.strftime("%Y%m%dT%H%M%SZ")) + "&" +
-        aws_uri_encode("X-Amz-Expires") + "=" + aws_uri_encode("900") + "&" +
-        aws_uri_encode("X-Amz-SignedHeaders") + "=" + aws_uri_encode("host")
+        URI.encode_www_form(
+          "Action" => "kafka-cluster:Connect",
+          "X-Amz-Algorithm" => "AWS4-HMAC-SHA256",
+          "X-Amz-Credential" => @access_key_id + "/" + now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          "X-Amz-Date" => now.strftime("%Y%m%dT%H%M%SZ",
+          "X-Amz-Expires" => "900",
+          "X-Amz-SignedHeaders" => "host"
+        )
       end
 
       def canonical_headers(host:)
