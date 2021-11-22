@@ -4,7 +4,7 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
-- Add support for AWS IAM Authentication to an MSK cluster
+- Add support for AWS IAM Authentication to an MSK cluster (#907).
 
 ## 1.4.0
 
