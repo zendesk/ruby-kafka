@@ -89,7 +89,7 @@ module Kafka
           "Action" => "kafka-cluster:Connect",
           "X-Amz-Algorithm" => "AWS4-HMAC-SHA256",
           "X-Amz-Credential" => @access_key_id + "/" + now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
-          "X-Amz-Date" => now.strftime("%Y%m%dT%H%M%SZ",
+          "X-Amz-Date" => now.strftime("%Y%m%dT%H%M%SZ"),
           "X-Amz-Expires" => "900",
           "X-Amz-SignedHeaders" => "host"
         )
