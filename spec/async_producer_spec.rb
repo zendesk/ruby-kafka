@@ -75,6 +75,18 @@ describe Kafka::AsyncProducer do
   end
 
   describe "#shutdown" do
+    it "times out if a timeout is set" do
+      sleep_time = 100
+      allow(sync_producer).to receive(:buffer_size) { 42 }
+      allow(sync_producer).to receive(:deliver_messages) { sleep(sleep_time) }
+
+      start_time = Time.now
+      async_producer.shutdown(0)
+      end_time = Time.now
+
+      expect(end_time - start_time < sleep_time)
+    end
+
     it "delivers buffered messages" do
       async_producer.produce("hello", topic: "greetings")
       async_producer.shutdown
