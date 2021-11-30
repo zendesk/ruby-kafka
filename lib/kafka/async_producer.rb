@@ -117,7 +117,12 @@ module Kafka
       end
 
       args = [value, **options.merge(topic: topic)]
-      @queue << [:produce, args]
+
+      begin
+        @queue << [:produce, args]
+      rescue ClosedQueueError
+        raise Kafka::AsyncProducerIsClosed
+      end
 
       @instrumenter.instrument("enqueue_message.async_producer", {
         topic: topic,

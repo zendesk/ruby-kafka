@@ -355,6 +355,9 @@ module Kafka
   class TokenMethodNotImplementedError < Error
   end
 
+  class AsyncProducerIsClosed < Error
+  end
+
   # Initializes a new Kafka client.
   #
   # @see Client#initialize

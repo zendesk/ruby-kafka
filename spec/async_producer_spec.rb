@@ -109,6 +109,12 @@ describe Kafka::AsyncProducer do
   end
 
   describe "#produce" do
+    it "raises an exception if trying to produce after shutdown" do
+      async_producer.shutdown
+      expect {
+        async_producer.produce("hello", topic: "greetings")
+      }.to raise_exception(Kafka::AsyncProducerIsClosed)
+    end
     it "delivers buffered messages" do
       async_producer.produce("hello", topic: "greetings")
       sleep 0.2 # wait for worker to call produce
