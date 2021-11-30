@@ -149,6 +149,7 @@ module Kafka
     def shutdown(timeout=nil)
       ensure_threads_running!
 
+      @queue.close
       @worker.flip_shutdown_latch!
       @timer_thread && @timer_thread.exit
 
