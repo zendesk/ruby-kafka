@@ -146,7 +146,7 @@ module Kafka
     #
     # @see Kafka::Producer#shutdown
     # @return [nil]
-    def shutdown(timeout=nil)
+    def shutdown(timeout = nil)
       ensure_threads_running!
 
       @queue.close
@@ -160,7 +160,6 @@ module Kafka
     def shutdown?
       !worker_thread_alive? && !timer_thread_alive?
     end
-
 
     private
 
