@@ -104,7 +104,7 @@ describe Kafka::AsyncProducer do
       expect(log.string).to include "Failed to deliver messages during shutdown: uh-oh!"
 
       metric = instrumenter.metrics_for("drop_messages.async_producer").first
-      expect(metric.payload[:message_count]).to eq 42
+      expect(metric.payload[:message_count]).to eq 43 # plus the produced message
     end
   end
 
