@@ -31,7 +31,9 @@ module Kafka
 
         host_without_port = host.split(':', -1).first
 
-        msg = authentication_payload(host: host_without_port)
+        time_now = Time.now.utc
+
+        msg = authentication_payload(host: host_without_port, time_now: time_now)
         @logger.debug "Sending first client SASL AWS_MSK_IAM message:"
         @logger.debug msg
         encoder.write_bytes(msg)
@@ -58,19 +60,18 @@ module Kafka
         @digest ||= OpenSSL::Digest::SHA256.new
       end
 
-      def authentication_payload(host:)
-        now = Time.now
+      def authentication_payload(host:, time_now:)
         {
           'version': "2020_10_22",
           'host': host,
           'user-agent': "ruby-kafka",
           'action': "kafka-cluster:Connect",
           'x-amz-algorithm': "AWS4-HMAC-SHA256",
-          'x-amz-credential': @access_key_id + "/" + now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
-          'x-amz-date': now.strftime("%Y%m%dT%H%M%SZ"),
+          'x-amz-credential': @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          'x-amz-date': time_now.strftime("%Y%m%dT%H%M%SZ"),
           'x-amz-signedheaders': "host",
           'x-amz-expires': "900",
-          'x-amz-signature': signature(host: host)
+          'x-amz-signature': signature(host: host, time_now: time_now)
         }.to_json
       end
 
@@ -83,13 +84,12 @@ module Kafka
         hashed_payload
       end
 
-      def canonical_query_string
-        now = Time.now
+      def canonical_query_string(time_now:)
         URI.encode_www_form(
           "Action" => "kafka-cluster:Connect",
           "X-Amz-Algorithm" => "AWS4-HMAC-SHA256",
-          "X-Amz-Credential" => @access_key_id + "/" + now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
-          "X-Amz-Date" => now.strftime("%Y%m%dT%H%M%SZ"),
+          "X-Amz-Credential" => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          "X-Amz-Date" => time_now.strftime("%Y%m%dT%H%M%SZ"),
           "X-Amz-Expires" => "900",
           "X-Amz-SignedHeaders" => "host"
         )
@@ -107,22 +107,19 @@ module Kafka
         bin_to_hex(digest.digest(""))
       end
 
-      def string_to_sign(host:)
-        now = Time.now
+      def string_to_sign(host:, time_now:)
         "AWS4-HMAC-SHA256" + "\n" +
-        now.strftime("%Y%m%dT%H%M%SZ") + "\n" +
-        now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request" + "\n" +
+        time_now.strftime("%Y%m%dT%H%M%SZ") + "\n" +
+        time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request" + "\n" +
         bin_to_hex(digest.digest(canonical_request(host: host)))
       end
 
-      def signature(host:)
-        now = Time.now
-
-        date_key = OpenSSL::HMAC.digest("SHA256", "AWS4" + @secret_key_id, now.strftime("%Y%m%d"))
+      def signature(host:, time_now:)
+        date_key = OpenSSL::HMAC.digest("SHA256", "AWS4" + @secret_key_id, time_now.strftime("%Y%m%d"))
         date_region_key = OpenSSL::HMAC.digest("SHA256", date_key, @aws_region)
         date_region_service_key = OpenSSL::HMAC.digest("SHA256", date_region_key, "kafka-cluster")
         signing_key = OpenSSL::HMAC.digest("SHA256", date_region_service_key, "aws4_request")
-        signature = bin_to_hex(OpenSSL::HMAC.digest("SHA256", signing_key, string_to_sign(host: host)))
+        signature = bin_to_hex(OpenSSL::HMAC.digest("SHA256", signing_key, string_to_sign(host: host, time_now: time_now)))
 
         signature
       end
