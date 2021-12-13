@@ -268,6 +268,10 @@ module Kafka
             deliver_messages if threshold_reached?
           when :deliver_messages
             deliver_messages
+          when nil
+            # will be nil after the queue is closed, so we should shutdown in this case
+            shutdown
+            break
           else
             raise "Unknown operation #{operation.inspect}"
           end
