@@ -674,6 +674,23 @@ consumer.each_message(automatically_mark_as_processed: false) do |message|
 end
 ```
 
+#### Callbacks
+
+You can execute **lambda** after each message fetching procedure. It might be useful for sending heartbeat events to some monitoring services even if there is no data in topic for a long time.
+
+```ruby
+def send_event
+  lambda do
+    uri = URI('http://www.example.com/search.cgi')
+    Net::HTTP.post_form(uri, 'q' => 'ruby', 'max' => '50')
+  end
+end
+
+consumer.each_message(after_fetch_messages: send_event) do |message|
+  ...
+end
+```
+
 
 #### Topic Subscriptions
 

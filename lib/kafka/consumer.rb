@@ -212,7 +212,13 @@ module Kafka
     #   The original exception will be returned by calling `#cause` on the
     #   {Kafka::ProcessingError} instance.
     # @return [nil]
-    def each_message(min_bytes: 1, max_bytes: 10485760, max_wait_time: 1, automatically_mark_as_processed: true)
+    def each_message(
+      min_bytes: 1,
+      max_bytes: 10485760,
+      max_wait_time: 1,
+      automatically_mark_as_processed: true,
+      after_fetch_messages: nil
+    )
       @fetcher.configure(
         min_bytes: min_bytes,
         max_bytes: max_bytes,
@@ -221,6 +227,8 @@ module Kafka
 
       consumer_loop do
         batches = fetch_batches
+
+        after_fetch_messages&.call
 
         batches.each do |batch|
           batch = @interceptors.call(batch)
