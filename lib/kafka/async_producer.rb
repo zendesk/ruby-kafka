@@ -35,7 +35,12 @@ module Kafka
   # this happens, the background thread will stop popping messages off the
   # queue until it can successfully deliver the buffered messages. The queue
   # will therefore grow in size, potentially hitting the `max_queue_size` limit.
-  # Once this happens, calls to {#produce} will raise a {BufferOverflow} error.
+  # Once this happens, calls to {#produce} will block until the queue has more
+  # space to accommodate more messages.
+  # @see SizedQueue#push
+  #
+  # Since this will be a blocking operation, you could use a timeout at the caller
+  # of {#produce} of async producer.
   #
   # Depending on your use case you may want to slow down the rate of messages
   # being produced or perhaps halt your application completely until the
@@ -75,7 +80,7 @@ module Kafka
       raise ArgumentError unless delivery_threshold >= 0
       raise ArgumentError unless delivery_interval >= 0
 
-      @queue = Queue.new
+      @queue = SizedQueue.new(max_queue_size)
       @max_queue_size = max_queue_size
       @instrumenter = instrumenter
       @logger = TaggedLogger.new(logger)
@@ -108,10 +113,7 @@ module Kafka
 
       ensure_threads_running!
 
-      if @queue.size >= @max_queue_size
-        buffer_overflow topic,
-          "Cannot produce to #{topic}, max queue size (#{@max_queue_size} messages) reached"
-      end
+      buffer_overflow topic if @queue.size >= @max_queue_size
 
       args = [value, **options.merge(topic: topic)]
       @queue << [:produce, args]
@@ -176,8 +178,6 @@ module Kafka
       @instrumenter.instrument("buffer_overflow.async_producer", {
         topic: topic,
       })
-
-      raise BufferOverflow, message
     end
 
     class Timer
