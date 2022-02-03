@@ -75,10 +75,10 @@ module Kafka
         }.to_json
       end
 
-      def canonical_request(host:)
+      def canonical_request(host:, time_now:)
         "GET\n" +
         "/\n" +
-        canonical_query_string + "\n" +
+        canonical_query_string(time_now: time_now) + "\n" +
         canonical_headers(host: host) + "\n" +
         signed_headers + "\n" +
         hashed_payload
@@ -111,7 +111,7 @@ module Kafka
         "AWS4-HMAC-SHA256" + "\n" +
         time_now.strftime("%Y%m%dT%H%M%SZ") + "\n" +
         time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request" + "\n" +
-        bin_to_hex(digest.digest(canonical_request(host: host)))
+        bin_to_hex(digest.digest(canonical_request(host: host, time_now: time_now)))
       end
 
       def signature(host:, time_now:)
