@@ -82,6 +82,8 @@ module Kafka
       @instrumenter = instrumenter
       @logger = TaggedLogger.new(logger)
 
+      @sync_producer = sync_producer
+
       @worker = Worker.new(
         queue: @queue,
         producer: sync_producer,
@@ -97,6 +99,23 @@ module Kafka
       @timer = Timer.new(queue: @queue, interval: delivery_interval)
 
       @thread_mutex = Mutex.new
+    end
+
+    # @note Async producer produces asynchronously, so this value may
+    #       be stale immediately after reading
+    #
+    # @note The async producer queue also contains flush commands, so
+    #       the value may be slightly higher than the true number of
+    #       pending messages
+    #
+    # @return [Integer] Approximate number of buffered messages
+    def queue_plus_buffer_size
+      @queue.size + @sync_producer.buffer_size
+    end
+
+    # @note This is not thread safe; only use as a last resort
+    def extract_undelivered_messages!
+      @worker.drain_queue_and_get_messages.concat(@sync_producer.extract_undelivered_messages!)
     end
 
     # Produces a message to the specified topic.
@@ -236,19 +255,25 @@ module Kafka
         @logger.error "Unexpected Kafka error #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
         @logger.error "Async producer crashed!"
         if @finally
-          @queue.close
-          messages = []
-          @queue.size.times do
-            operation, payload = @queue.pop()
-            if !payload.nil?
-              messages << payload
-            end
-          end
-          @finally.call(messages)
+          @finally.call(drain_queue_and_get_messages)
+          @finally.call(@producer.extract_undelivered_messages!)
         end
       ensure
         @producer.shutdown
         @logger.pop_tags
+      end
+
+      # @return [Array<Array(Object, Hash)>]
+      def drain_queue_and_get_messages
+        @queue.close
+        messages = []
+        @queue.size.times do
+          _, payload = @queue.pop()
+          if !payload.nil?
+            messages << payload
+          end
+        end
+        messages
       end
 
       private
@@ -295,15 +320,8 @@ module Kafka
         })
 
         if @finally
-          @queue.close
-          messages = []
-          @queue.size.times do
-            operation, payload = @queue.pop()
-            if !payload.nil?
-              messages << payload
-            end
-          end
-          @finally.call(messages)
+          @finally.call(drain_queue_and_get_messages)
+          @finally.call(@producer.extract_undelivered_messages!)
         end
       end
 

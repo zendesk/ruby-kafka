@@ -284,6 +284,14 @@ module Kafka
       @pending_message_queue.clear
     end
 
+    # @note This will pull messages from buffers instead copying them
+    # @return [Array<Array(Object, Hash)>]
+    def extract_undelivered_messages!
+      extracted_messages = buffer_messages.map { |message| [message.value, { topic: message.topic }] }
+      clear_buffer
+      extracted_messages
+    end
+
     # Closes all connections to the brokers.
     #
     # @return [nil]

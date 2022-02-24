@@ -18,7 +18,7 @@ class FakeInstrumenter
 end
 
 describe Kafka::AsyncProducer do
-  let(:sync_producer) { double(:sync_producer, produce: nil, shutdown: nil, deliver_messages: nil) }
+  let(:sync_producer) { double(:sync_producer, produce: nil, shutdown: nil, deliver_messages: nil, extract_undelivered_messages!: []) }
   let(:log) { StringIO.new }
   let(:logger) { Logger.new(log) }
   let(:instrumenter) { FakeInstrumenter.new }
@@ -35,7 +35,34 @@ describe Kafka::AsyncProducer do
     )
   }
 
-  describe "#deliver_messages" do
+  describe "#queue_plus_buffer_size" do
+    it "uses the queue size and the sync producer buffer/queue size to calculate total" do
+      allow(sync_producer).to receive(:buffer_size) { 0 }
+      expect(async_producer.queue_plus_buffer_size).to eq(0)
+      async_producer.produce('test', topic: 'foo')
+      expect(async_producer.queue_plus_buffer_size).to eq(1)
+    end
+  end
+
+  describe "#extract_undelivered_messages!" do
+    it "extracts messages from the queue" do
+      async_producer.instance_variable_get(:@worker).define_singleton_method(:do_loop) { sleep }
+      allow(sync_producer).to receive(:buffer_size) { 0 }
+      async_producer.produce('test', topic: 'foo')
+      allow(sync_producer).to receive(:extract_undelivered_messages!) { [] }
+      expect(async_producer.extract_undelivered_messages!).to eq([['test', { topic: 'foo' }]])
+    end
+
+    it "extracts messages from the sync producer" do
+      undelivered_messages = [
+        ['sync test', { topic: 'bar' }]
+      ]
+      allow(sync_producer).to receive(:extract_undelivered_messages!) { undelivered_messages }
+      expect(async_producer.extract_undelivered_messages!).to eq(undelivered_messages)
+    end
+  end
+
+  describe "#ldeliver_messages" do
     it "instruments the error after failing to deliver buffered messages" do
       allow(sync_producer).to receive(:buffer_size) { 42 }
       allow(sync_producer).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
@@ -63,7 +90,7 @@ describe Kafka::AsyncProducer do
     it "Calls the `finally` lambda if passed in and it fails in worker." do
       # allow(async_producer.worker).to receive(:buffer_size) { 42 }
       allow(
-        async_producer.instance_variable_get("@worker").instance_variable_get("@producer")
+        async_producer.instance_variable_get(:@sync_producer)
       ).to receive(:deliver_messages) { raise Kafka::DeliveryFailed.new("something happened", []) }
 
       async_producer.produce("hello", topic: "greetings")

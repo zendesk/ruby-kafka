@@ -38,6 +38,29 @@ describe Kafka::Producer do
     allow(transaction_manager).to receive(:close).and_return(nil)
   end
 
+  describe "#extract_undelivered_messages!" do
+    it "gets messages from the buffer" do
+      producer.produce('test', topic: 'test')
+      allow(cluster).to receive(:partitions_for).with('test') { [1] }
+      producer.send(:assign_partitions!)
+      messages = producer.extract_undelivered_messages!
+      expect(messages).to eq([['test', { topic: 'test' }]])
+    end
+
+    it "gets messages from the pending message queue" do
+      producer.produce('test', topic: 'test')
+      messages = producer.extract_undelivered_messages!
+      expect(messages).to eq([['test', { topic: 'test' }]])
+    end
+
+    it "clears buffers afterwards" do
+      producer.produce('test', topic: 'test')
+      expect(producer.buffer_size).to eq(1)
+      producer.extract_undelivered_messages!
+      expect(producer.buffer_size).to eq(0)
+    end
+  end
+
   describe "#produce" do
     before do
       allow(cluster).to receive(:partitions_for).with("greetings") { [0, 1, 2, 3] }

@@ -334,6 +334,8 @@ module Kafka
     #   buffered messages that will automatically trigger a delivery.
     # @param delivery_interval [Integer] if greater than zero, the number of
     #   seconds between automatic message deliveries.
+    # @param finally [Proc] handler to deal with messages when they cannot be
+    #   delivered to producers (e.g. timeout during shutdown)
     #
     # @see AsyncProducer
     # @return [AsyncProducer]
