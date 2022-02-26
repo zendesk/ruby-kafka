@@ -48,6 +48,15 @@ describe Kafka::Client do
     end
   end
 
+  describe "#async_producer" do
+    subject(:client) { described_class.new(**client_opts) }
+
+    it "propagates the 'finally' lambda to the correct constructors" do
+      async_producer = client.async_producer(finally: Proc.new { |_| })
+      expect(async_producer).to_not be_nil
+    end
+  end
+
   describe "#deliver_message" do
     subject(:client) { described_class.new(**client_opts) }
 
