@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
 module Kafka
-  VERSION = "1.5.0"
+  # Braze forked the version at 1.5.0
+  VERSION = "1.5.0.1"
 end
