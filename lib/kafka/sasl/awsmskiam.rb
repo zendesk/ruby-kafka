@@ -9,12 +9,13 @@ module Kafka
     class AwsMskIam
       AWS_MSK_IAM = "AWS_MSK_IAM"
 
-      def initialize(aws_region:, access_key_id:, secret_key_id:, logger:)
+      def initialize(aws_region:, access_key_id:, secret_key_id:, session_token: nil,logger:)
         @semaphore = Mutex.new
 
         @aws_region = aws_region
         @access_key_id = access_key_id
         @secret_key_id = secret_key_id
+        @session_token = session_token
         @logger = TaggedLogger.new(logger)
       end
 
@@ -61,7 +62,7 @@ module Kafka
       end
 
       def authentication_payload(host:, time_now:)
-        {
+        payload = {
           'version': "2020_10_22",
           'host': host,
           'user-agent': "ruby-kafka",
@@ -72,7 +73,11 @@ module Kafka
           'x-amz-signedheaders': "host",
           'x-amz-expires': "900",
           'x-amz-signature': signature(host: host, time_now: time_now)
-        }.to_json
+        }
+
+        payload['x-amz-security-token'] = @session_token unless @session_token.nil?
+
+        payload.to_json
       end
 
       def canonical_request(host:, time_now:)
