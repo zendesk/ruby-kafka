@@ -62,7 +62,7 @@ module Kafka
       end
 
       def authentication_payload(host:, time_now:)
-        payload = {
+        {
           'version': "2020_10_22",
           'host': host,
           'user-agent': "ruby-kafka",
@@ -72,12 +72,9 @@ module Kafka
           'x-amz-date': time_now.strftime("%Y%m%dT%H%M%SZ"),
           'x-amz-signedheaders': "host",
           'x-amz-expires': "900",
+          'x-amz-security-token': @session_token,
           'x-amz-signature': signature(host: host, time_now: time_now)
-        }
-
-        payload['x-amz-security-token'] = @session_token unless @session_token.nil?
-
-        payload.to_json
+        }.to_json
       end
 
       def canonical_request(host:, time_now:)
@@ -96,6 +93,7 @@ module Kafka
           "X-Amz-Credential" => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
           "X-Amz-Date" => time_now.strftime("%Y%m%dT%H%M%SZ"),
           "X-Amz-Expires" => "900",
+          "X-Amz-Security-Token" => @session_token,
           "X-Amz-SignedHeaders" => "host"
         )
       end
