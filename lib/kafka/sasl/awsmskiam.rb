@@ -63,31 +63,31 @@ module Kafka
 
       def authentication_payload(host:, time_now:)
         {
-          'version': "2020_10_22",
-          'host': host,
-          'user-agent': "ruby-kafka",
-          'action': "kafka-cluster:Connect",
-          'x-amz-algorithm': "AWS4-HMAC-SHA256",
-          'x-amz-credential': @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
-          'x-amz-date': time_now.strftime("%Y%m%dT%H%M%SZ"),
-          'x-amz-signedheaders': "host",
-          'x-amz-expires': "900",
-          'x-amz-security-token': @session_token,
-          'x-amz-signature': signature(host: host, time_now: time_now)
-        }.to_json
+          'version' => "2020_10_22",
+          'host' => host,
+          'user-agent' => "ruby-kafka",
+          'action' => "kafka-cluster:Connect",
+          'x-amz-algorithm' => "AWS4-HMAC-SHA256",
+          'x-amz-credential' => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          'x-amz-date' => time_now.strftime("%Y%m%dT%H%M%SZ"),
+          'x-amz-signedheaders' => "host",
+          'x-amz-expires' => "900",
+          'x-amz-security-token' => @session_token,
+          'x-amz-signature' => signature(host: host, time_now: time_now)
+        }.delete_if { |_, v| v.nil? }.to_json
       end
 
       def canonical_request(host:, time_now:)
         "GET\n" +
-        "/\n" +
-        canonical_query_string(time_now: time_now) + "\n" +
-        canonical_headers(host: host) + "\n" +
-        signed_headers + "\n" +
-        hashed_payload
+          "/\n" +
+          canonical_query_string(time_now: time_now) + "\n" +
+          canonical_headers(host: host) + "\n" +
+          signed_headers + "\n" +
+          hashed_payload
       end
 
       def canonical_query_string(time_now:)
-        URI.encode_www_form(
+        params = {
           "Action" => "kafka-cluster:Connect",
           "X-Amz-Algorithm" => "AWS4-HMAC-SHA256",
           "X-Amz-Credential" => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
@@ -95,7 +95,9 @@ module Kafka
           "X-Amz-Expires" => "900",
           "X-Amz-Security-Token" => @session_token,
           "X-Amz-SignedHeaders" => "host"
-        )
+        }.delete_if { |_, v| v.nil? }
+
+        URI.encode_www_form(params)
       end
 
       def canonical_headers(host:)
@@ -112,9 +114,9 @@ module Kafka
 
       def string_to_sign(host:, time_now:)
         "AWS4-HMAC-SHA256" + "\n" +
-        time_now.strftime("%Y%m%dT%H%M%SZ") + "\n" +
-        time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request" + "\n" +
-        bin_to_hex(digest.digest(canonical_request(host: host, time_now: time_now)))
+          time_now.strftime("%Y%m%dT%H%M%SZ") + "\n" +
+          time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request" + "\n" +
+          bin_to_hex(digest.digest(canonical_request(host: host, time_now: time_now)))
       end
 
       def signature(host:, time_now:)
