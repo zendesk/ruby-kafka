@@ -9,7 +9,7 @@ module Kafka
     class AwsMskIam
       AWS_MSK_IAM = "AWS_MSK_IAM"
 
-      def initialize(aws_region:, access_key_id:, secret_key_id:, session_token: nil,logger:)
+      def initialize(aws_region:, access_key_id:, secret_key_id:, session_token: nil, logger:)
         @semaphore = Mutex.new
 
         @aws_region = aws_region
