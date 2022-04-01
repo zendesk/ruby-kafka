@@ -347,27 +347,29 @@ jobs:
       - image: circleci/ruby:2.5.1-node
         environment:
           LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.13-2.7.0
+      - image: bitnami/zookeeper
         environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          ALLOW_ANONYMOUS_LOGIN: yes
+      - image: bitnami/kafka:2.7.0
+        environment:
+          ALLOW_PLAINTEXT_LISTENER: yes
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+          KAFKA_CFG_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.13-2.7.0
+      - image: bitnami/kafka:2.7.0
         environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          ALLOW_PLAINTEXT_LISTENER: yes
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
+          KAFKA_CFG_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.13-2.7.0
+      - image: bitnami/kafka:2.7.0
         environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+          ALLOW_PLAINTEXT_LISTENER: yes
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9094
+          KAFKA_CFG_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
     steps:
       - checkout
