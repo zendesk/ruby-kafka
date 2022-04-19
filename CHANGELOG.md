@@ -4,6 +4,8 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+- Add support for AWS IAM Authentication to an MSK cluster (#907).
+
 ## 1.4.0
 
 - Refresh a stale cluster's metadata if necessary on `Kafka::Client#deliver_message` (#901).

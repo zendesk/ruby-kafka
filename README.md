@@ -1121,6 +1121,20 @@ kafka = Kafka.new(
 )
 ```
 
+##### AWS MSK (IAM)
+In order to authenticate using IAM w/ an AWS MSK cluster, set your access key, secret key, and region when initializing the Kafka client:
+
+```ruby
+k = Kafka.new(
+  ["kafka1:9092"],
+  sasl_aws_msk_iam_access_key_id: 'iam_access_key',
+  sasl_aws_msk_iam_secret_key_id: 'iam_secret_key',
+  sasl_aws_msk_iam_aws_region: 'us-west-2',
+  ssl_ca_certs_from_system: true,
+  # ...
+)
+```
+
 ##### PLAIN
 In order to authenticate using PLAIN, you must set your username and password when initializing the Kafka client:
 

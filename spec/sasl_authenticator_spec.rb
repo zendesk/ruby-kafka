@@ -41,6 +41,9 @@ describe Kafka::SaslAuthenticator do
       sasl_scram_password: nil,
       sasl_scram_mechanism: nil,
       sasl_oauth_token_provider: nil,
+      sasl_aws_msk_iam_access_key_id: nil,
+      sasl_aws_msk_iam_secret_key_id: nil,
+      sasl_aws_msk_iam_aws_region: nil
     }
   }
 
