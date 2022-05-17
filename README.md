@@ -139,6 +139,21 @@ Or install it yourself as:
     <td>Limited support</td>
     <td>Limited support</td>
   </tr>
+  <tr>
+    <th>Kafka 2.8</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
+  <tr>
+    <th>Kafka 3.0</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
+  <tr>
+    <th>Kafka 3.1</th>
+    <td>Limited support</td>
+    <td>Limited support</td>
+  </tr>
 </table>
 
 This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with the v0.5.x series. There's limited support for Kafka 0.8, and things should work with Kafka 0.11, although there may be performance issues due to changes in the protocol.
@@ -156,6 +171,9 @@ This library is targeting Kafka 0.9 with the v0.4.x series and Kafka 0.10 with t
 - **Kafka 2.5:** Everything that works with Kafka 2.4 should still work, but so far no features specific to Kafka 2.5 have been added.
 - **Kafka 2.6:** Everything that works with Kafka 2.5 should still work, but so far no features specific to Kafka 2.6 have been added.
 - **Kafka 2.7:** Everything that works with Kafka 2.6 should still work, but so far no features specific to Kafka 2.7 have been added.
+- **Kafka 2.8:** Everything that works with Kafka 2.7 should still work, but so far no features specific to Kafka 2.8 have been added.
+- **Kafka 3.0:** Everything that works with Kafka 2.8 should still work, but so far no features specific to Kafka 3.0 have been added.
+- **Kafka 3.1:** Everything that works with Kafka 3.0 should still work, but so far no features specific to Kafka 3.1 have been added.
 
 This library requires Ruby 2.1 or higher.
 
