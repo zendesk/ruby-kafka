@@ -89,7 +89,7 @@ module Kafka
     def join_group(**options)
       request = Protocol::JoinGroupRequest.new(**options)
 
-      send_request(request)
+      send_request(request, read_timeout: options[:rebalance_timeout])
     end
 
     def sync_group(**options)
@@ -196,8 +196,8 @@ module Kafka
 
     private
 
-    def send_request(request)
-      connection.send_request(request)
+    def send_request(request, read_timeout: nil)
+      connection.send_request(request, read_timeout: read_timeout)
     rescue IdleConnection
       @logger.warn "Connection has been unused for too long, re-connecting..."
       @connection.close rescue nil

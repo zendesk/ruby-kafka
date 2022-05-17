@@ -30,7 +30,7 @@ describe Kafka::Broker do
       @mocked_response = response
     end
 
-    def send_request(request)
+    def send_request(request, read_timeout: nil)
       @mocked_response
     end
 

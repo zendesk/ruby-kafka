@@ -81,9 +81,11 @@ module Kafka
     #
     # @param request [#encode, #response_class] the request that should be
     #   encoded and written.
+    # @param read_timeout [Integer] the read timeout in seconds.
+    #   For more details, see #read_response.
     #
     # @return [Object] the response.
-    def send_request(request)
+    def send_request(request, read_timeout: nil)
       api_name = Protocol.api_name(request.api_key)
 
       # Default notification payload.
@@ -107,7 +109,7 @@ module Kafka
         write_request(request, notification)
 
         response_class = request.response_class
-        response = wait_for_response(response_class, notification) unless response_class.nil?
+        response = wait_for_response(response_class, notification, timeout: read_timeout) unless response_class.nil?
 
         @last_request = Time.now
 
@@ -180,9 +182,13 @@ module Kafka
     #
     # @param response_class [#decode] an object that can decode the response from
     #   a given Decoder.
+    # @param timeout [Integer] the timeout in seconds. The actual timeout is the
+    #   minimum value of the multiplier of @socket_timeout that is greater than
+    #   or equal to this value.
     #
     # @return [nil]
-    def read_response(response_class, notification)
+    def read_response(response_class, notification, timeout: nil)
+      start_time ||= Time.now
       @logger.debug "Waiting for response #{@correlation_id} from #{to_s}"
 
       data = @decoder.bytes
@@ -198,13 +204,14 @@ module Kafka
 
       return correlation_id, response
     rescue Errno::ETIMEDOUT
+      retry if timeout && Time.now - start_time < timeout
       @logger.error "Timed out while waiting for response #{@correlation_id}"
       raise
     end
 
-    def wait_for_response(response_class, notification)
+    def wait_for_response(response_class, notification, timeout: nil)
       loop do
-        correlation_id, response = read_response(response_class, notification)
+        correlation_id, response = read_response(response_class, notification, timeout: timeout)
 
         # There may have been a previous request that timed out before the client
         # was able to read the response. In that case, the response will still be
