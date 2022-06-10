@@ -6,16 +6,36 @@ require 'json'
 
 module Kafka
   module Sasl
-    class AwsMskIam
-      AWS_MSK_IAM = "AWS_MSK_IAM"
 
-      def initialize(aws_region:, access_key_id:, secret_key_id:, session_token: nil, logger:)
-        @semaphore = Mutex.new
-
-        @aws_region = aws_region
+    class AwsMskIamCredentials
+      def initialize(access_key_id: nil, secret_key_id: nil, session_token: nil, assume_role_credentials: nil)
         @access_key_id = access_key_id
         @secret_key_id = secret_key_id
         @session_token = session_token
+        @assume_role_credentials = assume_role_credentials
+      end
+
+      def get_access_key_id
+        @assume_role_credentials.nil? ? @access_key_id : @assume_role_credentials.credentials.access_key_id
+      end
+
+      def get_secret_key_id
+        @assume_role_credentials.nil? ? @secret_key_id : @assume_role_credentials.credentials.secret_access_key
+      end
+
+      def get_session_token
+        @assume_role_credentials.nil? ? @session_token : @assume_role_credentials.credentials.session_token
+      end
+    end
+
+    class AwsMskIam
+      AWS_MSK_IAM = "AWS_MSK_IAM"
+
+      def initialize(aws_region:, aws_msk_iam_credentials:, logger:)
+        @semaphore = Mutex.new
+
+        @aws_region = aws_region
+        @aws_msk_iam_credentials = aws_msk_iam_credentials
         @logger = TaggedLogger.new(logger)
       end
 
@@ -24,11 +44,11 @@ module Kafka
       end
 
       def configured?
-        @aws_region && @access_key_id && @secret_key_id
+        @aws_region && @aws_msk_iam_credentials.get_access_key_id && @aws_msk_iam_credentials.get_secret_key_id
       end
 
       def authenticate!(host, encoder, decoder)
-        @logger.debug "Authenticating #{@access_key_id} with SASL #{AWS_MSK_IAM}"
+        @logger.debug "Authenticating #{@aws_msk_iam_credentials.get_access_key_id} with SASL #{AWS_MSK_IAM}"
 
         host_without_port = host.split(':', -1).first
 
@@ -68,11 +88,11 @@ module Kafka
           'user-agent' => "ruby-kafka",
           'action' => "kafka-cluster:Connect",
           'x-amz-algorithm' => "AWS4-HMAC-SHA256",
-          'x-amz-credential' => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          'x-amz-credential' => @aws_msk_iam_credentials.get_access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
           'x-amz-date' => time_now.strftime("%Y%m%dT%H%M%SZ"),
           'x-amz-signedheaders' => "host",
           'x-amz-expires' => "900",
-          'x-amz-security-token' => @session_token,
+          'x-amz-security-token' => @aws_msk_iam_credentials.get_session_token,
           'x-amz-signature' => signature(host: host, time_now: time_now)
         }.delete_if { |_, v| v.nil? }.to_json
       end
@@ -90,10 +110,10 @@ module Kafka
         params = {
           "Action" => "kafka-cluster:Connect",
           "X-Amz-Algorithm" => "AWS4-HMAC-SHA256",
-          "X-Amz-Credential" => @access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
+          "X-Amz-Credential" => @aws_msk_iam_credentials.get_access_key_id + "/" + time_now.strftime("%Y%m%d") + "/" + @aws_region + "/kafka-cluster/aws4_request",
           "X-Amz-Date" => time_now.strftime("%Y%m%dT%H%M%SZ"),
           "X-Amz-Expires" => "900",
-          "X-Amz-Security-Token" => @session_token,
+          "X-Amz-Security-Token" => @aws_msk_iam_credentials.get_session_token,
           "X-Amz-SignedHeaders" => "host"
         }.delete_if { |_, v| v.nil? }
 
@@ -120,7 +140,7 @@ module Kafka
       end
 
       def signature(host:, time_now:)
-        date_key = OpenSSL::HMAC.digest("SHA256", "AWS4" + @secret_key_id, time_now.strftime("%Y%m%d"))
+        date_key = OpenSSL::HMAC.digest("SHA256", "AWS4" + @aws_msk_iam_credentials.get_secret_key_id, time_now.strftime("%Y%m%d"))
         date_region_key = OpenSSL::HMAC.digest("SHA256", date_key, @aws_region)
         date_region_service_key = OpenSSL::HMAC.digest("SHA256", date_region_key, "kafka-cluster")
         signing_key = OpenSSL::HMAC.digest("SHA256", date_region_service_key, "aws4_request")
