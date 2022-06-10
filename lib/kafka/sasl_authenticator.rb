@@ -46,7 +46,7 @@ module Kafka
         assume_role_credentials: aws_iam_assume_role_credentials
       )
 
-      aws_msk_iam = Sasl::AwsMskIam.new(
+      @aws_msk_iam = Sasl::AwsMskIam.new(
         aws_region: sasl_aws_msk_iam_aws_region,
         aws_msk_iam_credentials: aws_msk_iam_credentials,
         logger: @logger,
@@ -58,7 +58,7 @@ module Kafka
       )
       @asc = aws_iam_assume_role_credentials
 
-      @mechanism = [@gssapi, @plain, @scram, @oauth, aws_msk_iam].find(&:configured?)
+      @mechanism = [@gssapi, @plain, @scram, @oauth, @aws_msk_iam].find(&:configured?)
     end
 
     def enabled?
