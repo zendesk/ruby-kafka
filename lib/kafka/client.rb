@@ -89,7 +89,7 @@ module Kafka
                    sasl_aws_msk_iam_secret_key_id: nil,
                    sasl_aws_msk_iam_aws_region: nil,
                    sasl_aws_msk_iam_session_token: nil,
-                   aws_iam_assume_role_credentails: nil,
+                   aws_iam_assume_role_credentials: nil,
                    sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true,
                    resolve_seed_brokers: false)
       @logger = TaggedLogger.new(logger)
@@ -121,7 +121,7 @@ module Kafka
         sasl_aws_msk_iam_secret_key_id: sasl_aws_msk_iam_secret_key_id,
         sasl_aws_msk_iam_aws_region: sasl_aws_msk_iam_aws_region,
         sasl_aws_msk_iam_session_token: sasl_aws_msk_iam_session_token,
-        aws_iam_assume_role_credentails: aws_iam_assume_role_credentails,
+        aws_iam_assume_role_credentials: aws_iam_assume_role_credentials,
         sasl_oauth_token_provider: sasl_oauth_token_provider,
         logger: @logger
       )
