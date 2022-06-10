@@ -56,7 +56,6 @@ module Kafka
         token_provider: sasl_oauth_token_provider,
         logger: @logger,
       )
-      @asc = aws_iam_assume_role_credentials
 
       @mechanism = [@gssapi, @plain, @scram, @oauth, @aws_msk_iam].find(&:configured?)
     end
