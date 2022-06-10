@@ -6,7 +6,6 @@ role_session_name = "example_session"
 test_topic = "test_topic"
 region = "us-east-2"
 
-
 # No explicit credentials needed, just other config values.
 sts = Aws::STS::Client.new
 
@@ -24,7 +23,6 @@ kafka_client = Kafka.new(
   sasl_aws_msk_iam_aws_region: region,
   ssl_ca_certs_from_system: true,
 )
-
 
 producer = kafka_client.producer
 producer.produce("hello1", topic: test_topic)
