@@ -15,7 +15,8 @@ module Kafka
                    sasl_aws_msk_iam_access_key_id:,
                    sasl_aws_msk_iam_secret_key_id:,
                    sasl_aws_msk_iam_aws_region:,
-                   sasl_aws_msk_iam_session_token: nil)
+                   sasl_aws_msk_iam_session_token:,
+                   aws_iam_assume_role_credentails: nil)
       @logger = TaggedLogger.new(logger)
 
       @plain = Sasl::Plain.new(
@@ -39,10 +40,10 @@ module Kafka
       )
 
       @aws_msk_iam = Sasl::AwsMskIam.new(
-        access_key_id: sasl_aws_msk_iam_access_key_id,
-        secret_key_id: sasl_aws_msk_iam_secret_key_id,
+        access_key_id: aws_iam_assume_role_credentails.nil ? sasl_aws_msk_iam_access_key_id : aws_iam_assume_role_credentails.credentials.access_key_id,
+        secret_key_id:  aws_iam_assume_role_credentails.nil ? sasl_aws_msk_iam_secret_key_id : aws_iam_assume_role_credentails.credentials.secret_access_key,
         aws_region: sasl_aws_msk_iam_aws_region,
-        session_token: sasl_aws_msk_iam_session_token,
+        session_token: aws_iam_assume_role_credentails.nil ? sasl_aws_msk_iam_session_token : aws_iam_assume_role_credentails.credentials.session_token,
         logger: @logger,
       )
 
