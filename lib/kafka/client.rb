@@ -814,6 +814,10 @@ module Kafka
       @cluster.disconnect
     end
 
+    def refresh_metadata
+      @cluster.refresh_metadata!
+    end
+
     private
 
     def initialize_cluster

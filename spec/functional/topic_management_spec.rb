@@ -60,7 +60,10 @@ describe "Topic management API", functional: true do
     expect(kafka.partitions_for(topic)).to eq 3
 
     kafka.create_partitions_for(topic, num_partitions: 10)
-    with_retry { expect(kafka.partitions_for(topic)).to eq 10 }
+    with_retry {
+      kafka.refresh_metadata
+      expect(kafka.partitions_for(topic)).to eq 10
+    }
   end
 
   example "describe a topic" do
