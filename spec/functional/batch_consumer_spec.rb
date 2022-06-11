@@ -45,7 +45,12 @@ describe "Batch Consumer API", functional: true do
     duplicates = Set.new
 
     loop do
-      message = message_queue.pop
+      message = begin
+        Timeout.timeout(10) { message_queue.pop }
+      rescue Timeout::Error
+        $stderr.puts "Timeout::Error: No message was added within the time-out period"
+        break
+      end
 
       if received_messages.include?(message)
         duplicates.add(message)
