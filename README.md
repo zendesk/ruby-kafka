@@ -1135,6 +1135,28 @@ k = Kafka.new(
 )
 ```
 
+or use a STS client to retrieve temporary AssumeRoleCredentials. AssumeRoleCredentials will be updated in the background automatically.
+```ruby
+sts = Aws::STS::Client.new
+
+# to get more information about how to create AssumeRoleCredentials
+# please refer to https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/AssumeRoleCredentials.html
+role_credentials = Aws::AssumeRoleCredentials.new(
+  client: sts,
+  role_arn: "role_arn",
+  role_session_name: "role_session_name"
+  
+)
+
+kafka_client = Kafka.new(
+  ["broker_address"],
+  aws_iam_assume_role_credentials: role_credentials,
+  sasl_aws_msk_iam_aws_region: "us-east-2",
+  ssl_ca_certs_from_system: true,
+)
+```
+
+
 ##### PLAIN
 In order to authenticate using PLAIN, you must set your username and password when initializing the Kafka client:
 
