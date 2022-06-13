@@ -2,7 +2,7 @@ version: 2
 jobs:
   unit:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
     steps:
@@ -14,7 +14,7 @@ jobs:
 
   kafka-0.11:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -47,7 +47,7 @@ jobs:
 
   kafka-1.0.0:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -80,7 +80,7 @@ jobs:
 
   kafka-1.1:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -113,7 +113,7 @@ jobs:
 
   kafka-2.0:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -146,7 +146,7 @@ jobs:
 
   kafka-2.1:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -179,7 +179,7 @@ jobs:
 
   kafka-2.2:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -212,7 +212,7 @@ jobs:
 
   kafka-2.3:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -245,7 +245,7 @@ jobs:
 
   kafka-2.4:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -278,7 +278,7 @@ jobs:
 
   kafka-2.5:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -311,7 +311,7 @@ jobs:
 
   kafka-2.6:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
@@ -344,7 +344,7 @@ jobs:
 
   kafka-2.7:
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5.9
         environment:
           LOG_LEVEL: DEBUG
       - image: bitnami/zookeeper
