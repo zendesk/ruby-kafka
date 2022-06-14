@@ -8,7 +8,7 @@ module Kafka
   module Sasl
 
     class AwsMskIamCredentialsException < StandardError
-      def initialize(msg="Aws Msk Iam Credentials Exception", exception_type="Aws Msk Iam Credentials Exception")
+      def initialize(msg = "Aws Msk Iam Credentials Exception", exception_type = "Aws Msk Iam Credentials Exception")
         @exception_type = exception_type
         super(msg)
       end
@@ -30,9 +30,9 @@ module Kafka
       end
 
       def verify_params
-          if @assume_role_credentials.nil? and (@access_key_id.nil? || @secret_key_id.nil?)
-            raise AwsMskIamCredentialsException.new(msg = "to create AwsMskIamCredentials, should provide either 1. assume_role_credentials or 2. access_key_id and access_key_id")
-          end
+        if @assume_role_credentials.nil? and (@access_key_id.nil? || @secret_key_id.nil?)
+          raise AwsMskIamCredentialsException.new(msg = "to create AwsMskIamCredentials, should provide either 1. assume_role_credentials or 2. access_key_id and access_key_id")
+        end
       end
 
       def get_access_key_id

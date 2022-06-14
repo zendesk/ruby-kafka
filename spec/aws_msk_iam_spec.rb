@@ -46,7 +46,6 @@ describe Kafka::Sasl::AwsMskIamCredentials do
       }.to raise_error(Kafka::Sasl::AwsMskIamCredentialsException)
     end
 
-
     it "should not throw Kafka::Sasl::AwsMskIamCredentialsException when both access_key_id and secret_key_id are not nil" do
       aws_iam_auth_options.update(
         access_key_id: "access_key_id",
@@ -69,14 +68,14 @@ describe Kafka::Sasl::AwsMskIamCredentials do
     end
   end
 
-
   context "when use assume_role_credentials" do
-    let(:mock_assume_role_credentials_obj){
+    let(:mock_assume_role_credentials_obj) {
       MockAssumeRoleCredentials.new(
-          credentials = MockAWSCredentials.new(
+        credentials = MockAWSCredentials.new(
           "mock_assume_role_access_key_id",
           "mock_assume_role_secret_access_key",
-          "mock_assume_role_session_token")
+          "mock_assume_role_session_token"
+        )
       )
     }
 
@@ -101,7 +100,7 @@ describe Kafka::Sasl::AwsMskIamCredentials do
         end
       end
       aws_iam_auth_options.update(
-          assume_role_credentials: mock_assume_role_credentials_obj
+        assume_role_credentials: mock_assume_role_credentials_obj
       )
     end
 
