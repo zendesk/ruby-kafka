@@ -43,7 +43,8 @@ module Kafka
         access_key_id: sasl_aws_msk_iam_access_key_id,
         secret_key_id: sasl_aws_msk_iam_secret_key_id,
         session_token: sasl_aws_msk_iam_session_token,
-        assume_role_credentials: aws_iam_assume_role_credentials
+        assume_role_credentials: aws_iam_assume_role_credentials,
+        logger: @logger,
       )
 
       @aws_msk_iam = Sasl::AwsMskIam.new(

@@ -7,12 +7,32 @@ require 'json'
 module Kafka
   module Sasl
 
+    class AwsMskIamCredentialsException < StandardError
+      def initialize(msg="Aws Msk Iam Credentials Exception", exception_type="Aws Msk Iam Credentials Exception")
+        @exception_type = exception_type
+        super(msg)
+      end
+    end
+
     class AwsMskIamCredentials
-      def initialize(access_key_id: nil, secret_key_id: nil, session_token: nil, assume_role_credentials: nil)
+      def initialize(access_key_id: nil, secret_key_id: nil, session_token: nil, assume_role_credentials: nil, logger:)
         @access_key_id = access_key_id
         @secret_key_id = secret_key_id
         @session_token = session_token
         @assume_role_credentials = assume_role_credentials
+        @logger = TaggedLogger.new(logger)
+
+        begin
+          verify_params
+        rescue AwsMskIamCredentialsException
+          @logger.error("to create AwsMskIamCredentials, should provide either 1. assume_role_credentials or 2. access_key_id and access_key_id. session_token is optional but can be required depends on the scenario")
+        end
+      end
+
+      def verify_params
+          if @assume_role_credentials.nil? and (@access_key_id.nil? || @secret_key_id.nil?)
+            raise AwsMskIamCredentialsException.new(msg = "to create AwsMskIamCredentials, should provide either 1. assume_role_credentials or 2. access_key_id and access_key_id")
+          end
       end
 
       def get_access_key_id
