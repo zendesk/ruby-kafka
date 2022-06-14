@@ -6,24 +6,6 @@ require 'fake_token_provider'
 describe Kafka::Sasl::AwsMskIamCredentials do
   let(:logger) { LOGGER }
 
-  let(:host) { "127.0.0.1" }
-  let(:server) { TCPServer.new(host, 0) }
-  let(:port) { server.addr[1] }
-
-  let(:connection) {
-    Kafka::Connection.new(
-      host: host,
-      port: port,
-      client_id: "test",
-      logger: logger,
-      instrumenter: Kafka::Instrumenter.new(client_id: "test"),
-      connect_timeout: 0.1,
-      socket_timeout: 0.1,
-    )
-  }
-
-  let!(:fake_server) { FakeServer.start(server) }
-
   let(:sasl_aws_iam_credentials) {
     Kafka::Sasl::AwsMskIamCredentials.new(
       **{ logger: logger }.merge(aws_iam_auth_options)
