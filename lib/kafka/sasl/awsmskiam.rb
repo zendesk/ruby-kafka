@@ -14,6 +14,11 @@ module Kafka
       end
     end
 
+    # AWS IAM Credentials will be encapsulated in an object
+    # so when the assume role credential object gets refreshed in the background by AWS SDK,
+    # the instance variable @assume_role_credentials will be "refreshed" as well(Ruby is "pass by object reference");
+    # if one just tried to retrieve access_key_id and secret_key_id from the temporary credential and pass those values as strings,
+    # those strings would not get updated in the background
     class AwsMskIamCredentials
       def initialize(access_key_id: nil, secret_key_id: nil, session_token: nil, assume_role_credentials: nil, logger:)
         @access_key_id = access_key_id
