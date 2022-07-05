@@ -381,8 +381,6 @@ module Kafka
 
     def deliver_messages_with_retries(notification)
       attempt = 0
-      refresh_attempt = 0
-      refresh_retries = 1
 
       @cluster.add_target_topics(@target_topics)
 
@@ -404,17 +402,6 @@ module Kafka
 
         begin
           @cluster.refresh_metadata_if_necessary!
-        rescue Kafka::Error => e
-          @cluster.mark_as_stale!
-
-          if refresh_attempt < refresh_retries
-            refresh_attempt += 1
-            @logger.warn "Error while delivering message, #{e.class}: #{e.message}; retrying after 1s..."
-
-            sleep 1
-
-            retry
-          end
         rescue ConnectionError => e
           raise DeliveryFailed.new(e, buffer_messages)
         end
