@@ -116,7 +116,7 @@ module Kafka
     rescue SystemCallError, EOFError, IOError => e
       close
 
-      @logger.error "Connection error while sending request: #{e.class}: #{e.backtrace.join("\n\t")}"
+      @logger.error "Connection error while sending request: #{e.class}: #{e.backtrace.join("\n")}"
       raise ConnectionError, "Connection error #{e.class}: #{e}"
     ensure
       @logger.pop_tags

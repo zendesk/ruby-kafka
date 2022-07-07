@@ -90,6 +90,7 @@ module Kafka
 
           raise Kafka::Error, "SASL AWS_MSK_IAM authentication failed: unknown error" unless @server_first_message
         rescue Errno::ETIMEDOUT, EOFError => e
+          @logger.error "SASL AWS_MSK_IAM authentication failed: #{e.backtrace.join("\n")}"
           raise Kafka::Error, "SASL AWS_MSK_IAM authentication failed: #{e.message}"
         end
 
