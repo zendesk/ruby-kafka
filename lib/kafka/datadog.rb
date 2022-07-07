@@ -288,13 +288,13 @@ module Kafka
         }
 
         # This gets us the write rate.
-        increment("producer.produce.messages", tags: tags.merge(topic: topic))
+        increment("producer.produce.messages", tags: tags)
 
         # Information about typical/average/95p message size.
-        histogram("producer.produce.message_size", message_size, tags: tags.merge(topic: topic))
+        histogram("producer.produce.message_size", message_size, tags: tags)
 
         # Aggregate message size.
-        count("producer.produce.message_size.sum", message_size, tags: tags.merge(topic: topic))
+        count("producer.produce.message_size.sum", message_size, tags: tags)
 
         # This gets us the avg/max buffer size per producer.
         histogram("producer.buffer.size", buffer_size, tags: tags)
