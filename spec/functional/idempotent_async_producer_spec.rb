@@ -106,7 +106,11 @@ describe "Idempotent async producer", functional: true do
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
     sleep 10
 
-    records = kafka.fetch_messages(topic: topic, offset: :earliest)
+    records = [
+      kafka.fetch_messages(topic: topic, offset: :earliest, partition: 0),
+      kafka.fetch_messages(topic: topic, offset: :earliest, partition: 1),
+      kafka.fetch_messages(topic: topic, offset: :earliest, partition: 2),
+    ].flatten
     expect(records.length).to eql(20)
   end
 
