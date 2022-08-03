@@ -87,6 +87,28 @@ describe "Idempotent async producer", functional: true do
     expect(records[0].value).to eql('Hello')
     expect(records[1].value).to eql('Hi')
   end
+  
+  example "no duplication if brokers are down while reading response (no key, partition_key or partition provided)" do
+    topic = create_random_topic(num_partitions: 3)
+
+    10.times do |i|
+      producer.produce("Hello #{i}", topic: topic)
+    end
+    sleep 10
+
+    # Simulate the situation that all brokers fail to read
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
+    10.times do |i|
+      producer.produce("Hi #{i}", topic: topic)
+    end
+    sleep 10
+
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
+    sleep 10
+
+    records = kafka.fetch_messages(topic: topic, offset: :earliest)
+    expect(records.length).to eql(20)
+  end
 
   example "no duplication if one of the brokers are down" do
     topic = create_random_topic(num_partitions: 10)
