@@ -1,8 +1,11 @@
-version: 2
+version: 2.1
 jobs:
   unit:
+    parameters:
+      ruby-version:
+        type: string
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:<< parameters.ruby-version >>
         environment:
           LOG_LEVEL: DEBUG
     steps:
@@ -12,27 +15,30 @@ jobs:
       - run: bundle exec rspec
       - run: bundle exec rubocop
 
-  kafka-0.11:
+  functional-with-wurstmeister:
+    parameters:
+      kafka-version:
+        type: string
     docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.11-0.11.0.3
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-0.11.0.3
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-0.11.0.3
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
@@ -45,326 +51,32 @@ jobs:
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec --profile --tag functional spec/functional
 
-  kafka-1.0.0:
+  functional-with-bitnami:
+    parameters:
+      kafka-version:
+        type: string
     docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.11-1.0.2
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-1.0.2
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-1.0.2
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-1.1:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.11-1.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-1.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-1.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.0:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.11-2.0.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-2.0.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.11-2.0.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.1:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.12-2.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.1.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.2:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.12-2.2.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.2.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.2.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.3:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.12-2.3.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.3.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.3.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.4:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.12-2.4.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.4.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.4.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.5:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.12-2.5.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.5.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.12-2.5.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.6:
-    docker:
-      - image: circleci/ruby:2.5.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:2.13-2.6.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.13-2.6.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:2.13-2.6.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-2.7:
-    docker:
-      - image: circleci/ruby:2.5.1-node
+      - image: cimg/ruby:2.5
         environment:
           LOG_LEVEL: DEBUG
       - image: bitnami/zookeeper
         environment:
           ALLOW_ANONYMOUS_LOGIN: yes
-      - image: bitnami/kafka:2.7.0
+      - image: bitnami/kafka:<< parameters.kafka-version >>
         environment:
           ALLOW_PLAINTEXT_LISTENER: yes
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
           KAFKA_CFG_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: bitnami/kafka:2.7.0
+      - image: bitnami/kafka:<< parameters.kafka-version >>
         environment:
           ALLOW_PLAINTEXT_LISTENER: yes
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
           KAFKA_CFG_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: bitnami/kafka:2.7.0
+      - image: bitnami/kafka:<< parameters.kafka-version >>
         environment:
           ALLOW_PLAINTEXT_LISTENER: yes
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
@@ -381,15 +93,30 @@ workflows:
   version: 2
   test:
     jobs:
-      - unit
-      - kafka-0.11
-      - kafka-1.0.0
-      - kafka-1.1
-      - kafka-2.0
-      - kafka-2.1
-      - kafka-2.2
-      - kafka-2.3
-      - kafka-2.4
-      - kafka-2.5
-      - kafka-2.6
-      - kafka-2.7
+      - unit:
+          name: unit-ruby-<< matrix.ruby-version >>
+          matrix:
+            parameters:
+              ruby-version:
+                - "2.5"
+      - functional-with-wurstmeister:
+          name: functional-kafka-<< matrix.kafka-version >>
+          matrix:
+            parameters:
+              kafka-version:
+                - 2.11-0.11.0.3
+                - 2.11-1.0.2
+                - 2.11-1.1.1
+                - 2.11-2.0.1
+                - 2.12-2.1.1
+                - 2.12-2.2.1
+                - 2.12-2.3.1
+                - 2.12-2.4.0
+                - 2.12-2.5.0
+                - 2.13-2.6.0
+      - functional-with-bitnami:
+          name: functional-kafka-<< matrix.kafka-version >>
+          matrix:
+            parameters:
+              kafka-version:
+                - "2.7.0"
