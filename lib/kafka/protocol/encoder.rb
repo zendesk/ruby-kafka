@@ -12,7 +12,6 @@ module Kafka
       # @param io [IO] an object that acts as an IO.
       def initialize(io)
         @io = io
-        @io.set_encoding(Encoding::BINARY)
       end
 
       # Writes bytes directly to the IO object.
