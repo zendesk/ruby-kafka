@@ -1,3 +1,9 @@
+# Deprecation notice
+
+This library is **no longer** actively developed and has been superseded by [`librdkafka`](https://github.com/edenhill/librdkafka) via [`rdkafka-ruby`](https://github.com/appsignal/rdkafka-ruby/) bindings. While this library may still receive security patches and bug fixes, it is no longer recommended for production usage.
+
+There needs to be a concerted effort to keep up with Kafka features. There is no point in trying to keep up with Kafka development when other languages use a well-established C binding and get more official support.
+
 # ruby-kafka
 
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
