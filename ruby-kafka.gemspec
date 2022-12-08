@@ -51,4 +51,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop", "~> 0.49.1"
   spec.add_development_dependency "gssapi", ">= 1.2.0"
   spec.add_development_dependency "stackprof"
+
+  spec.post_install_message = %q{
+This library is **no longer** actively developed and has been superseded by librdkafka via rdkafka-ruby bindings.
+
+While this library may still receive security patches and bug fixes, it is no longer recommended for production usage.
+}
 end

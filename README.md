@@ -1,3 +1,9 @@
+# Deprecation notice
+
+This library is **no longer** actively developed and has been superseded by [`librdkafka`](https://github.com/edenhill/librdkafka) via [`rdkafka-ruby`](https://github.com/appsignal/rdkafka-ruby/) bindings. While this library may still receive security patches and bug fixes, it is no longer recommended for production usage.
+
+There needs to be a concerted effort to keep up with Kafka features. There is no point in trying to keep up with Kafka development when other languages use a well-established C binding and get more official support.
+
 # ruby-kafka
 
 A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distributed log and message bus. The focus of this library will be operational simplicity, with good logging and metrics that can make debugging issues easier.
@@ -1316,11 +1322,13 @@ Latest stable release, with native support for the Kafka 0.10 protocol and event
 
 Currently, there are three actively developed frameworks based on ruby-kafka, that provide higher level API that can be used to work with Kafka messages and two libraries for publishing messages.
 
+**Note**: Many of the frameworks and libraries below use `ruby-kafka` only in older versions. See the deprecation notice at the top of this readme for more details.
+
 ### Message processing frameworks
 
-* [Racecar](https://github.com/zendesk/racecar) - A simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It comes with sensible defaults and conventions.
+* [Racecar 1.3](https://github.com/zendesk/racecar/tree/v1-stable) - A simple framework that integrates with Ruby on Rails to provide a seamless way to write, test, configure, and run Kafka consumers. It comes with sensible defaults and conventions.
 
-* [Karafka](https://github.com/karafka/karafka) - Framework used to simplify Apache Kafka based Ruby and Rails applications development. Karafka provides higher abstraction layers, including Capistrano, Docker and Heroku support.
+* [Karafka 1.4](https://github.com/karafka/karafka/tree/1.4) - Framework used to simplify Apache Kafka based Ruby and Rails applications development. Karafka provides higher abstraction layers, including Capistrano, Docker and Heroku support.
 
 * [Phobos](https://github.com/klarna/phobos) - Micro framework and library for applications dealing with Apache Kafka. It wraps common behaviors needed by consumers and producers in an easy and convenient API.
 
@@ -1328,7 +1336,7 @@ Currently, there are three actively developed frameworks based on ruby-kafka, th
 
 * [DeliveryBoy](https://github.com/zendesk/delivery_boy) – A library that integrates with Ruby on Rails, making it easy to publish Kafka messages from any Rails application.
 
-* [WaterDrop](https://github.com/karafka/waterdrop) – A library for Ruby and Ruby on Rails applications, to easy publish Kafka messages in both sync and async way.
+* [WaterDrop 1.4](https://github.com/karafka/waterdrop/tree/1.4) – A library for Ruby and Ruby on Rails applications, to easy publish Kafka messages in both sync and async way.
 
 ## Why Create A New Library?
 
