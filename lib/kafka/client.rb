@@ -8,6 +8,7 @@ require "kafka/broker_info"
 require "kafka/producer"
 require "kafka/consumer"
 require "kafka/heartbeat"
+require "kafka/parallel_heartbeat"
 require "kafka/broker_uri"
 require "kafka/async_producer"
 require "kafka/fetched_message"
@@ -384,6 +385,8 @@ module Kafka
         offset_commit_interval: 10,
         offset_commit_threshold: 0,
         heartbeat_interval: 10,
+        parallel_heartbeat_timeout: nil,
+        parallel_heartbeat_enabled: proc { false },
         offset_retention_time: nil,
         fetcher_max_queue_size: 100,
         refresh_topic_interval: 0,
@@ -428,11 +431,22 @@ module Kafka
         offset_retention_time: offset_retention_time
       )
 
-      heartbeat = Heartbeat.new(
-        group: group,
-        interval: heartbeat_interval,
-        instrumenter: instrumenter
-      )
+      if parallel_heartbeat_timeout
+        heartbeat = ParallelHeartbeat.new(
+          group: group,
+          interval: heartbeat_interval,
+          instrumenter: instrumenter,
+          timeout: parallel_heartbeat_timeout,
+          enabled: parallel_heartbeat_enabled,
+          logger: @logger,
+        )
+      else
+        heartbeat = Heartbeat.new(
+          group: group,
+          interval: heartbeat_interval,
+          instrumenter: instrumenter,
+        )
+      end
 
       Consumer.new(
         cluster: cluster,

@@ -4,6 +4,10 @@ Changes and additions to the library will be listed here.
 
 ## Unreleased
 
+## 1.5.100
+
+- Add ability to send hearbeats for max_processing_time while consumer is running.
+
 ## 1.5.0
 - Add support for AWS IAM Authentication to an MSK cluster (#907).
 - Added session token to the IAM mechanism; necessary for auth via temporary credentials (#937)

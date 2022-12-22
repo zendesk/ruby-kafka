@@ -127,6 +127,7 @@ module Kafka
     # @return [nil]
     def stop
       @running = false
+      @heartbeat.stop
       @fetcher.stop
     end
 
@@ -242,7 +243,9 @@ module Kafka
 
             @instrumenter.instrument("process_message.consumer", notification) do
               begin
-                yield message unless message.is_control_record
+                unless message.is_control_record
+                  @heartbeat.parallel { yield(message) }
+                end
                 @current_offsets[message.topic][message.partition] = message.offset
               rescue => e
                 location = "#{message.topic}/#{message.partition} at offset #{message.offset}"

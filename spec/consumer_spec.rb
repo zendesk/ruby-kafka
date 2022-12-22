@@ -150,6 +150,8 @@ describe Kafka::Consumer do
     allow(group).to receive(:assigned_partitions) { [] }
 
     allow(heartbeat).to receive(:trigger)
+    allow(heartbeat).to receive(:stop)
+    allow(heartbeat).to receive(:parallel) { |&block| block.call }
 
     allow(fetcher).to receive(:data?) { fetched_batches.any? }
     allow(fetcher).to receive(:poll) { [:batches, fetched_batches] }

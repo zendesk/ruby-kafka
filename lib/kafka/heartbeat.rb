@@ -21,5 +21,12 @@ module Kafka
     def trigger
       trigger! if Time.now > @last_heartbeat + @interval
     end
+
+    def parallel
+      yield
+    end
+
+    def stop
+    end
   end
 end
