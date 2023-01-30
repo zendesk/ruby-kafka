@@ -232,8 +232,8 @@ module Kafka
 
       private
 
-      def produce(*args)
-        @producer.produce(*args)
+      def produce(...)
+        @producer.produce(...)
       rescue BufferOverflow
         deliver_messages
         retry
