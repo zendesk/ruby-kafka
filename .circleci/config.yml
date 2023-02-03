@@ -1,37 +1,44 @@
 version: 2
 jobs:
   unit:
+    parameters:
+      ruby-version:
+        type: string
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: cimg/ruby:<< parameters.ruby-version >>
         environment:
           LOG_LEVEL: DEBUG
     steps:
       - checkout
+      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec
       - run: bundle exec rubocop
 
-  kafka-0.10:
+  kafka-with-wurstmeister:
+    parameters:
+      kafka-version:
+        type: string
     docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: cimg/ruby:2.4.1-node
         environment:
           LOG_LEVEL: DEBUG
       - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:0.10.2.1
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9092
           KAFKA_PORT: 9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.10.2.1
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9093
           KAFKA_PORT: 9093
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.10.2.1
+      - image: wurstmeister/kafka:<< parameters.kafka-version >>
         environment:
           KAFKA_ADVERTISED_HOST_NAME: localhost
           KAFKA_ADVERTISED_PORT: 9094
@@ -40,68 +47,7 @@ jobs:
           KAFKA_DELETE_TOPIC_ENABLE: true
     steps:
       - checkout
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-0.11:
-    docker:
-      - image: circleci/ruby:2.4.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:0.11.0.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.11.0.1
-        environment:
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:0.11.0.1
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
-      - run: bundle install --path vendor/bundle
-      - run: bundle exec rspec --profile --tag functional spec/functional
-
-  kafka-1.0:
-    docker:
-      - image: circleci/ruby:2.4.1-node
-        environment:
-          LOG_LEVEL: DEBUG
-      - image: wurstmeister/zookeeper
-      - image: wurstmeister/kafka:1.0.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9092
-          KAFKA_PORT: 9092
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.0.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9093
-          KAFKA_PORT: 9093
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-      - image: wurstmeister/kafka:1.0.0
-        environment:
-          KAFKA_ADVERTISED_HOST_NAME: localhost
-          KAFKA_ADVERTISED_PORT: 9094
-          KAFKA_PORT: 9094
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_DELETE_TOPIC_ENABLE: true
-    steps:
-      - checkout
+      - run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
       - run: bundle install --path vendor/bundle
       - run: bundle exec rspec --profile --tag functional spec/functional
 
@@ -109,7 +55,17 @@ workflows:
   version: 2
   test:
     jobs:
-      - unit
-      - kafka-0.10
-      - kafka-0.11
-      - kafka-1.0
+      - unit:
+          name: unit-ruby-<< matrix.ruby-version >>
+          matrix:
+            parameters:
+              ruby-version:
+                - "2.5"
+      - kafka-with-wurstmeister:
+          name: kafka-with-wurstmeister-<< matrix.kafka-version >>
+          matrix:
+            parameters:
+              kafka-version:
+                - "0.10.2.1"
+                - "0.11.0.1"
+                - "1.0.0"
