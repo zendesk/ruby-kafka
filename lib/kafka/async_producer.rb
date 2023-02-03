@@ -195,7 +195,7 @@ module Kafka
 
           case operation
           when :produce
-            produce(*payload)
+            produce(payload[0], **payload[1])
             deliver_messages if threshold_reached?
           when :deliver_messages
             deliver_messages
@@ -232,8 +232,8 @@ module Kafka
 
       private
 
-      def produce(...)
-        @producer.produce(...)
+      def produce(value, **kwargs)
+        @producer.produce(value, **kwargs)
       rescue BufferOverflow
         deliver_messages
         retry
