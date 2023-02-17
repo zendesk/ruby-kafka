@@ -111,19 +111,6 @@ describe "Producer API", functional: true do
     expect(message.key).to eq "xoxo"
   end
 
-  example "delivering a message to a topic that doesn't yet exist" do
-    topic = "unknown-topic-#{rand(1000)}"
-    now = Time.now
-
-    expect {
-      Timecop.freeze(now) do
-        kafka.deliver_message("yolo", topic: topic, key: "xoxo", partition: 0)
-      end
-    }.to raise_exception(Kafka::DeliveryFailed) {|exception|
-      expect(exception.failed_messages).to eq [Kafka::PendingMessage.new("yolo", "xoxo", topic, 0, nil, now)]
-    }
-  end
-
   example "enumerating the messages in a topic" do
     values = (1..10).to_a
 

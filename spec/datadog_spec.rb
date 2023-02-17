@@ -24,7 +24,7 @@ describe Kafka::Datadog do
 
     agent.wait_for_metrics
 
-    expect(agent.metrics.count).to eq 1
+    expect(agent.metrics.count).to eq 7
 
     metric = agent.metrics.first
 

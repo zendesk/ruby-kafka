@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+require "active_support"
 require "active_support/notifications"
 require "kafka"
 require "dotenv"
@@ -55,9 +56,9 @@ module SpecHelpers
     "#{RUN_ID}-topic-#{@@topic_number}"
   end
 
-  def create_random_topic(*args)
+  def create_random_topic(**args)
     topic = generate_topic_name
-    create_topic(topic, *args)
+    create_topic(topic, **args)
     topic
   end
 

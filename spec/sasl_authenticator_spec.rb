@@ -25,7 +25,7 @@ describe Kafka::SaslAuthenticator do
 
   let(:sasl_authenticator) {
     Kafka::SaslAuthenticator.new(
-      { logger: logger }.merge(auth_options)
+      **{ logger: logger }.merge(auth_options)
     )
   }
 
