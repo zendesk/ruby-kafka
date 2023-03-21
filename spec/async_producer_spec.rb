@@ -18,20 +18,22 @@ class FakeInstrumenter
 end
 
 describe Kafka::AsyncProducer do
+  let(:sync_producer) { double(:sync_producer, produce: nil, shutdown: nil, deliver_messages: nil) }
+  let(:log) { StringIO.new }
+  let(:logger) { Logger.new(log) }
+  let(:instrumenter) { FakeInstrumenter.new }
+
+  let(:async_producer) {
+    Kafka::AsyncProducer.new(
+      sync_producer: sync_producer,
+      instrumenter: instrumenter,
+      max_retries: 2,
+      retry_backoff: 0.2,
+      logger: logger,
+    )
+  }
+
   describe "#shutdown" do
-    let(:sync_producer) { double(:sync_producer, produce: nil, shutdown: nil, deliver_messages: nil) }
-    let(:log) { StringIO.new }
-    let(:logger) { Logger.new(log) }
-    let(:instrumenter) { FakeInstrumenter.new }
-
-    let(:async_producer) {
-      Kafka::AsyncProducer.new(
-        sync_producer: sync_producer,
-        instrumenter: instrumenter,
-        logger: logger,
-      )
-    }
-
     it "delivers buffered messages" do
       async_producer.produce("hello", topic: "greetings")
       async_producer.shutdown
@@ -50,6 +52,28 @@ describe Kafka::AsyncProducer do
 
       metric = instrumenter.metrics_for("drop_messages.async_producer").first
       expect(metric.payload[:message_count]).to eq 42
+    end
+  end
+
+  describe "#produce" do
+    it "delivers buffered messages" do
+      async_producer.produce("hello", topic: "greetings")
+      sleep 0.2 # wait for worker to call produce
+
+      expect(sync_producer).to have_received(:produce)
+    end
+
+    it "retries until configured max_retries" do
+      allow(sync_producer).to receive(:produce) {raise Kafka::BufferOverflow}
+
+      async_producer.produce("hello", topic: "greetings")
+      sleep 0.3 # wait for all retries to be done
+
+      expect(log.string).to include "Failed to asynchronously produce messages due to BufferOverflow"
+
+      metric = instrumenter.metrics_for("error.async_producer").first
+      expect(metric.payload[:error]).to be_a(Kafka::BufferOverflow)
+      expect(sync_producer).to have_received(:produce).exactly(3).times
     end
   end
 end
