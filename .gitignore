@@ -10,3 +10,4 @@
 .env
 *.log
 *.swp
+ .DS_Store
