@@ -1,0 +1,26 @@
+name: Publish to RubyGems.org
+
+on:
+  push:
+    branches: main
+    paths: lib/kafka/version.rb
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: rubygems-publish
+    if: github.repository_owner == 'zendesk'
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: false
+          
+      - name: Install dependencies
+        run: bundle install
+      - uses: rubygems/release-gem@v1

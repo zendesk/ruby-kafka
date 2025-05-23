@@ -50,6 +50,7 @@ A Ruby client library for [Apache Kafka](http://kafka.apache.org/), a distribute
     2. [Asynchronous Producer Design](#asynchronous-producer-design)
     3. [Consumer Design](#consumer-design)
 5. [Development](#development)
+    - [Releasing a new version](#releasing-a-new-version)
 6. [Support and Discussion](#support-and-discussion)
 7. [Roadmap](#roadmap)
 8. [Higher level libraries](#higher-level-libraries)
@@ -1298,6 +1299,20 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 If you would like to contribute to ruby-kafka, please [join our Slack team](https://ruby-kafka-slack.herokuapp.com/) and ask how best to do it.
 
+### Releasing a new version
+A new version is published to RubyGems.org every time a change to `version.rb` is pushed to the `main` branch.
+In short, follow these steps:
+1. Update `version.rb`,
+2. merge this change into `main`, and
+3. look at [the action](https://github.com/zendesk/ruby-kafka/actions/workflows/publish.yml) for output.
+
+To create a pre-release from a non-main branch:
+1. change the version in `version.rb` to something like `1.2.0.pre.1` or `2.0.0.beta.2`,
+2. push this change to your branch,
+3. go to [Actions → “Publish to RubyGems.org” on GitHub](https://github.com/zendesk/ruby-kafka/actions/workflows/publish.yml),
+4. click the “Run workflow” button,
+5. pick your branch from a dropdown.
+
 [![Circle CI](https://circleci.com/gh/zendesk/ruby-kafka.svg?style=shield)](https://circleci.com/gh/zendesk/ruby-kafka/tree/master)
 
 ## Support and Discussion
@@ -1352,7 +1367,7 @@ We needed a robust client that could be used from our existing Ruby apps, allowe
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/zendesk/ruby-kafka.
 
-
+  
 ## Copyright and license
 
 Copyright 2015 Zendesk
