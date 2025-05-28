@@ -4,7 +4,7 @@ If this is a bug report, please fill out the following:
 * Version of Kafka:
 * Version of ruby-kafka:
 
-Please verify that the problem you're seeing hasn't been fixed by the current `master` of ruby-kafka.
+Please verify that the problem you're seeing hasn't been fixed by the current `main` of ruby-kafka.
 
 ###### Steps to reproduce
 
