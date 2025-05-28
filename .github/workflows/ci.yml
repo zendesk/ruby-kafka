@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  unit:
+    name: unit-ruby-${{ matrix.ruby-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ["3.2"]
+    env:
+      LOG_LEVEL: DEBUG
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake # For installing snappy
+
+      - name: Run rspec
+        run: bundle exec rspec
+
+      - name: Run rubocop
+        run: bundle exec rubocop
+
+  functional-with-wurstmeister:
+    name: functional-wurstmeister-kafka-${{ matrix.kafka-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kafka-version:
+          - "2.11-0.11.0.3"
+          - "2.11-1.0.2"
+          - "2.11-1.1.1"
+          - "2.11-2.0.1"
+          - "2.12-2.1.1"
+          - "2.12-2.2.1"
+          - "2.12-2.3.1"
+          - "2.12-2.4.0"
+          - "2.12-2.5.0"
+          - "2.13-2.6.0"
+    env:
+      LOG_LEVEL: DEBUG
+    services:
+      zookeeper:
+        image: wurstmeister/zookeeper
+        ports: ['2181:2181']
+      kafka1:
+        image: wurstmeister/kafka:${{ matrix.kafka-version }}
+        ports: ['9092:9092']
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9092
+          KAFKA_PORT: 9092 # Internal port Kafka listens on
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_DELETE_TOPIC_ENABLE: "true"
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      kafka2:
+        image: wurstmeister/kafka:${{ matrix.kafka-version }}
+        ports: ['9093:9093']
+        env:
+          KAFKA_BROKER_ID: 2
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9093
+          KAFKA_PORT: 9093
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_DELETE_TOPIC_ENABLE: "true"
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      kafka3:
+        image: wurstmeister/kafka:${{ matrix.kafka-version }}
+        ports: ['9094:9094']
+        env:
+          KAFKA_BROKER_ID: 3
+          KAFKA_ADVERTISED_HOST_NAME: localhost
+          KAFKA_ADVERTISED_PORT: 9094
+          KAFKA_PORT: 9094
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_DELETE_TOPIC_ENABLE: "true"
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      - name: Set up Ruby 2.5
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.5"
+          bundler-cache: true
+
+      - name: Wait for Kafka services
+        run: |
+          echo "Waiting for Kafka services to be ready..."
+          sleep 30 # Adjust if needed; consider a more robust health check script
+
+      - name: Run functional tests (wurstmeister)
+        run: bundle exec rspec --profile --tag functional spec/functional
+
+  functional-with-bitnami:
+    name: functional-bitnami-kafka-${{ matrix.kafka-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kafka-version: ["2.7.0"]
+    env:
+      LOG_LEVEL: DEBUG
+    services:
+      zookeeper:
+        image: bitnami/zookeeper:latest
+        ports: ['2181:2181']
+        env:
+          ALLOW_ANONYMOUS_LOGIN: "yes"
+          ZOO_ENABLE_AUTH: "no"
+      kafka1:
+        image: bitnami/kafka:${{ matrix.kafka-version }}
+        ports: ['9092:9092']
+        env:
+          KAFKA_CFG_BROKER_ID: 1
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092
+          KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_CFG_DELETE_TOPIC_ENABLE: "true"
+          ALLOW_PLAINTEXT_LISTENER: "yes"
+          KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      kafka2:
+        image: bitnami/kafka:${{ matrix.kafka-version }}
+        ports: ['9093:9093']
+        env:
+          KAFKA_CFG_BROKER_ID: 2
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
+          KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9093
+          KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_CFG_DELETE_TOPIC_ENABLE: "true"
+          ALLOW_PLAINTEXT_LISTENER: "yes"
+          KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      kafka3:
+        image: bitnami/kafka:${{ matrix.kafka-version }}
+        ports: ['9094:9094']
+        env:
+          KAFKA_CFG_BROKER_ID: 3
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
+          KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9094
+          KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_CFG_DELETE_TOPIC_ENABLE: "true"
+          ALLOW_PLAINTEXT_LISTENER: "yes"
+          KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      - name: Set up Ruby 2.5
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.5"
+          bundler-cache: true
+
+      - name: Wait for Kafka services
+        run: |
+          echo "Waiting for Kafka services to be ready..."
+          sleep 45
+
+      - name: Run functional tests (bitnami)
+        run: bundle exec rspec --profile --tag functional spec/functional

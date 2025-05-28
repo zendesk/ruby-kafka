@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+require "logger"
 require "active_support"
 # A missing require for try has been added to rails master here:
 #   https://github.com/rails/rails/commit/530f7805ed5790af1d472a041bc74089dc183f47
@@ -10,7 +11,6 @@ require "active_support/notifications"
 require "kafka"
 require "kafka/tagged_logger"
 require "dotenv"
-require "logger"
 require "rspec-benchmark"
 require "colored"
 require "securerandom"
