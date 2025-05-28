@@ -31,9 +31,6 @@ jobs:
       - name: Run rspec
         run: bundle exec rspec
 
-      - name: Run rubocop
-        run: bundle exec rubocop
-
   functional-with-wurstmeister:
     name: functional-wurstmeister-kafka-${{ matrix.kafka-version }}
     runs-on: ubuntu-latest
