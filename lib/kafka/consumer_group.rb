@@ -47,12 +47,12 @@ module Kafka
       join_group
       synchronize
     rescue NotCoordinatorForGroup
-      @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
+      @logger.warn "Failed to find coordinator for group `#{@group_id}`; retrying..."
       sleep 1
       @coordinator = nil
       retry
     rescue ConnectionError
-      @logger.error "Connection error while trying to join group `#{@group_id}`; retrying..."
+      @logger.warn "Connection error while trying to join group `#{@group_id}`; retrying..."
       sleep 1
       @cluster.mark_as_stale!
       @coordinator = nil
@@ -69,6 +69,7 @@ module Kafka
         coordinator.leave_group(group_id: @group_id, member_id: @member_id)
       end
     rescue ConnectionError
+      @logger.warn "Connection error while leaving group `#{@group_id}`"
     end
 
     def fetch_offsets
@@ -111,7 +112,7 @@ module Kafka
       @logger.error "Error sending heartbeat: #{e}"
       raise HeartbeatError, e
     rescue NotCoordinatorForGroup
-      @logger.error "Failed to find coordinator for group `#{@group_id}`; retrying..."
+      @logger.warn "Failed to find coordinator for group `#{@group_id}`; retrying..."
       sleep 1
       @coordinator = nil
       retry
@@ -139,7 +140,7 @@ module Kafka
 
       @logger.info "Joined group `#{@group_id}` with member id `#{@member_id}`"
     rescue UnknownMemberId
-      @logger.error "Failed to join group; resetting member id and retrying in 1s..."
+      @logger.warn "Failed to join group; resetting member id and retrying in 1s..."
 
       @member_id = ""
       sleep 1
@@ -184,7 +185,7 @@ module Kafka
     def coordinator
       @coordinator ||= @cluster.get_group_coordinator(group_id: @group_id)
     rescue GroupCoordinatorNotAvailable
-      @logger.error "Group coordinator not available for group `#{@group_id}`"
+      @logger.warn "Group coordinator not available for group `#{@group_id}`, retrying in 1s"
 
       sleep 1
 
