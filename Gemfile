@@ -24,4 +24,5 @@ group :development, :test do
   gem "stackprof"
   gem "statsd-ruby"
   gem "timecop"
+  gem "prometheus-client"
 end
