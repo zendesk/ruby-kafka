@@ -61,4 +61,17 @@ describe Kafka::SslContext do
       expect(subject.extra_chain_cert).to eq expected_chain
     end
   end
+
+  context 'with max version specified' do
+    let(:client_cert) { IO.read("spec/fixtures/client_cert.pem") }
+    let(:client_cert_key) { IO.read("spec/fixtures/client_cert_key.pem") }
+    let(:max_version) { OpenSSL::SSL::TLS1_2_VERSION }
+
+    subject { Kafka::SslContext.build(client_cert: client_cert, client_cert_key: client_cert_key, max_version: max_version) }
+
+    it 'configures max version' do
+      # OpenSSL::SSL::SSLContext doesn't provide public method to read this attribute
+      expect(subject.instance_variable_get(:@max_proto_version)).to eq(max_version)
+    end
+  end
 end

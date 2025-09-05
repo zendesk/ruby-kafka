@@ -6,7 +6,7 @@ module Kafka
   module SslContext
     CLIENT_CERT_DELIMITER = "\n-----END CERTIFICATE-----\n"
 
-    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, client_cert_key_password: nil, client_cert_chain: nil, ca_certs_from_system: nil, verify_hostname: true)
+    def self.build(ca_cert_file_path: nil, ca_cert: nil, client_cert: nil, client_cert_key: nil, client_cert_key_password: nil, client_cert_chain: nil, ca_certs_from_system: nil, verify_hostname: true, max_version: nil)
       return nil unless ca_cert_file_path || ca_cert || client_cert || client_cert_key || client_cert_key_password || client_cert_chain || ca_certs_from_system
 
       ssl_context = OpenSSL::SSL::SSLContext.new
@@ -59,6 +59,8 @@ module Kafka
       ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
       # Verify certificate hostname if supported (ruby >= 2.4.0)
       ssl_context.verify_hostname = verify_hostname if ssl_context.respond_to?(:verify_hostname=)
+
+      ssl_context.max_version = max_version if max_version
 
       ssl_context
     end

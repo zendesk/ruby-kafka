@@ -89,7 +89,7 @@ module Kafka
                    sasl_aws_msk_iam_secret_key_id: nil,
                    sasl_aws_msk_iam_aws_region: nil,
                    sasl_aws_msk_iam_session_token: nil,
-                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true,
+                   sasl_over_ssl: true, ssl_ca_certs_from_system: false, partitioner: nil, sasl_oauth_token_provider: nil, ssl_verify_hostname: true, ssl_max_version: nil,
                    resolve_seed_brokers: false)
       @logger = TaggedLogger.new(logger)
       @instrumenter = Instrumenter.new(client_id: client_id)
@@ -104,7 +104,8 @@ module Kafka
         client_cert_key_password: ssl_client_cert_key_password,
         client_cert_chain: ssl_client_cert_chain,
         ca_certs_from_system: ssl_ca_certs_from_system,
-        verify_hostname: ssl_verify_hostname
+        verify_hostname: ssl_verify_hostname,
+        max_version: ssl_max_version
       )
 
       sasl_authenticator = SaslAuthenticator.new(
