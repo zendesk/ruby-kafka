@@ -161,18 +161,18 @@ describe Kafka::Producer do
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq [
-          Kafka::PendingMessage.new(
-            value: "hello1",
-            key: nil,
-            headers: {
-              hello: 'World'
-            },
-            topic: "greetings",
-            partition: 0,
-            partition_key: nil,
-            create_time: now
-          )
-        ]
+                                                  Kafka::PendingMessage.new(
+                                                    value: "hello1",
+                                                    key: nil,
+                                                    headers: {
+                                                      hello: 'World'
+                                                    },
+                                                    topic: "greetings",
+                                                    partition: 0,
+                                                    partition_key: nil,
+                                                    create_time: now
+                                                  )
+                                                ]
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -184,6 +184,22 @@ describe Kafka::Producer do
       producer.deliver_messages
 
       expect(producer.buffer_size).to eq 0
+    end
+
+    it "can return no errors" do
+      producer.produce("hello", topic: "greetings", key: "key")
+
+      # Raise an error when requesting partitions for the first message then
+      # return successfully for subsequent calls
+      partitions_for_call_count = 0
+      allow(cluster).to receive(:partitions_for) do
+        partitions_for_call_count += 1
+        raise(Kafka::UnknownTopicOrPartition.new) if partitions_for_call_count == 1
+        [0, 1]
+      end
+
+      producer.deliver_messages
+      expect(broker1.messages).to be_empty
     end
 
     it "handles multiple messages for a partition during retry" do
@@ -212,18 +228,18 @@ describe Kafka::Producer do
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq([
-          Kafka::PendingMessage.new(
-            value: "hello1",
-            key: nil,
-            headers: {
-              hello: 'World'
-            },
-            topic: "greetings",
-            partition: 0,
-            partition_key: nil,
-            create_time: now
-          )
-        ])
+                                                  Kafka::PendingMessage.new(
+                                                    value: "hello1",
+                                                    key: nil,
+                                                    headers: {
+                                                      hello: 'World'
+                                                    },
+                                                    topic: "greetings",
+                                                    partition: 0,
+                                                    partition_key: nil,
+                                                    create_time: now
+                                                  )
+                                                ])
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -244,18 +260,18 @@ describe Kafka::Producer do
 
       expect { producer.deliver_messages }.to raise_error(Kafka::DeliveryFailed) {|exception|
         expect(exception.failed_messages).to eq [
-          Kafka::PendingMessage.new(
-            value: "hello1",
-            key: nil,
-            headers: {
-              hello: 'World'
-            },
-            topic: "greetings",
-            partition: 0,
-            partition_key: nil,
-            create_time: now
-          )
-        ]
+                                                  Kafka::PendingMessage.new(
+                                                    value: "hello1",
+                                                    key: nil,
+                                                    headers: {
+                                                      hello: 'World'
+                                                    },
+                                                    topic: "greetings",
+                                                    partition: 0,
+                                                    partition_key: nil,
+                                                    create_time: now
+                                                  )
+                                                ]
       }
 
       # The producer was not able to write the message, but it's still buffered.
@@ -273,7 +289,7 @@ describe Kafka::Producer do
       producer = initialize_producer(
         required_acks: 0, # <-- this is the important bit.
         max_retries: 2,
-      )
+        )
 
       producer.produce("hello1", topic: "greetings", partition: 0)
       producer.deliver_messages
@@ -307,7 +323,7 @@ describe Kafka::Producer do
         topic: "greetings",
         partition: 0,
         error_code: 3,
-      )
+        )
 
       events = []
 
