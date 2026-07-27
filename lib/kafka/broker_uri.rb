@@ -33,6 +33,9 @@ module Kafka
         uri.scheme = 'kafka+ssl'
       end
 
+      # See rfc6066: https://datatracker.ietf.org/doc/html/rfc6066#section-3:~:text=without%20a%20trailing%20dot
+      uri.hostname.delete_suffix!(".")
+
       unless URI_SCHEMES.include?(uri.scheme)
         raise Kafka::Error, "invalid protocol `#{uri.scheme}` in `#{str}`"
       end
