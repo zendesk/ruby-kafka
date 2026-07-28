@@ -394,9 +394,11 @@ describe Kafka::ProduceOperation do
 
       expect(transaction_manager).to receive(:init_producer_id).once
       expect(transaction_manager).to receive(:add_partitions_to_transaction).with(
-        'hello' => [0, 1],
-        'hi' => [0, 1],
-        'bye' => [0]
+        {
+          'hello' => [0, 1],
+          'hi' => [0, 1],
+          'bye' => [0]
+        }
       ).ordered
       expect(transaction_manager).to receive(:update_sequence_for).with('hello', 0, 100).ordered
       expect(transaction_manager).to receive(:update_sequence_for).with('hello', 1, 101).ordered
