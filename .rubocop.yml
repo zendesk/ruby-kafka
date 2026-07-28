@@ -1,12 +1,14 @@
+inherit_from: .rubocop_todo.yml
+
 AllCops:
   DisplayCopNames: true
   TargetRubyVersion: 2.1
 
+plugins: rubocop-performance
+
 Lint:
   Enabled: false
 Metrics:
-  Enabled: false
-Performance:
   Enabled: false
 Style:
   Enabled: false
@@ -17,24 +19,24 @@ Layout/CaseIndentation:
   EnforcedStyle: end
 Layout/FirstParameterIndentation:
   EnforcedStyle: consistent
-Layout/IndentArray:
+Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
-Layout/IndentHash:
+Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
-Lint/EndAlignment:
+Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
 
 #
 # Disabled cops
 #
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 Layout/EmptyLinesAroundClassBody:
   Enabled: false
