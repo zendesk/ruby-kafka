@@ -19,4 +19,8 @@ describe Kafka::BrokerUri do
       Kafka::BrokerUri.parse("http://kafka")
     }.to raise_exception(Kafka::Error, "invalid protocol `http` in `http://kafka`")
   end
+
+  it "strips the trailing dot from fqdn hostnames" do
+    expect(Kafka::BrokerUri.parse("kafka://hello.").to_s).to eq "kafka://hello:9092"
+  end
 end
