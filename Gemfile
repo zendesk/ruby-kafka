@@ -2,4 +2,6 @@
 
 source "https://rubygems.org"
 
+gem "bigdecimal"
+gem "mutex_m"
 gemspec
