@@ -26,7 +26,7 @@ module Kafka
 
     # @return [nil]
     def disconnect
-      connection.close if connected?
+      @connection.close if connected?
     end
 
     # @return [Boolean]
@@ -197,7 +197,10 @@ module Kafka
     private
 
     def send_request(request)
-      connection.send_request(request)
+      @connection_builder.with_connection(@host, @port, @connection) do |connection|
+        @connection = connection
+        connection.send_request(request)
+      end
     rescue IdleConnection
       @logger.warn "Connection has been unused for too long, re-connecting..."
       @connection.close rescue nil
@@ -208,10 +211,6 @@ module Kafka
       @connection = nil
 
       raise
-    end
-
-    def connection
-      @connection ||= @connection_builder.build_connection(@host, @port)
     end
   end
 end
