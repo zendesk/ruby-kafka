@@ -3,6 +3,8 @@
 class FakeServer
   SUPPORTED_MECHANISMS = ['PLAIN', 'SCRAM-SHA-256', 'SCRAM-SHA-512', 'OAUTHBEARER']
 
+  attr_accessor :api_versions_error_code
+
   def self.start(server)
     thread = Thread.new { new(server).start }
     thread.abort_on_exception = true
@@ -13,6 +15,7 @@ class FakeServer
     @server = server
     @authenticating = false
     @auth_mechanism = nil
+    @api_versions_error_code = 0
   end
 
   def start
@@ -55,7 +58,7 @@ class FakeServer
         encoder.write_bytes(response.string)
         auth(message, encoder, decoder)
       when Kafka::Protocol::API_VERSIONS_API
-        response_encoder.write_int16(0)
+        response_encoder.write_int16(@api_versions_error_code)
         response_encoder.write_array([]) { |m| response_encoder.write_string(m) }
         encoder.write_bytes(response.string)
       else
