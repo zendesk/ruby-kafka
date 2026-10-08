@@ -1,0 +1,2 @@
+[tools]
+ruby = "{{ read_file(path='.ruby-version') | trim | split(pat='.')[0:2] | join(sep='.') }}"
