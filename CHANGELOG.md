@@ -5,6 +5,7 @@ Changes and additions to the library will be listed here.
 ## Unreleased
 
 - Removes trailing dots from broker hostnames for [rfc6066](https://datatracker.ietf.org/doc/html/rfc6066#section-3:~:text=without%20a%20trailing%20dot) compatibility.
+- Drop support for Ruby below 3.3
 
 ## 1.5.0
 - Add support for AWS IAM Authentication to an MSK cluster (#907).

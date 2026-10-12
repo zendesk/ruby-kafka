@@ -8,16 +8,24 @@ describe "Reporting metrics to Datadog", functional: true do
   let(:agent) { FakeDatadogAgent.new }
 
   before do
+    @original_host = Kafka::Datadog.host
+    @original_port = Kafka::Datadog.port
+    @original_socket_path = Kafka::Datadog.socket_path
+
     agent.start
+    Kafka::Datadog.host = agent.host
+    Kafka::Datadog.port = agent.port
+    Kafka::Datadog.socket_path = nil
   end
 
   after do
+    Kafka::Datadog.host = @original_host
+    Kafka::Datadog.port = @original_port
+    Kafka::Datadog.socket_path = @original_socket_path
     agent.stop
   end
 
   example "reporting connection metrics using UDP socket" do
-    Kafka::Datadog.port = agent.port
-
     kafka.topics
 
     agent.wait_for_metrics(count: 4)
