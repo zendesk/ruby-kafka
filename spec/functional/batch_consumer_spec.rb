@@ -10,7 +10,7 @@ describe "Batch Consumer API", functional: true do
 
     topic = create_random_topic(num_partitions: 15)
 
-    Thread.new do
+    producer_thread = Thread.new do
       kafka = Kafka.new(kafka_brokers, client_id: "test")
       producer = kafka.producer
 
@@ -19,16 +19,22 @@ describe "Batch Consumer API", functional: true do
       end
 
       producer.deliver_messages
+    ensure
+      producer && producer.shutdown
+      kafka && kafka.close
     end
+    producer_thread.abort_on_exception = true
 
     group_id = "test#{rand(1000)}"
 
-    threads = 2.times.map do |thread_id|
-      t = Thread.new do
-        kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
-        consumer.subscribe(topic)
+    consumers = 2.times.map do
+      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer.subscribe(topic)
+      consumer
+    end
 
+    threads = consumers.map do |consumer|
+      t = Thread.new do
         consumer.each_batch do |batch|
           batch.messages.each do |message|
             message_queue << Integer(message.value)
@@ -58,6 +64,10 @@ describe "Batch Consumer API", functional: true do
 
     expect(received_messages).to eq messages
     expect(duplicates).to eq Set.new
+  ensure
+    consumers && consumers.each(&:stop)
+    threads && threads.each(&:join)
+    producer_thread && producer_thread.join
   end
 
   example 'support record headers' do

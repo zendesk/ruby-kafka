@@ -31,7 +31,11 @@ module Kafka
 
     class << self
       def statsd
-        @statsd ||= ::Datadog::Statsd.new(host, port, namespace: namespace, tags: tags, socket_path: socket_path)
+        @statsd ||= if socket_path
+          ::Datadog::Statsd.new(socket_path:, namespace:, tags:, buffer_flush_interval: 1)
+        else
+          ::Datadog::Statsd.new(host, port, namespace:, tags:, buffer_flush_interval: 1)
+        end
       end
 
       def statsd=(statsd)

@@ -7,10 +7,18 @@ describe Kafka::Datadog do
   let(:agent) { FakeDatadogAgent.new }
 
   before do
+    @original_host = Kafka::Datadog.host
+    @original_port = Kafka::Datadog.port
+    @original_socket_path = Kafka::Datadog.socket_path
+
     agent.start
+    Kafka::Datadog.socket_path = nil
   end
 
   after do
+    Kafka::Datadog.host = @original_host
+    Kafka::Datadog.port = @original_port
+    Kafka::Datadog.socket_path = @original_socket_path
     agent.stop
   end
 
