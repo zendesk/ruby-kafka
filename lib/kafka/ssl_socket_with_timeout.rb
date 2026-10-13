@@ -134,17 +134,17 @@ module Kafka
           # catch exceptions from write_nonblock, and gradually build up
           # our write buffer.
           written += @ssl_socket.write_nonblock(bytes)
-        rescue Errno::EFAULT => error
-          raise error
-        rescue OpenSSL::SSL::SSLError, Errno::EAGAIN, Errno::EWOULDBLOCK, IO::WaitWritable => error
-          if error.is_a?(OpenSSL::SSL::SSLError) && error.message == 'write would block'
+        rescue Errno::EFAULT => e
+          raise e
+        rescue OpenSSL::SSL::SSLError, Errno::EAGAIN, Errno::EWOULDBLOCK, IO::WaitWritable => e
+          if e.is_a?(OpenSSL::SSL::SSLError) && e.message == 'write would block'
             if select_with_timeout(@ssl_socket, :write)
               retry
             else
               raise Errno::ETIMEDOUT
             end
           else
-            raise error
+            raise e
           end
         end
 

@@ -108,7 +108,6 @@ module Kafka
       @instrumenter.instrument('heartbeat.consumer',
                                group_id: @group_id,
                                topic_partitions: @assigned_partitions) do
-
         response = coordinator.heartbeat(
           group_id: @group_id,
           generation_id: @generation_id,

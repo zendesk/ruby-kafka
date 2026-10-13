@@ -163,13 +163,13 @@ module Kafka
 
       def digest
         @digest ||= case @mechanism
-                    when 'SCRAM-SHA-256'
-                      OpenSSL::Digest::SHA256.new
-                    when 'SCRAM-SHA-512'
-                      OpenSSL::Digest::SHA512.new
-                    else
-                      raise ArgumentError, "Unknown SASL mechanism '#{@mechanism}'"
-                    end
+        when 'SCRAM-SHA-256'
+          OpenSSL::Digest::SHA256.new
+        when 'SCRAM-SHA-512'
+          OpenSSL::Digest::SHA512.new
+        else
+          raise ArgumentError, "Unknown SASL mechanism '#{@mechanism}'"
+        end
       end
 
       def safe_str(val)

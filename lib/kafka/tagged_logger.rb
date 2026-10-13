@@ -54,6 +54,7 @@ module Kafka
     def self.new(logger_or_stream = nil)
       # don't keep wrapping the same logger over and over again
       return logger_or_stream if logger_or_stream.is_a?(TaggedLogger)
+
       super
     end
 

@@ -10,6 +10,7 @@ class FakeConsumerInterceptor
     if @on_call_error
       raise StandardError, "Something went wrong in the consumer interceptor"
     end
+
     intercepted_messages = batch.messages.collect do |message|
       Kafka::FetchedMessage.new(
         message: Kafka::Protocol::Message.new(

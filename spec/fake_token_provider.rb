@@ -6,7 +6,7 @@ class FakeTokenProvider
   end
 
   def extensions
-    { test_key: "test_value", test_key_2: "test_value_2" }
+    { test_key: "test_value", "test_key_2" => "test_value_2" }
   end
 end
 

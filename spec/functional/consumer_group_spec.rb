@@ -255,16 +255,16 @@ describe "Consumer API", functional: true do
   example "consumers process all messages in-order and non-duplicated" do
     topic = create_random_topic(num_partitions: 2)
     message_count = 500
-    messages_set_1 = (1..500).to_a
-    messages_set_2 = (501..1000).to_a
+    messages_set1 = (1..500).to_a
+    messages_set2 = (501..1000).to_a
 
     begin
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
       producer = kafka.producer
-      messages_set_1.each do |i|
+      messages_set1.each do |i|
         producer.produce(i.to_s, topic: topic, partition: 0)
       end
-      messages_set_2.each do |i|
+      messages_set2.each do |i|
         producer.produce(i.to_s, topic: topic, partition: 1)
       end
       producer.deliver_messages
@@ -300,9 +300,9 @@ describe "Consumer API", functional: true do
     received_messages.each do |_thread, messages|
       values = messages.map(&:value).map(&:to_i)
       if messages.first.partition == 0
-        expect(values).to eql(messages_set_1)
+        expect(values).to eql(messages_set1)
       else
-        expect(values).to eql(messages_set_2)
+        expect(values).to eql(messages_set2)
       end
     end
   end
@@ -360,12 +360,12 @@ describe "Consumer API", functional: true do
       break if count == 3
     end
 
-    consumer_2 = kafka.consumer(group_id: group_id)
-    consumer_2.subscribe(topic)
+    consumer2 = kafka.consumer(group_id: group_id)
+    consumer2.subscribe(topic)
 
-    consumer_2.each_message(automatically_mark_as_processed: false) do |message|
-      consumer_2.mark_message_as_processed(message)
-      consumer_2.commit_offsets
+    consumer2.each_message(automatically_mark_as_processed: false) do |message|
+      consumer2.mark_message_as_processed(message)
+      consumer2.commit_offsets
       data << message.value
       break
     end
@@ -488,6 +488,7 @@ describe "Consumer API", functional: true do
         joined_consumers |= [consumer]
         # Wait until all the consumers try to join to prevent one consumer from processing all messages
         raise Kafka::HeartbeatError if joined_consumers.size < consumers.size
+
         m.call(*args)
       end
 

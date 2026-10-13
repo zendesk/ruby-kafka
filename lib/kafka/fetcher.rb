@@ -65,6 +65,7 @@ module Kafka
 
     def stop
       return unless @running
+
       @commands << [:stop, []]
       @thread.join
     end

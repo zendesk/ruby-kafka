@@ -52,11 +52,13 @@ module Kafka
 
       def initial_client_response
         raise Kafka::TokenMethodNotImplementedError, "Token provider doesn't define 'token'" unless @token_provider.respond_to? :token
+
         "n,,\x01auth=Bearer #{@token_provider.token}#{token_extensions}\x01\x01"
       end
 
       def token_extensions
         return nil unless @token_provider.respond_to? :extensions
+
         "\x01#{@token_provider.extensions.map {|e| e.join("=")}.join("\x01")}"
       end
     end

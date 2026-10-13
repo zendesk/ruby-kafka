@@ -140,6 +140,7 @@ module Kafka
       force_transactional!
       raise Kafka::InvalidTxnStateError, 'Transaction has already started' if @transaction_state.in_transaction?
       raise Kafka::InvalidTxnStateError, 'Transaction is not ready' unless @transaction_state.ready?
+
       @transaction_state.transition_to!(TransactionStateMachine::IN_TRANSACTION)
 
       @logger.info "Begin transaction #{@transactional_id}, Producer ID: #{@producer_id} (Epoch #{@producer_epoch})"

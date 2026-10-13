@@ -154,9 +154,9 @@ describe Kafka::FetchedBatchGenerator do
   end
 
   context 'record batch format' do
-    let(:record_1) { Kafka::Protocol::Record.new(value: 'Hello') }
-    let(:record_2) { Kafka::Protocol::Record.new(value: 'World') }
-    let(:record_3) { Kafka::Protocol::Record.new(value: 'Bye') }
+    let(:record1) { Kafka::Protocol::Record.new(value: 'Hello') }
+    let(:record2) { Kafka::Protocol::Record.new(value: 'World') }
+    let(:record3) { Kafka::Protocol::Record.new(value: 'Bye') }
 
     context 'no control record' do
       let(:fetched_partition) do
@@ -171,14 +171,14 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 9,
               last_offset_delta: 1,
               records: [
-                record_1, record_2
+                record1, record2
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
               first_offset: 11,
               last_offset_delta: 1,
               records: [
-                record_3
+                record3
               ]
             )
           ]
@@ -194,9 +194,9 @@ describe Kafka::FetchedBatchGenerator do
 
         expect(batch.messages.length).to eql(3)
 
-        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record_1)
-        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record_2)
-        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record1)
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record2)
+        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record3)
       end
     end
 
@@ -213,13 +213,13 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 7,
               last_offset_delta: 2,
               records: [
-                record_1,
+                record1,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
                   value: nil
                 ),
-                record_2
+                record2
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
@@ -231,7 +231,7 @@ describe Kafka::FetchedBatchGenerator do
                   key: "\x00\x00\x00\x01",
                   value: nil
                 ),
-                record_3,
+                record3,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
@@ -252,9 +252,9 @@ describe Kafka::FetchedBatchGenerator do
 
         expect(batch.messages.length).to eql(3)
 
-        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record_1)
-        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record_2)
-        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record1)
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record2)
+        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record3)
       end
     end
 
@@ -271,13 +271,13 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 7,
               last_offset_delta: 0,
               records: [
-                record_1,
+                record1,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
                   value: nil
                 ),
-                record_2
+                record2
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
@@ -296,7 +296,7 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 9,
               last_offset_delta: 0,
               records: [
-                record_3,
+                record3,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
@@ -317,16 +317,16 @@ describe Kafka::FetchedBatchGenerator do
 
         expect(batch.messages.length).to eql(3)
 
-        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record_1)
-        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record_2)
-        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record1)
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record2)
+        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record3)
       end
     end
 
     context 'including aborted control records and aborted transactions' do
-      let(:record_1) { Kafka::Protocol::Record.new(value: 'Hello', offset: 12) }
-      let(:record_2) { Kafka::Protocol::Record.new(value: 'World', offset: 13) }
-      let(:record_3) { Kafka::Protocol::Record.new(value: 'Bye', offset: 14) }
+      let(:record1) { Kafka::Protocol::Record.new(value: 'Hello', offset: 12) }
+      let(:record2) { Kafka::Protocol::Record.new(value: 'World', offset: 13) }
+      let(:record3) { Kafka::Protocol::Record.new(value: 'Bye', offset: 14) }
 
       let(:fetched_partition) do
         Kafka::Protocol::FetchResponse::FetchedPartition.new(
@@ -377,13 +377,13 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 12,
               last_offset_delta: 1,
               records: [
-                record_1,
+                record1,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
                   value: nil
                 ),
-                record_2
+                record2
               ]
             ),
             Kafka::Protocol::RecordBatch.new(
@@ -392,7 +392,7 @@ describe Kafka::FetchedBatchGenerator do
               first_offset: 14,
               last_offset_delta: 0,
               records: [
-                record_3,
+                record3,
                 Kafka::Protocol::Record.new(
                   is_control_record: true,
                   key: "\x00\x00\x00\x01",
@@ -443,9 +443,9 @@ describe Kafka::FetchedBatchGenerator do
 
         expect(batch.messages.length).to eql(3)
 
-        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record_1)
-        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record_2)
-        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record_3)
+        expect_fetched_message_eql(batch.messages[0], 'Hello', 0, record1)
+        expect_fetched_message_eql(batch.messages[1], 'Hello', 0, record2)
+        expect_fetched_message_eql(batch.messages[2], 'Hello', 0, record3)
       end
     end
 

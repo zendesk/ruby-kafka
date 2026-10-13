@@ -44,6 +44,7 @@ module Kafka
           if Kafka::Protocol::RESOURCE_TYPES[resource_type].nil?
             raise Kafka::ProtocolError, "Resource type not supported: #{resource_type}"
           end
+
           resource_name = decoder.string
 
           configs = decoder.array do

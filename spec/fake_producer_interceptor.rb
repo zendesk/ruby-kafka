@@ -10,6 +10,7 @@ class FakeProducerInterceptor
     if @on_call_error
       raise StandardError, "Something went wrong in the producer interceptor"
     end
+
     Kafka::PendingMessage.new(
       value: pending_message.value + @append_s,
       key: pending_message.key,

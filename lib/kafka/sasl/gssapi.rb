@@ -45,6 +45,7 @@ module Kafka
       def handshake_messages
         msg = @decoder.bytes
         raise Kafka::Error, "GSSAPI negotiation failed." unless msg
+
         # unwrap with integrity only
         msg_unwrapped = @gssapi_ctx.unwrap_message(msg, GSSAPI_CONFIDENTIALITY)
         msg_wrapped = @gssapi_ctx.wrap_message(msg_unwrapped + @principal, GSSAPI_CONFIDENTIALITY)

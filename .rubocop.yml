@@ -1,12 +1,9 @@
 AllCops:
   DisplayCopNames: true
-  TargetRubyVersion: 2.1
 
 Lint:
   Enabled: false
 Metrics:
-  Enabled: false
-Performance:
   Enabled: false
 Style:
   Enabled: false
@@ -17,24 +14,24 @@ Layout/CaseIndentation:
   EnforcedStyle: end
 Layout/FirstParameterIndentation:
   EnforcedStyle: consistent
-Layout/IndentArray:
+Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
-Layout/IndentHash:
+Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
-Lint/EndAlignment:
+Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
 
 #
 # Disabled cops
 #
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 Layout/EmptyLinesAroundClassBody:
   Enabled: false
@@ -42,3 +39,13 @@ Layout/EmptyLinesAroundModuleBody:
   Enabled: false
 Layout/SpaceInsideBlockBraces:
   Enabled: false
+Naming/AccessorMethodName:
+  Enabled: false
+Layout/LineLength:
+  Enabled: false
+Naming/PredicatePrefix:
+  Enabled: false
+Naming/FileName:
+  Exclude:
+    - lib/ruby-kafka.rb
+    - examples/**/*

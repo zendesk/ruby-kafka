@@ -266,7 +266,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.init_transactions
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -301,7 +302,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.begin_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -316,7 +318,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.begin_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -335,7 +338,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.begin_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -395,7 +399,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.abort_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -412,7 +417,8 @@ describe ::Kafka::TransactionManager do
       it 'leaves transaction manager in ready state' do
         begin
           manager.abort_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.ready?).to eql(true)
       end
     end
@@ -431,7 +437,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.abort_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -491,7 +498,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.commit_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -510,7 +518,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.commit_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -529,7 +538,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.commit_transaction
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -625,7 +635,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
@@ -656,7 +667,8 @@ describe ::Kafka::TransactionManager do
       it 'changes state to error' do
         begin
           manager.send_offsets_to_txn(offsets: [1, 2], group_id: 1)
-        rescue; end
+        rescue;
+        end
         expect(manager.error?).to eql(true)
       end
     end
