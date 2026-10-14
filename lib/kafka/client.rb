@@ -252,7 +252,7 @@ module Kafka
     #
     # @param max_retries [Integer] the number of retries that should be attempted
     #   before giving up sending messages to the cluster. Does not include the
-    #   original attempt.
+    #   original attempt. Also applies to retriable producer ID initialization.
     #
     # @param retry_backoff [Integer] the number of seconds to wait between retries.
     #
@@ -304,6 +304,8 @@ module Kafka
         transactional: transactional,
         transactional_id: transactional_id,
         transactional_timeout: transactional_timeout,
+        max_retries: max_retries,
+        retry_backoff: retry_backoff,
       )
 
       Producer.new(

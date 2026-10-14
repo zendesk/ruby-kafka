@@ -72,7 +72,7 @@ jobs:
         bundler-cache: true
 
     - name: Start Kafka brokers
-      run: docker compose up -d && sleep 30
+      run: docker compose up -d --wait --wait-timeout 180
 
     - name: Run functional tests
       run: bundle exec rspec --profile --tag functional spec/functional

@@ -16,7 +16,9 @@ module Kafka
       idempotent: false,
       transactional: false,
       transactional_id: nil,
-      transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT
+      transactional_timeout: DEFAULT_TRANSACTION_TIMEOUT,
+      max_retries: 2,
+      retry_backoff: 1
     )
       @cluster = cluster
       @logger = TaggedLogger.new(logger)
@@ -24,6 +26,8 @@ module Kafka
       @transactional = transactional
       @transactional_id = transactional_id
       @transactional_timeout = transactional_timeout
+      @max_retries = max_retries
+      @retry_backoff = retry_backoff
       @transaction_state = Kafka::TransactionStateMachine.new(logger: logger)
       @transaction_partitions = {}
 
@@ -47,11 +51,22 @@ module Kafka
     def init_producer_id(force = false)
       return if @producer_id >= 0 && !force
 
-      response = transaction_coordinator.init_producer_id(
-        transactional_id: @transactional_id,
-        transactional_timeout: @transactional_timeout
-      )
-      Protocol.handle_error(response.error_code)
+      attempts = 0
+      begin
+        attempts += 1
+        response = transaction_coordinator.init_producer_id(
+          transactional_id: @transactional_id,
+          transactional_timeout: @transactional_timeout
+        )
+        Protocol.handle_error(response.error_code)
+      rescue CoordinatorLoadInProgress
+        # Kafka may still be allocating a producer ID block from the controller.
+        raise if attempts > @max_retries
+
+        @logger.warn "Producer ID initialization is still loading; retrying in #{@retry_backoff}s"
+        sleep @retry_backoff
+        retry
+      end
 
       # Reset producer id
       @producer_id = response.producer_id
