@@ -36,6 +36,12 @@ module Kafka
     # @param socket_timeout [Integer, nil] the timeout setting for socket
     #   connections. See {BrokerPool#initialize}.
     #
+    # @param reconnect_backoff [Integer, Float] initial reconnect delay in seconds;
+    #   default 0 disables reconnect backoff. Must be finite and non-negative.
+    #
+    # @param reconnect_backoff_max [Integer, Float] maximum reconnect delay in seconds;
+    #   default 1. Must be finite and at least reconnect_backoff.
+    #
     # @param ssl_ca_cert [String, Array<String>, nil] a PEM encoded CA cert, or an Array of
     #   PEM encoded CA certs, to use with an SSL connection.
     #
@@ -81,6 +87,7 @@ module Kafka
     #
     # @return [Client]
     def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil,
+                   reconnect_backoff: 0, reconnect_backoff_max: 1,
                    ssl_ca_cert_file_path: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil,
                    ssl_client_cert_key_password: nil, ssl_client_cert_chain: nil, sasl_gssapi_principal: nil,
                    sasl_gssapi_keytab: nil, sasl_plain_authzid: '', sasl_plain_username: nil, sasl_plain_password: nil,
@@ -135,7 +142,9 @@ module Kafka
         ssl_context: ssl_context,
         logger: @logger,
         instrumenter: @instrumenter,
-        sasl_authenticator: sasl_authenticator
+        sasl_authenticator: sasl_authenticator,
+        reconnect_backoff: reconnect_backoff,
+        reconnect_backoff_max: reconnect_backoff_max,
       )
 
       @cluster = initialize_cluster

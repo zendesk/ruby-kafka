@@ -188,6 +188,20 @@ You can also use a hostname with seed brokers' IP addresses:
 kafka = Kafka.new("seed-brokers:9092", client_id: "my-application", resolve_seed_brokers: true)
 ```
 
+Reconnect backoff is opt-in and applies to metadata connections as well as producer
+and consumer connections created by a client:
+
+```ruby
+kafka = Kafka.new(["kafka1:9092", "kafka2:9092"],
+  reconnect_backoff: 0.1, reconnect_backoff_max: 1.0)
+```
+
+Both options are seconds, accepting finite, non-negative Integers or Floats.
+`reconnect_backoff` defaults to `0` (disabled); `reconnect_backoff_max` defaults to
+`1` and must be at least `reconnect_backoff`. Invalid values raise `ArgumentError`
+at client construction. See [Understanding Timeouts](#understanding-timeouts) for
+the additional latency when enabled.
+
 ### Producing Messages to Kafka
 
 The simplest way to write a message to a Kafka topic is to call `#deliver_message`:
@@ -867,6 +881,12 @@ You typically don't want to share a Kafka client object between threads, since t
 
 You should also avoid sharing a synchronous producer between threads, as the internal buffers are not thread safe. However, the _asynchronous_ producer should be safe to use in a multi-threaded environment. This is because producers, when instantiated, get their own copy of any non-thread-safe data such as network sockets. Furthermore, the asynchronous producer has been designed in such a way to only a single background thread operates on this data while any foreground thread with a reference to the producer object can only send messages to that background thread over a safe queue. Therefore it is safe to share an async producer object between many threads.
 
+Reconnect-backoff history and probe ownership are process-local. On first use
+after a fork, the registry discards inherited entries and restarts its pruning
+schedule. A lazily initialized client constructed before the fork is not rejected
+by this registry. This reset does not make arbitrary inherited open sockets or
+other client state fork-safe, or change the thread-safety rules above.
+
 ### Logging
 
 It's a very good idea to configure the Kafka client with a logger. All important operations and errors are logged. When instantiating your client, simply pass in a valid logger:
@@ -1054,6 +1074,50 @@ When sending many messages, it's likely that the client needs to send some messa
     n * (connect_timeout + socket_timeout + retry_backoff) * max_retries
 
 Make sure your application can survive being blocked for so long.
+
+**Opt-in reconnect backoff** adds waiting beyond these socket timeouts. It is
+separate from producer `retry_backoff`, which does not cover every metadata
+reconnect. With `reconnect_backoff: 0`, existing reconnect timing is unchanged.
+When enabled, a transport failure starts a per-client, per-textual-host/port
+cooldown. The initial delay doubles on consecutive transport failures up to
+`reconnect_backoff_max`; each delay is multiplied by random jitter from 0.8 to 1.2
+and capped again at that maximum. Only the remaining monotonic-clock deadline is
+waited, so time already spent in producer retry sleeps counts toward the cooldown.
+
+Cold operations at endpoints without failure history are admitted independently,
+without waiting for an earlier request to finish. Existing open sockets never wait
+on this cooldown, but their transport failures arm future cold attempts. Only an
+endpoint with failure history has an exclusive cold recovery probe, covering
+connection establishment, authentication, and the application request. Waiters
+recheck history after recovery, so healthy cold operations are no longer serialized.
+A completed correlated response, including a valid Kafka error response, resets
+the failure streak only if no newer failure was recorded after the operation was
+cleared to run. For `required_acks: 0`, a completed write
+also resets it under the existing weaker no-acknowledgement contract: this is not
+proof of broker receipt or delivery. TCP establishment or a SASL handshake alone
+does not reset the streak. Programming errors, protocol error responses, and
+permanent authentication rejections do not introduce new transport retries; TLS
+exception classification is unchanged.
+
+Each call still executes its operation once; the gate does not retry, cache
+exceptions, or change native retry counts, buffering, partition selection, or
+producer identity. A cold caller to a failed endpoint can wait the remaining capped
+delay before its socket timeouts start, and concurrent cold callers there can also wait
+for an active probe's I/O. There is no new whole-operation deadline. Serial seed
+broker loops can delay reaching a healthy later seed, so the preceding latency
+estimate does **not** include enabled reconnect backoff. This is synchronous
+waiting, not an asynchronous event-loop reconnect scheduler.
+
+History is shared across a client's connection pools and recreated metadata
+brokers, not across clients or processes. Endpoint keys use the textual host and
+port passed to the connection builder; DNS aliases remain distinct, and existing
+seed resolution behavior is unchanged. Directly constructed `Kafka::Connection`
+objects are outside this policy. The registry retains only timing and
+synchronization state, not sockets, payloads, or exceptions. Inactive failure
+history is pruned lazily on subsequent use, at most once per minute, after at least
+`max(300 seconds, reconnect_backoff_max)` of inactivity. Active probes and waiters
+are never pruned; healthy unobserved entries are removed immediately. This bounds
+history to recently used endpoints, not a fixed global capacity or admission gate.
 
 ### Security
 
