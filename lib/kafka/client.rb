@@ -377,8 +377,7 @@ module Kafka
     # @param assignment_strategy [Object] a partition assignment strategy that
     #   implements `protocol_type()`, `user_data()`, and `assign(members:, partitions:)`
     # @return [Consumer]
-    def consumer(
-        group_id:,
+    def consumer(group_id:,
         session_timeout: 30,
         rebalance_timeout: 60,
         offset_commit_interval: 10,
@@ -388,8 +387,7 @@ module Kafka
         fetcher_max_queue_size: 100,
         refresh_topic_interval: 0,
         interceptors: [],
-        assignment_strategy: nil
-    )
+        assignment_strategy: nil)
       cluster = initialize_cluster
 
       instrumenter = DecoratingInstrumenter.new(@instrumenter, {

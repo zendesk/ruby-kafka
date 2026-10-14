@@ -18,8 +18,7 @@ module Kafka
 
       attr_accessor :codec_id
 
-      def initialize(
-          records: [],
+      def initialize(records: [],
           first_offset: 0,
           first_timestamp: Time.now,
           partition_leader_epoch: 0,
@@ -30,8 +29,7 @@ module Kafka
           producer_id: -1,
           producer_epoch: 0,
           first_sequence: 0,
-          max_timestamp: Time.now
-      )
+          max_timestamp: Time.now)
         @records = Array(records)
         @first_offset = first_offset
         @first_timestamp = first_timestamp

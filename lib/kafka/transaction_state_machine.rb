@@ -35,6 +35,7 @@ module Kafka
       unless TRANSITIONS[next_state].include?(@state)
         raise InvalidTransitionError, "Could not transition from state '#{@state}' to state '#{next_state}'"
       end
+
       @logger.debug("Transaction state changed to '#{next_state}'!")
       @mutex.synchronize { @state = next_state }
     end

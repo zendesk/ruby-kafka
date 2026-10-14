@@ -618,6 +618,7 @@ module Kafka
 
     def subscribe_to_topic(topic, default_offset, start_from_beginning, max_bytes_per_partition)
       return if @matched_topics.include?(topic)
+
       @matched_topics.add(topic)
       @join_group_for_new_topics = true
 

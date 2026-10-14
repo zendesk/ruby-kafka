@@ -53,8 +53,8 @@ module Kafka
 
       private
 
-      def bin_to_hex(s)
-        s.each_byte.map { |b| b.to_s(16).rjust(2, '0') }.join
+      def bin_to_hex(string)
+        string.each_byte.map { |b| b.to_s(16).rjust(2, '0') }.join
       end
 
       def digest

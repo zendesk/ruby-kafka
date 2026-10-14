@@ -38,8 +38,22 @@ jobs:
     - name: Run RSpec
       run: bundle exec rspec
 
-#    - name: Run Rubocop
-#      run: bundle exec rubocop
+  rubocop:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: Run Rubocop
+      run: bundle exec rubocop
 
   functional-confluent:
     runs-on: ubuntu-latest

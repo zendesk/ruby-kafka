@@ -345,6 +345,7 @@ describe Kafka::Consumer do
       before do
         allow(heartbeat).to receive(:trigger) do
           next unless @encounter_rebalance
+
           @encounter_rebalance = false
           raise Kafka::RebalanceInProgress
         end

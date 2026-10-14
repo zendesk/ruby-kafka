@@ -15,7 +15,7 @@ describe Kafka::Prometheus do
       Kafka::Instrumenter.new(client_id: 'test', exception: exception)
     else
       Kafka::Instrumenter.new(client_id: 'test')
-                   end
+    end
     instrumenter.instrument(hook, payload)
   end
 

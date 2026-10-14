@@ -197,23 +197,23 @@ module Kafka
       topic = topic.to_str
 
       message = @interceptors.call(PendingMessage.new(
-        value: value && value.to_s,
-        key: key && key.to_s,
-        headers: headers,
-        topic: topic,
-        partition: partition && Integer(partition),
-        partition_key: partition_key && partition_key.to_s,
-        create_time: create_time
-      ))
+                                     value: value && value.to_s,
+                                     key: key && key.to_s,
+                                     headers: headers,
+                                     topic: topic,
+                                     partition: partition && Integer(partition),
+                                     partition_key: partition_key && partition_key.to_s,
+                                     create_time: create_time
+                                   ))
 
       if buffer_size >= @max_buffer_size
         buffer_overflow topic,
-          "Cannot produce to #{topic}, max buffer size (#{@max_buffer_size} messages) reached"
+                        "Cannot produce to #{topic}, max buffer size (#{@max_buffer_size} messages) reached"
       end
 
       if buffer_bytesize + message.bytesize >= @max_buffer_bytesize
         buffer_overflow topic,
-          "Cannot produce to #{topic}, max buffer bytesize (#{@max_buffer_bytesize} bytes) reached"
+                        "Cannot produce to #{topic}, max buffer bytesize (#{@max_buffer_bytesize} bytes) reached"
       end
 
       # If the producer is in transactional mode, all the message production
@@ -367,6 +367,7 @@ module Kafka
     # @return [nil]
     def transaction
       raise 'This method requires a block' unless block_given?
+
       begin_transaction
       yield
       commit_transaction

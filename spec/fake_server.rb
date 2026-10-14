@@ -146,13 +146,13 @@ class FakeServer
 
   def digest
     @digest ||= case @scram_mechanism
-                when 'SHA-256'
-                  OpenSSL::Digest::SHA256.new.freeze
-                when 'SHA-512'
-                  OpenSSL::Digest::SHA512.new.freeze
-                else
-                  raise StandardError, "Unknown mechanism '#{@scram_mechanism}'"
-                end
+    when 'SHA-256'
+      OpenSSL::Digest::SHA256.new.freeze
+    when 'SHA-512'
+      OpenSSL::Digest::SHA512.new.freeze
+    else
+      raise StandardError, "Unknown mechanism '#{@scram_mechanism}'"
+    end
   end
 
   def xor(first, second)

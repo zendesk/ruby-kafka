@@ -197,6 +197,7 @@ describe Kafka::Producer do
       allow(cluster).to receive(:partitions_for) do
         partitions_for_call_count += 1
         raise(Kafka::UnknownTopicOrPartition.new) if partitions_for_call_count == 1
+
         [0, 1]
       end
 

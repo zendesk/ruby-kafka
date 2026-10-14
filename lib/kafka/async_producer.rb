@@ -110,7 +110,7 @@ module Kafka
 
       if @queue.size >= @max_queue_size
         buffer_overflow topic,
-          "Cannot produce to #{topic}, max queue size (#{@max_queue_size} messages) reached"
+                        "Cannot produce to #{topic}, max queue size (#{@max_queue_size} messages) reached"
       end
 
       args = [value, **options.merge(topic: topic)]

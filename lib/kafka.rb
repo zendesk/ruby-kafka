@@ -314,6 +314,7 @@ module Kafka
   # When the record array length doesn't match real number of received records
   class InsufficientDataMessage < Error
   end
+
   # Raised when there's a network connection error.
   class ConnectionError < Error
   end

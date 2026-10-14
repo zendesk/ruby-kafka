@@ -8,9 +8,9 @@ describe Kafka::ProduceOperation do
   let(:logger) { LOGGER }
   let(:instrumenter) { Kafka::Instrumenter.new(client_id: "test") }
 
-  let(:broker_1) { double(:broker) }
-  let(:broker_2) { double(:broker) }
-  let(:broker_3) { double(:broker) }
+  let(:broker1) { double(:broker) }
+  let(:broker2) { double(:broker) }
+  let(:broker3) { double(:broker) }
 
   let(:operation) {
     Kafka::ProduceOperation.new(
@@ -42,21 +42,21 @@ describe Kafka::ProduceOperation do
   }
 
   before do
-    allow(cluster).to receive(:get_leader).with('hello', 0).and_return(broker_1)
-    allow(cluster).to receive(:get_leader).with('hello', 1).and_return(broker_2)
-    allow(cluster).to receive(:get_leader).with('hi', 0).and_return(broker_3)
-    allow(cluster).to receive(:get_leader).with('hi', 1).and_return(broker_3)
-    allow(cluster).to receive(:get_leader).with('bye', 0).and_return(broker_3)
+    allow(cluster).to receive(:get_leader).with('hello', 0).and_return(broker1)
+    allow(cluster).to receive(:get_leader).with('hello', 1).and_return(broker2)
+    allow(cluster).to receive(:get_leader).with('hi', 0).and_return(broker3)
+    allow(cluster).to receive(:get_leader).with('hi', 1).and_return(broker3)
+    allow(cluster).to receive(:get_leader).with('bye', 0).and_return(broker3)
 
-    allow(broker_1).to receive(:produce) do |request|
+    allow(broker1).to receive(:produce) do |request|
       generate_successful_produce_response(request)
     end
 
-    allow(broker_2).to receive(:produce) do |request|
+    allow(broker2).to receive(:produce) do |request|
       generate_successful_produce_response(request)
     end
 
-    allow(broker_3).to receive(:produce) do |request|
+    allow(broker3).to receive(:produce) do |request|
       generate_successful_produce_response(request)
     end
   end
@@ -74,7 +74,7 @@ describe Kafka::ProduceOperation do
     end
 
     it 'sends produce requests to lead brokers of the partitions' do
-      expect(broker_1).to receive(:produce).with(
+      expect(broker1).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             0 => Kafka::Protocol::RecordBatch.new(
@@ -91,7 +91,7 @@ describe Kafka::ProduceOperation do
         transactional_id: nil
       )
 
-      expect(broker_2).to receive(:produce).with(
+      expect(broker2).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             1 => Kafka::Protocol::RecordBatch.new(
@@ -108,7 +108,7 @@ describe Kafka::ProduceOperation do
         transactional_id: nil
       )
 
-      expect(broker_3).to receive(:produce).with(
+      expect(broker3).to receive(:produce).with(
         messages_for_topics: {
           'hi' => {
             0 => Kafka::Protocol::RecordBatch.new(
@@ -165,7 +165,7 @@ describe Kafka::ProduceOperation do
     end
 
     it 'sends produce requests to lead brokers of the partitions' do
-      expect(broker_1).to receive(:produce).with(
+      expect(broker1).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             0 => Kafka::Protocol::RecordBatch.new(
@@ -185,7 +185,7 @@ describe Kafka::ProduceOperation do
         transactional_id: nil
       )
 
-      expect(broker_2).to receive(:produce).with(
+      expect(broker2).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             1 => Kafka::Protocol::RecordBatch.new(
@@ -205,7 +205,7 @@ describe Kafka::ProduceOperation do
         transactional_id: nil
       )
 
-      expect(broker_3).to receive(:produce).with(
+      expect(broker3).to receive(:produce).with(
         messages_for_topics: {
           'hi' => {
             0 => Kafka::Protocol::RecordBatch.new(
@@ -301,7 +301,7 @@ describe Kafka::ProduceOperation do
     end
 
     it 'sends produce requests to lead brokers of the partitions' do
-      expect(broker_1).to receive(:produce).with(
+      expect(broker1).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             0 => Kafka::Protocol::RecordBatch.new(
@@ -322,7 +322,7 @@ describe Kafka::ProduceOperation do
         transactional_id: 'IDID'
       )
 
-      expect(broker_2).to receive(:produce).with(
+      expect(broker2).to receive(:produce).with(
         messages_for_topics: {
           'hello' => {
             1 => Kafka::Protocol::RecordBatch.new(
@@ -343,7 +343,7 @@ describe Kafka::ProduceOperation do
         transactional_id: 'IDID'
       )
 
-      expect(broker_3).to receive(:produce).with(
+      expect(broker3).to receive(:produce).with(
         messages_for_topics: {
           'hi' => {
             0 => Kafka::Protocol::RecordBatch.new(

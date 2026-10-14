@@ -413,33 +413,33 @@ end
 def expect_matched_records(records)
   expect(records.length).to eql 2
 
-  record_1 = records.first
-  expect(record_1.attributes).to eql(1)
+  record1 = records.first
+  expect(record1.attributes).to eql(1)
 
-  expect(record_1.timestamp_delta).to eql(1000000)
-  expect(record_1.create_time.to_i).to eql(1521657000)
+  expect(record1.timestamp_delta).to eql(1000000)
+  expect(record1.create_time.to_i).to eql(1521657000)
 
-  expect(record_1.offset_delta).to eql(1)
-  expect(record_1.offset).to eql(2)
+  expect(record1.offset_delta).to eql(1)
+  expect(record1.offset).to eql(2)
 
-  expect(record_1.key).to eql('hello')
-  expect(record_1.value).to eql('world')
-  expect(record_1.headers).to eql('a' => '12')
+  expect(record1.key).to eql('hello')
+  expect(record1.value).to eql('world')
+  expect(record1.headers).to eql('a' => '12')
 
-  expect(record_1.is_control_record).to eql(true)
+  expect(record1.is_control_record).to eql(true)
 
-  record_2 = records.last
-  expect(record_2.attributes).to eql(2)
-  expect(record_2.timestamp_delta).to eql(2000000)
-  expect(record_2.create_time.to_i).to eql(1521658000)
-  expect(record_2.offset_delta).to eql(2)
-  expect(record_2.offset).to eql(3)
+  record2 = records.last
+  expect(record2.attributes).to eql(2)
+  expect(record2.timestamp_delta).to eql(2000000)
+  expect(record2.create_time.to_i).to eql(1521658000)
+  expect(record2.offset_delta).to eql(2)
+  expect(record2.offset).to eql(3)
 
-  expect(record_2.key).to eql('ruby')
-  expect(record_2.value).to eql('kafka')
-  expect(record_2.headers).to eql('b' => '34')
+  expect(record2.key).to eql('ruby')
+  expect(record2.value).to eql('kafka')
+  expect(record2.headers).to eql('b' => '34')
 
-  expect(record_2.is_control_record).to eql(false)
+  expect(record2.is_control_record).to eql(false)
 end
 
 # Compression usually has random factors. Therefore, the content and crc change
