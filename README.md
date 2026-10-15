@@ -1294,7 +1294,15 @@ The Consumer API is designed for flexibility and stability. The first is accompl
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-**Note:** the specs require a working [Docker](https://www.docker.com/) instance, but should work out of the box if you have Docker installed. Please create an issue if that's not the case.
+Functional tests require [Docker](https://www.docker.com/) and a three-broker Kafka cluster. CI tests Kafka 3.9 (Confluent image `7.9.0`) and Kafka 4.0 (image `8.0.0`) in KRaft mode. To run against Kafka 4.0 locally:
+
+```sh
+CONFLUENT_VERSION=8.0.0 docker compose up -d --wait --wait-timeout 180
+bundle exec rspec --profile --tag functional spec/functional
+docker compose down -v
+```
+
+Omit `CONFLUENT_VERSION` to use Kafka 3.9. Run `docker compose down -v` before switching versions to start with fresh broker data.
 
 If you would like to contribute to ruby-kafka, please [join our Slack team](https://ruby-kafka-slack.herokuapp.com/) and ask how best to do it.
 

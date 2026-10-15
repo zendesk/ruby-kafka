@@ -56,9 +56,20 @@ jobs:
       run: bundle exec rubocop
 
   functional-confluent:
+    name: Functional (Kafka ${{ matrix.kafka-version }})
     runs-on: ubuntu-latest
     env:
       LOG_LEVEL: DEBUG
+      CONFLUENT_VERSION: ${{ matrix.confluent-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kafka-version: "3.9"
+            confluent-version: "7.9.0"
+          - kafka-version: "4.0"
+            confluent-version: "8.0.0"
 
     steps:
     - uses: actions/checkout@v7
