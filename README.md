@@ -1294,10 +1294,10 @@ The Consumer API is designed for flexibility and stability. The first is accompl
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-Functional tests require [Docker](https://www.docker.com/) and a three-broker Kafka cluster. CI tests Kafka 3.9 (Confluent image `7.9.0`) and Kafka 4.0 (image `8.0.0`) in KRaft mode. To run against Kafka 4.0 locally:
+Functional tests require [Docker](https://www.docker.com/) and a three-broker Kafka cluster. CI tests Kafka 3.9 (Confluent image `7.9.0`), Kafka 4.0 (image `8.0.0`), Kafka 4.1 (image `8.1.0`), Kafka 4.2 (image `8.2.0`), and Kafka 4.3 (image `8.3.0`) in KRaft mode. To run against Kafka 4.3 locally:
 
 ```sh
-CONFLUENT_VERSION=8.0.0 docker compose up -d --wait --wait-timeout 180
+CONFLUENT_VERSION=8.3.0 docker compose up -d --wait --wait-timeout 180
 bundle exec rspec --profile --tag functional spec/functional
 docker compose down -v
 ```

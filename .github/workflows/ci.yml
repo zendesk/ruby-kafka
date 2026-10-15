@@ -70,6 +70,12 @@ jobs:
             confluent-version: "7.9.0"
           - kafka-version: "4.0"
             confluent-version: "8.0.0"
+          - kafka-version: "4.1"
+            confluent-version: "8.1.0"
+          - kafka-version: "4.2"
+            confluent-version: "8.2.0"
+          - kafka-version: "4.3"
+            confluent-version: "8.3.0"
 
     steps:
     - uses: actions/checkout@v7

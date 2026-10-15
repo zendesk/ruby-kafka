@@ -15,7 +15,7 @@ services:
   kafka1:
     image: confluentinc/cp-kafka:${CONFLUENT_VERSION:-7.9.0}
     healthcheck: &kafka-healthcheck
-      test: ["CMD", "cub", "kafka-ready", "-b", "localhost:19092", "3", "10"]
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:19092"]
       interval: 10s
       timeout: 15s
       retries: 12
