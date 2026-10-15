@@ -13,7 +13,7 @@ module Kafka
       end
 
       def api_version
-        0
+        1
       end
 
       def response_class
