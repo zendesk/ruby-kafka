@@ -27,8 +27,62 @@ describe ::Kafka::TransactionManager do
   end
 
   describe '#init_producer_id' do
+    let(:max_retries) { 2 }
     let!(:manager) do
-      described_class.new(logger: logger, cluster: cluster, transactional_id: 'IDID', transactional_timeout: 600)
+      described_class.new(
+        logger: logger, cluster: cluster, transactional: true,
+        transactional_id: 'IDID', transactional_timeout: 600,
+        max_retries: max_retries, retry_backoff: 0.5
+      )
+    end
+
+    context 'coordinator is still loading' do
+      let(:loading_response) do
+        Kafka::Protocol::InitProducerIDResponse.new(error_code: 14, producer_id: -1, producer_epoch: -1)
+      end
+      let(:success_response) do
+        Kafka::Protocol::InitProducerIDResponse.new(error_code: 0, producer_id: 1234, producer_epoch: 1)
+      end
+
+      it 'retries initialization before making the transaction ready' do
+        expect(transaction_coordinator).to receive(:init_producer_id).ordered.and_return(loading_response)
+        expect(manager).to receive(:sleep).with(0.5).ordered
+        expect(transaction_coordinator).to receive(:init_producer_id).ordered.and_return(success_response)
+
+        manager.init_transactions
+
+        expect(manager.producer_id).to eq(1234)
+        expect(manager.producer_epoch).to eq(1)
+        expect(manager).to be_ready
+      end
+
+      it 'raises after the configured retries without accepting an invalid producer ID' do
+        expect(transaction_coordinator).to receive(:init_producer_id).exactly(3).times.and_return(loading_response)
+        expect(manager).to receive(:sleep).with(0.5).twice
+
+        expect { manager.init_producer_id }.to raise_error(Kafka::CoordinatorLoadInProgress)
+        expect(manager.producer_id).to eq(-1)
+        expect(manager.producer_epoch).to eq(0)
+      end
+
+      context 'retries are disabled' do
+        let(:max_retries) { 0 }
+
+        it 'raises immediately' do
+          expect(transaction_coordinator).to receive(:init_producer_id).once.and_return(loading_response)
+          expect(manager).not_to receive(:sleep)
+
+          expect { manager.init_producer_id }.to raise_error(Kafka::CoordinatorLoadInProgress)
+        end
+      end
+    end
+
+    it 'does not retry fatal initialization errors' do
+      response = Kafka::Protocol::InitProducerIDResponse.new(error_code: 50, producer_id: -1, producer_epoch: -1)
+      expect(transaction_coordinator).to receive(:init_producer_id).once.and_return(response)
+      expect(manager).not_to receive(:sleep)
+
+      expect { manager.init_producer_id }.to raise_error(Kafka::InvalidTransactionTimeoutError)
     end
 
     context 'producer_id not exist' do
