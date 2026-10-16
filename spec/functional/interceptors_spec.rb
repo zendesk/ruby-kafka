@@ -14,9 +14,9 @@ describe "Interceptors", functional: true do
     producer.shutdown
 
     consumer_interceptor = FakeConsumerInterceptor.new(append_s: 'consumer')
-    consumer = kafka.consumer(group_id: SecureRandom.uuid, fetcher_max_queue_size: 1, interceptors: [consumer_interceptor])
+    consumer = create_consumer(kafka, group_id: SecureRandom.uuid, fetcher_max_queue_size: 1, interceptors: [consumer_interceptor])
     consumer.subscribe(topic)
-    consumer.each_message do |message|
+    consumer.each_message(max_wait_time: 0.1) do |message|
       expect(message.value).to eq "helloproducerconsumer"
       break
     end
