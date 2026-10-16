@@ -75,6 +75,22 @@ module SpecHelpers
 end
 
 module FunctionalSpecHelpers
+  # KRaft metadata changes propagate asynchronously to the brokers.
+  def with_retry(opts = {})
+    retries = opts.fetch(:retry, 30)
+    retry_wait = opts.fetch(:retry_wait, 0.1)
+    tries = 0
+    begin
+      yield
+    rescue RSpec::Expectations::ExpectationNotMetError, Kafka::UnknownTopicOrPartition, Kafka::LeaderNotAvailable
+      raise if tries >= retries
+
+      tries += 1
+      sleep retry_wait
+      retry
+    end
+  end
+
   def self.included(base)
     base.class_eval do
       let(:logger) { LOGGER }

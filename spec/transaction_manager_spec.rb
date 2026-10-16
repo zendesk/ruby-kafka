@@ -162,11 +162,74 @@ describe ::Kafka::TransactionManager do
   end
 
   describe '#add_partitions_to_transaction' do
+    let(:max_retries) { 2 }
     let!(:manager) do
       described_class.new(
         logger: logger, cluster: cluster,
-        transactional: true, transactional_id: '1234'
+        transactional: true, transactional_id: '1234',
+        max_retries: max_retries, retry_backoff: 0.5
       )
+    end
+
+    context 'the previous transaction is still completing' do
+      let(:pending_response) do
+        Kafka::Protocol::AddPartitionsToTxnResponse.new(errors: [
+          Kafka::Protocol::AddPartitionsToTxnResponse::TopicPartitionsError.new(
+            topic: 'hello',
+            partitions: [Kafka::Protocol::AddPartitionsToTxnResponse::PartitionError.new(partition: 1, error_code: 51)]
+          )
+        ])
+      end
+
+      before do
+        manager.init_transactions
+        manager.begin_transaction
+      end
+
+      it 'retries without putting the transaction into an error state' do
+        expect(transaction_coordinator).to receive(:add_partitions_to_txn).ordered.and_return(pending_response)
+        expect(manager).to receive(:sleep).with(0.5).ordered
+        expect(transaction_coordinator).to receive(:add_partitions_to_txn).ordered.and_return(
+          success_add_partitions_to_txn_response('hello' => [1])
+        )
+
+        manager.add_partitions_to_transaction('hello' => [1])
+        expect(manager).to be_in_transaction
+        expect(manager).not_to be_error
+
+        # Successfully added partitions must not be registered again.
+        expect(transaction_coordinator).not_to receive(:add_partitions_to_txn)
+        manager.add_partitions_to_transaction('hello' => [1])
+      end
+
+      it 'raises and marks the transaction as failed when retries are exhausted' do
+        expect(transaction_coordinator).to receive(:add_partitions_to_txn).exactly(3).times.and_return(pending_response)
+        expect(manager).to receive(:sleep).with(0.5).twice
+
+        expect { manager.add_partitions_to_transaction('hello' => [1]) }.to raise_error(Kafka::ConcurrentTransactionError)
+        expect(manager).to be_error
+      end
+
+      context 'retries are disabled' do
+        let(:max_retries) { 0 }
+
+        it 'raises immediately' do
+          expect(transaction_coordinator).to receive(:add_partitions_to_txn).once.and_return(pending_response)
+          expect(manager).not_to receive(:sleep)
+
+          expect { manager.add_partitions_to_transaction('hello' => [1]) }.to raise_error(Kafka::ConcurrentTransactionError)
+          expect(manager).to be_error
+        end
+      end
+
+      it 'does not retry a fenced producer' do
+        pending_response.errors.first.partitions[0] = Kafka::Protocol::AddPartitionsToTxnResponse::PartitionError.new(partition: 1, error_code: 47)
+        expect(transaction_coordinator).to receive(:add_partitions_to_txn).once.and_return(pending_response)
+        expect(manager).not_to receive(:sleep)
+
+        expect { manager.add_partitions_to_transaction('hello' => [1]) }.to raise_error(Kafka::InvalidProducerEpochError)
+        expect(manager).to be_error
+      end
     end
 
     context 'no partitions in the transaction yet' do

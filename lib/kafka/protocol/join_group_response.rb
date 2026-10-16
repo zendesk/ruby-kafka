@@ -21,6 +21,7 @@ module Kafka
       end
 
       def self.decode(decoder)
+        decoder.int32 # throttle_time_ms
         new(
           error_code: decoder.int16,
           generation_id: decoder.int32,

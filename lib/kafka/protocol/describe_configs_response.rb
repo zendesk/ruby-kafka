@@ -48,13 +48,19 @@ module Kafka
           resource_name = decoder.string
 
           configs = decoder.array do
-            ConfigEntry.new(
+            config = ConfigEntry.new(
               name: decoder.string,
               value: decoder.string,
               read_only: decoder.boolean,
-              is_default: decoder.boolean,
+              is_default: decoder.int8 == 5, # DEFAULT_CONFIG source
               is_sensitive: decoder.boolean,
             )
+            decoder.array do
+              decoder.string # name
+              decoder.string # value
+              decoder.int8 # source
+            end
+            config
           end
 
           ResourceDescription.new(

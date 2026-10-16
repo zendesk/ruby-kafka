@@ -13,7 +13,7 @@ module Kafka
       end
 
       def api_version
-        0
+        1
       end
 
       def response_class
@@ -28,6 +28,7 @@ module Kafka
             encoder.write_string(config)
           end
         end
+        encoder.write_boolean(false) # include_synonyms
       end
     end
 

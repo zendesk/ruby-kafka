@@ -1,4 +1,15 @@
 describe Kafka::Protocol::Decoder do
+  describe '#boolean' do
+    it 'decodes zero as false and nonzero bytes as true' do
+      decoder = described_class.from_string("\x00\x01\xFF")
+
+      expect(decoder.boolean).to eq(false)
+      expect(decoder.boolean).to eq(true)
+      expect(decoder.boolean).to eq(true)
+      expect(decoder).to be_eof
+    end
+  end
+
   describe '#peek' do
     let(:io) { StringIO.new(data) }
     let(:decoder) { Kafka::Protocol::Decoder.new(io) }

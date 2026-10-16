@@ -1,19 +1,5 @@
 # frozen_string_literal: true
 
-def with_retry(opts = {}, &block)
-  retries = opts[:retry] || 3
-  retry_wait = opts[:retry_wait] || 1
-  tries = 0
-  begin
-    yield
-  rescue RSpec::Expectations::ExpectationNotMetError => e
-    sleep retry_wait
-    tries += 1
-    retry if tries <= retries
-    raise e
-  end
-end
-
 describe "Topic management API", functional: true do
   example "creating topics" do
     topic = generate_topic_name
@@ -21,9 +7,7 @@ describe "Topic management API", functional: true do
 
     kafka.create_topic(topic, num_partitions: 3)
 
-    partitions = kafka.partitions_for(topic)
-
-    expect(partitions).to eq 3
+    with_retry { expect(kafka.partitions_for(topic)).to eq 3 }
   end
 
   example "creating a topic with config entries" do
@@ -36,7 +20,7 @@ describe "Topic management API", functional: true do
 
     kafka.create_topic(topic, num_partitions: 3, config: { "cleanup.policy" => "compact" })
 
-    configs = kafka.describe_topic(topic, ["cleanup.policy"])
+    configs = with_retry { kafka.describe_topic(topic, ["cleanup.policy"]) }
     expect(configs.fetch("cleanup.policy")).to eq("compact")
   end
 
@@ -44,10 +28,10 @@ describe "Topic management API", functional: true do
     topic = generate_topic_name
 
     kafka.create_topic(topic, num_partitions: 3)
-    expect(kafka.partitions_for(topic)).to eq 3
+    with_retry { expect(kafka.partitions_for(topic)).to eq 3 }
 
     kafka.delete_topic(topic)
-    expect(kafka.has_topic?(topic)).to eql(false)
+    with_retry { expect(kafka.has_topic?(topic)).to eql(false) }
   end
 
   example "create partitions" do
@@ -57,10 +41,18 @@ describe "Topic management API", functional: true do
     topic = generate_topic_name
 
     kafka.create_topic(topic, num_partitions: 3)
-    expect(kafka.partitions_for(topic)).to eq 3
+    with_retry { expect(kafka.partitions_for(topic)).to eq 3 }
 
     kafka.create_partitions_for(topic, num_partitions: 10)
-    with_retry { expect(kafka.partitions_for(topic)).to eq 10 }
+    with_retry do
+      # Use fresh metadata while the partition change propagates to brokers.
+      client = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
+      begin
+        expect(client.partitions_for(topic)).to eq 10
+      ensure
+        client.close
+      end
+    end
   end
 
   example "describe a topic" do
@@ -70,7 +62,7 @@ describe "Topic management API", functional: true do
 
     topic = generate_topic_name
     kafka.create_topic(topic, num_partitions: 3)
-    configs = kafka.describe_topic(topic, %w(retention.ms))
+    configs = with_retry { kafka.describe_topic(topic, %w(retention.ms)) }
 
     expect(configs.keys).to eql(%w(retention.ms))
     expect(configs['retention.ms']).to be_a(String)
@@ -89,9 +81,11 @@ describe "Topic management API", functional: true do
       'max.message.bytes' => '987654'
     )
 
-    retention_configs = kafka.describe_topic(topic, %w(retention.ms))
-    expect(retention_configs['retention.ms']).to eql('1234567')
-    max_msg_bytes_configs = kafka.describe_topic(topic, %w(max.message.bytes))
-    expect(max_msg_bytes_configs['max.message.bytes']).to eql('987654')
+    with_retry do
+      retention_configs = kafka.describe_topic(topic, %w(retention.ms))
+      expect(retention_configs['retention.ms']).to eql('1234567')
+      max_msg_bytes_configs = kafka.describe_topic(topic, %w(max.message.bytes))
+      expect(max_msg_bytes_configs['max.message.bytes']).to eql('987654')
+    end
   end
 end

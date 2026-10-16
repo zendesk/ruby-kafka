@@ -11,6 +11,7 @@ module Kafka
       end
 
       def self.decode(decoder)
+        decoder.int32 # throttle_time_ms
         errors = decoder.array do
           topic = decoder.string
           error_code = decoder.int16

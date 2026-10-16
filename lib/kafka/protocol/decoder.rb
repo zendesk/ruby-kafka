@@ -36,7 +36,7 @@ module Kafka
       #
       # @return [Boolean]
       def boolean
-        read(1) == 0x1
+        int8 != 0
       end
 
       # Decodes an 8-bit integer from the IO object.

@@ -11,12 +11,14 @@ describe "Client API", functional: true do
     # Use a clean Kafka instance to avoid hitting caches.
     kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
 
-    topics = kafka.topics
+    with_retry do
+      topics = kafka.topics
 
-    expect(topics).to include topic
-    expect(topics).not_to include deleted_topic
-    expect(kafka.has_topic?(topic)).to eq true
-    expect(kafka.has_topic?(deleted_topic)).to eq false
+      expect(topics).to include topic
+      expect(topics).not_to include deleted_topic
+      expect(kafka.has_topic?(topic)).to eq true
+      expect(kafka.has_topic?(deleted_topic)).to eq false
+    end
   end
 
   example "listing brokers in the cluster" do
@@ -120,14 +122,7 @@ describe "Client API", functional: true do
   example "fetching the partition count for a topic that doesn't yet exist" do
     topic = "unknown-topic-#{SecureRandom.uuid}"
 
-    expect { kafka.partitions_for(topic) }.to raise_exception(Kafka::LeaderNotAvailable)
-
-    # Eventually the call should succeed.
-    expect {
-      10.times { kafka.partitions_for(topic) rescue nil }
-    }.not_to raise_exception
-
-    expect(kafka.partitions_for(topic)).to be > 0
+    with_retry { expect(kafka.partitions_for(topic)).to be > 0 }
   end
 
   example "fetching the replica count for a topic" do
@@ -137,14 +132,7 @@ describe "Client API", functional: true do
   example "fetching the replica count for a topic that doesn't yet exist" do
     topic = "unknown-topic-#{SecureRandom.uuid}"
 
-    expect { kafka.replica_count_for(topic) }.to raise_exception(Kafka::LeaderNotAvailable)
-
-    # Eventually the call should succeed.
-    expect {
-      10.times { kafka.replica_count_for(topic) rescue nil }
-    }.not_to raise_exception
-
-    expect(kafka.replica_count_for(topic)).to be > 0
+    with_retry { expect(kafka.replica_count_for(topic)).to be > 0 }
   end
 
   example "delivering a message to a topic" do

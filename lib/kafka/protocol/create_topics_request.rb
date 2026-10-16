@@ -13,7 +13,7 @@ module Kafka
       end
 
       def api_version
-        0
+        2
       end
 
       def response_class
@@ -38,6 +38,7 @@ module Kafka
 
         # Timeout is in ms.
         encoder.write_int32(@timeout * 1000)
+        encoder.write_boolean(false) # validate_only
       end
     end
 
