@@ -48,10 +48,10 @@ describe "Fetch API", functional: true do
       batch_count += 1
     end
     # Test consuming
-    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer = create_consumer(kafka, group_id: SecureRandom.uuid)
     consumer.subscribe(topic)
     message_count = 0
-    consumer.each_message do
+    consumer.each_message(max_wait_time: 0.1) do
       message_count += 1
       break if message_count == total_messages
     end

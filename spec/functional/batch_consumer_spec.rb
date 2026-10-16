@@ -25,17 +25,17 @@ describe "Batch Consumer API", functional: true do
     end
     producer_thread.abort_on_exception = true
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     consumers = 2.times.map do
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer = create_consumer(kafka, group_members: 2, group_id: group_id, offset_retention_time: offset_retention_time)
       consumer.subscribe(topic)
       consumer
     end
 
     threads = consumers.map do |consumer|
       t = Thread.new do
-        consumer.each_batch do |batch|
+        consumer.each_batch(max_wait_time: 0.1) do |batch|
           batch.messages.each do |message|
             message_queue << Integer(message.value)
           end
@@ -81,11 +81,11 @@ describe "Batch Consumer API", functional: true do
       'hello2', topic: topic, headers: { 'TracingID' => 'c3', 'SpanID' => 'd4' }
     )
     producer.deliver_messages
-    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer = create_consumer(kafka, group_id: SecureRandom.uuid)
     consumer.subscribe(topic)
 
     headers = []
-    consumer.each_batch do |batch|
+    consumer.each_batch(max_wait_time: 0.1) do |batch|
       batch.messages.each do |message|
         headers << message.headers
       end

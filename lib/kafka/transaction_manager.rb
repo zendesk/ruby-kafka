@@ -52,9 +52,13 @@ module Kafka
       return if @producer_id >= 0 && !force
 
       attempts = 0
+      coordinator = nil
       begin
         attempts += 1
-        response = transaction_coordinator.init_producer_id(
+        # Non-transactional producers choose a random broker. Retry on that same
+        # broker so its in-progress producer ID allocation can finish.
+        coordinator ||= transaction_coordinator
+        response = coordinator.init_producer_id(
           transactional_id: @transactional_id,
           transactional_timeout: @transactional_timeout
         )

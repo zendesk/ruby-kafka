@@ -70,19 +70,58 @@ module SpecHelpers
 
   def create_topic(name, num_partitions: 1, num_replicas: 1)
     kafka.create_topic(name, num_partitions: num_partitions, replication_factor: num_replicas)
-    sleep 0.5
+
+    # Every broker must know the topic (including for regex subscriptions),
+    # and every partition leader must serve usable offsets before consumers start.
+    expected_offsets = (0...num_partitions).map { |partition| [partition, -1] }.to_h
+    kafka.brokers.each do |broker|
+      client = Kafka.new(["#{broker.host}:#{broker.port}"], logger: LOGGER)
+      begin
+        with_retry(errors: [Kafka::NotLeaderForPartition]) do
+          expect(client.has_topic?(name)).to eq(true) # Refresh metadata on every attempt.
+          expect(client.last_offsets_for(name).fetch(name)).to eq(expected_offsets)
+        end
+      ensure
+        client.close
+      end
+    end
   end
 end
 
 module FunctionalSpecHelpers
-  # KRaft metadata changes propagate asynchronously to the brokers.
+  # Keep rebalances responsive without changing the library's production defaults.
+  # Multi-consumer tests must not process records before all members have joined.
+  def create_consumer(client = kafka, group_members: 1, **options)
+    if group_members > 1
+      strategy = options.fetch(:assignment_strategy) { Kafka::RoundRobinAssignmentStrategy.new }
+      group_id = options.fetch(:group_id)
+      allow(strategy).to receive(:call).and_wrap_original do |method, **args|
+        ready = started_consumer_groups[group_id] ||= args.fetch(:members).size >= group_members
+        ready ? method.call(**args) : {}
+      end
+      options[:assignment_strategy] = strategy
+    end
+
+    client.consumer(heartbeat_interval: 0.1, **options)
+  end
+
+  def fetch_records(topic:, partition: 0, offset: :earliest, count:)
+    with_retry do
+      records = kafka.fetch_messages(topic: topic, partition: partition, offset: offset, max_wait_time: 0.1)
+      expect(records.size).to eq(count)
+      records
+    end
+  end
+
+  # KRaft metadata changes and transaction completion are asynchronous.
   def with_retry(opts = {})
     retries = opts.fetch(:retry, 30)
     retry_wait = opts.fetch(:retry_wait, 0.1)
+    errors = opts.fetch(:errors, [])
     tries = 0
     begin
       yield
-    rescue RSpec::Expectations::ExpectationNotMetError, Kafka::UnknownTopicOrPartition, Kafka::LeaderNotAvailable
+    rescue RSpec::Expectations::ExpectationNotMetError, Kafka::UnknownTopicOrPartition, Kafka::LeaderNotAvailable, *errors
       raise if tries >= retries
 
       tries += 1
@@ -96,6 +135,7 @@ module FunctionalSpecHelpers
       let(:logger) { LOGGER }
       let(:kafka_brokers) { KAFKA_BROKERS }
       let(:kafka) { Kafka.new(kafka_brokers, client_id: "test", logger: logger) }
+      let(:started_consumer_groups) { {} }
 
       after { kafka.close rescue nil }
     end
