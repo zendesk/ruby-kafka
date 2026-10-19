@@ -7,7 +7,7 @@ describe "Producer API", functional: true do
     producer.shutdown
   end
 
-  let!(:topic) { create_random_topic(num_partitions: 3) }
+  let(:topic) { create_random_topic(num_partitions: 3) }
 
   example "setting a create_time value" do
     timestamp = Time.now

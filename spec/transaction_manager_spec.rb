@@ -65,6 +65,19 @@ describe ::Kafka::TransactionManager do
         expect(manager.producer_epoch).to eq(0)
       end
 
+      it 'retries the same broker for a non-transactional idempotent producer' do
+        manager = described_class.new(logger: logger, cluster: cluster, idempotent: true)
+        expect(cluster).to receive(:get_transaction_coordinator).with(transactional_id: nil).once.and_return(transaction_coordinator)
+        expect(transaction_coordinator).to receive(:init_producer_id).ordered.and_return(loading_response)
+        expect(manager).to receive(:sleep).with(1).ordered
+        expect(transaction_coordinator).to receive(:init_producer_id).ordered.and_return(success_response)
+
+        manager.init_producer_id
+
+        expect(manager.producer_id).to eq(1234)
+        expect(manager.producer_epoch).to eq(1)
+      end
+
       context 'retries are disabled' do
         let(:max_retries) { 0 }
 

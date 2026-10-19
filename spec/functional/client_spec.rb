@@ -3,21 +3,26 @@
 require "timecop"
 
 describe "Client API", functional: true do
-  let!(:topic) { create_random_topic(num_partitions: 3) }
-  let!(:deleted_topic) { create_random_topic(num_partitions: 3) }
+  let(:topic) { create_random_topic(num_partitions: 3) }
+  let(:deleted_topic) { create_random_topic(num_partitions: 3) }
 
   example "listing available topics in the cluster" do
+    existing_topic = topic
     kafka.delete_topic(deleted_topic)
-    # Use a clean Kafka instance to avoid hitting caches.
-    kafka = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
 
     with_retry do
-      topics = kafka.topics
+      # Use fresh metadata on every attempt while deletion propagates.
+      client = Kafka.new(KAFKA_BROKERS, logger: LOGGER)
+      begin
+        topics = client.topics
 
-      expect(topics).to include topic
-      expect(topics).not_to include deleted_topic
-      expect(kafka.has_topic?(topic)).to eq true
-      expect(kafka.has_topic?(deleted_topic)).to eq false
+        expect(topics).to include existing_topic
+        expect(topics).not_to include deleted_topic
+        expect(client.has_topic?(existing_topic)).to eq true
+        expect(client.has_topic?(deleted_topic)).to eq false
+      ensure
+        client.close
+      end
     end
   end
 
@@ -33,9 +38,9 @@ describe "Client API", functional: true do
 
     group_id = "consumer-group-#{SecureRandom.uuid}"
     kafka.deliver_message('test', topic: topic)
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic)
-    consumer.each_message do |msg|
+    consumer.each_message(max_wait_time: 0.1) do |msg|
       consumer.stop
     end
 
@@ -46,11 +51,11 @@ describe "Client API", functional: true do
     group_id = "consumer-group=#{SecureRandom.uuid}"
 
     kafka.deliver_message('test', topic: topic)
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic)
 
     result = nil
-    consumer.each_message do |msg|
+    consumer.each_message(max_wait_time: 0.1) do |msg|
       result = kafka.describe_group(group_id)
       consumer.stop
     end
@@ -79,9 +84,9 @@ describe "Client API", functional: true do
     group_id = "consumer-group=#{SecureRandom.uuid}"
 
     kafka.deliver_message('test', topic: topic)
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic)
-    consumer.each_message do |msg|
+    consumer.each_message(max_wait_time: 0.1) do |msg|
       consumer.stop
     end
 
@@ -95,9 +100,9 @@ describe "Client API", functional: true do
     group_id = "consumer-group=#{SecureRandom.uuid}"
 
     kafka.deliver_message('test', topic: topic, partition: 0)
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic)
-    consumer.each_message do |msg|
+    consumer.each_message(max_wait_time: 0.1) do |msg|
       consumer.stop
     end
 
@@ -151,7 +156,7 @@ describe "Client API", functional: true do
       kafka.deliver_message(value.to_s, topic: topic)
     end
 
-    kafka.each_message(topic: topic) do |message|
+    kafka.each_message(topic: topic, max_wait_time: 0.1) do |message|
       value = Integer(message.value)
       values.delete(value)
 
@@ -199,8 +204,7 @@ describe "Client API", functional: true do
       headers: { hello: 'World', 'greeting' => 'is great', bye: 1, love: nil }
     )
 
-    sleep 0.2
-    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+    messages = fetch_records(topic: topic, count: 1)
 
     expect(messages[0].value).to eq "hello"
     expect(messages[0].headers).to eql(

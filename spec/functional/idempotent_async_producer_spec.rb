@@ -1,30 +1,34 @@
 # frozen_string_literal: true
 
 describe "Idempotent async producer", functional: true do
-  let(:producer) { kafka.async_producer(max_retries: 3, delivery_interval: 1, retry_backoff: 1, idempotent: true) }
+  let(:idempotent) { true }
+  let(:producer) { kafka.async_producer(idempotent: idempotent) }
   after do
     producer.shutdown
   end
 
-  example 'duplication if idempotent is not enabled' do
-    producer = kafka.async_producer(max_retries: 3, delivery_interval: 1, retry_backoff: 1, idempotent: false)
-    topic = create_random_topic(num_partitions: 3)
+  context 'without idempotence' do
+    let(:idempotent) { false }
 
-    producer.produce('Hello', topic: topic, partition: 0)
-    sleep 2
+    example 'duplication if idempotent is not enabled' do
+      topic = create_random_topic(num_partitions: 3)
 
-    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
-    producer.produce('Hi', topic: topic, partition: 0)
-    sleep 2
+      producer.produce('Hello', topic: topic, partition: 0)
+      deliver_and_wait
 
-    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    sleep 2
+      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
+      producer.produce('Hi', topic: topic, partition: 0)
+      deliver_and_wait(expect_failure: true)
 
-    records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
-    expect(records.length).to eql(3)
-    expect(records[0].value).to eql('Hello')
-    expect(records[1].value).to eql('Hi')
-    expect(records[2].value).to eql('Hi')
+      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
+      deliver_and_wait
+
+      records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
+      expect(records.length).to eql(3)
+      expect(records[0].value).to eql('Hello')
+      expect(records[1].value).to eql('Hi')
+      expect(records[2].value).to eql('Hi')
+    end
   end
 
   example "produces records in normal situation" do
@@ -35,16 +39,11 @@ describe "Idempotent async producer", functional: true do
       producer.produce(index.to_s, topic: topic, partition: 1)
       producer.produce(index.to_s, topic: topic, partition: 2)
     end
-    sleep 2
+    deliver_and_wait
 
-    kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest).each_with_index do |record, index|
-      expect(record.value).to eql(index.to_s)
-    end
-    kafka.fetch_messages(topic: topic, partition: 1, offset: :earliest).each_with_index do |record, index|
-      expect(record.value).to eql(index.to_s)
-    end
-    kafka.fetch_messages(topic: topic, partition: 2, offset: :earliest).each_with_index do |record, index|
-      expect(record.value).to eql(index.to_s)
+    3.times do |partition|
+      records = fetch_records(topic: topic, partition: partition, count: 250)
+      expect(records.map(&:value)).to eq((0...250).map(&:to_s))
     end
   end
 
@@ -52,15 +51,15 @@ describe "Idempotent async producer", functional: true do
     topic = create_random_topic(num_partitions: 3)
 
     producer.produce('Hello', topic: topic, partition: 0)
-    sleep 2
+    deliver_and_wait
 
     # Simulate the situation that all brokers fail to write
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_raise(Errno::ETIMEDOUT)
     producer.produce('Hi', topic: topic, partition: 0)
-    sleep 2
+    deliver_and_wait(expect_failure: true)
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:write).and_call_original
-    sleep 2
+    deliver_and_wait
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
     expect(records.length).to eql(2)
@@ -72,15 +71,15 @@ describe "Idempotent async producer", functional: true do
     topic = create_random_topic(num_partitions: 3)
 
     producer.produce('Hello', topic: topic, partition: 0)
-    sleep 2
+    deliver_and_wait
 
     # Simulate the situation that all brokers fail to read
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_raise(Errno::ETIMEDOUT)
     producer.produce('Hi', topic: topic, partition: 0)
-    sleep 2
+    deliver_and_wait(expect_failure: true)
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    sleep 2
+    deliver_and_wait
 
     records = kafka.fetch_messages(topic: topic, partition: 0, offset: :earliest)
     expect(records.length).to eql(2)
@@ -94,33 +93,51 @@ describe "Idempotent async producer", functional: true do
     10.times do |index|
       producer.produce('Hello', topic: topic, partition: index)
     end
-    sleep 2
+    deliver_and_wait
 
     # Simulate the situation that only one broker is down
-    raised = 1
-    begin
-      allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read) do
-        if raised != 0
-          raised -= 1
-        else
-          raise Errno::ETIMEDOUT
-        end
+    failed_socket = nil
+    failures = 0
+    allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_wrap_original do |method, *args|
+      failed_socket ||= method.receiver
+      if method.receiver == failed_socket
+        failures += 1
+        raise Errno::ETIMEDOUT
+      else
+        method.call(*args)
       end
-    rescue Kafka::DeliveryFailed
     end
     10.times do |index|
       producer.produce('Hi', topic: topic, partition: index)
     end
-    sleep 2
+    deliver_and_wait
+    expect(failures).to be > 0
 
     allow_any_instance_of(Kafka::SocketWithTimeout).to receive(:read).and_call_original
-    sleep 2
 
     10.times do |index|
       records = kafka.fetch_messages(topic: topic, partition: index, offset: :earliest)
       expect(records.length).to eql(2)
       expect(records[0].value).to eql('Hello')
       expect(records[1].value).to eql('Hi')
+    end
+  end
+
+  # Delivery is queued on another thread. Observe its completion before changing
+  # socket faults, so the tests exercise a failed delivery and a real retry.
+  def deliver_and_wait(expect_failure: false)
+    deliveries = Queue.new
+    listener = ->(*args) { deliveries << args.last }
+
+    ActiveSupport::Notifications.subscribed(listener, "deliver_messages.producer.kafka") do
+      producer.deliver_messages
+      with_retry(retry: 100) { expect(deliveries).not_to be_empty }
+      delivery = deliveries.pop
+      if expect_failure
+        expect(delivery[:exception_object]).to be_a(Kafka::DeliveryFailed)
+      else
+        expect(delivery[:exception_object]).to be_nil
+      end
     end
   end
 end

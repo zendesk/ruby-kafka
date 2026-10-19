@@ -5,6 +5,26 @@ require "timeout"
 describe "Consumer API", functional: true do
   let(:offset_retention_time) { 30 }
 
+  around do |example|
+    existing_threads = Thread.list
+    Timeout.timeout(60, Timeout::Error) { example.run }
+  rescue Timeout::Error
+    timed_out = true
+    raise
+  ensure
+    if timed_out || example.exception.is_a?(Timeout::Error)
+      backtraces = Thread.list.map do |thread|
+        "#{thread.inspect}:\n#{Array(thread.backtrace).join("\n")}"
+      end.join("\n\n")
+      warn "Timed out: #{example.full_description}\n#{backtraces}"
+    end
+
+    # Failed examples must not leave consumers/fetchers running into the next one.
+    remaining_threads = Thread.list - existing_threads
+    remaining_threads.each(&:kill)
+    remaining_threads.each { |thread| thread.join(1) }
+  end
+
   example "consuming messages from the beginning of a topic" do
     topic = create_random_topic(num_partitions: 1)
     messages = (1..1000).to_a
@@ -20,21 +40,21 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     mutex = Mutex.new
     received_messages = []
 
     consumers = 2.times.map do
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer = create_consumer(kafka, group_members: 2, group_id: group_id, offset_retention_time: offset_retention_time)
       consumer.subscribe(topic)
       consumer
     end
 
     threads = consumers.map do |consumer|
       t = Thread.new do
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           mutex.synchronize do
             received_messages << message
 
@@ -78,21 +98,21 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     mutex = Mutex.new
     received_messages = []
 
     consumers = 2.times.map do
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+      consumer = create_consumer(kafka, group_members: 2, group_id: group_id, offset_retention_time: offset_retention_time)
       consumer.subscribe(/#{topic_a}|#{topic_b}/)
       consumer
     end
 
     threads = consumers.map do |consumer|
       t = Thread.new do
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           mutex.synchronize do
             received_messages << message
 
@@ -126,16 +146,16 @@ describe "Consumer API", functional: true do
     messages_a.each { |i| producer.produce(i.to_s, topic: topic_a) }
     producer.deliver_messages
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     received_messages = []
 
     kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, refresh_topic_interval: 1)
+    consumer = create_consumer(kafka, group_id: group_id, offset_retention_time: offset_retention_time, refresh_topic_interval: 1)
     consumer.subscribe(/#{topic_a}|#{topic_b}/)
 
     thread = Thread.new do
-      consumer.each_message do |message|
+      consumer.each_message(max_wait_time: 0.1) do |message|
         received_messages << message
 
         if received_messages.count == messages.count
@@ -145,7 +165,7 @@ describe "Consumer API", functional: true do
     end
     thread.abort_on_exception = true
 
-    sleep 1
+    with_retry { expect(received_messages.size).to eq(messages_a.size) }
     messages_b.each { |i| producer.produce(i.to_s, topic: topic_b) }
     producer.deliver_messages
 
@@ -161,6 +181,7 @@ describe "Consumer API", functional: true do
 
     mutex = Mutex.new
     var = ConditionVariable.new
+    received_messages = []
 
     Thread.new do
       kafka = Kafka.new(kafka_brokers, client_id: "test")
@@ -173,7 +194,9 @@ describe "Consumer API", functional: true do
           producer.deliver_messages
 
           mutex.synchronize do
-            var.wait(mutex)
+            # Consumption can win the race with deliver_messages returning.
+            # A predicate preserves that progress even if the signal came first.
+            var.wait(mutex) while received_messages.size < i
           end
         end
       end
@@ -186,16 +209,15 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
-    received_messages = []
+    group_id = SecureRandom.uuid
 
     threads = 2.times.map do |thread_id|
       t = Thread.new do
         kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-        consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+        consumer = create_consumer(kafka, group_members: 2, group_id: group_id, offset_retention_time: offset_retention_time)
         consumer.subscribe(topic)
 
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           if message.value.nil?
             consumer.stop
           else
@@ -226,12 +248,12 @@ describe "Consumer API", functional: true do
     (1..num_messages).each {|i| producer.produce(i.to_s, topic: topic) }
     producer.deliver_messages
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
-    consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time)
+    consumer = create_consumer(kafka, group_id: group_id, offset_retention_time: offset_retention_time)
     consumer.subscribe(topic, start_from_beginning: true)
 
-    consumer.each_message do |message|
+    consumer.each_message(max_wait_time: 0.1) do |message|
       processed_messages += 1
       consumer.stop if Integer(message.value) == num_messages
     end
@@ -241,10 +263,10 @@ describe "Consumer API", functional: true do
     (1..num_messages).each {|i| producer.produce(i.to_s, topic: topic) }
     producer.deliver_messages
 
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic, start_from_beginning: true)
 
-    consumer.each_message do |message|
+    consumer.each_message(max_wait_time: 0.1) do |message|
       processed_messages += 1
       consumer.stop if Integer(message.value) == num_messages
     end
@@ -270,12 +292,12 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
     received_messages = {}
 
     consumers = 2.times.map do
       kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id)
+      consumer = create_consumer(kafka, group_members: 2, group_id: group_id)
       consumer.subscribe(topic)
       consumer
     end
@@ -283,7 +305,7 @@ describe "Consumer API", functional: true do
     threads = consumers.map do |consumer|
       t = Thread.new do
         received_messages[Thread.current] = []
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           received_messages[Thread.current] << message
 
           if received_messages[Thread.current].count == message_count
@@ -318,11 +340,11 @@ describe "Consumer API", functional: true do
       'hello2', topic: topic, headers: { 'TracingID' => 'c3', 'SpanID' => 'd4' }
     )
     producer.deliver_messages
-    consumer = kafka.consumer(group_id: SecureRandom.uuid)
+    consumer = create_consumer(kafka, group_id: SecureRandom.uuid)
     consumer.subscribe(topic)
 
     headers = []
-    consumer.each_message do |message|
+    consumer.each_message(max_wait_time: 0.1) do |message|
       headers << message.headers
       break if headers.length == 2
     end
@@ -349,10 +371,10 @@ describe "Consumer API", functional: true do
     count = 0
     data = []
 
-    consumer = kafka.consumer(group_id: group_id)
+    consumer = create_consumer(kafka, group_id: group_id)
     consumer.subscribe(topic)
 
-    consumer.each_message(automatically_mark_as_processed: false) do |message|
+    consumer.each_message(max_wait_time: 0.1, automatically_mark_as_processed: false) do |message|
       count += 1
       consumer.mark_message_as_processed(message)
       consumer.commit_offsets
@@ -360,10 +382,10 @@ describe "Consumer API", functional: true do
       break if count == 3
     end
 
-    consumer2 = kafka.consumer(group_id: group_id)
+    consumer2 = create_consumer(kafka, group_id: group_id)
     consumer2.subscribe(topic)
 
-    consumer2.each_message(automatically_mark_as_processed: false) do |message|
+    consumer2.each_message(max_wait_time: 0.1, automatically_mark_as_processed: false) do |message|
       consumer2.mark_message_as_processed(message)
       consumer2.commit_offsets
       data << message.value
@@ -393,9 +415,9 @@ describe "Consumer API", functional: true do
       @consumer_1_messages = []
       consumer_1_thread = Thread.new do
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
-        consumer = kafka.consumer(group_id: group_id)
+        consumer = create_consumer(kafka, group_id: group_id)
         consumer.subscribe(topic)
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           @consumer_1_messages << message
         end
       end.tap(&:abort_on_exception)
@@ -403,7 +425,7 @@ describe "Consumer API", functional: true do
       # Ensure consumer 1 started processing
       begin
         wait_until(timeout: 20) { @consumer_1_messages.size >= 5 }
-      rescue TimeoutError
+      rescue Timeout::Error
         fail "consumer #1 didn't consumer 5 messages within 20 seconds"
       end
 
@@ -412,9 +434,9 @@ describe "Consumer API", functional: true do
       @consumer_2_messages = []
       consumer_2_thread = Thread.new do
         kafka = Kafka.new(seed_brokers: kafka_brokers, client_id: "test")
-        consumer = kafka.consumer(group_id: group_id)
+        consumer = create_consumer(kafka, group_id: group_id)
         consumer.subscribe(topic)
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           @consumer_2_messages << message
         end
       end.tap(&:abort_on_exception)
@@ -422,7 +444,7 @@ describe "Consumer API", functional: true do
       # Ensure consumer 2 has joined the group and been assigned partitions
       begin
         wait_until(timeout: 20) { @consumer_2_messages.size >= 5 }
-      rescue TimeoutError
+      rescue Timeout::Error
         fail "consumer #2 didn't consumer 5 messages within 20 seconds"
       end
 
@@ -451,7 +473,7 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     mutex = Mutex.new
     received_messages = Hash.new {|h, k| h[k] = [] }
@@ -476,28 +498,19 @@ describe "Consumer API", functional: true do
       end
     end
 
-    joined_consumers = []
     consumers = 2.times.map do |i|
       assignment_strategy = assignment_strategy_class.new(i + 1)
 
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
+      consumer = create_consumer(kafka, group_members: 2, group_id: group_id, offset_retention_time: offset_retention_time, assignment_strategy: assignment_strategy)
       consumer.subscribe(topic)
-
-      allow(consumer).to receive(:trigger_heartbeat).and_wrap_original do |m, *args|
-        joined_consumers |= [consumer]
-        # Wait until all the consumers try to join to prevent one consumer from processing all messages
-        raise Kafka::HeartbeatError if joined_consumers.size < consumers.size
-
-        m.call(*args)
-      end
 
       consumer
     end
 
     threads = consumers.map do |consumer|
       t = Thread.new do
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           mutex.synchronize do
             received_messages[consumer] << message
 
@@ -539,7 +552,7 @@ describe "Consumer API", functional: true do
       producer.deliver_messages
     end
 
-    group_id = "test#{rand(1000)}"
+    group_id = SecureRandom.uuid
 
     mutex = Mutex.new
     received_messages = []
@@ -549,7 +562,9 @@ describe "Consumer API", functional: true do
     consumers = [topic1, topic2].map do |topic|
       assignment_strategy = assignment_strategy_class.new
       kafka = Kafka.new(kafka_brokers, client_id: "test", logger: logger)
-      consumer = kafka.consumer(
+      consumer = create_consumer(
+        kafka,
+        group_members: 2,
         group_id: group_id,
         offset_retention_time: offset_retention_time,
         assignment_strategy: assignment_strategy
@@ -560,7 +575,7 @@ describe "Consumer API", functional: true do
 
     threads = consumers.map do |consumer|
       t = Thread.new do
-        consumer.each_message do |message|
+        consumer.each_message(max_wait_time: 0.1) do |message|
           mutex.synchronize do
             received_messages << message
 

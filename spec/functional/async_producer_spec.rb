@@ -2,7 +2,7 @@
 
 describe "Producer API", functional: true do
   let(:producer) { kafka.async_producer(max_retries: 1, retry_backoff: 0) }
-  let!(:topic) { create_random_topic(num_partitions: 3) }
+  let(:topic) { create_random_topic(num_partitions: 3) }
 
   after do
     producer.shutdown
@@ -33,14 +33,7 @@ describe "Producer API", functional: true do
     value = rand(10_000).to_s
     producer.produce(value, topic: topic, partition: 0)
 
-    sleep 1
-
-    messages = kafka.fetch_messages(
-      topic: topic,
-      partition: 0,
-      offset: 0,
-      max_wait_time: 0.1,
-    )
+    messages = fetch_records(topic: topic, count: 1)
 
     expect(messages.last.value).to eq value
 
@@ -56,14 +49,7 @@ describe "Producer API", functional: true do
       producer.produce(value, topic: topic, partition: 0)
     end
 
-    sleep 0.2
-
-    messages = kafka.fetch_messages(
-      topic: topic,
-      partition: 0,
-      offset: 0,
-      max_wait_time: 0,
-    )
+    messages = fetch_records(topic: topic, count: 5)
 
     expect(messages.last(5).map(&:value)).to eq values
 
@@ -79,8 +65,7 @@ describe "Producer API", functional: true do
       headers: { hello: 'World', 'greeting' => 'is great', bye: 1, love: nil }
     )
 
-    sleep 0.2
-    messages = kafka.fetch_messages(topic: topic, partition: 0, offset: 0)
+    messages = fetch_records(topic: topic, count: 1)
 
     expect(messages[0].value).to eq "hello"
     expect(messages[0].headers).to eql(
@@ -89,5 +74,6 @@ describe "Producer API", functional: true do
       'bye' => '1',
       'love' => ''
     )
+    producer.shutdown
   end
 end
