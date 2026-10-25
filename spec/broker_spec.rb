@@ -5,7 +5,7 @@ require "kafka/protocol/message"
 describe Kafka::Broker do
   let(:logger) { LOGGER }
   let(:connection) { FakeConnection.new }
-  let(:connection_builder) { double(:connection_builder) }
+  let(:connection_builder) { Kafka.new("localhost:9092", logger: logger).instance_variable_get(:@connection_builder) }
 
   before do
     allow(connection_builder).to receive(:build_connection) { connection }

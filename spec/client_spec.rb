@@ -12,6 +12,30 @@ describe Kafka::Client do
   end
 
   describe ".new" do
+    context "with reconnect backoff options" do
+      it "accepts seconds through Kafka.new, including a zero maximum when disabled" do
+        expect(Kafka.new(kafka_brokers, reconnect_backoff: 0.1)).to be_a(Kafka::Client)
+        expect(Kafka.new(kafka_brokers, reconnect_backoff: 0, reconnect_backoff_max: 0)).to be_a(Kafka::Client)
+      end
+
+      [:reconnect_backoff, :reconnect_backoff_max].each do |option|
+        [nil, false, "0.1", -1, Float::NAN, Float::INFINITY, 10**400, Complex(1, 1)].each do |value|
+          it "rejects #{option}=#{value.inspect} before network activity" do
+            expect(Kafka::SocketWithTimeout).not_to receive(:new)
+            expect {
+              described_class.new(**client_opts.merge(option => value))
+            }.to raise_error(ArgumentError, /#{option}.*finite.*non-negative/)
+          end
+        end
+      end
+
+      it "rejects a maximum below the initial delay" do
+        expect {
+          described_class.new(**client_opts.merge(reconnect_backoff: 2, reconnect_backoff_max: 1))
+        }.to raise_error(ArgumentError, /reconnect_backoff_max.*reconnect_backoff/)
+      end
+    end
+
     context "when SASL SCRAM has been configured without ssl" do
       before do
         client_opts.update({
