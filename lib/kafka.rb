@@ -346,6 +346,10 @@ module Kafka
   class FetchError < Error
   end
 
+  # Raised when a fetched batch uses a compression codec whose gem isn't installed.
+  class CodecUnavailable < Error
+  end
+
   class SaslScramError < Error
   end
 

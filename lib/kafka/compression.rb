@@ -37,7 +37,13 @@ module Kafka
         raise "Unknown codec id #{codec_id}"
       end
 
-      codec.load
+      begin
+        codec.load
+      rescue LoadError => e
+        # LoadError isn't a StandardError, so in the fetcher thread it would
+        # bypass `rescue Kafka::Error` and abort the process.
+        raise CodecUnavailable, e.message
+      end
 
       codec
     end

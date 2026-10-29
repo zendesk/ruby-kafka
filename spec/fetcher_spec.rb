@@ -33,4 +33,19 @@ describe Kafka::Fetcher do
       )
     end
   end
+
+  describe '#step' do
+    it "queues a missing codec as an exception for the consumer instead of raising in the fetcher thread" do
+      snappy = Kafka::Compression::CODECS_BY_NAME.fetch(:snappy)
+      allow(snappy).to receive(:load).and_raise(LoadError, "snappy gem missing")
+      # Decoding a fetched snappy batch looks the codec up by id.
+      allow(fetcher).to receive(:fetch_batches) { Kafka::Compression.find_codec_by_id(snappy.codec_id) }
+
+      expect { fetcher.send(:step) }.not_to raise_error
+
+      tag, error = fetcher.poll
+      expect(tag).to eq :exception
+      expect(error).to be_a(Kafka::CodecUnavailable)
+    end
+  end
 end

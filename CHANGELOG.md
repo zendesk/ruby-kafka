@@ -7,6 +7,7 @@ Changes and additions to the library will be listed here.
 - Removes trailing dots from broker hostnames for [rfc6066](https://datatracker.ietf.org/doc/html/rfc6066#section-3:~:text=without%20a%20trailing%20dot) compatibility.
 - Drop support for Ruby below 3.3
 - Retry producer ID initialization when Kafka reports `CoordinatorLoadInProgress`.
+- Raise `Kafka::CodecUnavailable`, naming the topic and partition, when a fetched batch uses a compression codec whose gem isn't installed. Previously the `LoadError` aborted the consumer process from the fetcher thread.
 
 ## 1.5.0
 - Add support for AWS IAM Authentication to an MSK cluster (#907).
